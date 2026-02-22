@@ -85,11 +85,12 @@ button:disabled {
 /* Tab Navigation */
 .tab-navigation {
     display: flex;
-    gap: 0;
+    gap: 10px;
     margin-bottom: 30px;
     flex-wrap: wrap;
     border-bottom: 4px solid var(--accent-color);
     justify-content: center;
+    padding-bottom: 12px;
 }
 
 .description h2 {
@@ -111,13 +112,13 @@ button:disabled {
     padding: 15px 30px;
     background: var(--item-header-bg);
     border: none;
+    border-radius: 8px;
     color: var(--text-color);
     font-family: var(--font-heading);
     font-size: var(--font-tab);
     text-transform: uppercase;
     cursor: pointer;
     transition: all 0.2s ease;
-    border-right: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .tab-button:hover {
@@ -149,10 +150,14 @@ button:disabled {
 }
 
 .accordion-item {
-    margin-top: 12px;
+    margin-top: 0;
     border: 1px solid var(--border-color);
     border-radius: 5px;
     background-color: var(--item-bg);
+}
+
+.accordion-item + .accordion-item {
+    margin-top: 20px;
 }
 
 .accordion-header {
