@@ -31,19 +31,21 @@ let optionGridResizeQueued = false;
 // Theme State
 let isDarkMode = localStorage.getItem('cyoa-dark-mode') === 'true';
 const DARK_THEME_VARS = {
-    "bg-color": "#0f172a",
-    "container-bg": "#1e293b",
-    "text-color": "#f1f5f9",
-    "text-muted": "#94a3b8",
-    "accent-color": "#38bdf8",
+    "bg-color": "#111827", /* Dark Slate */
+    "container-bg": "#1f2937",
+    "text-color": "#f3f4f6",
+    "text-muted": "#9ca3af",
+    "accent-color": "#b91c1c", /* Brighter Red for Dark Mode */
     "accent-text": "#ffffff",
-    "border-color": "#334155",
-    "item-bg": "#334155",
-    "item-header-bg": "#475569",
-    "points-bg": "#38bdf8",
-    "points-border": "#0ea5e9",
-    "shadow-color": "rgba(0, 0, 0, 0.4)"
+    "border-color": "#374151",
+    "item-bg": "#1f2937",
+    "item-header-bg": "#374151",
+    "points-bg": "rgba(185, 28, 28, 0.95)",
+    "points-border": "#fbbf24", /* Bright Yellow */
+    "points-text": "#fbbf24",
+    "shadow-color": "rgba(0, 0, 0, 0.5)"
 };
+
 
 function clearObject(obj) {
     if (!obj) return;
@@ -823,43 +825,43 @@ function validateInputJson(data, pointsEntry) {
     // Populate optionMap and dependencyGraph
     data.forEach(entry => {
         forEachCategoryOption(entry, (opt) => {
-                if (optionMap.has(opt.id)) {
-                    errors.push(`Duplicate option ID found: "${opt.id}"`);
-                }
-                optionMap.set(opt.id, opt);
-                // Fix: Only use Set for array/object prerequisites, not for strings
-                let prereqSet;
-                if (typeof opt.prerequisites === 'string') {
-                    prereqSet = new Set(); // Handled separately in validation
-                } else if (Array.isArray(opt.prerequisites)) {
-                    prereqSet = new Set(opt.prerequisites);
-                } else if (typeof opt.prerequisites === 'object' && opt.prerequisites !== null) {
-                    // For AND/OR object style, flatten all values into a set
-                    prereqSet = new Set([
-                        ...(opt.prerequisites.and || []),
-                        ...(opt.prerequisites.or || [])
-                    ]);
-                } else {
-                    prereqSet = new Set();
-                }
-                dependencyGraph.set(opt.id, {
-                    prerequisites: prereqSet,
-                    conflicts: new Set(opt.conflictsWith || [])
-                });
-
-                (opt.discountGrants || []).forEach((rule, idx) => {
-                    const targets = Array.isArray(rule?.targetIds)
-                        ? rule.targetIds
-                        : (Array.isArray(rule?.targets) ? rule.targets : (rule?.targetId ? [rule.targetId] : []));
-                    if (!Array.isArray(targets) || targets.length === 0) {
-                        errors.push(`Option "${opt.id}" has discountGrants[${idx}] with no target option IDs.`);
-                    }
-                    const slots = Number(rule?.slots) || 0;
-                    if (slots <= 0) {
-                        errors.push(`Option "${opt.id}" has discountGrants[${idx}] with invalid slots value.`);
-                    }
-                });
+            if (optionMap.has(opt.id)) {
+                errors.push(`Duplicate option ID found: "${opt.id}"`);
+            }
+            optionMap.set(opt.id, opt);
+            // Fix: Only use Set for array/object prerequisites, not for strings
+            let prereqSet;
+            if (typeof opt.prerequisites === 'string') {
+                prereqSet = new Set(); // Handled separately in validation
+            } else if (Array.isArray(opt.prerequisites)) {
+                prereqSet = new Set(opt.prerequisites);
+            } else if (typeof opt.prerequisites === 'object' && opt.prerequisites !== null) {
+                // For AND/OR object style, flatten all values into a set
+                prereqSet = new Set([
+                    ...(opt.prerequisites.and || []),
+                    ...(opt.prerequisites.or || [])
+                ]);
+            } else {
+                prereqSet = new Set();
+            }
+            dependencyGraph.set(opt.id, {
+                prerequisites: prereqSet,
+                conflicts: new Set(opt.conflictsWith || [])
             });
+
+            (opt.discountGrants || []).forEach((rule, idx) => {
+                const targets = Array.isArray(rule?.targetIds)
+                    ? rule.targetIds
+                    : (Array.isArray(rule?.targets) ? rule.targets : (rule?.targetId ? [rule.targetId] : []));
+                if (!Array.isArray(targets) || targets.length === 0) {
+                    errors.push(`Option "${opt.id}" has discountGrants[${idx}] with no target option IDs.`);
+                }
+                const slots = Number(rule?.slots) || 0;
+                if (slots <= 0) {
+                    errors.push(`Option "${opt.id}" has discountGrants[${idx}] with invalid slots value.`);
+                }
+            });
+        });
 
         walkSubcategoryTree(entry.subcategories || [], (subcat) => {
             // Handle subcategory-level requiresOption applying to all options in this subcategory tree
@@ -898,33 +900,33 @@ function validateInputJson(data, pointsEntry) {
         if (entry.requiresOption) {
             const requiredItems = Array.isArray(entry.requiresOption) ? entry.requiresOption : [entry.requiresOption];
             forEachCategoryOption(entry, opt => {
-                    const node = dependencyGraph.get(opt.id);
-                    if (!node) return;
-                    requiredItems.forEach(req => {
-                        // If the requiresOption looks like a logical expression (contains operators or parentheses),
-                        // treat it as a string prerequisite expression for the node so validation can parse it.
-                        const looksLikeExpr = (typeof req === 'string') && /[()!&|\s]/.test(req);
-                        if (looksLikeExpr) {
-                            const existing = node.prerequisites;
-                            if (typeof existing === 'string') {
-                                node.prerequisites = `(${existing}) && (${req})`;
-                            } else {
-                                const arr = Array.from(existing || []);
-                                if (arr.length === 0) {
-                                    node.prerequisites = req;
-                                } else {
-                                    node.prerequisites = `(${arr.join(' && ')}) && (${req})`;
-                                }
-                            }
+                const node = dependencyGraph.get(opt.id);
+                if (!node) return;
+                requiredItems.forEach(req => {
+                    // If the requiresOption looks like a logical expression (contains operators or parentheses),
+                    // treat it as a string prerequisite expression for the node so validation can parse it.
+                    const looksLikeExpr = (typeof req === 'string') && /[()!&|\s]/.test(req);
+                    if (looksLikeExpr) {
+                        const existing = node.prerequisites;
+                        if (typeof existing === 'string') {
+                            node.prerequisites = `(${existing}) && (${req})`;
                         } else {
-                            // simple id; add to set (or combine with existing string)
-                            if (typeof node.prerequisites === 'string') {
-                                node.prerequisites = `(${node.prerequisites}) && (${req})`;
+                            const arr = Array.from(existing || []);
+                            if (arr.length === 0) {
+                                node.prerequisites = req;
                             } else {
-                                node.prerequisites.add(req);
+                                node.prerequisites = `(${arr.join(' && ')}) && (${req})`;
                             }
                         }
-                    });
+                    } else {
+                        // simple id; add to set (or combine with existing string)
+                        if (typeof node.prerequisites === 'string') {
+                            node.prerequisites = `(${node.prerequisites}) && (${req})`;
+                        } else {
+                            node.prerequisites.add(req);
+                        }
+                    }
+                });
             });
         }
     });
@@ -1024,13 +1026,13 @@ function validateInputJson(data, pointsEntry) {
     const knownAttributes = Object.keys(pointsEntry?.values || {});
     for (const cat of data.filter(e => e.name)) { // Filter for actual categories
         forEachCategoryOption(cat, opt => {
-                if (opt.inputType === "slider") {
-                    // Find the attribute name that is not "Attribute Points" (if it exists)
-                    const attr = Object.keys(opt.costPerPoint || {}).find(t => t !== "Attribute Points");
-                    if (attr && !knownAttributes.includes(attr)) {
-                        errors.push(`Slider option "${opt.id}" references unknown attribute "${attr}" in its costPerPoint.`);
-                    }
+            if (opt.inputType === "slider") {
+                // Find the attribute name that is not "Attribute Points" (if it exists)
+                const attr = Object.keys(opt.costPerPoint || {}).find(t => t !== "Attribute Points");
+                if (attr && !knownAttributes.includes(attr)) {
+                    errors.push(`Slider option "${opt.id}" references unknown attribute "${attr}" in its costPerPoint.`);
                 }
+            }
         });
     }
 
@@ -1076,38 +1078,44 @@ function applyCyoaData(rawData, {
             "font-points",
             "font-points-value",
             "font-prereq-help",
-            "font-label"
+            "font-label",
+            "font-heading",
+            "font-body"
         ]);
 
-        // Default theme variables
+        // Default theme variables - Aligned with MHA/Heroic Aesthetic
         const defaults = {
-            "bg-color": "#f9f9f9",
+            "bg-color": "#fdf6e3",
             "container-bg": "#ffffff",
-            "text-color": "#333333",
-            "text-muted": "#555555",
-            "accent-color": "#007acc",
+            "text-color": "#2b2b2b",
+            "text-muted": "#5e5e5e",
+            "accent-color": "#8b0000",
             "accent-text": "#ffffff",
-            "border-color": "#dddddd",
-            "item-bg": "#f4f4f4",
-            "item-header-bg": "#e0e0e0",
-            "points-bg": "#f0f0f0",
-            "points-border": "#cccccc",
-            "shadow-color": "rgba(0, 0, 0, 0.1)",
-            "font-base": "20px",
-            "font-title": "44px",
-            "font-description": "22px",
-            "font-tab": "20px",
-            "font-accordion": "22px",
-            "font-subcategory": "24px",
-            "font-option-title": "21px",
-            "font-option-req": "18px",
-            "font-option-desc": "19px",
-            "font-story": "21px",
-            "font-story-input": "20px",
-            "font-points": "20px",
-            "font-points-value": "20px",
+            "border-color": "#d1cfc7",
+            "item-bg": "#f5f1e4",
+            "item-header-bg": "#e5e0d0",
+            "points-bg": "rgba(139, 0, 0, 0.9)",
+            "points-border": "#ffd700",
+            "points-text": "#ffd700",
+            "shadow-color": "rgba(0, 0, 0, 0.15)",
+            "selection-glow": "0 0 15px rgba(255, 215, 0, 0.6)",
+            "font-base": "18px",
+            "font-title": "48px",
+            "font-description": "20px",
+            "font-tab": "22px",
+            "font-accordion": "24px",
+            "font-subcategory": "26px",
+            "font-option-title": "22px",
+            "font-option-req": "17px",
+            "font-option-desc": "18px",
+            "font-story": "20px",
+            "font-story-input": "19px",
+            "font-points": "22px",
+            "font-points-value": "24px",
             "font-prereq-help": "17px",
-            "font-label": "19px"
+            "font-label": "19px",
+            "font-heading": "'Luckiest Guy', cursive",
+            "font-body": "'Quicksand', sans-serif"
         };
 
         if (isDarkMode) {

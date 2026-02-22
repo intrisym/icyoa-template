@@ -871,6 +871,7 @@
             "item-header-bg": "#e0e0e0",
             "points-bg": "#f0f0f0",
             "points-border": "#cccccc",
+            "points-text": "#ffd700",
             "shadow-color": "rgba(0,0,0,0.1)",
             "font-base": "20px",
             "font-title": "44px",
@@ -886,7 +887,9 @@
             "font-points": "20px",
             "font-points-value": "20px",
             "font-prereq-help": "17px",
-            "font-label": "19px"
+            "font-label": "19px",
+            "font-heading": "'Luckiest Guy', cursive",
+            "font-body": "'Quicksand', sans-serif"
         }), {
             mergeDefaults: true
         }).entry;
@@ -1169,6 +1172,7 @@
             "item-header-bg": "Category Header",
             "points-bg": "Points Tracker Background",
             "points-border": "Points Tracker Border",
+            "points-text": "Points Value Text",
             "shadow-color": "Shadow Color"
         };
 
@@ -1359,6 +1363,129 @@
             inputRow.appendChild(input);
             field.appendChild(label);
             field.appendChild(inputRow);
+            grid.appendChild(field);
+        });
+
+        const familyFields = {
+            "font-heading": {
+                label: "Heading Font Family",
+                placeholder: "'Luckiest Guy', cursive",
+                options: [{
+                        label: "Luckiest Guy",
+                        value: "'Luckiest Guy', cursive"
+                    },
+                    {
+                        label: "Impact",
+                        value: "Impact, 'Arial Black', sans-serif"
+                    },
+                    {
+                        label: "Georgia",
+                        value: "Georgia, serif"
+                    },
+                    {
+                        label: "Trebuchet MS",
+                        value: "'Trebuchet MS', sans-serif"
+                    },
+                    {
+                        label: "Verdana",
+                        value: "Verdana, sans-serif"
+                    }
+                ]
+            },
+            "font-body": {
+                label: "Body Font Family",
+                placeholder: "'Quicksand', sans-serif",
+                options: [{
+                        label: "Quicksand",
+                        value: "'Quicksand', sans-serif"
+                    },
+                    {
+                        label: "Arial",
+                        value: "Arial, sans-serif"
+                    },
+                    {
+                        label: "Helvetica",
+                        value: "'Helvetica Neue', Helvetica, Arial, sans-serif"
+                    },
+                    {
+                        label: "Verdana",
+                        value: "Verdana, sans-serif"
+                    },
+                    {
+                        label: "Georgia",
+                        value: "Georgia, serif"
+                    },
+                    {
+                        label: "Times New Roman",
+                        value: "'Times New Roman', Times, serif"
+                    }
+                ]
+            }
+        };
+
+        Object.entries(familyFields).forEach(([key, config]) => {
+            const field = document.createElement("div");
+            field.className = "field";
+            field.style.gridColumn = "1 / -1";
+
+            const label = document.createElement("label");
+            label.textContent = config.label;
+
+            const select = document.createElement("select");
+            const defaultOption = document.createElement("option");
+            defaultOption.value = "";
+            defaultOption.textContent = "Use default";
+            select.appendChild(defaultOption);
+
+            config.options.forEach((opt) => {
+                const optionEl = document.createElement("option");
+                optionEl.value = opt.value;
+                optionEl.textContent = opt.label;
+                select.appendChild(optionEl);
+            });
+
+            const customOption = document.createElement("option");
+            customOption.value = "__custom__";
+            customOption.textContent = "Custom...";
+            select.appendChild(customOption);
+
+            const input = document.createElement("input");
+            input.type = "text";
+            input.placeholder = config.placeholder;
+            input.value = themeEntry[key] || "";
+
+            const currentValue = (themeEntry[key] || "").trim();
+            const isPreset = config.options.some(opt => opt.value === currentValue);
+            select.value = currentValue === "" ? "" : (isPreset ? currentValue : "__custom__");
+            input.style.display = select.value === "__custom__" ? "block" : "none";
+
+            const applyFontFamilyValue = (value) => {
+                if (value === "") {
+                    delete themeEntry[key];
+                } else {
+                    themeEntry[key] = value;
+                }
+                schedulePreviewUpdate();
+            };
+
+            select.addEventListener("change", () => {
+                if (select.value === "__custom__") {
+                    input.style.display = "block";
+                    applyFontFamilyValue(input.value.trim());
+                    return;
+                }
+                input.style.display = "none";
+                applyFontFamilyValue(select.value.trim());
+            });
+
+            input.addEventListener("input", () => {
+                if (select.value !== "__custom__") return;
+                applyFontFamilyValue(input.value.trim());
+            });
+
+            field.appendChild(label);
+            field.appendChild(select);
+            field.appendChild(input);
             grid.appendChild(field);
         });
 

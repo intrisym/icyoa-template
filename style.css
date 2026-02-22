@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Quicksand:wght@400;500;700&display=swap');
+
 *,
 *::before,
 *::after {
@@ -5,53 +7,64 @@
 }
 
 :root {
-    --bg-color: #f9f9f9;
+    /* MHA Thematic Palette */
+    --bg-color: #fdf6e3;
+    /* Cream/Parchment */
     --container-bg: #ffffff;
-    --text-color: #333333;
-    --text-muted: #555555;
-    --accent-color: #007acc;
+    --text-color: #2b2b2b;
+    --text-muted: #5e5e5e;
+    --accent-color: #8b0000;
+    /* Deep Heroic Red */
     --accent-text: #ffffff;
-    --border-color: #dddddd;
-    --item-bg: #f4f4f4;
-    --item-header-bg: #e0e0e0;
-    --points-bg: #f0f0f0;
-    --points-border: #cccccc;
-    --shadow-color: rgba(0, 0, 0, 0.1);
-    --font-base: 20px;
-    --font-title: 44px;
-    --font-description: 22px;
-    --font-tab: 20px;
-    --font-accordion: 22px;
-    --font-subcategory: 24px;
-    --font-option-title: 21px;
-    --font-option-req: 18px;
-    --font-option-desc: 19px;
-    --font-story: 21px;
-    --font-story-input: 20px;
-    --font-points: 20px;
-    --font-points-value: 20px;
-    --font-prereq-help: 17px;
-    --font-label: 19px;
+    --border-color: #d1cfc7;
+    --item-bg: #f5f1e4;
+    --item-header-bg: #e5e0d0;
+    --points-bg: rgba(139, 0, 0, 0.9);
+    /* Transparent Red */
+    --points-border: #ffd700;
+    /* Yellow */
+    --points-text: #ffd700;
+    /* Points value text color */
+    --shadow-color: rgba(0, 0, 0, 0.15);
+    --selection-glow: 0 0 15px rgba(255, 215, 0, 0.6);
+
+    /* Typography */
+    --font-heading: 'Luckiest Guy', cursive;
+    --font-body: 'Quicksand', sans-serif;
+
+    --font-base: 18px;
+    --font-title: 48px;
+    --font-description: 20px;
+    --font-tab: 22px;
+    --font-accordion: 24px;
+    --font-subcategory: 26px;
+    --font-option-title: 22px;
+    --font-option-req: 17px;
+    --font-option-desc: 18px;
+    --font-story: 20px;
+    --font-story-input: 19px;
+    --font-points: 22px;
+    --font-points-value: 24px;
 }
 
 body {
-    font-family: sans-serif;
+    font-family: var(--font-body);
     background-color: var(--bg-color);
     color: var(--text-color);
     padding: 0;
     margin: 0;
     min-height: 100vh;
     font-size: var(--font-base);
+    line-height: 1.6;
 }
 
+
 .container {
-    max-width: none;
-    margin: 0;
-    background: var(--container-bg);
+    max-width: 1400px;
+    margin: 0 auto;
+    background: var(--bg-color);
     min-height: 100vh;
-    padding: 32px 40px 80px;
-    border-radius: 0;
-    box-shadow: none;
+    padding: 20px 20px 100px;
 }
 
 button {
@@ -72,15 +85,20 @@ button:disabled {
 /* Tab Navigation */
 .tab-navigation {
     display: flex;
-    gap: 8px;
-    border-bottom: 2px solid var(--border-color);
-    margin-bottom: 24px;
+    gap: 0;
+    margin-bottom: 30px;
     flex-wrap: wrap;
+    border-bottom: 4px solid var(--accent-color);
+    justify-content: center;
 }
 
 .description h2 {
+    font-family: var(--font-heading);
     font-size: var(--font-title);
-    margin: 0 0 8px;
+    color: var(--accent-color);
+    text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.1);
+    margin: 0 0 12px;
+    text-align: center;
 }
 
 .description p {
@@ -90,26 +108,26 @@ button:disabled {
 }
 
 .tab-button {
-    padding: 12px 20px;
-    background: none;
+    padding: 15px 30px;
+    background: var(--item-header-bg);
     border: none;
-    border-bottom: 3px solid transparent;
-    color: var(--text-muted);
+    color: var(--text-color);
+    font-family: var(--font-heading);
     font-size: var(--font-tab);
-    font-weight: 500;
+    text-transform: uppercase;
     cursor: pointer;
     transition: all 0.2s ease;
-    margin-top: 0;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .tab-button:hover {
-    color: var(--text-color);
-    border-bottom-color: var(--border-color);
+    background: var(--accent-color);
+    color: var(--accent-text);
 }
 
 .tab-button.active {
-    color: var(--accent-color);
-    border-bottom-color: var(--accent-color);
+    background: var(--accent-color);
+    color: var(--points-border);
 }
 
 .tab-content {
@@ -197,8 +215,8 @@ button:disabled {
 .subcategory-tab-button.locked {
     opacity: 0.6;
     cursor: pointer;
-    background: #eee;
-    color: #999;
+    background: var(--item-bg);
+    color: var(--text-muted);
 }
 
 .subcategory-content.tab-active {
@@ -206,17 +224,16 @@ button:disabled {
 }
 
 .subcategory-content-title {
+    font-family: var(--font-heading);
     font-size: var(--font-subcategory);
-    font-weight: bold;
-    text-align: center;
-    margin: 30px 0 20px 0;
-    padding: 12px;
-    background-color: var(--item-header-bg);
-    border-bottom: 3px solid var(--accent-color);
-    border-radius: 4px;
-    color: var(--text-color);
+    text-align: left;
+    margin: 40px 0 25px 0;
+    padding: 10px 20px;
+    background-color: var(--accent-color);
+    color: var(--accent-text);
+    border-bottom: 4px solid var(--points-border);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
 }
 
 .subcategory-item {
@@ -245,10 +262,10 @@ button:disabled {
 }
 
 /* Keep consistent spacing when options and nested subcategories coexist in the same level */
-.category-content > .options-grid + .subcategory-navigation,
-.subcategory-content > .options-grid + .subcategory-navigation,
-.category-content > .options-grid + .subcategory-item,
-.subcategory-content > .options-grid + .subcategory-item {
+.category-content>.options-grid+.subcategory-navigation,
+.subcategory-content>.options-grid+.subcategory-navigation,
+.category-content>.options-grid+.subcategory-item,
+.subcategory-content>.options-grid+.subcategory-item {
     margin-top: 24px;
 }
 
@@ -257,19 +274,19 @@ button:disabled {
     flex-direction: column;
     min-width: 0;
     align-items: center;
-    gap: 12px;
-    padding: 16px;
+    gap: 0;
+    padding: 0;
     border: 1px solid var(--border-color);
-    border-radius: 8px;
-    background-color: var(--container-bg);
+    border-radius: 12px;
+    background-color: var(--item-bg);
     transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-    /* Removed height: 100% and margin-bottom to prevent grid overflow */
+    overflow: hidden;
 }
 
 .option-wrapper:hover {
-    border-color: var(--accent-color);
-    box-shadow: 0 4px 12px var(--shadow-color);
-    transform: translateY(-2px);
+    border-color: var(--points-border);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    transform: translateY(-4px);
     z-index: 10;
     position: relative;
 }
@@ -279,13 +296,12 @@ button:disabled {
 }
 
 .option-wrapper.selected {
-    border-color: var(--accent-color);
-    background-color: rgba(0, 122, 204, 0.05);
-    box-shadow: 0 0 0 2px var(--accent-color);
+    border: 4px solid var(--points-border);
+    box-shadow: var(--selection-glow);
 }
 
 .option-wrapper.selected:hover {
-    background-color: rgba(0, 122, 204, 0.1);
+    box-shadow: var(--selection-glow-hover, 0 0 20px rgba(255, 215, 0, 0.8));
 }
 
 .option-wrapper img {
@@ -304,10 +320,14 @@ button:disabled {
     flex-grow: 1;
     width: 100%;
     text-align: center;
+    padding: 15px;
 }
 
 .option-content strong {
+    font-family: var(--font-heading);
     font-size: var(--font-option-title);
+    color: var(--accent-color);
+    margin-bottom: 5px;
 }
 
 .option-wrapper button {
@@ -378,14 +398,18 @@ button:disabled {
     left: 0;
     width: 100%;
     background: var(--points-bg);
-    border-top: 1px solid var(--points-border);
-    padding: 10px 20px;
+    border-top: 3px solid var(--points-border);
+    padding: 15px 20px;
+    font-family: var(--font-body);
     font-size: var(--font-points);
+    font-weight: 700;
+    color: white;
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 1000;
-    box-shadow: 0 -2px 6px var(--shadow-color);
+    box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(5px);
 }
 
 .modal {
@@ -600,15 +624,20 @@ div {
 #pointsDisplay {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 25px;
     justify-content: center;
     align-items: center;
-    line-height: 1.6;
 }
 
 #pointsDisplay span {
     white-space: nowrap;
+    font-family: var(--font-body);
     font-size: var(--font-points-value);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+    color: var(--points-text, #ffd700);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 /* CYOA Selection Styles */
