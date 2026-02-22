@@ -32,7 +32,25 @@
     "item-header-bg": "#2D3748",
     "points-bg": "#00A3FF",
     "points-border": "#0082CC",
-    "shadow-color": "rgba(0, 163, 255, 0.2)"
+    "shadow-color": "rgba(0, 163, 255, 0.2)",
+    "points-text": "#f9fffb",
+    "font-base": "20px",
+    "font-title": "44px",
+    "font-description": "22px",
+    "font-tab": "20px",
+    "font-accordion": "22px",
+    "font-subcategory": "24px",
+    "font-option-title": "21px",
+    "font-option-req": "18px",
+    "font-option-desc": "19px",
+    "font-story": "21px",
+    "font-story-input": "20px",
+    "font-points": "20px",
+    "font-points-value": "20px",
+    "font-prereq-help": "17px",
+    "font-label": "19px",
+    "font-heading": "Verdana, sans-serif",
+    "font-body": "'Quicksand', sans-serif"
   },
   {
     "name": "Ego",
@@ -57,7 +75,8 @@
             "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fi.pinimg.com%2Foriginals%2F81%2Ff1%2F63%2F81f16319f8c84330524e92d9caaf6f3a.jpg%3Fnii%3Dt&f=1&nofb=1&ipt=878bde9c05d3b56d5b94c09c2706ac46c2c9d37ea359ffa8639b12cbcf685636"
           }
         ],
-        "maxSelections": 1
+        "maxSelections": 1,
+        "subcategories": []
       },
       {
         "name": "Category",
@@ -79,7 +98,8 @@
             "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fi.pinimg.com%2F736x%2F4a%2F21%2F5e%2F4a215e98ee7d02804e5be417f97a1fd0.jpg&f=1&nofb=1&ipt=4884ff38050762f8c721b4b4625d4c3fb25128a6ace704c3d9e8f360dce75fb8"
           }
         ],
-        "maxSelections": 1
+        "maxSelections": 1,
+        "subcategories": []
       },
       {
         "name": "Archetype",
@@ -119,7 +139,8 @@
             "prerequisites": "egoCategoryWholistic && egoTypeFreedom"
           }
         ],
-        "maxSelections": 1
+        "maxSelections": 1,
+        "subcategories": []
       }
     ]
   },
@@ -153,7 +174,8 @@
             "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fpreview.redd.it%2Faryu-colored-panel-v0-3y6tyd772ysc1.png%3Fauto%3Dwebp%26s%3D6f38dac79c42befa3532b92ec0e810e2a4263dc9&f=1&nofb=1&ipt=a4e62abc2f59dc33f93ff58fbbc1058993d373d48c2f866a54cc94d4cf3a2cfb"
           }
         ],
-        "maxSelections": 1
+        "maxSelections": 1,
+        "subcategories": []
       },
       {
         "name": "Build",
@@ -182,7 +204,8 @@
             "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fotakukart.com%2Fwp-content%2Fuploads%2F2023%2F07%2FBarou-1-2048x1152.jpeg&f=1&nofb=1&ipt=b909a84ef0e4741d64bda437ef929490f7a305922d4521301605e5b7912c733e"
           }
         ],
-        "maxSelections": 1
+        "maxSelections": 1,
+        "subcategories": []
       },
       {
         "name": "Strong Foot",
@@ -204,7 +227,8 @@
             "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fi.pinimg.com%2F736x%2Fb1%2Fd8%2F98%2Fb1d898c6a4b1c3c5a9fa01634fe2e669.jpg&f=1&nofb=1&ipt=6e3beed621a733a4359f1911f06575f3a3f3f9f18202d9061217c5ddd76b1c3c"
           }
         ],
-        "maxSelections": 1
+        "maxSelections": 1,
+        "subcategories": []
       }
     ]
   },
@@ -270,7 +294,8 @@
             "id": "weaponsPhysicalStrength",
             "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fi.pinimg.com%2F736x%2Fea%2Fc1%2F58%2Feac158e5778be1b05f1d51473bce86f4.jpg&f=1&nofb=1&ipt=ac0d73517854e945d4ef05cf459daa460677eb4ed0df3933ea4bd6f00bd881fc"
           }
-        ]
+        ],
+        "subcategories": []
       },
       {
         "name": "Technical",
@@ -331,7 +356,8 @@
             "id": "weaponsTechnicalTrapping",
             "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fi.pinimg.com%2F736x%2Fd6%2Fd9%2F01%2Fd6d9014238021d7cd728c9579d112a99.jpg&f=1&nofb=1&ipt=aabe0f2f1f04463a925752074bc6d94c9337a0363c46d1a91adc84d8a42ae4ad"
           }
-        ]
+        ],
+        "subcategories": []
       },
       {
         "name": "Shooting",
@@ -365,7 +391,8 @@
             "id": "weaponsShootingFinesseShot",
             "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fi.pinimg.com%2Foriginals%2F7f%2F76%2F33%2F7f7633e87d8b36fb8a4c425fb6a3bae3.png&f=1&nofb=1&ipt=b4b3e118a5a34ca13db89a21bba1efb6db3f187406f7515495ace176146763d9"
           }
-        ]
+        ],
+        "subcategories": []
       },
       {
         "name": "Mental",
@@ -399,7 +426,8 @@
             "id": "weaponsMentalSpatialAwareness",
             "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fi.pinimg.com%2Foriginals%2Fe2%2Ffd%2Fc7%2Fe2fdc742da17e142c146e5e6c3501fdc.jpg&f=1&nofb=1&ipt=f04cce7cbe4dc42739d81456b8a8268b8c46b5c6a996f5868d9f177e55dd7294"
           }
-        ]
+        ],
+        "subcategories": []
       },
       {
         "name": "Special",
@@ -462,7 +490,8 @@
             "prerequisites": "weaponsMentalFiq || weaponsMentalEiq || weaponsMentalSpatialAwareness",
             "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fi.pinimg.com%2F736x%2Fb8%2Fb5%2F0f%2Fb8b50fef9441ca590405794ece9e3ac9.jpg&f=1&nofb=1&ipt=66980dbf3b1ec6685ee24d47004a4ba4105bde867cb326d737b46f68932f5aef"
           }
-        ]
+        ],
+        "subcategories": []
       }
     ]
   },
@@ -510,7 +539,8 @@
             "id": "drawbacksDrawbacksOpticNeuropathy",
             "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fpreview.redd.it%2Fyukimiya-colored-panel-v0-uoihu8n6z42d1.png%3Fwidth%3D1080%26crop%3Dsmart%26auto%3Dwebp%26s%3De0465a572a270afb304300e69679829c109b0fdd&f=1&nofb=1&ipt=09c65d80527e64292ffcde1ef3cbcfa2218e079af17e2b01d997a1fc32ab223e"
           }
-        ]
+        ],
+        "subcategories": []
       }
     ]
   },
