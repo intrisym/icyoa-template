@@ -23,13 +23,15 @@
     /* Transparent Red */
     --points-border: #ffd700;
     /* Yellow */
-    --points-text: #ffd700;
+    --points-text: #000000;
     /* Points value text color */
     --shadow-color: rgba(0, 0, 0, 0.15);
-    --selection-glow: 0 0 15px rgba(255, 215, 0, 0.6);
+    --selection-glow-color: #2563eb;
+    --selection-glow: 0 0 15px rgba(37, 99, 235, 0.6);
+    --selection-glow-hover: 0 0 20px rgba(37, 99, 235, 0.8);
 
     /* Typography */
-    --font-heading: 'Luckiest Guy', cursive;
+    --font-heading: Verdana, sans-serif;
     --font-body: 'Quicksand', sans-serif;
 
     --font-base: 18px;
@@ -306,7 +308,7 @@ button:disabled {
 }
 
 .option-wrapper.selected:hover {
-    box-shadow: var(--selection-glow-hover, 0 0 20px rgba(255, 215, 0, 0.8));
+    box-shadow: var(--selection-glow-hover, 0 0 20px rgba(37, 99, 235, 0.8));
 }
 
 .option-wrapper img {
@@ -641,7 +643,7 @@ div {
     font-weight: 700;
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.02em;
-    color: var(--points-text, #ffd700);
+    color: var(--points-text, #000000);
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 }
 

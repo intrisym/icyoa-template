@@ -871,7 +871,8 @@
             "item-header-bg": "#e0e0e0",
             "points-bg": "#f0f0f0",
             "points-border": "#cccccc",
-            "points-text": "#ffd700",
+            "points-text": "#000000",
+            "selection-glow-color": "#2563eb",
             "shadow-color": "rgba(0,0,0,0.1)",
             "font-base": "20px",
             "font-title": "44px",
@@ -888,7 +889,7 @@
             "font-points-value": "20px",
             "font-prereq-help": "17px",
             "font-label": "19px",
-            "font-heading": "'Luckiest Guy', cursive",
+            "font-heading": "Verdana, sans-serif",
             "font-body": "'Quicksand', sans-serif"
         }), {
             mergeDefaults: true
@@ -1173,6 +1174,7 @@
             "points-bg": "Points Tracker Background",
             "points-border": "Points Tracker Border",
             "points-text": "Points Value Text",
+            "selection-glow-color": "Selected Option Glow",
             "shadow-color": "Shadow Color"
         };
 
@@ -1369,7 +1371,7 @@
         const familyFields = {
             "font-heading": {
                 label: "Heading Font Family",
-                placeholder: "'Luckiest Guy', cursive",
+                placeholder: "Verdana, sans-serif",
                 options: [{
                         label: "Luckiest Guy",
                         value: "'Luckiest Guy', cursive"

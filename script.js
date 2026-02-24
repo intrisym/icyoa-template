@@ -42,9 +42,27 @@ const DARK_THEME_VARS = {
     "item-header-bg": "#374151",
     "points-bg": "rgba(185, 28, 28, 0.95)",
     "points-border": "#fbbf24", /* Bright Yellow */
-    "points-text": "#fbbf24",
+    "points-text": "#000000",
     "shadow-color": "rgba(0, 0, 0, 0.5)"
 };
+
+function makeGlowShadow(color, blurPx, alpha) {
+    const raw = String(color || "").trim();
+    const hex = raw.replace(/^#/, "");
+    if (/^[0-9a-fA-F]{6}$/.test(hex)) {
+        const r = parseInt(hex.slice(0, 2), 16);
+        const g = parseInt(hex.slice(2, 4), 16);
+        const b = parseInt(hex.slice(4, 6), 16);
+        return `0 0 ${blurPx}px rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+    if (/^[0-9a-fA-F]{3}$/.test(hex)) {
+        const r = parseInt(`${hex[0]}${hex[0]}`, 16);
+        const g = parseInt(`${hex[1]}${hex[1]}`, 16);
+        const b = parseInt(`${hex[2]}${hex[2]}`, 16);
+        return `0 0 ${blurPx}px rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+    return `0 0 ${blurPx}px ${raw || "#2563eb"}`;
+}
 
 
 function clearObject(obj) {
@@ -1096,9 +1114,11 @@ function applyCyoaData(rawData, {
             "item-header-bg": "#e5e0d0",
             "points-bg": "rgba(139, 0, 0, 0.9)",
             "points-border": "#ffd700",
-            "points-text": "#ffd700",
+            "points-text": "#000000",
             "shadow-color": "rgba(0, 0, 0, 0.15)",
-            "selection-glow": "0 0 15px rgba(255, 215, 0, 0.6)",
+            "selection-glow-color": "#2563eb",
+            "selection-glow": "0 0 15px rgba(37, 99, 235, 0.6)",
+            "selection-glow-hover": "0 0 20px rgba(37, 99, 235, 0.8)",
             "font-base": "18px",
             "font-title": "48px",
             "font-description": "20px",
@@ -1114,7 +1134,7 @@ function applyCyoaData(rawData, {
             "font-points-value": "24px",
             "font-prereq-help": "17px",
             "font-label": "19px",
-            "font-heading": "'Luckiest Guy', cursive",
+            "font-heading": "Verdana, sans-serif",
             "font-body": "'Quicksand', sans-serif"
         };
 
@@ -1132,6 +1152,13 @@ function applyCyoaData(rawData, {
                 if (isDarkMode && !TYPOGRAPHY_KEYS.has(key)) return;
                 updateRootProperty(key, value);
             });
+        }
+
+        const glowColor = themeEntry?.["selection-glow-color"] || defaults["selection-glow-color"] || "#2563eb";
+        const hasExplicitGlow = !!(themeEntry && (Object.prototype.hasOwnProperty.call(themeEntry, "selection-glow") || Object.prototype.hasOwnProperty.call(themeEntry, "selection-glow-hover")));
+        if (!hasExplicitGlow) {
+            updateRootProperty("selection-glow", makeGlowShadow(glowColor, 15, 0.6));
+            updateRootProperty("selection-glow-hover", makeGlowShadow(glowColor, 20, 0.8));
         }
 
         updateThemeToggleButton();
