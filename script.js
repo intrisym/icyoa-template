@@ -571,6 +571,7 @@ const modalTextarea = document.getElementById("modalTextarea");
 const modalConfirmBtn = document.getElementById("modalConfirmBtn");
 const modalClose = document.getElementById("modalClose");
 let modalMode = null;
+const pointsTrackerEl = document.getElementById("pointsTracker");
 const assetLoadingOverlay = document.getElementById("assetLoadingOverlay");
 const assetLoadingMessage = document.getElementById("assetLoadingMessage");
 const assetLoadingBar = document.getElementById("assetLoadingBar");
@@ -592,6 +593,23 @@ function escapeHtml(text = "") {
 function setMultilineText(element, text = "") {
     if (!element) return;
     element.innerHTML = escapeHtml(text).replace(/\n/g, "<br>");
+}
+
+function syncPointsTrackerHeight() {
+    if (!pointsTrackerEl) return;
+    const trackerHeight = Math.max(0, Math.ceil(pointsTrackerEl.getBoundingClientRect().height));
+    document.documentElement.style.setProperty("--points-tracker-height", `${trackerHeight}px`);
+}
+
+if (pointsTrackerEl) {
+    syncPointsTrackerHeight();
+    window.addEventListener("resize", syncPointsTrackerHeight, { passive: true });
+    if (typeof ResizeObserver !== "undefined") {
+        const pointsTrackerObserver = new ResizeObserver(() => {
+            syncPointsTrackerHeight();
+        });
+        pointsTrackerObserver.observe(pointsTrackerEl);
+    }
 }
 
 // Event Listeners
@@ -1717,6 +1735,7 @@ function updatePointsDisplay() {
     display.innerHTML = Object.entries(points)
         .map(([type, val]) => `<span><strong>${type}:</strong> ${val}</span>`)
         .join("");
+    syncPointsTrackerHeight();
 }
 
 /**
@@ -3082,7 +3101,7 @@ function renderSliderControl(opt, contentWrapper) {
         }
 
         sliderLabel.textContent = `${opt.label}: ${newVal}`;
-        evaluateFormulas();
+        applyDynamicCosts();
         updatePointsDisplay();
     };
 
@@ -3199,7 +3218,7 @@ function renderDynamicCost(opt, contentWrapper) {
             }
 
             dynamicSelections[opt.id][i] = newValue;
-            evaluateFormulas();
+            applyDynamicCosts();
             updatePointsDisplay();
             renderAccordion();
         };

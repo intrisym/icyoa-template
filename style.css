@@ -47,6 +47,7 @@
     --font-story-input: 19px;
     --font-points: 22px;
     --font-points-value: 24px;
+    --points-tracker-height: 96px;
 }
 
 body {
@@ -66,7 +67,7 @@ body {
     margin: 0 auto;
     background: var(--bg-color);
     min-height: 100vh;
-    padding: 20px 20px 100px;
+    padding: 20px 20px calc(var(--points-tracker-height) + env(safe-area-inset-bottom, 0px) + 24px);
 }
 
 button {
@@ -417,6 +418,7 @@ button:disabled {
     z-index: 1000;
     box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.3);
     backdrop-filter: blur(5px);
+    max-width: 100%;
 }
 
 .modal {
@@ -634,6 +636,7 @@ div {
     gap: 25px;
     justify-content: center;
     align-items: center;
+    max-width: 100%;
 }
 
 #pointsDisplay span {
@@ -802,6 +805,24 @@ div {
 @media (max-width: 768px) {
     .options-grid {
         grid-template-columns: 1fr;
+    }
+
+    .points-tracker {
+        padding: 10px 12px;
+    }
+
+    #pointsDisplay {
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        gap: 12px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+    }
+
+    #pointsDisplay span {
+        font-size: clamp(14px, 3.8vw, 18px);
     }
 }
 
