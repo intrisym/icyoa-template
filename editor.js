@@ -1,6 +1,7 @@
 (function () {
     const CORE_TYPES_ORDER = ["title", "description", "headerImage", "points"];
-    const BASE_OPTION_KEYS = new Set(["id", "label", "description", "image", "inputType", "inputLabel", "cost", "maxSelections", "countsAsOneSelection", "prerequisites", "conflictsWith", "discounts", "discountGrants"]);
+    const BASE_OPTION_KEYS = new Set(["id", "label", "description", "image", "inputType", "inputLabel", "cost", "maxSelections", "countsAsOneSelection", "prerequisites", "conflictsWith", "discounts", "discountGrants", "dynamicCost"]);
+    const DEFAULT_POINT_CHOICES = ["Heat", "Cold", "Acid", "Sonic", "Electric", "Light", "Dark"];
 
     const state = {
         data: [],
@@ -21,6 +22,34 @@
     const sectionOpenState = new Map();
     const optionIdAutoMap = new WeakMap();
     const optionOpenState = new WeakMap();
+
+    function parseChoiceCsv(raw = "") {
+        const parsed = String(raw)
+            .split(",")
+            .map(part => part.trim())
+            .filter(Boolean);
+        return parsed.length ? parsed : [...DEFAULT_POINT_CHOICES];
+    }
+
+    function parseAmountCsv(raw = "") {
+        const values = String(raw)
+            .split(",")
+            .map(part => Number(part.trim()))
+            .filter(num => Number.isFinite(num));
+        return values.length ? values : [100, -100];
+    }
+
+    function isPointDropdownDynamicCost(config) {
+        if (!config || typeof config !== "object") return false;
+        if (config.target !== "points") return false;
+        if (!Array.isArray(config.choices) || !config.choices.length) return false;
+        const types = Array.isArray(config.types) ? config.types : [];
+        const values = Array.isArray(config.values) ? config.values : [];
+        return types.length > 0 &&
+            values.length > 0 &&
+            types.length === values.length &&
+            values.every(val => Number.isFinite(Number(val)));
+    }
 
     function walkEditorSubcategories(subcategories, callback, path = []) {
         if (!Array.isArray(subcategories)) return;
@@ -2408,6 +2437,129 @@
             inputTypeField.appendChild(inputLabelLabel);
             inputTypeField.appendChild(inputLabelInput);
             body.appendChild(inputTypeField);
+
+            const pointDropdownField = document.createElement("div");
+            pointDropdownField.className = "field";
+            const pointDropdownToggle = document.createElement("label");
+            pointDropdownToggle.className = "checkbox-option";
+            const pointDropdownCheckbox = document.createElement("input");
+            pointDropdownCheckbox.type = "checkbox";
+            const pointDropdownLabel = document.createElement("span");
+            pointDropdownLabel.textContent = "Point Dropdown (optional)";
+            pointDropdownToggle.appendChild(pointDropdownCheckbox);
+            pointDropdownToggle.appendChild(pointDropdownLabel);
+
+            const pointChoicesLabel = document.createElement("label");
+            pointChoicesLabel.textContent = "Selectable point types (comma-separated)";
+            const pointChoicesInput = document.createElement("input");
+            pointChoicesInput.type = "text";
+
+            const pointAmountsLabel = document.createElement("label");
+            pointAmountsLabel.textContent = "Adjustment amounts (comma-separated)";
+            const pointAmountsInput = document.createElement("input");
+            pointAmountsInput.type = "text";
+            pointAmountsInput.placeholder = "e.g. 100, -100";
+
+            const requireUniqueToggle = document.createElement("label");
+            requireUniqueToggle.className = "checkbox-option";
+            const requireUniqueInput = document.createElement("input");
+            requireUniqueInput.type = "checkbox";
+            const requireUniqueText = document.createElement("span");
+            requireUniqueText.textContent = "Require unique dropdown selections";
+            requireUniqueToggle.appendChild(requireUniqueInput);
+            requireUniqueToggle.appendChild(requireUniqueText);
+
+            const hasPointDropdownConfig = isPointDropdownDynamicCost(option.dynamicCost);
+            const existingChoices = Array.isArray(option.dynamicCost?.choices) && option.dynamicCost.choices.length
+                ? option.dynamicCost.choices
+                : [];
+            const existingValues = hasPointDropdownConfig
+                ? option.dynamicCost.values.map(val => Number(val))
+                : [];
+            const existingUnique = option.dynamicCost?.requireUnique !== false;
+            pointDropdownCheckbox.checked = hasPointDropdownConfig;
+            pointChoicesInput.value = existingChoices.join(", ");
+            pointAmountsInput.value = existingValues.join(", ");
+            requireUniqueInput.checked = existingUnique;
+
+            const pointDropdownHelp = document.createElement("div");
+            pointDropdownHelp.className = "field-help";
+            pointDropdownHelp.textContent = "Adds one dropdown per amount. Positive amounts add points, negatives remove points.";
+
+            const customDynamicCostHelp = document.createElement("div");
+            customDynamicCostHelp.className = "field-help";
+            if (option.dynamicCost && !hasPointDropdownConfig) {
+                customDynamicCostHelp.textContent = "This option already has custom dynamic dropdown data. Enabling this setting will replace it.";
+            }
+
+            const syncPointDropdownInputsEnabled = () => {
+                const enabled = pointDropdownCheckbox.checked;
+                pointChoicesInput.disabled = !enabled;
+                pointAmountsInput.disabled = !enabled;
+                requireUniqueInput.disabled = !enabled;
+            };
+
+            const applyPointDropdownConfig = (normalizeInputs = false) => {
+                if (!pointDropdownCheckbox.checked) {
+                    if (isPointDropdownDynamicCost(option.dynamicCost)) {
+                        delete option.dynamicCost;
+                    }
+                    syncPointDropdownInputsEnabled();
+                    schedulePreviewUpdate();
+                    return;
+                }
+
+                syncPointDropdownInputsEnabled();
+                const choices = parseChoiceCsv(pointChoicesInput.value);
+                const values = parseAmountCsv(pointAmountsInput.value);
+                if (normalizeInputs) {
+                    pointChoicesInput.value = choices.join(", ");
+                    pointAmountsInput.value = values.join(", ");
+                }
+                option.dynamicCost = {
+                    target: "points",
+                    choices,
+                    types: values.map((_, index) => `Adjustment ${index + 1}`),
+                    values,
+                    requireUnique: requireUniqueInput.checked
+                };
+                schedulePreviewUpdate();
+            };
+
+            pointDropdownCheckbox.addEventListener("change", applyPointDropdownConfig);
+            pointChoicesInput.addEventListener("input", () => {
+                if (!pointDropdownCheckbox.checked) return;
+                applyPointDropdownConfig(false);
+            });
+            pointAmountsInput.addEventListener("input", () => {
+                if (!pointDropdownCheckbox.checked) return;
+                applyPointDropdownConfig(false);
+            });
+            requireUniqueInput.addEventListener("change", () => {
+                if (!pointDropdownCheckbox.checked) return;
+                applyPointDropdownConfig(false);
+            });
+            pointChoicesInput.addEventListener("blur", () => {
+                if (!pointDropdownCheckbox.checked) return;
+                applyPointDropdownConfig(true);
+            });
+            pointAmountsInput.addEventListener("blur", () => {
+                if (!pointDropdownCheckbox.checked) return;
+                applyPointDropdownConfig(true);
+            });
+
+            pointDropdownField.appendChild(pointDropdownToggle);
+            pointDropdownField.appendChild(pointChoicesLabel);
+            pointDropdownField.appendChild(pointChoicesInput);
+            pointDropdownField.appendChild(pointAmountsLabel);
+            pointDropdownField.appendChild(pointAmountsInput);
+            pointDropdownField.appendChild(requireUniqueToggle);
+            pointDropdownField.appendChild(pointDropdownHelp);
+            if (customDynamicCostHelp.textContent) {
+                pointDropdownField.appendChild(customDynamicCostHelp);
+            }
+            body.appendChild(pointDropdownField);
+            syncPointDropdownInputsEnabled();
 
             const optionLimitField = document.createElement("div");
             optionLimitField.className = "field-inline";

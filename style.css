@@ -630,6 +630,28 @@ div {
     overflow-wrap: break-word;
 }
 
+.dynamic-choice-wrapper {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.dynamic-choice-row {
+    display: grid;
+    grid-template-columns: minmax(200px, auto) minmax(180px, 1fr);
+    align-items: center;
+    gap: 8px;
+}
+
+.dynamic-choice-row label {
+    margin: 0;
+}
+
+.dynamic-choice-row select {
+    margin-top: 0;
+}
+
 #pointsDisplay {
     display: flex;
     flex-wrap: wrap;
@@ -823,6 +845,10 @@ div {
 
     #pointsDisplay span {
         font-size: clamp(14px, 3.8vw, 18px);
+    }
+
+    .dynamic-choice-row {
+        grid-template-columns: 1fr;
     }
 }
 

@@ -1626,8 +1626,8 @@ function applyDynamicCosts() {
                     attributeSliderValues[choiceName] = boostAmount;
                 }
             }
-            // Handle Resistance/Weakness for points
-            else if (isPointTarget && (type === "Resistance" || type === "Weakness")) {
+            // Generic point adjustments from dropdown selections.
+            else if (isPointTarget && type !== "Formula Cost") {
                 if (!points.hasOwnProperty(choiceName)) {
                     points[choiceName] = 0;
                 }
@@ -3187,6 +3187,8 @@ function renderDynamicCost(opt, contentWrapper) {
     }
 
     for (let i = 0; i < numChoices; i++) {
+        const row = document.createElement("div");
+        row.className = "dynamic-choice-row";
         const select = document.createElement("select");
         select.innerHTML = `<option value="">-- Select --</option>` +
             opt.dynamicCost.choices.map(choice => `<option value="${choice}">${choice}</option>`).join("");
@@ -3201,20 +3203,19 @@ function renderDynamicCost(opt, contentWrapper) {
             effectText = `(${valueText >= 0 ? "+" : ""}${valueText})`;
         }
         label.textContent = `${affectedTypes[i] || "Select Effect"}: ${effectText}`;
-        label.style.display = "block";
-        label.style.marginTop = "0.25em";
-
         select.onchange = (e) => {
             const newValue = e.target.value;
             const prevValue = dynamicSelections[opt.id][i];
 
-            const tempDynamicSelections = [...dynamicSelections[opt.id]];
-            tempDynamicSelections[i] = newValue;
-            const uniqueSelections = new Set(tempDynamicSelections.filter(v => v !== ""));
-            if (uniqueSelections.size !== tempDynamicSelections.filter(v => v !== "").length) {
-                alert("Each selection must be unique for this set of choices.");
-                e.target.value = prevValue;
-                return;
+            if (opt.dynamicCost?.requireUnique !== false) {
+                const tempDynamicSelections = [...dynamicSelections[opt.id]];
+                tempDynamicSelections[i] = newValue;
+                const uniqueSelections = new Set(tempDynamicSelections.filter(v => v !== ""));
+                if (uniqueSelections.size !== tempDynamicSelections.filter(v => v !== "").length) {
+                    alert("Each selection must be unique for this set of choices.");
+                    e.target.value = prevValue;
+                    return;
+                }
             }
 
             dynamicSelections[opt.id][i] = newValue;
@@ -3222,8 +3223,9 @@ function renderDynamicCost(opt, contentWrapper) {
             updatePointsDisplay();
             renderAccordion();
         };
-        choiceWrapper.appendChild(label);
-        choiceWrapper.appendChild(select);
+        row.appendChild(label);
+        row.appendChild(select);
+        choiceWrapper.appendChild(row);
     }
     contentWrapper.appendChild(choiceWrapper);
 }
