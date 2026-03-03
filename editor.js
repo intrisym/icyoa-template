@@ -356,6 +356,75 @@
         return ids;
     }
 
+    function getDefinedPointTypes(sourceData = state.data) {
+        const pointsEntry = Array.isArray(sourceData)
+            ? sourceData.find(entry => entry?.type === "points")
+            : null;
+        const values = pointsEntry?.values;
+        if (!values || typeof values !== "object" || Array.isArray(values)) return [];
+        return Object.keys(values);
+    }
+
+    function validateCostPointTypesOrThrow(sourceData) {
+        const pointTypes = getDefinedPointTypes(sourceData);
+        if (!pointTypes.length) {
+            throw new Error('Missing or empty "type: points" values. Define point types before editing costs.');
+        }
+        const allowed = new Set(pointTypes);
+        const invalid = [];
+
+        const checkCostMap = (costMap, pathLabel) => {
+            if (!costMap || typeof costMap !== "object" || Array.isArray(costMap)) return;
+            Object.keys(costMap).forEach((key) => {
+                if (!allowed.has(key)) {
+                    invalid.push(`${pathLabel}: "${key}"`);
+                }
+            });
+        };
+
+        const walkSubcats = (subcategories, parentPath) => {
+            if (!Array.isArray(subcategories)) return;
+            subcategories.forEach((subcat, subIdx) => {
+                const subPath = `${parentPath} > Subcategory "${subcat?.name || `#${subIdx + 1}`}"`;
+                checkCostMap(subcat?.discountAmount, `${subPath}.discountAmount`);
+                checkCostMap(subcat?.defaultCost, `${subPath}.defaultCost`);
+
+                (subcat?.options || []).forEach((opt, optIdx) => {
+                    const optLabel = opt?.id || opt?.label || `#${optIdx + 1}`;
+                    checkCostMap(opt?.cost, `${subPath} > Option "${optLabel}".cost`);
+                    (opt?.discounts || []).forEach((rule, ruleIdx) => {
+                        checkCostMap(rule?.cost, `${subPath} > Option "${optLabel}".discounts[${ruleIdx + 1}].cost`);
+                    });
+                });
+
+                walkSubcats(subcat?.subcategories || [], subPath);
+            });
+        };
+
+        (sourceData || []).forEach((entry, catIdx) => {
+            if (entry?.type) return;
+            const catPath = `Category "${entry?.name || `#${catIdx + 1}`}"`;
+            checkCostMap(entry?.discountAmount, `${catPath}.discountAmount`);
+            checkCostMap(entry?.defaultCost, `${catPath}.defaultCost`);
+
+            (entry?.options || []).forEach((opt, optIdx) => {
+                const optLabel = opt?.id || opt?.label || `#${optIdx + 1}`;
+                checkCostMap(opt?.cost, `${catPath} > Option "${optLabel}".cost`);
+                (opt?.discounts || []).forEach((rule, ruleIdx) => {
+                    checkCostMap(rule?.cost, `${catPath} > Option "${optLabel}".discounts[${ruleIdx + 1}].cost`);
+                });
+            });
+
+            walkSubcats(entry?.subcategories || [], catPath);
+        });
+
+        if (invalid.length) {
+            throw new Error(
+                `Invalid cost point type(s) not found in "type: points" values:\n- ${invalid.join("\n- ")}`
+            );
+        }
+    }
+
     function normalizeIdList(value) {
         if (!value) return [];
         const raw = Array.isArray(value) ? value : String(value).split(/[,\n]/g);
@@ -3273,14 +3342,22 @@
     function renderCostEditor(container, option) {
         container.innerHTML = "";
         option.cost = option.cost || {};
+        const pointTypes = getDefinedPointTypes();
         Object.entries(option.cost).forEach(([currency, amount]) => {
             const row = document.createElement("div");
             row.className = "cost-row";
 
-            const nameInput = document.createElement("input");
-            nameInput.type = "text";
-            nameInput.value = currency;
-            nameInput.placeholder = "Currency";
+            const nameSelect = document.createElement("select");
+            const selectChoices = pointTypes.includes(currency)
+                ? pointTypes
+                : [...pointTypes, currency];
+            selectChoices.forEach((name) => {
+                const optionEl = document.createElement("option");
+                optionEl.value = name;
+                optionEl.textContent = pointTypes.includes(name) ? name : `${name} (invalid)`;
+                nameSelect.appendChild(optionEl);
+            });
+            nameSelect.value = currency;
 
             const valueInput = document.createElement("input");
             valueInput.type = "number";
@@ -3297,15 +3374,14 @@
                 schedulePreviewUpdate();
             });
 
-            nameInput.addEventListener("blur", () => {
-                const newName = nameInput.value.trim();
+            nameSelect.addEventListener("change", () => {
+                const newName = nameSelect.value.trim();
                 if (!newName || newName === currency) {
-                    nameInput.value = currency;
                     return;
                 }
                 if (option.cost.hasOwnProperty(newName)) {
                     showEditorMessage(`Duplicate cost key "${newName}"`, "warning");
-                    nameInput.value = currency;
+                    nameSelect.value = currency;
                     return;
                 }
                 const existing = option.cost[currency];
@@ -3321,7 +3397,7 @@
                 schedulePreviewUpdate();
             });
 
-            row.appendChild(nameInput);
+            row.appendChild(nameSelect);
             row.appendChild(valueInput);
             row.appendChild(removeBtn);
             container.appendChild(row);
@@ -3332,12 +3408,10 @@
         addBtn.className = "button-subtle";
         addBtn.textContent = "Add cost";
         addBtn.addEventListener("click", () => {
-            let base = "Currency";
-            let suffix = 1;
-            let candidate = base;
-            while (option.cost.hasOwnProperty(candidate)) {
-                suffix += 1;
-                candidate = `${base} ${suffix}`;
+            const candidate = pointTypes.find(name => !Object.prototype.hasOwnProperty.call(option.cost, name));
+            if (!candidate) {
+                showEditorMessage("No available point types to add. Define more under type: points or remove an existing cost row.", "warning", 4000);
+                return;
             }
             option.cost[candidate] = 0;
             renderCostEditor(container, option);
@@ -3350,15 +3424,23 @@
     function renderPointMapEditor(container, map, onChange) {
         container.innerHTML = "";
         const valueMap = map && typeof map === "object" ? { ...map } : {};
+        const pointTypes = getDefinedPointTypes();
 
         Object.entries(valueMap).forEach(([pointType, amount]) => {
             const row = document.createElement("div");
             row.className = "cost-row";
 
-            const nameInput = document.createElement("input");
-            nameInput.type = "text";
-            nameInput.value = pointType;
-            nameInput.placeholder = "Point type";
+            const typeSelect = document.createElement("select");
+            const selectChoices = pointTypes.includes(pointType)
+                ? pointTypes
+                : [...pointTypes, pointType];
+            selectChoices.forEach((name) => {
+                const option = document.createElement("option");
+                option.value = name;
+                option.textContent = pointTypes.includes(name) ? name : `${name} (invalid)`;
+                typeSelect.appendChild(option);
+            });
+            typeSelect.value = pointType;
 
             const valueInput = document.createElement("input");
             valueInput.type = "number";
@@ -3375,15 +3457,14 @@
                 onChange(Object.keys(valueMap).length ? { ...valueMap } : null);
             });
 
-            nameInput.addEventListener("blur", () => {
-                const newName = nameInput.value.trim();
+            typeSelect.addEventListener("change", () => {
+                const newName = typeSelect.value.trim();
                 if (!newName || newName === pointType) {
-                    nameInput.value = pointType;
                     return;
                 }
                 if (Object.prototype.hasOwnProperty.call(valueMap, newName)) {
                     showEditorMessage(`Duplicate key "${newName}"`, "warning", 4000);
-                    nameInput.value = pointType;
+                    typeSelect.value = pointType;
                     return;
                 }
                 const existingValue = valueMap[pointType];
@@ -3399,7 +3480,7 @@
                 renderPointMapEditor(container, valueMap, onChange);
             });
 
-            row.appendChild(nameInput);
+            row.appendChild(typeSelect);
             row.appendChild(valueInput);
             row.appendChild(removeBtn);
             container.appendChild(row);
@@ -3410,11 +3491,10 @@
         addBtn.className = "button-subtle";
         addBtn.textContent = "Add point type";
         addBtn.addEventListener("click", () => {
-            let candidate = "Point";
-            let suffix = 1;
-            while (Object.prototype.hasOwnProperty.call(valueMap, candidate)) {
-                suffix += 1;
-                candidate = `Point ${suffix}`;
+            const candidate = pointTypes.find(name => !Object.prototype.hasOwnProperty.call(valueMap, name));
+            if (!candidate) {
+                showEditorMessage("No available point types to add. Define more under type: points or remove an existing entry.", "warning", 4000);
+                return;
             }
             valueMap[candidate] = 0;
             onChange({ ...valueMap });
@@ -3443,6 +3523,7 @@
         try {
             const parsed = JSON.parse(text);
             if (!Array.isArray(parsed)) throw new Error("Imported JSON must be an array.");
+            validateCostPointTypesOrThrow(parsed);
             state.data = parsed;
             normalizeLegacyRequiresFields();
             regenerateAllOptionIds();
@@ -3451,6 +3532,7 @@
             schedulePreviewUpdate();
             showEditorMessage("Imported configuration.", "success");
         } catch (err) {
+            alert(`Import failed:\n\n${err.message}`);
             showEditorMessage(`Import failed: ${err.message}`, "error", 6000);
         }
     }
@@ -3468,14 +3550,22 @@
 
         const config = await loadSelectedConfig();
         if (config.ok) {
-            state.data = config.data;
-            normalizeLegacyRequiresFields();
-            regenerateAllOptionIds();
-            renderGlobalSettings();
-            renderCategories();
-            schedulePreviewUpdate();
-            showEditorMessage(`Loaded ${state.selectedFile}`, "success");
-            return;
+            try {
+                validateCostPointTypesOrThrow(config.data);
+                state.data = config.data;
+                normalizeLegacyRequiresFields();
+                regenerateAllOptionIds();
+                renderGlobalSettings();
+                renderCategories();
+                schedulePreviewUpdate();
+                showEditorMessage(`Loaded ${state.selectedFile}`, "success");
+                return;
+            } catch (validationErr) {
+                alert(`Failed to load ${state.selectedFile}:\n\n${validationErr.message}`);
+                showEditorMessage(`Failed to load ${state.selectedFile}: ${validationErr.message}`, "error", 12000);
+                setTimeout(() => showSelectionModal(), 1500);
+                return;
+            }
         }
 
         showEditorMessage(`Failed to load ${state.selectedFile}: ${config.error}`, "error", 10000);
