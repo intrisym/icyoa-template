@@ -1552,6 +1552,15 @@ function applyDynamicCosts() {
     // This ensures that previous dynamic caps are removed before new ones are applied.
     attributeRanges = JSON.parse(JSON.stringify(originalAttributeRanges));
 
+    // Re-sync tracked attribute points back to slider/base values before applying multipliers.
+    // This prevents multiplied values from "sticking" after options are removed.
+    Object.keys(originalAttributeRanges || {}).forEach((attrName) => {
+        const baseValue = Number(attributeSliderValues[attrName]);
+        if (Number.isFinite(baseValue)) {
+            points[attrName] = baseValue;
+        }
+    });
+
     // --- Reset all dynamic resistance/weakness points to their original values before applying new effects ---
     // Find all point types affected by dynamicCost (e.g., Fire, Frost, etc.)
     const dynamicPointTypes = new Set();
@@ -1637,18 +1646,9 @@ function applyDynamicCosts() {
             else if (type === "Multiply Attribute" && isAttributeTarget) {
                 const multiplier = parseFloat(value);
                 if (isNaN(multiplier)) return;
-                // Find the slider value for the attribute (if present)
-                // The attributeSliderValues key is usually the lowercased attribute name + 'Attribute'
-                // We'll try both the slider and points object
-                let baseValue = 0;
-                // Try to find the slider key for this attribute
-                const sliderKey = Object.keys(attributeSliderValues).find(k => k.toLowerCase().includes(choiceName.toLowerCase()));
-                if (sliderKey && attributeSliderValues.hasOwnProperty(sliderKey)) {
-                    baseValue = attributeSliderValues[sliderKey];
-                } else if (points.hasOwnProperty(choiceName)) {
-                    baseValue = points[choiceName];
-                }
-                // Set the points value to the multiplied value
+                const sliderValue = Number(attributeSliderValues[choiceName]);
+                const pointValue = Number(points[choiceName]);
+                const baseValue = Number.isFinite(sliderValue) ? sliderValue : (Number.isFinite(pointValue) ? pointValue : 0);
                 points[choiceName] = baseValue * multiplier;
             }
             // Handle Formula Cost for dynamic points (e.g., COIDL)
@@ -1668,6 +1668,31 @@ function applyDynamicCosts() {
                 }
             }
         });
+    });
+
+    // Static multipliers applied directly by selected options (no dropdown required).
+    // Example option JSON:
+    // "attributeMultipliers": { "STR": 2 }
+    const staticAttributeFactors = {};
+    Object.entries(selectedOptions).forEach(([optionId, count]) => {
+        const pickCount = Number(count) || 0;
+        if (pickCount <= 0) return;
+        const opt = findOptionById(optionId);
+        const multipliers = opt?.attributeMultipliers;
+        if (!multipliers || typeof multipliers !== "object") return;
+
+        Object.entries(multipliers).forEach(([attrName, factorRaw]) => {
+            const factor = Number(factorRaw);
+            if (!Number.isFinite(factor) || factor === 1) return;
+            staticAttributeFactors[attrName] = (staticAttributeFactors[attrName] || 1) * Math.pow(factor, pickCount);
+        });
+    });
+
+    Object.entries(staticAttributeFactors).forEach(([attrName, factor]) => {
+        const sliderValue = Number(attributeSliderValues[attrName]);
+        const pointValue = Number(points[attrName]);
+        const baseValue = Number.isFinite(sliderValue) ? sliderValue : (Number.isFinite(pointValue) ? pointValue : 0);
+        points[attrName] = baseValue * factor;
     });
 }
 
@@ -1775,10 +1800,13 @@ function canSelect(option) {
     // Check subcategory limits
     const subcat = findSubcategoryOfOption(option.id);
     const subcatOptions = subcat?.options || [];
-    const subcatCount = getSubcategorySelectionCount(subcat, option.id);
+    const currentSubcatCount = getSubcategorySelectionCount(subcat);
+    const projectedSubcatCount = getSubcategorySelectionCount(subcat, option.id);
     const subcatMax = subcat?.maxSelections || Infinity; // Default to no limit
-    // Allow selecting even if at limit, provided there IS a limit (so we can auto-unselect)
-    const underSubcatLimit = (subcatCount < subcatMax) || (subcatMax !== Infinity);
+    // Allow direct selection if within limit. If over limit, only allow when there is
+    // already at least one selected item that can be auto-removed by ensureSubcategoryLimit().
+    const underSubcatLimit = projectedSubcatCount <= subcatMax ||
+        (Number.isFinite(subcatMax) && subcatMax > 0 && currentSubcatCount > 0);
 
     // Check option-specific max selections
     const maxPerOption = option.maxSelections || 1; // Default to 1 selection
@@ -2695,6 +2723,15 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
     if (gain.length) requirements.innerHTML += `Gain: ${gain.join(', ')}<br>`;
     if (spend.length) requirements.innerHTML += `Cost: ${spend.join(', ')}<br>`;
 
+    const attributeMultipliers = opt.attributeMultipliers && typeof opt.attributeMultipliers === "object"
+        ? Object.entries(opt.attributeMultipliers)
+            .filter(([_, factor]) => Number.isFinite(Number(factor)) && Number(factor) > 0)
+            .map(([attr, factor]) => `${attr} x${Number(factor)}`)
+        : [];
+    if (attributeMultipliers.length) {
+        requirements.innerHTML += `Multiplier: ${attributeMultipliers.join(", ")}<br>`;
+    }
+
     // Indicate discount availability/applied for this item
     const displayDiffers = Object.entries(displayCost || {}).some(([type, val]) => val !== (originalCost[type] ?? val));
     const currentPaidDiffers = Object.entries(costToShow || {}).some(([type, val]) => val !== (originalCost[type] ?? val));
@@ -2710,7 +2747,7 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
     }
 
     // Show prerequisites...
-    if (opt.prerequisites && opt.prerequisites.length > 0) {
+    if (opt.prerequisites) {
         let prereqLines = [];
         if (typeof opt.prerequisites === 'string') {
             const tokens = opt.prerequisites.match(/!?[a-zA-Z_][a-zA-Z0-9_]*(?:__\d+)?/g) || [];

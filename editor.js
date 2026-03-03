@@ -1,7 +1,6 @@
 (function () {
     const CORE_TYPES_ORDER = ["title", "description", "headerImage", "points"];
-    const BASE_OPTION_KEYS = new Set(["id", "label", "description", "image", "inputType", "inputLabel", "cost", "maxSelections", "countsAsOneSelection", "prerequisites", "conflictsWith", "discounts", "discountGrants", "dynamicCost"]);
-    const DEFAULT_POINT_CHOICES = ["Heat", "Cold", "Acid", "Sonic", "Electric", "Light", "Dark"];
+    const BASE_OPTION_KEYS = new Set(["id", "label", "description", "image", "inputType", "inputLabel", "cost", "maxSelections", "countsAsOneSelection", "prerequisites", "conflictsWith", "discounts", "discountGrants", "dynamicCost", "attributeMultipliers"]);
 
     const state = {
         data: [],
@@ -28,7 +27,7 @@
             .split(",")
             .map(part => part.trim())
             .filter(Boolean);
-        return parsed.length ? parsed : [...DEFAULT_POINT_CHOICES];
+        return parsed;
     }
 
     function parseAmountCsv(raw = "") {
@@ -36,7 +35,7 @@
             .split(",")
             .map(part => Number(part.trim()))
             .filter(num => Number.isFinite(num));
-        return values.length ? values : [100, -100];
+        return values;
     }
 
     function isPointDropdownDynamicCost(config) {
@@ -49,6 +48,14 @@
             values.length > 0 &&
             types.length === values.length &&
             values.every(val => Number.isFinite(Number(val)));
+    }
+
+    function getAttributeMultiplierChoices() {
+        const pointsEntry = state.data.find(entry => entry?.type === "points");
+        const values = pointsEntry?.values && typeof pointsEntry.values === "object"
+            ? Object.keys(pointsEntry.values)
+            : [];
+        return values;
     }
 
     function walkEditorSubcategories(subcategories, callback, path = []) {
@@ -309,6 +316,30 @@
             }
         });
         return result;
+    }
+
+    function normalizeLegacyRequiresFields() {
+        state.data.forEach((entry) => {
+            if (entry.type) return;
+
+            // Legacy category-level "requires" -> "requiresOption"
+            if (Object.prototype.hasOwnProperty.call(entry, "requires")) {
+                if (!Object.prototype.hasOwnProperty.call(entry, "requiresOption")) {
+                    entry.requiresOption = entry.requires;
+                }
+                delete entry.requires;
+            }
+
+            walkEditorSubcategories(entry.subcategories || [], (subcat) => {
+                // Legacy subcategory-level "requires" -> "requiresOption"
+                if (Object.prototype.hasOwnProperty.call(subcat, "requires")) {
+                    if (!Object.prototype.hasOwnProperty.call(subcat, "requiresOption")) {
+                        subcat.requiresOption = subcat.requires;
+                    }
+                    delete subcat.requires;
+                }
+            });
+        });
     }
 
     function collectOptionIds() {
@@ -2516,13 +2547,17 @@
                     pointChoicesInput.value = choices.join(", ");
                     pointAmountsInput.value = values.join(", ");
                 }
-                option.dynamicCost = {
-                    target: "points",
-                    choices,
-                    types: values.map((_, index) => `Adjustment ${index + 1}`),
-                    values,
-                    requireUnique: requireUniqueInput.checked
-                };
+                if (!choices.length || !values.length) {
+                    delete option.dynamicCost;
+                } else {
+                    option.dynamicCost = {
+                        target: "points",
+                        choices,
+                        types: values.map((_, index) => `Adjustment ${index + 1}`),
+                        values,
+                        requireUnique: requireUniqueInput.checked
+                    };
+                }
                 schedulePreviewUpdate();
             };
 
@@ -2560,6 +2595,167 @@
             }
             body.appendChild(pointDropdownField);
             syncPointDropdownInputsEnabled();
+
+            const attributeMultiplierField = document.createElement("div");
+            attributeMultiplierField.className = "field";
+            const attributeMultiplierToggle = document.createElement("label");
+            attributeMultiplierToggle.className = "checkbox-option";
+            const attributeMultiplierCheckbox = document.createElement("input");
+            attributeMultiplierCheckbox.type = "checkbox";
+            const attributeMultiplierText = document.createElement("span");
+            attributeMultiplierText.textContent = "Attribute multipliers (optional)";
+            attributeMultiplierToggle.appendChild(attributeMultiplierCheckbox);
+            attributeMultiplierToggle.appendChild(attributeMultiplierText);
+
+            const attributeMultiplierLabel = document.createElement("label");
+            attributeMultiplierLabel.textContent = "Attribute and multiplier factor";
+            const attributeMultiplierContainer = document.createElement("div");
+            attributeMultiplierContainer.className = "cost-list";
+
+            const hasAttributeMultipliers = option.attributeMultipliers &&
+                typeof option.attributeMultipliers === "object" &&
+                Object.keys(option.attributeMultipliers).length > 0;
+            attributeMultiplierCheckbox.checked = hasAttributeMultipliers;
+
+            const attributeMultiplierHelp = document.createElement("div");
+            attributeMultiplierHelp.className = "field-help";
+            attributeMultiplierHelp.textContent = "When selected, this option multiplies effective values. Attribute dropdown values come from type: points.";
+
+            const syncAttributeMultiplierInputEnabled = () => {
+                const enabled = attributeMultiplierCheckbox.checked;
+                const controls = attributeMultiplierContainer.querySelectorAll("select, input, button");
+                controls.forEach((el) => {
+                    el.disabled = !enabled;
+                });
+            };
+
+            const applyAttributeMultipliers = (nextMap) => {
+                if (!attributeMultiplierCheckbox.checked) {
+                    delete option.attributeMultipliers;
+                    syncAttributeMultiplierInputEnabled();
+                    schedulePreviewUpdate();
+                    return;
+                }
+                const map = nextMap && typeof nextMap === "object" ? nextMap : {};
+                if (Object.keys(map).length) {
+                    option.attributeMultipliers = map;
+                } else {
+                    delete option.attributeMultipliers;
+                }
+                syncAttributeMultiplierInputEnabled();
+                schedulePreviewUpdate();
+            };
+
+            const renderAttributeMultiplierEditor = () => {
+                attributeMultiplierContainer.innerHTML = "";
+                const currentMap = option.attributeMultipliers && typeof option.attributeMultipliers === "object"
+                    ? { ...option.attributeMultipliers }
+                    : {};
+                const availableChoices = getAttributeMultiplierChoices();
+                const baseChoices = availableChoices.length ? availableChoices : Object.keys(currentMap);
+
+                Object.entries(currentMap).forEach(([attrName, factor]) => {
+                    const row = document.createElement("div");
+                    row.className = "cost-row";
+
+                    const attrSelect = document.createElement("select");
+                    const allChoices = [...new Set([...baseChoices, attrName])];
+                    allChoices.forEach((name) => {
+                        const optEl = document.createElement("option");
+                        optEl.value = name;
+                        optEl.textContent = name;
+                        attrSelect.appendChild(optEl);
+                    });
+                    attrSelect.value = attrName;
+
+                    const factorInput = document.createElement("input");
+                    factorInput.type = "number";
+                    factorInput.step = "0.1";
+                    factorInput.min = "0.1";
+                    factorInput.value = String(Number(factor) || 1);
+
+                    const removeBtn = document.createElement("button");
+                    removeBtn.type = "button";
+                    removeBtn.className = "button-icon danger";
+                    removeBtn.textContent = "✕";
+                    removeBtn.title = "Remove multiplier";
+
+                    attrSelect.addEventListener("change", () => {
+                        const nextName = attrSelect.value;
+                        if (!nextName || nextName === attrName) return;
+                        if (Object.prototype.hasOwnProperty.call(currentMap, nextName)) {
+                            showEditorMessage(`Duplicate attribute "${nextName}"`, "warning", 3500);
+                            attrSelect.value = attrName;
+                            return;
+                        }
+                        const currentFactor = Number(currentMap[attrName]) || 1;
+                        delete currentMap[attrName];
+                        currentMap[nextName] = currentFactor;
+                        applyAttributeMultipliers(currentMap);
+                        renderAttributeMultiplierEditor();
+                    });
+
+                    factorInput.addEventListener("input", () => {
+                        const nextFactor = Number(factorInput.value);
+                        currentMap[attrName] = Number.isFinite(nextFactor) && nextFactor > 0 ? nextFactor : 1;
+                        applyAttributeMultipliers(currentMap);
+                    });
+
+                    removeBtn.addEventListener("click", () => {
+                        delete currentMap[attrName];
+                        applyAttributeMultipliers(currentMap);
+                        renderAttributeMultiplierEditor();
+                    });
+
+                    row.appendChild(attrSelect);
+                    row.appendChild(factorInput);
+                    row.appendChild(removeBtn);
+                    attributeMultiplierContainer.appendChild(row);
+                });
+
+                const addBtn = document.createElement("button");
+                addBtn.type = "button";
+                addBtn.className = "button-subtle";
+                addBtn.textContent = "Add multiplier";
+                addBtn.addEventListener("click", () => {
+                    const current = option.attributeMultipliers && typeof option.attributeMultipliers === "object"
+                        ? { ...option.attributeMultipliers }
+                        : {};
+                    const choices = getAttributeMultiplierChoices();
+                    const nextName = choices.find(name => !Object.prototype.hasOwnProperty.call(current, name));
+                    if (!nextName) {
+                        showEditorMessage("No point types available from type: points (or all are already used).", "warning", 3500);
+                        return;
+                    }
+                    current[nextName] = 1;
+                    applyAttributeMultipliers(current);
+                    renderAttributeMultiplierEditor();
+                });
+                attributeMultiplierContainer.appendChild(addBtn);
+                syncAttributeMultiplierInputEnabled();
+            };
+
+            attributeMultiplierCheckbox.addEventListener("change", () => {
+                if (!attributeMultiplierCheckbox.checked) {
+                    applyAttributeMultipliers({});
+                    renderAttributeMultiplierEditor();
+                    return;
+                }
+                if (option.attributeMultipliers && Object.keys(option.attributeMultipliers).length) {
+                    applyAttributeMultipliers(option.attributeMultipliers);
+                } else {
+                    applyAttributeMultipliers({});
+                }
+                renderAttributeMultiplierEditor();
+            });
+            renderAttributeMultiplierEditor();
+
+            attributeMultiplierField.appendChild(attributeMultiplierToggle);
+            attributeMultiplierField.appendChild(attributeMultiplierLabel);
+            attributeMultiplierField.appendChild(attributeMultiplierContainer);
+            attributeMultiplierField.appendChild(attributeMultiplierHelp);
+            body.appendChild(attributeMultiplierField);
+            syncAttributeMultiplierInputEnabled();
 
             const optionLimitField = document.createElement("div");
             optionLimitField.className = "field-inline";
@@ -3248,6 +3444,7 @@
             const parsed = JSON.parse(text);
             if (!Array.isArray(parsed)) throw new Error("Imported JSON must be an array.");
             state.data = parsed;
+            normalizeLegacyRequiresFields();
             regenerateAllOptionIds();
             renderGlobalSettings();
             renderCategories();
@@ -3272,6 +3469,7 @@
         const config = await loadSelectedConfig();
         if (config.ok) {
             state.data = config.data;
+            normalizeLegacyRequiresFields();
             regenerateAllOptionIds();
             renderGlobalSettings();
             renderCategories();
