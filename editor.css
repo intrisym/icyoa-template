@@ -115,7 +115,8 @@ button:disabled {
 }
 
 input,
-textarea {
+textarea,
+select {
     font-family: inherit;
     font-size: 13px;
     border-radius: 6px;
@@ -128,6 +129,20 @@ textarea {
 textarea {
     resize: vertical;
     min-height: 72px;
+}
+
+select[multiple] {
+    min-height: 110px;
+}
+
+.point-type-checkbox-list {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 6px;
+    background: var(--input-bg);
 }
 
 .editor-layout {
@@ -355,12 +370,21 @@ textarea {
     flex-direction: column;
     gap: 12px;
     padding: 16px;
+    min-width: 0;
+}
+
+/* Keep deep nesting inside panel width */
+.subcategory-list .subcategory-list {
+    padding: 10px 0 0 12px;
+    margin-left: 0;
+    border-left: 1px solid var(--border-subtle);
 }
 
 .subcategory-item {
     border: 1px solid var(--border-subtle);
     border-radius: 10px;
     background: var(--surface);
+    min-width: 0;
 }
 
 .subcategory-item summary {
@@ -392,6 +416,7 @@ textarea {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    min-width: 0;
 }
 
 .field {
@@ -432,6 +457,7 @@ textarea {
     grid-template-columns: max-content 1fr max-content 1fr;
     gap: 8px;
     align-items: center;
+    min-width: 0;
 }
 
 /* Ensure inline numeric and select controls are compact and align with other inline fields */
@@ -439,6 +465,7 @@ textarea {
 .field-inline select {
     max-width: 120px; /* similar to Min/Max selection size */
     width: 100%;
+    min-width: 0;
 }
 
 /* Slightly smaller text for compact inline labels */
@@ -465,6 +492,7 @@ textarea {
     border: 1px solid var(--border-subtle);
     border-radius: 8px;
     background: var(--surface);
+    min-width: 0;
 }
 
 .option-item summary {
@@ -494,6 +522,7 @@ textarea {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    min-width: 0;
 }
 
 .cost-list {
@@ -504,9 +533,15 @@ textarea {
 
 .cost-row {
     display: grid;
-    grid-template-columns: 1fr 120px auto;
+    grid-template-columns: minmax(0, 1fr) 120px auto;
     gap: 8px;
     align-items: center;
+    min-width: 0;
+}
+
+.option-item summary .summary-label {
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .option-rule-row {

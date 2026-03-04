@@ -2503,7 +2503,7 @@
             body.appendChild(imageField);
 
             const inputTypeField = document.createElement("div");
-            inputTypeField.className = "field-inline";
+            inputTypeField.className = "field";
             const inputTypeLabel = document.createElement("label");
             inputTypeLabel.textContent = "Input type";
             const inputTypeInput = document.createElement("input");
@@ -2518,6 +2518,12 @@
                 }
                 schedulePreviewUpdate();
             });
+            inputTypeField.appendChild(inputTypeLabel);
+            inputTypeField.appendChild(inputTypeInput);
+            body.appendChild(inputTypeField);
+
+            const inputLabelField = document.createElement("div");
+            inputLabelField.className = "field";
             const inputLabelLabel = document.createElement("label");
             inputLabelLabel.textContent = "Input label";
             const inputLabelInput = document.createElement("input");
@@ -2532,11 +2538,9 @@
                 }
                 schedulePreviewUpdate();
             });
-            inputTypeField.appendChild(inputTypeLabel);
-            inputTypeField.appendChild(inputTypeInput);
-            inputTypeField.appendChild(inputLabelLabel);
-            inputTypeField.appendChild(inputLabelInput);
-            body.appendChild(inputTypeField);
+            inputLabelField.appendChild(inputLabelLabel);
+            inputLabelField.appendChild(inputLabelInput);
+            body.appendChild(inputLabelField);
 
             const pointDropdownField = document.createElement("div");
             pointDropdownField.className = "field";
@@ -2550,9 +2554,9 @@
             pointDropdownToggle.appendChild(pointDropdownLabel);
 
             const pointChoicesLabel = document.createElement("label");
-            pointChoicesLabel.textContent = "Selectable point types (comma-separated)";
-            const pointChoicesInput = document.createElement("input");
-            pointChoicesInput.type = "text";
+            pointChoicesLabel.textContent = "Selectable point types";
+            const pointChoicesInput = document.createElement("div");
+            pointChoicesInput.className = "point-type-checkbox-list";
 
             const pointAmountsLabel = document.createElement("label");
             pointAmountsLabel.textContent = "Adjustment amounts (comma-separated)";
@@ -2573,12 +2577,30 @@
             const existingChoices = Array.isArray(option.dynamicCost?.choices) && option.dynamicCost.choices.length
                 ? option.dynamicCost.choices
                 : [];
+            const availablePointTypes = getDefinedPointTypes();
+            const selectableChoices = existingChoices.length
+                ? [...new Set([...availablePointTypes, ...existingChoices])]
+                : availablePointTypes;
+            const pointChoiceCheckboxes = [];
+            selectableChoices.forEach((choice) => {
+                const row = document.createElement("label");
+                row.className = "checkbox-option";
+                const checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.value = choice;
+                checkbox.checked = existingChoices.includes(choice);
+                const text = document.createElement("span");
+                text.textContent = availablePointTypes.includes(choice) ? choice : `${choice} (invalid)`;
+                row.appendChild(checkbox);
+                row.appendChild(text);
+                pointChoicesInput.appendChild(row);
+                pointChoiceCheckboxes.push(checkbox);
+            });
             const existingValues = hasPointDropdownConfig
                 ? option.dynamicCost.values.map(val => Number(val))
                 : [];
             const existingUnique = option.dynamicCost?.requireUnique !== false;
             pointDropdownCheckbox.checked = hasPointDropdownConfig;
-            pointChoicesInput.value = existingChoices.join(", ");
             pointAmountsInput.value = existingValues.join(", ");
             requireUniqueInput.checked = existingUnique;
 
@@ -2594,7 +2616,9 @@
 
             const syncPointDropdownInputsEnabled = () => {
                 const enabled = pointDropdownCheckbox.checked;
-                pointChoicesInput.disabled = !enabled;
+                pointChoiceCheckboxes.forEach((checkbox) => {
+                    checkbox.disabled = !enabled;
+                });
                 pointAmountsInput.disabled = !enabled;
                 requireUniqueInput.disabled = !enabled;
             };
@@ -2610,10 +2634,12 @@
                 }
 
                 syncPointDropdownInputsEnabled();
-                const choices = parseChoiceCsv(pointChoicesInput.value);
+                const choices = pointChoiceCheckboxes
+                    .filter((checkbox) => checkbox.checked)
+                    .map((checkbox) => checkbox.value.trim())
+                    .filter(Boolean);
                 const values = parseAmountCsv(pointAmountsInput.value);
                 if (normalizeInputs) {
-                    pointChoicesInput.value = choices.join(", ");
                     pointAmountsInput.value = values.join(", ");
                 }
                 if (!choices.length || !values.length) {
@@ -2631,9 +2657,11 @@
             };
 
             pointDropdownCheckbox.addEventListener("change", applyPointDropdownConfig);
-            pointChoicesInput.addEventListener("input", () => {
-                if (!pointDropdownCheckbox.checked) return;
-                applyPointDropdownConfig(false);
+            pointChoiceCheckboxes.forEach((checkbox) => {
+                checkbox.addEventListener("change", () => {
+                    if (!pointDropdownCheckbox.checked) return;
+                    applyPointDropdownConfig(false);
+                });
             });
             pointAmountsInput.addEventListener("input", () => {
                 if (!pointDropdownCheckbox.checked) return;
