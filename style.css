@@ -421,6 +421,25 @@ button:disabled {
     max-width: 100%;
 }
 
+.points-tracker-mode-btn {
+    position: fixed;
+    right: 14px;
+    bottom: calc(var(--points-tracker-height) + env(safe-area-inset-bottom, 0px) + 10px);
+    margin-top: 0;
+    padding: 4px 8px;
+    font-size: 12px;
+    line-height: 1.2;
+    border-radius: 5px;
+    border: 1px solid var(--points-border);
+    background: rgba(255, 255, 255, 0.85);
+    color: #111;
+    z-index: 1200;
+}
+
+.points-tracker-mode-btn:hover {
+    background: #fff;
+}
+
 .modal {
     position: fixed;
     z-index: 2000;
@@ -672,6 +691,16 @@ div {
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 }
 
+body.desktop-slideable-points #pointsDisplay {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    gap: 12px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+}
+
 /* CYOA Selection Styles */
 .cyoa-list {
     margin-top: 20px;
@@ -825,6 +854,10 @@ div {
 }
 
 @media (max-width: 768px) {
+    .points-tracker-mode-btn {
+        display: none !important;
+    }
+
     .options-grid {
         grid-template-columns: 1fr;
     }

@@ -650,6 +650,7 @@ const modalConfirmBtn = document.getElementById("modalConfirmBtn");
 const modalClose = document.getElementById("modalClose");
 let modalMode = null;
 const pointsTrackerEl = document.getElementById("pointsTracker");
+const pointsTrackerModeBtn = document.getElementById("pointsTrackerModeBtn");
 const assetLoadingOverlay = document.getElementById("assetLoadingOverlay");
 const assetLoadingMessage = document.getElementById("assetLoadingMessage");
 const assetLoadingBar = document.getElementById("assetLoadingBar");
@@ -657,6 +658,8 @@ const assetLoadingPercent = document.getElementById("assetLoadingPercent");
 const initialTitleText = document.getElementById("cyoaTitle")?.textContent || "";
 const initialDescriptionHTML = document.getElementById("cyoaDescription")?.innerHTML || "";
 const initialHeaderImageHTML = document.getElementById("headerImageContainer")?.innerHTML || "";
+const POINTS_TRACKER_MODE_KEY = "cyoa-points-tracker-mode";
+let desktopPointsTrackerMode = localStorage.getItem(POINTS_TRACKER_MODE_KEY) === "slide" ? "slide" : "block";
 
 function escapeHtml(text = "") {
     return String(text).replace(/[&<>"']/g, (ch) => ({
@@ -679,15 +682,57 @@ function syncPointsTrackerHeight() {
     document.documentElement.style.setProperty("--points-tracker-height", `${trackerHeight}px`);
 }
 
-if (pointsTrackerEl) {
+function isMobileViewport() {
+    return window.matchMedia("(max-width: 768px)").matches;
+}
+
+function applyDesktopPointsTrackerMode() {
+    if (isMobileViewport()) {
+        document.body.classList.remove("desktop-slideable-points");
+        if (pointsTrackerModeBtn) {
+            pointsTrackerModeBtn.style.display = "none";
+        }
+        syncPointsTrackerHeight();
+        return;
+    }
+
+    if (desktopPointsTrackerMode === "slide") {
+        document.body.classList.add("desktop-slideable-points");
+    } else {
+        document.body.classList.remove("desktop-slideable-points");
+    }
+
+    if (pointsTrackerModeBtn) {
+        pointsTrackerModeBtn.style.display = "inline-flex";
+        pointsTrackerModeBtn.textContent = desktopPointsTrackerMode === "slide"
+            ? "Tracker: Slideable"
+            : "Tracker: Block";
+    }
     syncPointsTrackerHeight();
-    window.addEventListener("resize", syncPointsTrackerHeight, { passive: true });
+}
+
+if (pointsTrackerEl) {
+    applyDesktopPointsTrackerMode();
+    syncPointsTrackerHeight();
+    window.addEventListener("resize", () => {
+        applyDesktopPointsTrackerMode();
+        syncPointsTrackerHeight();
+    }, { passive: true });
     if (typeof ResizeObserver !== "undefined") {
         const pointsTrackerObserver = new ResizeObserver(() => {
             syncPointsTrackerHeight();
         });
         pointsTrackerObserver.observe(pointsTrackerEl);
     }
+}
+
+if (pointsTrackerModeBtn) {
+    pointsTrackerModeBtn.addEventListener("click", () => {
+        if (isMobileViewport()) return;
+        desktopPointsTrackerMode = desktopPointsTrackerMode === "slide" ? "block" : "slide";
+        localStorage.setItem(POINTS_TRACKER_MODE_KEY, desktopPointsTrackerMode);
+        applyDesktopPointsTrackerMode();
+    });
 }
 
 // Event Listeners
