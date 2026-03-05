@@ -1057,11 +1057,13 @@
     }
 
     function createSectionContainer(title, {
-        defaultOpen = true
+        defaultOpen = true,
+        stateKey = title
     } = {}) {
         const details = document.createElement("details");
         details.className = "section-block";
-        const stored = sectionOpenState.has(title) ? sectionOpenState.get(title) : defaultOpen;
+        const key = stateKey || title;
+        const stored = sectionOpenState.has(key) ? sectionOpenState.get(key) : defaultOpen;
         if (stored) {
             details.open = true;
         }
@@ -1071,7 +1073,7 @@
         body.className = "section-body";
         details.append(summary, body);
         details.addEventListener("toggle", () => {
-            sectionOpenState.set(title, details.open);
+            sectionOpenState.set(key, details.open);
         });
         return {
             container: details,
@@ -2043,7 +2045,7 @@
         categories.forEach(({ entry: category, index: dataIndex }, position) => {
             const details = document.createElement("details");
             details.className = "category-card";
-            const storedOpen = categoryOpenState.has(category) ? categoryOpenState.get(category) : true;
+            const storedOpen = categoryOpenState.has(category) ? categoryOpenState.get(category) : position === 0;
             if (storedOpen) {
                 details.open = true;
             }
@@ -2236,7 +2238,7 @@
 
                 const subDetails = document.createElement("details");
                 subDetails.className = "subcategory-item";
-                const storedSubOpen = subcategoryOpenState.has(subcat) ? subcategoryOpenState.get(subcat) : subIndex === 0;
+                const storedSubOpen = subcategoryOpenState.has(subcat) ? subcategoryOpenState.get(subcat) : false;
                 if (storedSubOpen) subDetails.open = true;
 
                 const subSummary = document.createElement("summary");
@@ -2517,7 +2519,9 @@
                 addOptionBtn.textContent = "Add option";
                 addOptionBtn.addEventListener("click", () => {
                     subcat.options = subcat.options || [];
-                    subcat.options.push(createDefaultOption([category.name, ...namePath, subcat.name]));
+                    const newOption = createDefaultOption([category.name, ...namePath, subcat.name]);
+                    subcat.options.push(newOption);
+                    optionOpenState.set(newOption, true);
                     keepPanelOpen(category, subcat);
                     renderCategories();
                     schedulePreviewUpdate();
@@ -2592,7 +2596,7 @@
             const details = document.createElement("details");
             details.className = "option-item";
 
-            const storedOpen = optionOpenState.has(option) ? optionOpenState.get(option) : optionIndex < 2;
+            const storedOpen = optionOpenState.has(option) ? optionOpenState.get(option) : false;
             if (storedOpen) {
                 details.open = true;
             }
@@ -2700,6 +2704,20 @@
             };
             body.appendChild(validationBox);
 
+            const optionSectionKeyPrefix = `${normalizedPath.join("/") || "option"}:${option.id || optionIndex}`;
+            const commonSection = createSectionContainer("Common Fields", {
+                defaultOpen: true,
+                stateKey: `${optionSectionKeyPrefix}:common`
+            });
+            const advancedSettingsSection = createSectionContainer("Advanced Settings", {
+                defaultOpen: false,
+                stateKey: `${optionSectionKeyPrefix}:advanced`
+            });
+            body.appendChild(commonSection.container);
+            body.appendChild(advancedSettingsSection.container);
+            const commonBody = commonSection.body;
+            const advancedBody = advancedSettingsSection.body;
+
             const idField = document.createElement("div");
             idField.className = "field";
             const idLabel = document.createElement("label");
@@ -2712,7 +2730,7 @@
             idInput.title = "Auto-generated from the option path and label";
             idField.appendChild(idLabel);
             idField.appendChild(idInput);
-            body.appendChild(idField);
+            commonBody.appendChild(idField);
 
             const labelField = document.createElement("div");
             labelField.className = "field";
@@ -2737,7 +2755,7 @@
             });
             labelField.appendChild(labelLabel);
             labelField.appendChild(labelInput);
-            body.appendChild(labelField);
+            commonBody.appendChild(labelField);
 
             const descField = document.createElement("div");
             descField.className = "field";
@@ -2752,7 +2770,7 @@
             });
             descField.appendChild(descLabel);
             descField.appendChild(descTextarea);
-            body.appendChild(descField);
+            commonBody.appendChild(descField);
 
             const imageField = document.createElement("div");
             imageField.className = "field";
@@ -2772,7 +2790,7 @@
             });
             imageField.appendChild(imageLabel);
             imageField.appendChild(imageInput);
-            body.appendChild(imageField);
+            advancedBody.appendChild(imageField);
 
             const inputTypeField = document.createElement("div");
             inputTypeField.className = "field";
@@ -2792,7 +2810,7 @@
             });
             inputTypeField.appendChild(inputTypeLabel);
             inputTypeField.appendChild(inputTypeInput);
-            body.appendChild(inputTypeField);
+            advancedBody.appendChild(inputTypeField);
 
             const inputLabelField = document.createElement("div");
             inputLabelField.className = "field";
@@ -2812,7 +2830,7 @@
             });
             inputLabelField.appendChild(inputLabelLabel);
             inputLabelField.appendChild(inputLabelInput);
-            body.appendChild(inputLabelField);
+            advancedBody.appendChild(inputLabelField);
 
             const pointDropdownField = document.createElement("div");
             pointDropdownField.className = "field";
@@ -2962,7 +2980,7 @@
             if (customDynamicCostHelp.textContent) {
                 pointDropdownField.appendChild(customDynamicCostHelp);
             }
-            body.appendChild(pointDropdownField);
+            advancedBody.appendChild(pointDropdownField);
             syncPointDropdownInputsEnabled();
 
             const attributeMultiplierField = document.createElement("div");
@@ -3123,7 +3141,7 @@
             attributeMultiplierField.appendChild(attributeMultiplierLabel);
             attributeMultiplierField.appendChild(attributeMultiplierContainer);
             attributeMultiplierField.appendChild(attributeMultiplierHelp);
-            body.appendChild(attributeMultiplierField);
+            advancedBody.appendChild(attributeMultiplierField);
             syncAttributeMultiplierInputEnabled();
 
             const optionLimitField = document.createElement("div");
@@ -3148,7 +3166,7 @@
             });
             optionLimitField.appendChild(optionLimitLabel);
             optionLimitField.appendChild(optionLimitInput);
-            body.appendChild(optionLimitField);
+            advancedBody.appendChild(optionLimitField);
 
             const countAsOneField = document.createElement("div");
             countAsOneField.className = "field";
@@ -3170,7 +3188,7 @@
             countAsOneToggle.appendChild(countAsOneInput);
             countAsOneToggle.appendChild(countAsOneText);
             countAsOneField.appendChild(countAsOneToggle);
-            body.appendChild(countAsOneField);
+            advancedBody.appendChild(countAsOneField);
 
             const costSection = document.createElement("div");
             costSection.className = "field";
@@ -3181,7 +3199,7 @@
             renderCostEditor(costContainer, option);
             costSection.appendChild(costLabel);
             costSection.appendChild(costContainer);
-            body.appendChild(costSection);
+            commonBody.appendChild(costSection);
 
             const prereqSection = document.createElement("div");
             prereqSection.className = "field";
@@ -3215,7 +3233,7 @@
             prereqSection.appendChild(prereqLabel);
             prereqSection.appendChild(prereqHint);
             prereqSection.appendChild(prereqInput);
-            body.appendChild(prereqSection);
+            commonBody.appendChild(prereqSection);
 
             const conflictSection = document.createElement("div");
             conflictSection.className = "field";
@@ -3249,7 +3267,7 @@
             conflictSection.appendChild(conflictLabel);
             conflictSection.appendChild(conflictHint);
             conflictSection.appendChild(conflictContainer);
-            body.appendChild(conflictSection);
+            advancedBody.appendChild(conflictSection);
 
             const discountSection = document.createElement("div");
             discountSection.className = "field";
@@ -3439,7 +3457,7 @@
             discountSection.appendChild(discountLabel);
             discountSection.appendChild(discountHint);
             discountSection.appendChild(discountContainer);
-            body.appendChild(discountSection);
+            advancedBody.appendChild(discountSection);
 
             const grantsSection = document.createElement("div");
             grantsSection.className = "field";
@@ -3589,7 +3607,7 @@
             grantsSection.appendChild(grantsLabel);
             grantsSection.appendChild(grantsHint);
             grantsSection.appendChild(grantsContainer);
-            body.appendChild(grantsSection);
+            advancedBody.appendChild(grantsSection);
             refreshOptionWarnings();
 
             const advancedKeys = Object.keys(option).filter(key => !BASE_OPTION_KEYS.has(key));
@@ -3632,7 +3650,7 @@
             });
             advancedSection.appendChild(advancedLabel);
             advancedSection.appendChild(advancedTextarea);
-            body.appendChild(advancedSection);
+            advancedBody.appendChild(advancedSection);
 
             details.appendChild(body);
             container.appendChild(details);
