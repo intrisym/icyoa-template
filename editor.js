@@ -425,6 +425,100 @@
         }
     }
 
+    function collectOptionIdsFromData(sourceData) {
+        const ids = new Set();
+        const walkSubcats = (subcategories) => {
+            if (!Array.isArray(subcategories)) return;
+            subcategories.forEach((subcat) => {
+                (subcat?.options || []).forEach((opt) => {
+                    const id = String(opt?.id || "").trim();
+                    if (id) ids.add(id);
+                });
+                walkSubcats(subcat?.subcategories || []);
+            });
+        };
+
+        (sourceData || []).forEach((entry) => {
+            if (!entry || entry.type) return;
+            (entry.options || []).forEach((opt) => {
+                const id = String(opt?.id || "").trim();
+                if (id) ids.add(id);
+            });
+            walkSubcats(entry.subcategories || []);
+        });
+        return ids;
+    }
+
+    function validateOptionReferencesOrThrow(sourceData) {
+        const knownIds = collectOptionIdsFromData(sourceData);
+        const invalidRefs = [];
+
+        const addMissingIds = (value, pathLabel) => {
+            const ids = Array.from(extractReferencedIds(value));
+            ids.forEach((id) => {
+                if (!knownIds.has(id)) {
+                    invalidRefs.push(`${pathLabel}: "${id}"`);
+                }
+            });
+        };
+
+        const walkSubcats = (subcategories, parentPath) => {
+            if (!Array.isArray(subcategories)) return;
+            subcategories.forEach((subcat, subIdx) => {
+                const subPath = `${parentPath} > Subcategory "${subcat?.name || `#${subIdx + 1}`}"`;
+                addMissingIds(subcat?.requiresOption, `${subPath}.requiresOption`);
+
+                (subcat?.options || []).forEach((opt, optIdx) => {
+                    const optLabel = opt?.id || opt?.label || `#${optIdx + 1}`;
+                    const optPath = `${subPath} > Option "${optLabel}"`;
+                    addMissingIds(opt?.prerequisites, `${optPath}.prerequisites`);
+                    addMissingIds(opt?.conflictsWith, `${optPath}.conflictsWith`);
+
+                    (opt?.discounts || []).forEach((rule, ruleIdx) => {
+                        const triggerIds = rule?.idsAny || rule?.ids || (rule?.id ? [rule.id] : []);
+                        addMissingIds(triggerIds, `${optPath}.discounts[${ruleIdx + 1}] triggers`);
+                    });
+                    (opt?.discountGrants || []).forEach((rule, ruleIdx) => {
+                        const targets = rule?.targetIds || rule?.targets || (rule?.targetId ? [rule.targetId] : []);
+                        addMissingIds(targets, `${optPath}.discountGrants[${ruleIdx + 1}] targets`);
+                    });
+                });
+
+                walkSubcats(subcat?.subcategories || [], subPath);
+            });
+        };
+
+        (sourceData || []).forEach((entry, catIdx) => {
+            if (!entry || entry.type) return;
+            const catPath = `Category "${entry?.name || `#${catIdx + 1}`}"`;
+            addMissingIds(entry?.requiresOption, `${catPath}.requiresOption`);
+
+            (entry?.options || []).forEach((opt, optIdx) => {
+                const optLabel = opt?.id || opt?.label || `#${optIdx + 1}`;
+                const optPath = `${catPath} > Option "${optLabel}"`;
+                addMissingIds(opt?.prerequisites, `${optPath}.prerequisites`);
+                addMissingIds(opt?.conflictsWith, `${optPath}.conflictsWith`);
+
+                (opt?.discounts || []).forEach((rule, ruleIdx) => {
+                    const triggerIds = rule?.idsAny || rule?.ids || (rule?.id ? [rule.id] : []);
+                    addMissingIds(triggerIds, `${optPath}.discounts[${ruleIdx + 1}] triggers`);
+                });
+                (opt?.discountGrants || []).forEach((rule, ruleIdx) => {
+                    const targets = rule?.targetIds || rule?.targets || (rule?.targetId ? [rule.targetId] : []);
+                    addMissingIds(targets, `${optPath}.discountGrants[${ruleIdx + 1}] targets`);
+                });
+            });
+
+            walkSubcats(entry?.subcategories || [], catPath);
+        });
+
+        if (invalidRefs.length) {
+            throw new Error(
+                `Unknown option ID reference(s) after ID normalization:\n- ${invalidRefs.join("\n- ")}`
+            );
+        }
+    }
+
     function normalizeIdList(value) {
         if (!value) return [];
         const raw = Array.isArray(value) ? value : String(value).split(/[,\n]/g);
@@ -439,12 +533,48 @@
         "as", "await", "async", "yield"
     ]);
 
-    function formatPrerequisiteValue(value) {
+    function prerequisiteValueToExpression(value) {
         if (value == null || value === "") return "";
-        if (typeof value === "string") return value;
-        if (Array.isArray(value)) return value.join(", ");
-        if (typeof value === "object") return JSON.stringify(value);
-        return String(value);
+        if (typeof value === "string") return value.trim();
+        if (Array.isArray(value)) {
+            const list = normalizeIdList(value);
+            if (!list.length) return "";
+            if (list.length === 1) return list[0];
+            return `(${list.join(" && ")})`;
+        }
+        if (typeof value === "object") {
+            const andList = normalizeIdList(value.and || []);
+            const orList = normalizeIdList(value.or || []);
+            const parts = [];
+            if (andList.length) {
+                parts.push(andList.length === 1 ? andList[0] : `(${andList.join(" && ")})`);
+            }
+            if (orList.length) {
+                parts.push(orList.length === 1 ? orList[0] : `(${orList.join(" || ")})`);
+            }
+            return parts.join(" && ");
+        }
+        return String(value).trim();
+    }
+
+    function formatPrerequisiteValue(value) {
+        return prerequisiteValueToExpression(value);
+    }
+
+    function validatePrerequisiteExpression(expr) {
+        if (!expr) return { error: null };
+        const replaced = expr.replace(/!?[A-Za-z_][A-Za-z0-9_]*(?:__\d+)?/g, "true");
+        const scrubbed = replaced.replace(/true|false/g, "");
+        if (/[^()&|! \t\r\n]/.test(scrubbed)) {
+            return { error: "Prerequisite expression contains invalid characters." };
+        }
+        try {
+            // eslint-disable-next-line no-new-func
+            Function(`return (${replaced});`)();
+        } catch (err) {
+            return { error: `Prerequisite expression is invalid: ${err.message}` };
+        }
+        return { error: null };
     }
 
     function parsePrerequisiteValue(raw) {
@@ -452,20 +582,20 @@
         if (!text) return { value: null, error: null };
 
         if ((text.startsWith("{") && text.endsWith("}")) || (text.startsWith("[") && text.endsWith("]"))) {
-            try {
-                return { value: JSON.parse(text), error: null };
-            } catch (err) {
-                return { value: null, error: `Prerequisite JSON is invalid: ${err.message}` };
-            }
+            return { value: null, error: "Use expression syntax only (&&, ||, !). JSON is not supported in this field." };
         }
-
-        if (/[()!&|]/.test(text)) {
-            return { value: text, error: null };
+        if (text.includes(",")) {
+            return { value: null, error: "Use expression syntax only (e.g. idA && idB). Comma-separated IDs are not supported." };
         }
-
-        const ids = normalizeIdList(text);
-        if (!ids.length) return { value: null, error: null };
-        return { value: ids.length === 1 ? ids[0] : ids, error: null };
+        const tokenMatches = text.match(/[A-Za-z_][A-Za-z0-9_]*(?:__\d+)?/g) || [];
+        if (!tokenMatches.length) {
+            return { value: null, error: "Prerequisite expression must include at least one option ID." };
+        }
+        const validation = validatePrerequisiteExpression(text);
+        if (validation.error) {
+            return { value: null, error: validation.error };
+        }
+        return { value: text, error: null };
     }
 
     function extractReferencedIds(value) {
@@ -721,6 +851,20 @@
         });
     }
 
+    function syncOptionIdsWithMap(path, options = [], idMap = new Map()) {
+        if (!Array.isArray(options)) return idMap;
+        options.forEach(opt => {
+            const previousId = String(opt?.id || "").trim();
+            optionIdAutoMap.set(opt, true);
+            const nextId = generateOptionId(opt?.label, { path, skipOption: opt });
+            opt.id = nextId;
+            if (previousId && previousId !== nextId && !idMap.has(previousId)) {
+                idMap.set(previousId, nextId);
+            }
+        });
+        return idMap;
+    }
+
     function syncSubcategoryTreeOptionIds(basePath, subcategories = []) {
         if (!Array.isArray(subcategories)) return;
         subcategories.forEach(subcat => {
@@ -730,10 +874,138 @@
         });
     }
 
+    function syncSubcategoryTreeOptionIdsWithMap(basePath, subcategories = [], idMap = new Map()) {
+        if (!Array.isArray(subcategories)) return idMap;
+        subcategories.forEach(subcat => {
+            const nextPath = [...basePath, subcat?.name || ""].filter(Boolean);
+            syncOptionIdsWithMap(nextPath, subcat?.options || [], idMap);
+            syncSubcategoryTreeOptionIdsWithMap(nextPath, subcat?.subcategories || [], idMap);
+        });
+        return idMap;
+    }
+
+    function remapIdToken(raw, idMap) {
+        if (!raw || typeof raw !== "string" || !(idMap instanceof Map) || !idMap.size) return raw;
+        const negated = raw.startsWith("!");
+        const token = negated ? raw.slice(1) : raw;
+        const suffixIndex = token.indexOf("__");
+        const baseId = suffixIndex === -1 ? token : token.slice(0, suffixIndex);
+        if (!baseId) return raw;
+        const mappedBase = idMap.get(baseId);
+        if (!mappedBase) return raw;
+        const suffix = suffixIndex === -1 ? "" : token.slice(suffixIndex);
+        return `${negated ? "!" : ""}${mappedBase}${suffix}`;
+    }
+
+    function remapLogicalReferenceValue(value, idMap) {
+        if (!value || !(idMap instanceof Map) || !idMap.size) return value;
+
+        if (typeof value === "string") {
+            return value.replace(/!?[A-Za-z_][A-Za-z0-9_]*(?:__\d+)?/g, (token) => {
+                const probe = token.startsWith("!") ? token.slice(1) : token;
+                const [base] = probe.split("__");
+                if (!base || RESERVED_EXPR_IDENTIFIERS.has(base)) return token;
+                return remapIdToken(token, idMap);
+            });
+        }
+
+        if (Array.isArray(value)) {
+            return value.map((item) => {
+                if (typeof item !== "string") return item;
+                return remapIdToken(item, idMap);
+            });
+        }
+
+        if (typeof value === "object") {
+            const next = { ...value };
+            if (Object.prototype.hasOwnProperty.call(next, "and")) {
+                next.and = remapLogicalReferenceValue(next.and, idMap);
+            }
+            if (Object.prototype.hasOwnProperty.call(next, "or")) {
+                next.or = remapLogicalReferenceValue(next.or, idMap);
+            }
+            return next;
+        }
+
+        return value;
+    }
+
+    function remapOptionIdReferences(idMap) {
+        if (!(idMap instanceof Map) || !idMap.size) return;
+
+        const remapDiscountRule = (rule) => {
+            if (!rule || typeof rule !== "object") return;
+            if (Array.isArray(rule.idsAny)) {
+                rule.idsAny = remapLogicalReferenceValue(rule.idsAny, idMap);
+            }
+            if (Array.isArray(rule.ids)) {
+                rule.ids = remapLogicalReferenceValue(rule.ids, idMap);
+            }
+            if (typeof rule.id === "string") {
+                rule.id = remapIdToken(rule.id, idMap);
+            }
+        };
+
+        const remapGrantRule = (rule) => {
+            if (!rule || typeof rule !== "object") return;
+            if (Array.isArray(rule.targetIds)) {
+                rule.targetIds = remapLogicalReferenceValue(rule.targetIds, idMap);
+            }
+            if (Array.isArray(rule.targets)) {
+                rule.targets = remapLogicalReferenceValue(rule.targets, idMap);
+            }
+            if (typeof rule.targetId === "string") {
+                rule.targetId = remapIdToken(rule.targetId, idMap);
+            }
+        };
+
+        const remapOption = (option) => {
+            if (!option || typeof option !== "object") return;
+            if (Object.prototype.hasOwnProperty.call(option, "prerequisites")) {
+                option.prerequisites = remapLogicalReferenceValue(option.prerequisites, idMap);
+            }
+            if (Array.isArray(option.conflictsWith)) {
+                option.conflictsWith = remapLogicalReferenceValue(option.conflictsWith, idMap);
+            }
+            if (Array.isArray(option.discounts)) {
+                option.discounts.forEach(remapDiscountRule);
+            }
+            if (Array.isArray(option.discountGrants)) {
+                option.discountGrants.forEach(remapGrantRule);
+            }
+        };
+
+        state.data.forEach((entry) => {
+            if (!entry || entry.type) return;
+            if (Object.prototype.hasOwnProperty.call(entry, "requiresOption")) {
+                entry.requiresOption = remapLogicalReferenceValue(entry.requiresOption, idMap);
+            }
+            (entry.options || []).forEach(remapOption);
+            walkEditorSubcategories(entry.subcategories || [], (subcat) => {
+                if (Object.prototype.hasOwnProperty.call(subcat, "requiresOption")) {
+                    subcat.requiresOption = remapLogicalReferenceValue(subcat.requiresOption, idMap);
+                }
+                (subcat.options || []).forEach(remapOption);
+            });
+        });
+    }
+
+    function regenerateAllOptionIdsAndReferences() {
+        const categories = getCategorySnapshots();
+        const idMap = new Map();
+        categories.forEach(({ entry: category }) => {
+            const basePath = [category?.name || ""].filter(Boolean);
+            syncOptionIdsWithMap(basePath, category?.options || [], idMap);
+            syncSubcategoryTreeOptionIdsWithMap(basePath, category?.subcategories || [], idMap);
+        });
+        remapOptionIdReferences(idMap);
+    }
+
     function regenerateAllOptionIds() {
         const categories = getCategorySnapshots();
         categories.forEach(({ entry: category }) => {
             const basePath = [category?.name || ""].filter(Boolean);
+            syncOptionIds(basePath, category?.options || []);
             syncSubcategoryTreeOptionIds(basePath, category?.subcategories || []);
         });
     }
@@ -2917,10 +3189,10 @@
             prereqLabel.textContent = "Prerequisites (optional)";
             const prereqHint = document.createElement("div");
             prereqHint.className = "field-help";
-            prereqHint.textContent = "Use comma-separated IDs, expression syntax (&&, ||, !), or JSON (array/object).";
+            prereqHint.textContent = "Use expression syntax only: && (and), || (or), ! (not), and parentheses.";
             const prereqInput = document.createElement("textarea");
             prereqInput.value = formatPrerequisiteValue(option.prerequisites);
-            prereqInput.placeholder = "e.g. powerCore, focusTraining OR powerCore && !villainPath";
+            prereqInput.placeholder = "e.g. powerCore && (focusTraining || !villainPath)";
             let prereqParseError = null;
             const syncPrereqFromInput = () => {
                 const parsed = parsePrerequisiteValue(prereqInput.value);
@@ -3554,7 +3826,8 @@
             validateCostPointTypesOrThrow(parsed);
             state.data = parsed;
             normalizeLegacyRequiresFields();
-            regenerateAllOptionIds();
+            regenerateAllOptionIdsAndReferences();
+            validateOptionReferencesOrThrow(state.data);
             renderGlobalSettings();
             renderCategories();
             schedulePreviewUpdate();
@@ -3582,7 +3855,8 @@
                 validateCostPointTypesOrThrow(config.data);
                 state.data = config.data;
                 normalizeLegacyRequiresFields();
-                regenerateAllOptionIds();
+                regenerateAllOptionIdsAndReferences();
+                validateOptionReferencesOrThrow(state.data);
                 renderGlobalSettings();
                 renderCategories();
                 schedulePreviewUpdate();
