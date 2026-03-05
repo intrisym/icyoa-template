@@ -1,6 +1,6 @@
 (function () {
     const CORE_TYPES_ORDER = ["title", "description", "headerImage", "points"];
-    const BASE_OPTION_KEYS = new Set(["id", "label", "description", "image", "inputType", "inputLabel", "cost", "maxSelections", "countsAsOneSelection", "prerequisites", "conflictsWith", "discounts", "discountGrants", "dynamicCost", "attributeMultipliers"]);
+    const BASE_OPTION_KEYS = new Set(["id", "label", "description", "image", "inputType", "inputLabel", "cost", "maxSelections", "countsAsOneSelection", "prerequisites", "conflictsWith", "discounts", "discountGrants", "dynamicCost", "attributeMultipliers", "sliderPointType", "sliderBaseFormula"]);
 
     const state = {
         data: [],
@@ -1248,11 +1248,13 @@
             type: "points",
             values: {},
             allowNegative: [],
-            attributeRanges: {}
+            attributeRanges: {},
+            formulas: {}
         })).entry;
         if (!pointsEntry.values) pointsEntry.values = {};
         if (!Array.isArray(pointsEntry.allowNegative)) pointsEntry.allowNegative = [];
         if (!pointsEntry.attributeRanges) pointsEntry.attributeRanges = {};
+        if (!pointsEntry.formulas || typeof pointsEntry.formulas !== "object") pointsEntry.formulas = {};
         fragment.appendChild(renderPointsSection(pointsEntry));
 
         const backpackEntry = ensureEntry("backpack", () => ({
@@ -1351,6 +1353,10 @@
                 const existingValue = pointsEntry.values[currency];
                 delete pointsEntry.values[currency];
                 pointsEntry.values[newName] = existingValue;
+                if (Object.prototype.hasOwnProperty.call(pointsEntry.formulas, currency)) {
+                    pointsEntry.formulas[newName] = pointsEntry.formulas[currency];
+                    delete pointsEntry.formulas[currency];
+                }
 
                 const allowIdx = pointsEntry.allowNegative.indexOf(currency);
                 if (allowIdx !== -1) {
@@ -1363,6 +1369,9 @@
             removeBtn.addEventListener("click", () => {
                 delete pointsEntry.values[currency];
                 pointsEntry.allowNegative = pointsEntry.allowNegative.filter(t => t !== currency);
+                if (Object.prototype.hasOwnProperty.call(pointsEntry.formulas, currency)) {
+                    delete pointsEntry.formulas[currency];
+                }
                 renderGlobalSettings();
                 schedulePreviewUpdate();
             });
@@ -1517,6 +1526,104 @@
 
         body.appendChild(rangesContainer);
         body.appendChild(addAttrBtn);
+
+        const formulasHeading = document.createElement("div");
+        formulasHeading.className = "subheading";
+        formulasHeading.textContent = "Derived point formulas";
+        body.appendChild(formulasHeading);
+
+        const formulasHelp = document.createElement("div");
+        formulasHelp.className = "field-help";
+        formulasHelp.textContent = "Recalculates the point pool from the formula while preserving spent deltas. Example: ((STR+DEX+CON+INT+WIS+CHA)-60)*8";
+        body.appendChild(formulasHelp);
+
+        const formulasContainer = document.createElement("div");
+        formulasContainer.className = "list-stack";
+        Object.entries(pointsEntry.formulas || {}).forEach(([pointType, formula]) => {
+            const row = document.createElement("div");
+            row.className = "list-row";
+
+            const typeSelect = document.createElement("select");
+            const pointTypes = Object.keys(pointsEntry.values || {});
+            pointTypes.forEach((name) => {
+                const opt = document.createElement("option");
+                opt.value = name;
+                opt.textContent = name;
+                typeSelect.appendChild(opt);
+            });
+            if (pointType && !pointTypes.includes(pointType)) {
+                const invalidOpt = document.createElement("option");
+                invalidOpt.value = pointType;
+                invalidOpt.textContent = `${pointType} (invalid)`;
+                typeSelect.appendChild(invalidOpt);
+            }
+            typeSelect.value = pointType;
+
+            const formulaInput = document.createElement("input");
+            formulaInput.type = "text";
+            formulaInput.value = typeof formula === "string" ? formula : "";
+            formulaInput.placeholder = "e.g. ((STR+DEX+CON)-30)*2";
+
+            const removeBtn = document.createElement("button");
+            removeBtn.type = "button";
+            removeBtn.className = "button-icon danger";
+            removeBtn.title = "Remove formula";
+            removeBtn.textContent = "✕";
+
+            typeSelect.addEventListener("change", () => {
+                const nextType = typeSelect.value.trim();
+                if (!nextType || nextType === pointType) return;
+                if (Object.prototype.hasOwnProperty.call(pointsEntry.formulas, nextType)) {
+                    showEditorMessage(`Formula for "${nextType}" already exists.`, "warning");
+                    typeSelect.value = pointType;
+                    return;
+                }
+                const existingFormula = pointsEntry.formulas[pointType];
+                delete pointsEntry.formulas[pointType];
+                pointsEntry.formulas[nextType] = existingFormula;
+                renderGlobalSettings();
+                schedulePreviewUpdate();
+            });
+
+            formulaInput.addEventListener("input", () => {
+                const nextFormula = formulaInput.value.trim();
+                if (nextFormula) {
+                    pointsEntry.formulas[pointType] = nextFormula;
+                } else {
+                    delete pointsEntry.formulas[pointType];
+                }
+                schedulePreviewUpdate();
+            });
+
+            removeBtn.addEventListener("click", () => {
+                delete pointsEntry.formulas[pointType];
+                renderGlobalSettings();
+                schedulePreviewUpdate();
+            });
+
+            row.appendChild(typeSelect);
+            row.appendChild(formulaInput);
+            row.appendChild(removeBtn);
+            formulasContainer.appendChild(row);
+        });
+        body.appendChild(formulasContainer);
+
+        const addFormulaBtn = document.createElement("button");
+        addFormulaBtn.type = "button";
+        addFormulaBtn.className = "button-subtle";
+        addFormulaBtn.textContent = "Add formula";
+        addFormulaBtn.addEventListener("click", () => {
+            const pointTypes = Object.keys(pointsEntry.values || {});
+            const candidate = pointTypes.find(name => !Object.prototype.hasOwnProperty.call(pointsEntry.formulas, name));
+            if (!candidate) {
+                showEditorMessage("No point type available for a new formula.", "warning", 3500);
+                return;
+            }
+            pointsEntry.formulas[candidate] = "";
+            renderGlobalSettings();
+            schedulePreviewUpdate();
+        });
+        body.appendChild(addFormulaBtn);
 
         return container;
     }
@@ -2820,6 +2927,9 @@
                 } else {
                     delete option.inputType;
                 }
+                if (typeof syncSliderFormulaInputEnabled === "function") {
+                    syncSliderFormulaInputEnabled();
+                }
                 schedulePreviewUpdate();
             });
             inputTypeField.appendChild(inputTypeLabel);
@@ -2845,6 +2955,74 @@
             inputLabelField.appendChild(inputLabelLabel);
             inputLabelField.appendChild(inputLabelInput);
             advancedBody.appendChild(inputLabelField);
+
+            const sliderPointTypeField = document.createElement("div");
+            sliderPointTypeField.className = "field";
+            const sliderPointTypeLabel = document.createElement("label");
+            sliderPointTypeLabel.textContent = "Slider point type (optional)";
+            const sliderPointTypeSelect = document.createElement("select");
+            const sliderPointTypeAuto = document.createElement("option");
+            sliderPointTypeAuto.value = "";
+            sliderPointTypeAuto.textContent = "Auto (from costPerPoint)";
+            sliderPointTypeSelect.appendChild(sliderPointTypeAuto);
+            const sliderPointTypeChoices = getDefinedPointTypes();
+            sliderPointTypeChoices.forEach((typeName) => {
+                const optEl = document.createElement("option");
+                optEl.value = typeName;
+                optEl.textContent = typeName;
+                sliderPointTypeSelect.appendChild(optEl);
+            });
+            if (option.sliderPointType && !sliderPointTypeChoices.includes(option.sliderPointType)) {
+                const invalidOpt = document.createElement("option");
+                invalidOpt.value = option.sliderPointType;
+                invalidOpt.textContent = `${option.sliderPointType} (invalid)`;
+                sliderPointTypeSelect.appendChild(invalidOpt);
+            }
+            sliderPointTypeSelect.value = option.sliderPointType || "";
+            sliderPointTypeSelect.addEventListener("change", () => {
+                const nextType = sliderPointTypeSelect.value.trim();
+                if (nextType) {
+                    option.sliderPointType = nextType;
+                } else {
+                    delete option.sliderPointType;
+                }
+                schedulePreviewUpdate();
+            });
+            sliderPointTypeField.appendChild(sliderPointTypeLabel);
+            sliderPointTypeField.appendChild(sliderPointTypeSelect);
+            advancedBody.appendChild(sliderPointTypeField);
+
+            const sliderBaseFormulaField = document.createElement("div");
+            sliderBaseFormulaField.className = "field";
+            const sliderBaseFormulaLabel = document.createElement("label");
+            sliderBaseFormulaLabel.textContent = "Slider base formula (optional)";
+            const sliderBaseFormulaInput = document.createElement("input");
+            sliderBaseFormulaInput.type = "text";
+            sliderBaseFormulaInput.value = option.sliderBaseFormula || "";
+            sliderBaseFormulaInput.placeholder = "e.g. STR + DEX + CON - 20";
+            sliderBaseFormulaInput.addEventListener("input", () => {
+                const nextFormula = sliderBaseFormulaInput.value.trim();
+                if (nextFormula) {
+                    option.sliderBaseFormula = nextFormula;
+                } else {
+                    delete option.sliderBaseFormula;
+                }
+                schedulePreviewUpdate();
+            });
+            const sliderBaseFormulaHelp = document.createElement("div");
+            sliderBaseFormulaHelp.className = "field-help";
+            sliderBaseFormulaHelp.textContent = "Formula evaluates against point values (e.g., STR, DEX). Slider stores purchased bonus above this base.";
+            sliderBaseFormulaField.appendChild(sliderBaseFormulaLabel);
+            sliderBaseFormulaField.appendChild(sliderBaseFormulaInput);
+            sliderBaseFormulaField.appendChild(sliderBaseFormulaHelp);
+            advancedBody.appendChild(sliderBaseFormulaField);
+
+            const syncSliderFormulaInputEnabled = () => {
+                const isSlider = inputTypeInput.value.trim().toLowerCase() === "slider";
+                sliderPointTypeSelect.disabled = !isSlider;
+                sliderBaseFormulaInput.disabled = !isSlider;
+            };
+            syncSliderFormulaInputEnabled();
 
             const pointDropdownField = document.createElement("div");
             pointDropdownField.className = "field";
