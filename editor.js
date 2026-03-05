@@ -2253,6 +2253,20 @@
 
                 const subBody = document.createElement("div");
                 subBody.className = "subcategory-body";
+                const subPathParts = [category.name, ...namePath, subcat.name || `Subcategory${subIndex + 1}`].filter(Boolean);
+                const subSectionKeyPrefix = `${subPathParts.join("/") || "subcategory"}:${subIndex}`;
+                const subCommonSection = createSectionContainer("Common Fields", {
+                    defaultOpen: true,
+                    stateKey: `${subSectionKeyPrefix}:common`
+                });
+                const subAdvancedSection = createSectionContainer("Advanced Settings", {
+                    defaultOpen: false,
+                    stateKey: `${subSectionKeyPrefix}:advanced`
+                });
+                subBody.appendChild(subCommonSection.container);
+                subBody.appendChild(subAdvancedSection.container);
+                const subCommonBody = subCommonSection.body;
+                const subAdvancedBody = subAdvancedSection.body;
 
                 const subNameField = document.createElement("div");
                 subNameField.className = "field";
@@ -2270,7 +2284,7 @@
                 });
                 subNameField.appendChild(subNameLabel);
                 subNameField.appendChild(subNameInput);
-                subBody.appendChild(subNameField);
+                subCommonBody.appendChild(subNameField);
 
                 const subRequiresField = document.createElement("div");
                 subRequiresField.className = "field";
@@ -2290,7 +2304,7 @@
                 });
                 subRequiresField.appendChild(subRequiresLabel);
                 subRequiresField.appendChild(subRequiresInput);
-                subBody.appendChild(subRequiresField);
+                subAdvancedBody.appendChild(subRequiresField);
 
                 const typeField = document.createElement("div");
                 typeField.className = "field-inline";
@@ -2310,7 +2324,7 @@
                 });
                 typeField.appendChild(typeLabel);
                 typeField.appendChild(typeInput);
-                subBody.appendChild(typeField);
+                subAdvancedBody.appendChild(typeField);
 
                 const nestedViewField = document.createElement("div");
                 nestedViewField.className = "field-inline";
@@ -2332,7 +2346,7 @@
                 });
                 nestedViewField.appendChild(nestedViewLabel);
                 nestedViewField.appendChild(nestedViewSelect);
-                subBody.appendChild(nestedViewField);
+                subAdvancedBody.appendChild(nestedViewField);
 
                 const maxRow = document.createElement("div");
                 maxRow.className = "field-inline";
@@ -2371,7 +2385,7 @@
                 maxRow.appendChild(maxInput);
                 maxRow.appendChild(minLabel);
                 maxRow.appendChild(minInput);
-                subBody.appendChild(maxRow);
+                subAdvancedBody.appendChild(maxRow);
 
                 const discountRow = document.createElement("div");
                 discountRow.className = "field-inline";
@@ -2392,9 +2406,9 @@
                 });
                 discountRow.appendChild(discountFirstLabel);
                 discountRow.appendChild(discountFirstInput);
-                subBody.appendChild(discountRow);
+                subAdvancedBody.appendChild(discountRow);
 
-                renderPointTypeAmountControls(subBody, {
+                renderPointTypeAmountControls(subAdvancedBody, {
                     labelPrefix: "Discount Amount",
                     getMap: () => subcat.discountAmount,
                     setMap: (next) => {
@@ -2403,7 +2417,7 @@
                     }
                 });
 
-                renderPointTypeAmountControls(subBody, {
+                renderPointTypeAmountControls(subAdvancedBody, {
                     labelPrefix: "Default cost",
                     getMap: () => subcat.defaultCost,
                     setMap: (next) => {
@@ -2434,7 +2448,7 @@
                 });
                 columnsRow.appendChild(columnsLabel);
                 columnsRow.appendChild(columnsInput);
-                subBody.appendChild(columnsRow);
+                subAdvancedBody.appendChild(columnsRow);
 
                 const textField = document.createElement("div");
                 textField.className = "field";
@@ -2449,7 +2463,7 @@
                 });
                 textField.appendChild(textLabel);
                 textField.appendChild(textArea);
-                subBody.appendChild(textField);
+                subCommonBody.appendChild(textField);
 
                 const subActions = document.createElement("div");
                 subActions.className = "inline-actions";
@@ -2495,12 +2509,12 @@
                 subActions.appendChild(subUpBtn);
                 subActions.appendChild(subDownBtn);
                 subActions.appendChild(subRemoveBtn);
-                subBody.appendChild(subActions);
+                subCommonBody.appendChild(subActions);
 
                 const optionsHeading = document.createElement("div");
                 optionsHeading.className = "subheading";
                 optionsHeading.textContent = "Options";
-                subBody.appendChild(optionsHeading);
+                subCommonBody.appendChild(optionsHeading);
 
                 const optionsContainer = document.createElement("div");
                 optionsContainer.className = "option-list";
@@ -2511,7 +2525,7 @@
                     subIndex,
                     [category.name, ...namePath, subcat.name]
                 );
-                subBody.appendChild(optionsContainer);
+                subCommonBody.appendChild(optionsContainer);
 
                 const addOptionBtn = document.createElement("button");
                 addOptionBtn.type = "button";
@@ -2526,14 +2540,14 @@
                     renderCategories();
                     schedulePreviewUpdate();
                 });
-                subBody.appendChild(addOptionBtn);
+                subCommonBody.appendChild(addOptionBtn);
 
                 const nestedContainer = document.createElement("div");
                 nestedContainer.className = "subcategory-list";
                 (subcat.subcategories || []).forEach((childSubcat, childIdx) => {
                     renderSubcategoryEditor(subcat.subcategories, childSubcat, childIdx, nestedContainer, [...namePath, subcat.name || `Subcategory${subIndex + 1}`]);
                 });
-                subBody.appendChild(nestedContainer);
+                subCommonBody.appendChild(nestedContainer);
 
                 const addNestedBtn = document.createElement("button");
                 addNestedBtn.type = "button";
@@ -2548,7 +2562,7 @@
                     renderCategories();
                     schedulePreviewUpdate();
                 });
-                subBody.appendChild(addNestedBtn);
+                subCommonBody.appendChild(addNestedBtn);
 
                 subDetails.appendChild(subBody);
                 container.appendChild(subDetails);
