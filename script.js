@@ -260,6 +260,8 @@ function resetGlobalState() {
     subcategoriesToAnimate.clear();
     points = {};
     categories = [];
+    pointsTrackerGroupDefinitions = [];
+    clearObject(pointsTrackerGroupVisibility);
     selectionHistory.length = 0;
 
     originalPoints = {};
@@ -650,6 +652,7 @@ const modalConfirmBtn = document.getElementById("modalConfirmBtn");
 const modalClose = document.getElementById("modalClose");
 let modalMode = null;
 const pointsTrackerEl = document.getElementById("pointsTracker");
+const pointsTrackerGroupsEl = document.getElementById("pointsTrackerGroups");
 const pointsTrackerModeBtn = document.getElementById("pointsTrackerModeBtn");
 const assetLoadingOverlay = document.getElementById("assetLoadingOverlay");
 const assetLoadingMessage = document.getElementById("assetLoadingMessage");
@@ -660,6 +663,29 @@ const initialDescriptionHTML = document.getElementById("cyoaDescription")?.inner
 const initialHeaderImageHTML = document.getElementById("headerImageContainer")?.innerHTML || "";
 const POINTS_TRACKER_MODE_KEY = "cyoa-points-tracker-mode";
 let desktopPointsTrackerMode = localStorage.getItem(POINTS_TRACKER_MODE_KEY) === "slide" ? "slide" : "block";
+let pointsTrackerGroupDefinitions = [];
+const pointsTrackerGroupVisibility = {};
+
+function normalizeTrackerGroups(rawGroups, pointTypes = []) {
+    if (!Array.isArray(rawGroups)) return [];
+    const known = new Set(pointTypes || []);
+    const normalized = [];
+    rawGroups.forEach((group, idx) => {
+        if (!group || typeof group !== "object") return;
+        const name = String(group.name || `Group ${idx + 1}`).trim() || `Group ${idx + 1}`;
+        const pointTypesRaw = Array.isArray(group.pointTypes) ? group.pointTypes : [];
+        const pointTypesClean = Array.from(new Set(pointTypesRaw.map((type) => String(type || "").trim()).filter(Boolean)));
+        const usablePointTypes = pointTypesClean.filter((type) => known.has(type));
+        if (!usablePointTypes.length) return;
+        normalized.push({
+            id: String(group.id || `trackerGroup${idx + 1}`),
+            name,
+            pointTypes: usablePointTypes,
+            defaultVisible: group.defaultVisible !== false
+        });
+    });
+    return normalized;
+}
 
 function escapeHtml(text = "") {
     return String(text).replace(/[&<>"']/g, (ch) => ({
@@ -1378,6 +1404,11 @@ function applyCyoaData(rawData, {
         points = {
             ...originalPoints
         };
+        pointsTrackerGroupDefinitions = normalizeTrackerGroups(pointsEntry?.trackerGroups, Object.keys(originalPoints));
+        clearObject(pointsTrackerGroupVisibility);
+        pointsTrackerGroupDefinitions.forEach((group) => {
+            pointsTrackerGroupVisibility[group.id] = group.defaultVisible !== false;
+        });
 
         categories = data.filter(entry => !entry.type || entry.name);
 
@@ -1911,7 +1942,44 @@ function addSelection(option) {
  */
 function updatePointsDisplay() {
     const display = document.getElementById("pointsDisplay");
+    if (!display) return;
+    if (pointsTrackerGroupsEl) {
+        pointsTrackerGroupsEl.innerHTML = "";
+        pointsTrackerGroupDefinitions.forEach((group) => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "points-group-toggle";
+            if (pointsTrackerGroupVisibility[group.id] !== false) {
+                btn.classList.add("is-active");
+            }
+            btn.textContent = group.name;
+            btn.addEventListener("click", () => {
+                const nextState = pointsTrackerGroupVisibility[group.id] === false;
+                pointsTrackerGroupVisibility[group.id] = nextState;
+                updatePointsDisplay();
+            });
+            pointsTrackerGroupsEl.appendChild(btn);
+        });
+        pointsTrackerGroupsEl.style.display = pointsTrackerGroupDefinitions.length ? "flex" : "none";
+    }
+
+    const groupedTypes = new Set();
+    pointsTrackerGroupDefinitions.forEach((group) => {
+        group.pointTypes.forEach((type) => groupedTypes.add(type));
+    });
+    const visibleTypes = new Set();
+    Object.keys(points).forEach((type) => {
+        if (!groupedTypes.has(type)) {
+            visibleTypes.add(type);
+        }
+    });
+    pointsTrackerGroupDefinitions.forEach((group) => {
+        if (pointsTrackerGroupVisibility[group.id] === false) return;
+        group.pointTypes.forEach((type) => visibleTypes.add(type));
+    });
+
     display.innerHTML = Object.entries(points)
+        .filter(([type]) => visibleTypes.has(type))
         .map(([type, val]) => `<span><strong>${type}:</strong> ${val}</span>`)
         .join("");
     syncPointsTrackerHeight();

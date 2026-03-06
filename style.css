@@ -413,6 +413,8 @@ button:disabled {
     font-weight: 700;
     color: white;
     display: flex;
+    flex-direction: column;
+    gap: 4px;
     justify-content: center;
     align-items: center;
     z-index: 1000;
@@ -438,6 +440,31 @@ button:disabled {
 
 .points-tracker-mode-btn:hover {
     background: #fff;
+}
+
+.points-tracker-groups {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 8px;
+    width: 100%;
+}
+
+.points-group-toggle {
+    margin-top: 0;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--points-border);
+    background: rgba(255, 255, 255, 0.85);
+    color: #111;
+    font-size: 12px;
+    line-height: 1.2;
+}
+
+.points-group-toggle.is-active {
+    background: #fff6cc;
+    border-color: #d9b200;
 }
 
 .modal {
@@ -864,6 +891,14 @@ body.desktop-slideable-points #pointsDisplay {
 
     .points-tracker {
         padding: 10px 12px;
+    }
+
+    .points-tracker-groups {
+        justify-content: flex-start;
+        overflow-x: auto;
+        overflow-y: hidden;
+        flex-wrap: nowrap;
+        padding-bottom: 2px;
     }
 
     #pointsDisplay {

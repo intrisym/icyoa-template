@@ -1249,12 +1249,14 @@
             values: {},
             allowNegative: [],
             attributeRanges: {},
-            formulas: {}
+            formulas: {},
+            trackerGroups: []
         })).entry;
         if (!pointsEntry.values) pointsEntry.values = {};
         if (!Array.isArray(pointsEntry.allowNegative)) pointsEntry.allowNegative = [];
         if (!pointsEntry.attributeRanges) pointsEntry.attributeRanges = {};
         if (!pointsEntry.formulas || typeof pointsEntry.formulas !== "object") pointsEntry.formulas = {};
+        if (!Array.isArray(pointsEntry.trackerGroups)) pointsEntry.trackerGroups = [];
         fragment.appendChild(renderPointsSection(pointsEntry));
 
         const backpackEntry = ensureEntry("backpack", () => ({
@@ -1357,6 +1359,10 @@
                     pointsEntry.formulas[newName] = pointsEntry.formulas[currency];
                     delete pointsEntry.formulas[currency];
                 }
+                (pointsEntry.trackerGroups || []).forEach((group) => {
+                    if (!group || !Array.isArray(group.pointTypes)) return;
+                    group.pointTypes = group.pointTypes.map((type) => type === currency ? newName : type);
+                });
 
                 const allowIdx = pointsEntry.allowNegative.indexOf(currency);
                 if (allowIdx !== -1) {
@@ -1372,6 +1378,10 @@
                 if (Object.prototype.hasOwnProperty.call(pointsEntry.formulas, currency)) {
                     delete pointsEntry.formulas[currency];
                 }
+                (pointsEntry.trackerGroups || []).forEach((group) => {
+                    if (!group || !Array.isArray(group.pointTypes)) return;
+                    group.pointTypes = group.pointTypes.filter((type) => type !== currency);
+                });
                 renderGlobalSettings();
                 schedulePreviewUpdate();
             });
@@ -1624,6 +1634,133 @@
             schedulePreviewUpdate();
         });
         body.appendChild(addFormulaBtn);
+
+        const trackerGroupsHeading = document.createElement("div");
+        trackerGroupsHeading.className = "subheading";
+        trackerGroupsHeading.textContent = "Points tracker groups";
+        body.appendChild(trackerGroupsHeading);
+
+        const trackerGroupsHelp = document.createElement("div");
+        trackerGroupsHelp.className = "field-help";
+        trackerGroupsHelp.textContent = "Create groups that end users can show/hide in the points tracker.";
+        body.appendChild(trackerGroupsHelp);
+
+        const trackerGroupsContainer = document.createElement("div");
+        trackerGroupsContainer.className = "list-stack";
+        const pointTypes = Object.keys(pointsEntry.values || {});
+        (pointsEntry.trackerGroups || []).forEach((group, groupIndex) => {
+            if (!group || typeof group !== "object") {
+                group = {};
+                pointsEntry.trackerGroups[groupIndex] = group;
+            }
+            if (!Array.isArray(group.pointTypes)) {
+                group.pointTypes = [];
+            }
+            const groupCard = document.createElement("div");
+            groupCard.className = "discount-rule-card";
+
+            const groupHeader = document.createElement("div");
+            groupHeader.className = "discount-rule-header";
+            const groupTitle = document.createElement("strong");
+            groupTitle.textContent = group.name?.trim() ? group.name.trim() : `Group ${groupIndex + 1}`;
+            const removeGroupBtn = document.createElement("button");
+            removeGroupBtn.type = "button";
+            removeGroupBtn.className = "button-icon danger";
+            removeGroupBtn.textContent = "✕";
+            removeGroupBtn.title = "Delete group";
+            removeGroupBtn.addEventListener("click", () => {
+                pointsEntry.trackerGroups.splice(groupIndex, 1);
+                renderGlobalSettings();
+                schedulePreviewUpdate();
+            });
+            groupHeader.appendChild(groupTitle);
+            groupHeader.appendChild(removeGroupBtn);
+            groupCard.appendChild(groupHeader);
+
+            const groupNameRow = document.createElement("div");
+            groupNameRow.className = "field";
+            const groupNameLabel = document.createElement("label");
+            groupNameLabel.textContent = "Group name";
+            const groupNameInput = document.createElement("input");
+            groupNameInput.type = "text";
+            groupNameInput.value = group.name || "";
+            groupNameInput.placeholder = "e.g. Attributes";
+            groupNameInput.addEventListener("input", () => {
+                group.name = groupNameInput.value;
+                groupTitle.textContent = group.name?.trim() ? group.name.trim() : `Group ${groupIndex + 1}`;
+                schedulePreviewUpdate();
+            });
+            groupNameRow.appendChild(groupNameLabel);
+            groupNameRow.appendChild(groupNameInput);
+            groupCard.appendChild(groupNameRow);
+
+            const defaultVisibleRow = document.createElement("label");
+            defaultVisibleRow.className = "checkbox-option";
+            const defaultVisibleInput = document.createElement("input");
+            defaultVisibleInput.type = "checkbox";
+            defaultVisibleInput.checked = group.defaultVisible !== false;
+            const defaultVisibleText = document.createElement("span");
+            defaultVisibleText.textContent = "Visible by default";
+            defaultVisibleInput.addEventListener("change", () => {
+                group.defaultVisible = defaultVisibleInput.checked;
+                schedulePreviewUpdate();
+            });
+            defaultVisibleRow.appendChild(defaultVisibleInput);
+            defaultVisibleRow.appendChild(defaultVisibleText);
+            groupCard.appendChild(defaultVisibleRow);
+
+            const pointsLabel = document.createElement("label");
+            pointsLabel.textContent = "Point types in this group";
+            groupCard.appendChild(pointsLabel);
+
+            const pointList = document.createElement("div");
+            pointList.className = "point-type-checkbox-list";
+            const availableTypes = Array.from(new Set([...pointTypes, ...(group.pointTypes || [])]));
+            availableTypes.forEach((typeName) => {
+                const optionRow = document.createElement("label");
+                optionRow.className = "checkbox-option";
+                const checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.checked = group.pointTypes.includes(typeName);
+                const text = document.createElement("span");
+                text.textContent = pointTypes.includes(typeName) ? typeName : `${typeName} (invalid)`;
+                checkbox.addEventListener("change", () => {
+                    if (checkbox.checked) {
+                        if (!group.pointTypes.includes(typeName)) {
+                            group.pointTypes.push(typeName);
+                        }
+                    } else {
+                        group.pointTypes = group.pointTypes.filter((type) => type !== typeName);
+                    }
+                    schedulePreviewUpdate();
+                });
+                optionRow.appendChild(checkbox);
+                optionRow.appendChild(text);
+                pointList.appendChild(optionRow);
+            });
+            groupCard.appendChild(pointList);
+
+            trackerGroupsContainer.appendChild(groupCard);
+        });
+        body.appendChild(trackerGroupsContainer);
+
+        const addTrackerGroupBtn = document.createElement("button");
+        addTrackerGroupBtn.type = "button";
+        addTrackerGroupBtn.className = "button-subtle";
+        addTrackerGroupBtn.textContent = "Add tracker group";
+        addTrackerGroupBtn.addEventListener("click", () => {
+            if (!Array.isArray(pointsEntry.trackerGroups)) {
+                pointsEntry.trackerGroups = [];
+            }
+            pointsEntry.trackerGroups.push({
+                name: "",
+                pointTypes: [],
+                defaultVisible: true
+            });
+            renderGlobalSettings();
+            schedulePreviewUpdate();
+        });
+        body.appendChild(addTrackerGroupBtn);
 
         return container;
     }
