@@ -139,10 +139,73 @@ select[multiple] {
     border: 1px solid var(--border);
     border-radius: 6px;
     padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: var(--input-bg);
+}
+
+.point-group-panel {
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    background: var(--surface);
+}
+
+.point-group-panel > summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 8px 10px;
+    font-weight: 600;
+    font-size: 12px;
+    border-bottom: 1px solid transparent;
+}
+
+.point-group-panel[open] > summary {
+    border-bottom-color: var(--border-subtle);
+}
+
+.point-group-list {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
     gap: 6px;
+    padding: 8px;
+}
+
+.point-type-picker {
+    position: relative;
+    min-width: 0;
+}
+
+.point-type-picker > summary {
+    list-style: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 8px;
     background: var(--input-bg);
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.point-type-picker-menu {
+    margin-top: 6px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px;
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 260px;
+    overflow: auto;
+}
+
+.point-type-option {
+    text-align: left;
+}
+
+.point-type-option.is-selected {
+    border-color: var(--accent);
+    color: var(--accent-strong);
 }
 
 .editor-layout {

@@ -366,6 +366,117 @@
         return Object.keys(values);
     }
 
+    function getGroupedPointTypes(sourceData = state.data, extraPointTypes = []) {
+        const pointTypes = getDefinedPointTypes(sourceData);
+        const known = new Set(pointTypes);
+        const pointsEntry = Array.isArray(sourceData)
+            ? sourceData.find(entry => entry?.type === "points")
+            : null;
+        const trackerGroups = Array.isArray(pointsEntry?.trackerGroups) ? pointsEntry.trackerGroups : [];
+
+        const assigned = new Set();
+        const groups = [];
+
+        trackerGroups.forEach((group, idx) => {
+            const name = String(group?.name || `Group ${idx + 1}`).trim() || `Group ${idx + 1}`;
+            const id = String(group?.id || `group${idx + 1}`).trim() || `group${idx + 1}`;
+            const rawTypes = Array.isArray(group?.pointTypes) ? group.pointTypes : [];
+            const cleanTypes = Array.from(new Set(rawTypes.map((type) => String(type || "").trim()).filter(Boolean)));
+            const visibleTypes = cleanTypes.filter((type) => known.has(type));
+            if (!visibleTypes.length) return;
+            visibleTypes.forEach((type) => assigned.add(type));
+            groups.push({
+                id,
+                name,
+                pointTypes: visibleTypes
+            });
+        });
+
+        const ungrouped = pointTypes.filter((type) => !assigned.has(type));
+        if (ungrouped.length) {
+            groups.push({
+                id: "__ungrouped",
+                name: "Ungrouped",
+                pointTypes: ungrouped
+            });
+        }
+
+        const extras = Array.from(new Set((extraPointTypes || []).map((type) => String(type || "").trim()).filter(Boolean)))
+            .filter((type) => !known.has(type));
+        if (extras.length) {
+            groups.push({
+                id: "__invalid",
+                name: "Invalid / Unknown",
+                pointTypes: extras
+            });
+        }
+
+        return groups;
+    }
+
+    function createGroupedPointTypePicker(currentValue, {
+        extraPointTypes = [],
+        onSelect = () => {}
+    } = {}) {
+        const picker = document.createElement("details");
+        picker.className = "point-type-picker";
+
+        const summary = document.createElement("summary");
+        summary.textContent = currentValue ? `Point Type: ${currentValue}` : "Select point type";
+        picker.appendChild(summary);
+
+        const menu = document.createElement("div");
+        menu.className = "point-type-picker-menu";
+        const groups = getGroupedPointTypes(state.data, [currentValue, ...extraPointTypes]);
+
+        if (!groups.length) {
+            const empty = document.createElement("div");
+            empty.className = "field-help";
+            empty.textContent = "No point types defined under type: points.";
+            menu.appendChild(empty);
+        } else {
+            groups.forEach((group, groupIndex) => {
+                const groupDetails = document.createElement("details");
+                groupDetails.className = "point-group-panel";
+                if (groupIndex === 0 || group.id === "__invalid") {
+                    groupDetails.open = true;
+                }
+
+                const groupSummary = document.createElement("summary");
+                groupSummary.textContent = `${group.name} (${group.pointTypes.length})`;
+                groupDetails.appendChild(groupSummary);
+
+                const list = document.createElement("div");
+                list.className = "point-group-list";
+
+                group.pointTypes.forEach((pointType) => {
+                    const btn = document.createElement("button");
+                    btn.type = "button";
+                    btn.className = "button-subtle point-type-option";
+                    if (pointType === currentValue) {
+                        btn.classList.add("is-selected");
+                    }
+                    btn.textContent = pointType;
+                    btn.addEventListener("click", () => {
+                        if (pointType === currentValue) {
+                            picker.open = false;
+                            return;
+                        }
+                        onSelect(pointType);
+                        picker.open = false;
+                    });
+                    list.appendChild(btn);
+                });
+
+                groupDetails.appendChild(list);
+                menu.appendChild(groupDetails);
+            });
+        }
+
+        picker.appendChild(menu);
+        return picker;
+    }
+
     function getDefinedSliderUnlockGroups(sourceData = state.data) {
         const pointsEntry = Array.isArray(sourceData)
             ? sourceData.find(entry => entry?.type === "points")
@@ -3597,21 +3708,8 @@
             const selectableChoices = existingChoices.length
                 ? [...new Set([...availablePointTypes, ...existingChoices])]
                 : availablePointTypes;
+            const selectedPointChoices = new Set(existingChoices);
             const pointChoiceCheckboxes = [];
-            selectableChoices.forEach((choice) => {
-                const row = document.createElement("label");
-                row.className = "checkbox-option";
-                const checkbox = document.createElement("input");
-                checkbox.type = "checkbox";
-                checkbox.value = choice;
-                checkbox.checked = existingChoices.includes(choice);
-                const text = document.createElement("span");
-                text.textContent = availablePointTypes.includes(choice) ? choice : `${choice} (invalid)`;
-                row.appendChild(checkbox);
-                row.appendChild(text);
-                pointChoicesInput.appendChild(row);
-                pointChoiceCheckboxes.push(checkbox);
-            });
             const existingValues = hasPointDropdownConfig
                 ? option.dynamicCost.values.map(val => Number(val))
                 : [];
@@ -3639,6 +3737,63 @@
                 requireUniqueInput.disabled = !enabled;
             };
 
+            const renderPointDropdownChoices = () => {
+                pointChoicesInput.innerHTML = "";
+                pointChoiceCheckboxes.length = 0;
+
+                const groupedChoices = getGroupedPointTypes(state.data, selectableChoices);
+                if (!groupedChoices.length) {
+                    const empty = document.createElement("div");
+                    empty.className = "field-help";
+                    empty.textContent = "No point types defined under type: points.";
+                    pointChoicesInput.appendChild(empty);
+                    return;
+                }
+
+                groupedChoices.forEach((group, groupIndex) => {
+                    const groupDetails = document.createElement("details");
+                    groupDetails.className = "point-group-panel";
+                    if (groupIndex === 0 || group.id === "__invalid") {
+                        groupDetails.open = true;
+                    }
+
+                    const summary = document.createElement("summary");
+                    summary.textContent = `${group.name} (${group.pointTypes.length})`;
+                    groupDetails.appendChild(summary);
+
+                    const list = document.createElement("div");
+                    list.className = "point-group-list";
+                    group.pointTypes.forEach((choice) => {
+                        const row = document.createElement("label");
+                        row.className = "checkbox-option";
+                        const checkbox = document.createElement("input");
+                        checkbox.type = "checkbox";
+                        checkbox.value = choice;
+                        checkbox.checked = selectedPointChoices.has(choice);
+                        checkbox.disabled = !pointDropdownCheckbox.checked;
+                        checkbox.addEventListener("change", () => {
+                            if (checkbox.checked) {
+                                selectedPointChoices.add(choice);
+                            } else {
+                                selectedPointChoices.delete(choice);
+                            }
+                            if (pointDropdownCheckbox.checked) {
+                                applyPointDropdownConfig(false);
+                            }
+                        });
+                        const text = document.createElement("span");
+                        text.textContent = choice;
+                        row.appendChild(checkbox);
+                        row.appendChild(text);
+                        list.appendChild(row);
+                        pointChoiceCheckboxes.push(checkbox);
+                    });
+
+                    groupDetails.appendChild(list);
+                    pointChoicesInput.appendChild(groupDetails);
+                });
+            };
+
             const applyPointDropdownConfig = (normalizeInputs = false) => {
                 if (!pointDropdownCheckbox.checked) {
                     if (isPointDropdownDynamicCost(option.dynamicCost)) {
@@ -3650,10 +3805,7 @@
                 }
 
                 syncPointDropdownInputsEnabled();
-                const choices = pointChoiceCheckboxes
-                    .filter((checkbox) => checkbox.checked)
-                    .map((checkbox) => checkbox.value.trim())
-                    .filter(Boolean);
+                const choices = Array.from(selectedPointChoices).map((choice) => choice.trim()).filter(Boolean);
                 const values = parseAmountCsv(pointAmountsInput.value);
                 if (normalizeInputs) {
                     pointAmountsInput.value = values.join(", ");
@@ -3673,12 +3825,6 @@
             };
 
             pointDropdownCheckbox.addEventListener("change", applyPointDropdownConfig);
-            pointChoiceCheckboxes.forEach((checkbox) => {
-                checkbox.addEventListener("change", () => {
-                    if (!pointDropdownCheckbox.checked) return;
-                    applyPointDropdownConfig(false);
-                });
-            });
             pointAmountsInput.addEventListener("input", () => {
                 if (!pointDropdownCheckbox.checked) return;
                 applyPointDropdownConfig(false);
@@ -3707,6 +3853,7 @@
                 pointDropdownField.appendChild(customDynamicCostHelp);
             }
             advancedBody.appendChild(pointDropdownField);
+            renderPointDropdownChoices();
             syncPointDropdownInputsEnabled();
 
             const attributeMultiplierField = document.createElement("div");
@@ -4623,17 +4770,24 @@
             const row = document.createElement("div");
             row.className = "cost-row";
 
-            const typeSelect = document.createElement("select");
-            const selectChoices = pointTypes.includes(pointType)
-                ? pointTypes
-                : [...pointTypes, pointType];
-            selectChoices.forEach((name) => {
-                const option = document.createElement("option");
-                option.value = name;
-                option.textContent = pointTypes.includes(name) ? name : `${name} (invalid)`;
-                typeSelect.appendChild(option);
+            const typePicker = createGroupedPointTypePicker(pointType, {
+                extraPointTypes: Object.keys(valueMap),
+                onSelect: (newName) => {
+                    const nextName = String(newName || "").trim();
+                    if (!nextName || nextName === pointType) {
+                        return;
+                    }
+                    if (Object.prototype.hasOwnProperty.call(valueMap, nextName)) {
+                        showEditorMessage(`Duplicate key "${nextName}"`, "warning", 4000);
+                        return;
+                    }
+                    const existingValue = valueMap[pointType];
+                    delete valueMap[pointType];
+                    valueMap[nextName] = existingValue;
+                    onChange(Object.keys(valueMap).length ? { ...valueMap } : null);
+                    renderPointMapEditor(container, valueMap, onChange);
+                }
             });
-            typeSelect.value = pointType;
 
             const valueInput = document.createElement("input");
             valueInput.type = "number";
@@ -4650,30 +4804,13 @@
                 onChange(Object.keys(valueMap).length ? { ...valueMap } : null);
             });
 
-            typeSelect.addEventListener("change", () => {
-                const newName = typeSelect.value.trim();
-                if (!newName || newName === pointType) {
-                    return;
-                }
-                if (Object.prototype.hasOwnProperty.call(valueMap, newName)) {
-                    showEditorMessage(`Duplicate key "${newName}"`, "warning", 4000);
-                    typeSelect.value = pointType;
-                    return;
-                }
-                const existingValue = valueMap[pointType];
-                delete valueMap[pointType];
-                valueMap[newName] = existingValue;
-                onChange(Object.keys(valueMap).length ? { ...valueMap } : null);
-                renderPointMapEditor(container, valueMap, onChange);
-            });
-
             removeBtn.addEventListener("click", () => {
                 delete valueMap[pointType];
                 onChange(Object.keys(valueMap).length ? { ...valueMap } : null);
                 renderPointMapEditor(container, valueMap, onChange);
             });
 
-            row.appendChild(typeSelect);
+            row.appendChild(typePicker);
             row.appendChild(valueInput);
             row.appendChild(removeBtn);
             container.appendChild(row);

@@ -665,6 +665,40 @@ function evaluateExpressionAgainstPoints(expression) {
     }
 }
 
+function getConfiguredPointRange(pointType) {
+    const type = String(pointType || "").trim();
+    if (!type) return null;
+    const range = attributeRanges?.[type] || originalAttributeRanges?.[type];
+    if (!range || typeof range !== "object") return null;
+    const minRaw = Number(range.min);
+    const maxRaw = Number(range.max);
+    const hasMin = Number.isFinite(minRaw);
+    const hasMax = Number.isFinite(maxRaw);
+    if (!hasMin && !hasMax) return null;
+    return {
+        min: hasMin ? minRaw : null,
+        max: hasMax ? maxRaw : null
+    };
+}
+
+function clampPointToConfiguredRange(pointType, valueRaw) {
+    const value = Number(valueRaw);
+    if (!Number.isFinite(value)) return valueRaw;
+    const range = getConfiguredPointRange(pointType);
+    if (!range) return value;
+    if (Number.isFinite(range.min) && Number.isFinite(range.max) && range.max < range.min) {
+        return range.min;
+    }
+    let next = value;
+    if (Number.isFinite(range.min)) {
+        next = Math.max(range.min, next);
+    }
+    if (Number.isFinite(range.max)) {
+        next = Math.min(range.max, next);
+    }
+    return next;
+}
+
 function recomputeFormulaPointValues() {
     if (!pointFormulaDefinitions || typeof pointFormulaDefinitions !== "object") return;
 
@@ -2073,20 +2107,22 @@ function applyDynamicCosts() {
     // Recompute formula-based point pools (e.g., Free Skill Points) while preserving spent deltas.
     recomputeFormulaPointValues();
 
-    // --- Reset all dynamic resistance/weakness points to their original values before applying new effects ---
-    // Find all point types affected by dynamicCost (e.g., Fire, Frost, etc.)
+    // --- Reset all point types affected by point-targeted dynamic dropdowns ---
+    // Use all option definitions (not just active selections), so deselecting an option
+    // properly restores previously adjusted point types to their base values.
     const dynamicPointTypes = new Set();
-    Object.entries(dynamicSelections).forEach(([optionId, selectedChoices]) => {
-        const opt = findOptionById(optionId);
-        const config = opt?.dynamicCost;
-        if (!config || config.target !== "points") return;
-        config.choices.forEach(choice => {
-            if (originalPoints.hasOwnProperty(choice)) {
-                dynamicPointTypes.add(choice);
-            }
+    (categories || []).forEach((cat) => {
+        forEachCategoryOption(cat, (opt) => {
+            const config = opt?.dynamicCost;
+            if (!config || config.target !== "points" || !Array.isArray(config.choices)) return;
+            config.choices.forEach((choice) => {
+                if (originalPoints.hasOwnProperty(choice)) {
+                    dynamicPointTypes.add(choice);
+                }
+            });
         });
     });
-    // Reset these points to their original values
+    // Reset these points to their original values before re-applying active selections.
     dynamicPointTypes.forEach(type => {
         points[type] = originalPoints[type];
     });
@@ -2211,6 +2247,7 @@ function applyDynamicCosts() {
                 const evalFunc = new Function("points", `return ${value}`);
                 const result = evalFunc(points);
                 points[choiceName] += Number(result) || 0;
+                points[choiceName] = clampPointToConfiguredRange(choiceName, points[choiceName]);
             } catch (err) {
                 console.warn(`Failed to evaluate dynamic formula for ${choiceName}:`, err);
             }
@@ -2219,6 +2256,7 @@ function applyDynamicCosts() {
         const numeric = Number.parseInt(value, 10);
         if (Number.isFinite(numeric)) {
             points[choiceName] += numeric;
+            points[choiceName] = clampPointToConfiguredRange(choiceName, points[choiceName]);
         }
     });
 }
