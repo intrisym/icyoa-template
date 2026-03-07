@@ -1,6 +1,6 @@
 (function () {
     const CORE_TYPES_ORDER = ["title", "description", "headerImage", "points"];
-    const BASE_OPTION_KEYS = new Set(["id", "label", "description", "image", "inputType", "inputLabel", "cost", "maxSelections", "countsAsOneSelection", "prerequisites", "conflictsWith", "discounts", "discountGrants", "dynamicCost", "attributeMultipliers", "sliderPointType", "sliderBaseFormula"]);
+    const BASE_OPTION_KEYS = new Set(["id", "label", "description", "image", "inputType", "inputLabel", "cost", "maxSelections", "countsAsOneSelection", "prerequisites", "conflictsWith", "discounts", "discountGrants", "dynamicCost", "attributeMultipliers", "sliderPointType", "sliderBaseFormula", "sliderSoftCapFormula", "sliderUnlockGroup"]);
 
     const state = {
         data: [],
@@ -365,6 +365,47 @@
         return Object.keys(values);
     }
 
+    function getDefinedSliderUnlockGroups(sourceData = state.data) {
+        const pointsEntry = Array.isArray(sourceData)
+            ? sourceData.find(entry => entry?.type === "points")
+            : null;
+        const groups = Array.isArray(pointsEntry?.sliderUnlockGroups) ? pointsEntry.sliderUnlockGroups : [];
+        return groups
+            .map((group, idx) => {
+                const fallbackId = `sliderUnlockGroup${idx + 1}`;
+                const id = String(group?.id || fallbackId).trim() || fallbackId;
+                const name = String(group?.name || id).trim() || id;
+                return { id, name };
+            })
+            .filter(group => group.id);
+    }
+
+    function forEachEditorOption(callback) {
+        if (typeof callback !== "function") return;
+        state.data.forEach((entry) => {
+            if (!entry || entry.type) return;
+            (entry.options || []).forEach((option, optionIndex) => {
+                callback(option, { category: entry, subcategory: null, optionIndex });
+            });
+            walkEditorSubcategories(entry.subcategories || [], (subcat) => {
+                (subcat.options || []).forEach((option, optionIndex) => {
+                    callback(option, { category: entry, subcategory: subcat, optionIndex });
+                });
+            });
+        });
+    }
+
+    function replaceSliderUnlockGroupReference(oldId, newId) {
+        const prev = String(oldId || "").trim();
+        const next = String(newId || "").trim();
+        if (!prev || !next || prev === next) return;
+        forEachEditorOption((option) => {
+            if (String(option?.sliderUnlockGroup || "").trim() === prev) {
+                option.sliderUnlockGroup = next;
+            }
+        });
+    }
+
     function validateCostPointTypesOrThrow(sourceData) {
         const pointTypes = getDefinedPointTypes(sourceData);
         if (!pointTypes.length) {
@@ -519,6 +560,53 @@
         }
     }
 
+    function validateSliderUnlockGroupsOrThrow(sourceData) {
+        const pointsEntry = Array.isArray(sourceData)
+            ? sourceData.find(entry => entry?.type === "points")
+            : null;
+        const groups = Array.isArray(pointsEntry?.sliderUnlockGroups) ? pointsEntry.sliderUnlockGroups : [];
+        const knownGroupIds = new Set(
+            groups.map((group, idx) => String(group?.id || `sliderUnlockGroup${idx + 1}`).trim()).filter(Boolean)
+        );
+
+        const invalidRefs = [];
+        const checkOption = (opt, pathLabel) => {
+            const groupId = String(opt?.sliderUnlockGroup || "").trim();
+            if (!groupId) return;
+            if (!knownGroupIds.has(groupId)) {
+                invalidRefs.push(`${pathLabel}: "${groupId}"`);
+            }
+        };
+
+        const walkSubcats = (subcategories, parentPath) => {
+            if (!Array.isArray(subcategories)) return;
+            subcategories.forEach((subcat, subIdx) => {
+                const subPath = `${parentPath} > Subcategory "${subcat?.name || `#${subIdx + 1}`}"`;
+                (subcat?.options || []).forEach((opt, optIdx) => {
+                    const optLabel = opt?.id || opt?.label || `#${optIdx + 1}`;
+                    checkOption(opt, `${subPath} > Option "${optLabel}".sliderUnlockGroup`);
+                });
+                walkSubcats(subcat?.subcategories || [], subPath);
+            });
+        };
+
+        (sourceData || []).forEach((entry, catIdx) => {
+            if (!entry || entry.type) return;
+            const catPath = `Category "${entry?.name || `#${catIdx + 1}`}"`;
+            (entry?.options || []).forEach((opt, optIdx) => {
+                const optLabel = opt?.id || opt?.label || `#${optIdx + 1}`;
+                checkOption(opt, `${catPath} > Option "${optLabel}".sliderUnlockGroup`);
+            });
+            walkSubcats(entry?.subcategories || [], catPath);
+        });
+
+        if (invalidRefs.length) {
+            throw new Error(
+                `Unknown slider unlock group reference(s):\n- ${invalidRefs.join("\n- ")}`
+            );
+        }
+    }
+
     function normalizeIdList(value) {
         if (!value) return [];
         const raw = Array.isArray(value) ? value : String(value).split(/[,\n]/g);
@@ -652,6 +740,14 @@
             if (id === selfId && selfId) warnings.push("Incompatible option list contains this option itself.");
             if (!allIds.has(id)) warnings.push(`Incompatible option ID "${id}" does not exist.`);
         });
+
+        if (String(option?.inputType || "").trim().toLowerCase() === "slider") {
+            const knownUnlockGroups = new Set(getDefinedSliderUnlockGroups().map(group => group.id));
+            const unlockGroupId = String(option?.sliderUnlockGroup || "").trim();
+            if (unlockGroupId && !knownUnlockGroups.has(unlockGroupId)) {
+                warnings.push(`Slider unlock group "${unlockGroupId}" does not exist.`);
+            }
+        }
 
         const rules = Array.isArray(option?.discounts) ? option.discounts : [];
         rules.forEach((rule, index) => {
@@ -1250,13 +1346,15 @@
             allowNegative: [],
             attributeRanges: {},
             formulas: {},
-            trackerGroups: []
+            trackerGroups: [],
+            sliderUnlockGroups: []
         })).entry;
         if (!pointsEntry.values) pointsEntry.values = {};
         if (!Array.isArray(pointsEntry.allowNegative)) pointsEntry.allowNegative = [];
         if (!pointsEntry.attributeRanges) pointsEntry.attributeRanges = {};
         if (!pointsEntry.formulas || typeof pointsEntry.formulas !== "object") pointsEntry.formulas = {};
         if (!Array.isArray(pointsEntry.trackerGroups)) pointsEntry.trackerGroups = [];
+        if (!Array.isArray(pointsEntry.sliderUnlockGroups)) pointsEntry.sliderUnlockGroups = [];
         fragment.appendChild(renderPointsSection(pointsEntry));
 
         const backpackEntry = ensureEntry("backpack", () => ({
@@ -1634,6 +1732,162 @@
             schedulePreviewUpdate();
         });
         body.appendChild(addFormulaBtn);
+
+        const sliderUnlockGroupsHeading = document.createElement("div");
+        sliderUnlockGroupsHeading.className = "subheading";
+        sliderUnlockGroupsHeading.textContent = "Slider unlock groups";
+        body.appendChild(sliderUnlockGroupsHeading);
+
+        const sliderUnlockGroupsHelp = document.createElement("div");
+        sliderUnlockGroupsHelp.className = "field-help";
+        sliderUnlockGroupsHelp.textContent = "Use these groups to limit how many sliders can bypass a soft cap. Slot formulas can use point names (e.g. floor(CON/5)+1).";
+        body.appendChild(sliderUnlockGroupsHelp);
+
+        const sliderUnlockGroupsContainer = document.createElement("div");
+        sliderUnlockGroupsContainer.className = "list-stack";
+        const usedGroupIds = new Set();
+        (pointsEntry.sliderUnlockGroups || []).forEach((group, groupIndex) => {
+            if (!group || typeof group !== "object") {
+                group = {};
+                pointsEntry.sliderUnlockGroups[groupIndex] = group;
+            }
+
+            const defaultId = `sliderUnlockGroup${groupIndex + 1}`;
+            let normalizedId = String(group.id || defaultId).trim() || defaultId;
+            while (usedGroupIds.has(normalizedId)) {
+                normalizedId = `${normalizedId}_copy`;
+            }
+            usedGroupIds.add(normalizedId);
+            group.id = normalizedId;
+            if (typeof group.name !== "string") group.name = "";
+            if (typeof group.slotsFormula !== "string" || !group.slotsFormula.trim()) {
+                group.slotsFormula = "0";
+            }
+
+            const card = document.createElement("div");
+            card.className = "discount-rule-card";
+
+            const header = document.createElement("div");
+            header.className = "discount-rule-header";
+            const title = document.createElement("strong");
+            title.textContent = group.name?.trim() ? group.name.trim() : group.id;
+            const removeBtn = document.createElement("button");
+            removeBtn.type = "button";
+            removeBtn.className = "button-icon danger";
+            removeBtn.textContent = "✕";
+            removeBtn.title = "Delete unlock group";
+            removeBtn.addEventListener("click", () => {
+                const removedId = group.id;
+                pointsEntry.sliderUnlockGroups.splice(groupIndex, 1);
+                forEachEditorOption((option) => {
+                    if (String(option?.sliderUnlockGroup || "").trim() === removedId) {
+                        delete option.sliderUnlockGroup;
+                    }
+                });
+                renderGlobalSettings();
+                renderCategories();
+                schedulePreviewUpdate();
+            });
+            header.appendChild(title);
+            header.appendChild(removeBtn);
+            card.appendChild(header);
+
+            const idRow = document.createElement("div");
+            idRow.className = "field";
+            const idLabel = document.createElement("label");
+            idLabel.textContent = "Group ID";
+            const idInput = document.createElement("input");
+            idInput.type = "text";
+            idInput.value = group.id;
+            idInput.placeholder = "sliderUnlockGroup1";
+            idInput.addEventListener("input", () => {
+                const oldId = group.id;
+                const nextId = idInput.value.trim();
+                if (!nextId) return;
+                const duplicate = (pointsEntry.sliderUnlockGroups || []).some((candidate, idx) =>
+                    idx !== groupIndex && String(candidate?.id || "").trim() === nextId
+                );
+                if (duplicate) {
+                    idInput.classList.add("field-error");
+                    return;
+                }
+                idInput.classList.remove("field-error");
+                group.id = nextId;
+                title.textContent = group.name?.trim() ? group.name.trim() : group.id;
+                replaceSliderUnlockGroupReference(oldId, nextId);
+                renderCategories();
+                schedulePreviewUpdate();
+            });
+            idRow.appendChild(idLabel);
+            idRow.appendChild(idInput);
+            card.appendChild(idRow);
+
+            const nameRow = document.createElement("div");
+            nameRow.className = "field";
+            const nameLabel = document.createElement("label");
+            nameLabel.textContent = "Group name";
+            const nameInput = document.createElement("input");
+            nameInput.type = "text";
+            nameInput.value = group.name || "";
+            nameInput.placeholder = "e.g. Craft Skills";
+            nameInput.addEventListener("input", () => {
+                group.name = nameInput.value;
+                title.textContent = group.name?.trim() ? group.name.trim() : group.id;
+                schedulePreviewUpdate();
+            });
+            nameRow.appendChild(nameLabel);
+            nameRow.appendChild(nameInput);
+            card.appendChild(nameRow);
+
+            const slotsRow = document.createElement("div");
+            slotsRow.className = "field";
+            const slotsLabel = document.createElement("label");
+            slotsLabel.textContent = "Unlock slots formula";
+            const slotsInput = document.createElement("input");
+            slotsInput.type = "text";
+            slotsInput.value = group.slotsFormula || "0";
+            slotsInput.placeholder = "e.g. floor(CON/5)+1";
+            slotsInput.addEventListener("input", () => {
+                const nextFormula = slotsInput.value.trim();
+                group.slotsFormula = nextFormula || "0";
+                schedulePreviewUpdate();
+            });
+            const slotsHelp = document.createElement("div");
+            slotsHelp.className = "field-help";
+            slotsHelp.textContent = "Result is rounded down and clamped to 0.";
+            slotsRow.appendChild(slotsLabel);
+            slotsRow.appendChild(slotsInput);
+            slotsRow.appendChild(slotsHelp);
+            card.appendChild(slotsRow);
+
+            sliderUnlockGroupsContainer.appendChild(card);
+        });
+        body.appendChild(sliderUnlockGroupsContainer);
+
+        const addSliderUnlockGroupBtn = document.createElement("button");
+        addSliderUnlockGroupBtn.type = "button";
+        addSliderUnlockGroupBtn.className = "button-subtle";
+        addSliderUnlockGroupBtn.textContent = "Add slider unlock group";
+        addSliderUnlockGroupBtn.addEventListener("click", () => {
+            if (!Array.isArray(pointsEntry.sliderUnlockGroups)) {
+                pointsEntry.sliderUnlockGroups = [];
+            }
+            let suffix = pointsEntry.sliderUnlockGroups.length + 1;
+            let candidate = `sliderUnlockGroup${suffix}`;
+            const existingIds = new Set(pointsEntry.sliderUnlockGroups.map(group => String(group?.id || "").trim()).filter(Boolean));
+            while (existingIds.has(candidate)) {
+                suffix += 1;
+                candidate = `sliderUnlockGroup${suffix}`;
+            }
+            pointsEntry.sliderUnlockGroups.push({
+                id: candidate,
+                name: "",
+                slotsFormula: "0"
+            });
+            renderGlobalSettings();
+            schedulePreviewUpdate();
+        });
+        body.appendChild(addSliderUnlockGroupBtn);
 
         const trackerGroupsHeading = document.createElement("div");
         trackerGroupsHeading.className = "subheading";
@@ -3154,10 +3408,77 @@
             sliderBaseFormulaField.appendChild(sliderBaseFormulaHelp);
             advancedBody.appendChild(sliderBaseFormulaField);
 
+            const sliderSoftCapFormulaField = document.createElement("div");
+            sliderSoftCapFormulaField.className = "field";
+            const sliderSoftCapFormulaLabel = document.createElement("label");
+            sliderSoftCapFormulaLabel.textContent = "Slider soft cap formula (optional)";
+            const sliderSoftCapFormulaInput = document.createElement("input");
+            sliderSoftCapFormulaInput.type = "text";
+            sliderSoftCapFormulaInput.value = option.sliderSoftCapFormula || "";
+            sliderSoftCapFormulaInput.placeholder = "e.g. 10 + CON";
+            sliderSoftCapFormulaInput.addEventListener("input", () => {
+                const nextFormula = sliderSoftCapFormulaInput.value.trim();
+                if (nextFormula) {
+                    option.sliderSoftCapFormula = nextFormula;
+                } else {
+                    delete option.sliderSoftCapFormula;
+                }
+                schedulePreviewUpdate();
+            });
+            const sliderSoftCapFormulaHelp = document.createElement("div");
+            sliderSoftCapFormulaHelp.className = "field-help";
+            sliderSoftCapFormulaHelp.textContent = "Sets a dynamic max value. If an unlock group is selected, this cap is ignored only when unlocked.";
+            sliderSoftCapFormulaField.appendChild(sliderSoftCapFormulaLabel);
+            sliderSoftCapFormulaField.appendChild(sliderSoftCapFormulaInput);
+            sliderSoftCapFormulaField.appendChild(sliderSoftCapFormulaHelp);
+            advancedBody.appendChild(sliderSoftCapFormulaField);
+
+            const sliderUnlockGroupField = document.createElement("div");
+            sliderUnlockGroupField.className = "field";
+            const sliderUnlockGroupLabel = document.createElement("label");
+            sliderUnlockGroupLabel.textContent = "Slider unlock group (optional)";
+            const sliderUnlockGroupSelect = document.createElement("select");
+            const sliderUnlockGroupNone = document.createElement("option");
+            sliderUnlockGroupNone.value = "";
+            sliderUnlockGroupNone.textContent = "None";
+            sliderUnlockGroupSelect.appendChild(sliderUnlockGroupNone);
+            const sliderUnlockGroups = getDefinedSliderUnlockGroups();
+            sliderUnlockGroups.forEach((group) => {
+                const optEl = document.createElement("option");
+                optEl.value = group.id;
+                optEl.textContent = `${group.name} (${group.id})`;
+                sliderUnlockGroupSelect.appendChild(optEl);
+            });
+            if (option.sliderUnlockGroup && !sliderUnlockGroups.some(group => group.id === option.sliderUnlockGroup)) {
+                const invalidOpt = document.createElement("option");
+                invalidOpt.value = option.sliderUnlockGroup;
+                invalidOpt.textContent = `${option.sliderUnlockGroup} (invalid)`;
+                sliderUnlockGroupSelect.appendChild(invalidOpt);
+            }
+            sliderUnlockGroupSelect.value = option.sliderUnlockGroup || "";
+            sliderUnlockGroupSelect.addEventListener("change", () => {
+                const nextGroup = sliderUnlockGroupSelect.value.trim();
+                if (nextGroup) {
+                    option.sliderUnlockGroup = nextGroup;
+                } else {
+                    delete option.sliderUnlockGroup;
+                }
+                schedulePreviewUpdate();
+            });
+            const sliderUnlockGroupHelp = document.createElement("div");
+            sliderUnlockGroupHelp.className = "field-help";
+            sliderUnlockGroupHelp.textContent = "Choose a global unlock group to limit how many sliders can bypass their soft cap.";
+            sliderUnlockGroupField.appendChild(sliderUnlockGroupLabel);
+            sliderUnlockGroupField.appendChild(sliderUnlockGroupSelect);
+            sliderUnlockGroupField.appendChild(sliderUnlockGroupHelp);
+            advancedBody.appendChild(sliderUnlockGroupField);
+
             const syncSliderFormulaInputEnabled = () => {
                 const isSlider = inputTypeInput.value.trim().toLowerCase() === "slider";
                 sliderPointTypeSelect.disabled = !isSlider;
                 sliderBaseFormulaInput.disabled = !isSlider;
+                sliderSoftCapFormulaInput.disabled = !isSlider;
+                sliderUnlockGroupSelect.disabled = !isSlider;
             };
             syncSliderFormulaInputEnabled();
 
@@ -4175,6 +4496,7 @@
             normalizeLegacyRequiresFields();
             regenerateAllOptionIdsAndReferences();
             validateOptionReferencesOrThrow(state.data);
+            validateSliderUnlockGroupsOrThrow(state.data);
             renderGlobalSettings();
             renderCategories();
             schedulePreviewUpdate();
@@ -4204,6 +4526,7 @@
                 normalizeLegacyRequiresFields();
                 regenerateAllOptionIdsAndReferences();
                 validateOptionReferencesOrThrow(state.data);
+                validateSliderUnlockGroupsOrThrow(state.data);
                 renderGlobalSettings();
                 renderCategories();
                 schedulePreviewUpdate();

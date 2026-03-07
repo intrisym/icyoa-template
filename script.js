@@ -17,6 +17,8 @@ let allowNegativeTypes = new Set();
 const dynamicSelections = {};
 const formulaPointBaseValues = {};
 let pointFormulaDefinitions = {};
+let sliderUnlockGroupDefinitions = [];
+const sliderUnlockSelections = {};
 let attributeRanges = {}; // Will be updated by dynamic effects
 let originalAttributeRanges = {}; // Stores the initial, base ranges from input.json
 const subcategoryDiscountSelections = {};
@@ -262,6 +264,8 @@ function resetGlobalState() {
     categories = [];
     pointsTrackerGroupDefinitions = [];
     clearObject(pointsTrackerGroupVisibility);
+    sliderUnlockGroupDefinitions = [];
+    clearObject(sliderUnlockSelections);
     selectionHistory.length = 0;
 
     originalPoints = {};
@@ -576,9 +580,18 @@ function getSliderTypes(costPerPoint = {}) {
 function evaluateExpressionAgainstPoints(expression) {
     if (typeof expression !== "string" || !expression.trim()) return null;
     try {
+        const helpers = {
+            min: Math.min,
+            max: Math.max,
+            floor: Math.floor,
+            ceil: Math.ceil,
+            round: Math.round,
+            abs: Math.abs,
+            pow: Math.pow
+        };
         // eslint-disable-next-line no-new-func
-        const evalFn = new Function("ctx", "points", "selectedOptions", "attributeSliderValues", "Math", `with (ctx) { return (${expression}); }`);
-        const result = evalFn(points, points, selectedOptions, attributeSliderValues, Math);
+        const evalFn = new Function("ctx", "points", "selectedOptions", "attributeSliderValues", "Math", "helpers", `with (ctx) { with (helpers) { return (${expression}); } }`);
+        const result = evalFn(points, points, selectedOptions, attributeSliderValues, Math, helpers);
         return Number.isFinite(Number(result)) ? Number(result) : null;
     } catch (err) {
         console.warn("Failed to evaluate expression:", expression, err);
@@ -641,6 +654,195 @@ function recomputeFormulaSliderPointValues() {
             sliderBonusValues[bonusKey] = value - base;
             attributeSliderValues[opt.id] = value;
             points[sliderPointType] = value;
+        });
+    });
+}
+
+function normalizeSliderUnlockGroups(rawGroups) {
+    if (!Array.isArray(rawGroups)) return [];
+    const normalized = [];
+    const usedIds = new Set();
+    rawGroups.forEach((group, idx) => {
+        if (!group || typeof group !== "object") return;
+        const fallbackId = `sliderUnlockGroup${idx + 1}`;
+        let id = String(group.id || fallbackId).trim() || fallbackId;
+        if (usedIds.has(id)) {
+            let suffix = 2;
+            let candidate = `${id}${suffix}`;
+            while (usedIds.has(candidate)) {
+                suffix += 1;
+                candidate = `${id}${suffix}`;
+            }
+            id = candidate;
+        }
+        usedIds.add(id);
+        const name = String(group.name || id).trim() || id;
+        const slotsFormula = typeof group.slotsFormula === "string" && group.slotsFormula.trim()
+            ? group.slotsFormula.trim()
+            : "0";
+        normalized.push({
+            id,
+            name,
+            slotsFormula
+        });
+    });
+    return normalized;
+}
+
+function getSliderUnlockGroupDefinition(groupId) {
+    if (typeof groupId !== "string" || !groupId.trim()) return null;
+    const id = groupId.trim();
+    return sliderUnlockGroupDefinitions.find(group => group.id === id) || null;
+}
+
+function evaluateSliderUnlockSlots(groupDef) {
+    if (!groupDef) return 0;
+    const raw = evaluateExpressionAgainstPoints(groupDef.slotsFormula);
+    if (!Number.isFinite(raw)) return 0;
+    return Math.max(0, Math.floor(raw));
+}
+
+function getOptionIdsForSliderUnlockGroup(groupId) {
+    const ids = new Set();
+    if (!groupId) return ids;
+    categories.forEach((cat) => {
+        forEachCategoryOption(cat, (opt) => {
+            if (!opt || opt.inputType !== "slider") return;
+            if (String(opt.sliderUnlockGroup || "").trim() !== groupId) return;
+            if (opt.id) ids.add(opt.id);
+        });
+    });
+    return ids;
+}
+
+function sanitizeSliderUnlockSelections() {
+    const validGroupIds = new Set(sliderUnlockGroupDefinitions.map(group => group.id));
+    Object.keys(sliderUnlockSelections).forEach((groupId) => {
+        if (!validGroupIds.has(groupId)) {
+            delete sliderUnlockSelections[groupId];
+            return;
+        }
+        const allowedOptionIds = getOptionIdsForSliderUnlockGroup(groupId);
+        const deduped = Array.isArray(sliderUnlockSelections[groupId])
+            ? Array.from(new Set(sliderUnlockSelections[groupId].map(id => String(id || "").trim()).filter(Boolean)))
+            : [];
+        const filtered = deduped.filter(id => allowedOptionIds.has(id));
+        const maxSlots = evaluateSliderUnlockSlots(getSliderUnlockGroupDefinition(groupId));
+        sliderUnlockSelections[groupId] = filtered.slice(0, maxSlots);
+        if (!sliderUnlockSelections[groupId].length) {
+            delete sliderUnlockSelections[groupId];
+        }
+    });
+}
+
+function getSliderConstraintState(opt) {
+    const { currencyType, attributeType } = getSliderTypes(opt.costPerPoint || {});
+    const sliderPointType = opt.sliderPointType || attributeType;
+    const attrName = sliderPointType || attributeType;
+    const rawMin = opt.min ?? attributeRanges[attrName]?.min ?? 0;
+    const effectiveMin = Number.isFinite(Number(rawMin)) ? Number(rawMin) : 0;
+    const rawMax = attributeRanges[attrName]?.max ?? opt.max ?? 40;
+    const unclampedMax = Number.isFinite(Number(rawMax)) ? Number(rawMax) : Math.max(effectiveMin, 40);
+    const effectiveMaxRange = Math.max(effectiveMin, unclampedMax);
+
+    const sliderUsesBaseFormula = typeof opt.sliderBaseFormula === "string" && opt.sliderBaseFormula.trim().length > 0;
+    const baseFromFormulaRaw = sliderUsesBaseFormula ? evaluateExpressionAgainstPoints(opt.sliderBaseFormula) : null;
+    const baseFromFormula = Number.isFinite(baseFromFormulaRaw)
+        ? Math.max(effectiveMin, Math.min(effectiveMaxRange, Math.round(baseFromFormulaRaw)))
+        : effectiveMin;
+    const minWithFormula = sliderUsesBaseFormula ? Math.max(effectiveMin, baseFromFormula) : effectiveMin;
+
+    let capMax = effectiveMaxRange;
+    let softCap = null;
+    if (typeof opt.sliderSoftCapFormula === "string" && opt.sliderSoftCapFormula.trim()) {
+        const softRaw = evaluateExpressionAgainstPoints(opt.sliderSoftCapFormula);
+        if (Number.isFinite(softRaw)) {
+            softCap = Math.max(minWithFormula, Math.min(effectiveMaxRange, Math.round(softRaw)));
+            capMax = Math.min(capMax, softCap);
+        }
+    }
+
+    const unlockGroupId = typeof opt.sliderUnlockGroup === "string" ? opt.sliderUnlockGroup.trim() : "";
+    const unlockGroup = unlockGroupId ? getSliderUnlockGroupDefinition(unlockGroupId) : null;
+    let unlocked = false;
+    let unlockSlots = 0;
+    let assignedCount = 0;
+
+    if (unlockGroup) {
+        unlockSlots = evaluateSliderUnlockSlots(unlockGroup);
+        const assigned = Array.isArray(sliderUnlockSelections[unlockGroup.id]) ? sliderUnlockSelections[unlockGroup.id] : [];
+        assignedCount = assigned.length;
+        unlocked = assigned.includes(opt.id);
+        if (softCap !== null && unlocked) {
+            capMax = effectiveMaxRange;
+        }
+    }
+
+    if (capMax < minWithFormula) {
+        capMax = minWithFormula;
+    }
+
+    return {
+        currencyType,
+        attributeType,
+        sliderPointType,
+        effectiveMin,
+        effectiveMax: capMax,
+        effectiveMaxRange,
+        minWithFormula,
+        sliderUsesBaseFormula,
+        baseFromFormula,
+        unlockGroup,
+        unlockSlots,
+        assignedCount,
+        unlocked
+    };
+}
+
+function applySliderValueState(opt, nextValue, constraintState) {
+    if (!opt) return;
+    const state = constraintState || getSliderConstraintState(opt);
+    const bounded = Math.max(state.minWithFormula, Math.min(state.effectiveMax, Number(nextValue)));
+    const value = Number.isFinite(bounded) ? bounded : state.minWithFormula;
+    attributeSliderValues[opt.id] = value;
+    if (state.sliderUsesBaseFormula) {
+        const bonusKey = `${opt.id}__bonus`;
+        sliderBonusValues[bonusKey] = Math.max(0, value - state.baseFromFormula);
+    }
+    if (state.attributeType) {
+        attributeSliderValues[state.attributeType] = value;
+    }
+    if (state.sliderPointType) {
+        points[state.sliderPointType] = value;
+    }
+}
+
+function applySliderDeltaCost(opt, previousValue, nextValue, currencyType) {
+    const oldVal = Number(previousValue);
+    const newVal = Number(nextValue);
+    if (!Number.isFinite(oldVal) || !Number.isFinite(newVal) || oldVal === newVal) return;
+    if (!currencyType) return;
+    const costPerPoint = Number(opt?.costPerPoint?.[currencyType] || 0);
+    if (!Number.isFinite(costPerPoint) || costPerPoint === 0) return;
+    if (!Object.prototype.hasOwnProperty.call(points, currencyType) || !Number.isFinite(Number(points[currencyType]))) {
+        points[currencyType] = 0;
+    }
+    points[currencyType] -= costPerPoint * (newVal - oldVal);
+}
+
+function enforceSliderConstraints() {
+    if (!Array.isArray(categories)) return;
+    categories.forEach((cat) => {
+        forEachCategoryOption(cat, (opt) => {
+            if (!opt || opt.inputType !== "slider") return;
+            const state = getSliderConstraintState(opt);
+            const currentRaw = Number(attributeSliderValues[opt.id]);
+            const current = Number.isFinite(currentRaw) ? currentRaw : state.minWithFormula;
+            const bounded = Math.max(state.minWithFormula, Math.min(state.effectiveMax, current));
+            if (bounded < current) {
+                applySliderDeltaCost(opt, current, bounded, state.currencyType);
+            }
+            applySliderValueState(opt, bounded, state);
         });
     });
 }
@@ -828,6 +1030,7 @@ document.getElementById("resetBtn").onclick = () => {
     for (let key in categoryDiscountSelections) delete categoryDiscountSelections[key];
     for (let key in optionGrantDiscountSelections) delete optionGrantDiscountSelections[key];
     for (let key in formulaPointBaseValues) delete formulaPointBaseValues[key];
+    for (let key in sliderUnlockSelections) delete sliderUnlockSelections[key];
 
 
     // Reset points and attribute ranges to their original states from input.json
@@ -866,6 +1069,7 @@ modalConfirmBtn.onclick = () => {
         for (let key in categoryDiscountSelections) delete categoryDiscountSelections[key];
         for (let key in optionGrantDiscountSelections) delete optionGrantDiscountSelections[key];
         for (let key in formulaPointBaseValues) delete formulaPointBaseValues[key];
+        for (let key in sliderUnlockSelections) delete sliderUnlockSelections[key];
 
         // Apply imported states
         points = {
@@ -937,10 +1141,15 @@ modalConfirmBtn.onclick = () => {
                 formulaPointBaseValues[key] = numeric;
             }
         });
+        Object.entries(importedData.sliderUnlockSelections || {}).forEach(([groupId, optionIds]) => {
+            if (!Array.isArray(optionIds)) return;
+            sliderUnlockSelections[groupId] = Array.from(new Set(optionIds.map(id => String(id || "").trim()).filter(Boolean)));
+        });
 
         // Reset attribute ranges to original before re-applying dynamic effects
         attributeRanges = JSON.parse(JSON.stringify(originalAttributeRanges));
 
+        sanitizeSliderUnlockSelections();
         applyDynamicCosts(); // Evaluate formulas after initial points are set and ranges reset
         updatePointsDisplay();
         renderAccordion();
@@ -969,6 +1178,7 @@ function openModal(mode) {
             categoryDiscountSelections,
             optionGrantDiscountSelections,
             formulaPointBaseValues,
+            sliderUnlockSelections,
 
         }, null, 2);
         modalConfirmBtn.style.display = "none";
@@ -1224,6 +1434,9 @@ function validateInputJson(data, pointsEntry) {
 
     // Validate slider attributes against defined points
     const knownAttributes = Object.keys(pointsEntry?.values || {});
+    const knownSliderUnlockGroups = new Set(
+        normalizeSliderUnlockGroups(pointsEntry?.sliderUnlockGroups).map(group => group.id)
+    );
     for (const cat of data.filter(e => e.name)) { // Filter for actual categories
         forEachCategoryOption(cat, opt => {
             if (opt.inputType === "slider") {
@@ -1238,6 +1451,10 @@ function validateInputJson(data, pointsEntry) {
                     errors.push(`Slider option "${opt.id}" references unknown point type "${implicitAttr}" in its costPerPoint.`);
                 }
 
+                const unlockGroupId = typeof opt.sliderUnlockGroup === "string" ? opt.sliderUnlockGroup.trim() : "";
+                if (unlockGroupId && !knownSliderUnlockGroups.has(unlockGroupId)) {
+                    errors.push(`Slider option "${opt.id}" references unknown sliderUnlockGroup "${unlockGroupId}".`);
+                }
             }
         });
     }
@@ -1404,6 +1621,8 @@ function applyCyoaData(rawData, {
         points = {
             ...originalPoints
         };
+        sliderUnlockGroupDefinitions = normalizeSliderUnlockGroups(pointsEntry?.sliderUnlockGroups);
+        clearObject(sliderUnlockSelections);
         pointsTrackerGroupDefinitions = normalizeTrackerGroups(pointsEntry?.trackerGroups, Object.keys(originalPoints));
         clearObject(pointsTrackerGroupVisibility);
         pointsTrackerGroupDefinitions.forEach((group) => {
@@ -1420,6 +1639,7 @@ function applyCyoaData(rawData, {
             backpackBtn.style.display = backpackEnabled ? "inline-block" : "none";
         }
 
+        sanitizeSliderUnlockSelections();
         renderAccordion();
         applyDynamicCosts();
         updatePointsDisplay();
@@ -1877,8 +2097,11 @@ function applyDynamicCosts() {
         points[attrName] = baseValue * factor;
     });
 
+    sanitizeSliderUnlockSelections();
+
     // Recompute slider values whose base comes from formulas (e.g., skill bases derived from attributes).
     recomputeFormulaSliderPointValues();
+    enforceSliderConstraints();
 }
 
 
@@ -2963,7 +3186,15 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
     if (spend.length) requirements.innerHTML += `Cost: ${spend.join(', ')}<br>`;
 
     if (opt.inputType === "slider") {
-        const { currencyType, attributeType } = getSliderTypes(opt.costPerPoint || {});
+        const {
+            currencyType,
+            attributeType,
+            unlockGroup,
+            unlockSlots,
+            assignedCount,
+            unlocked,
+            effectiveMaxRange
+        } = getSliderConstraintState(opt);
         const sliderPointType = opt.sliderPointType || attributeType;
 
         const sliderGain = [];
@@ -2980,6 +3211,17 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
 
         if (sliderGain.length) requirements.innerHTML += `Gain per +1: ${sliderGain.join(", ")}<br>`;
         if (sliderSpend.length) requirements.innerHTML += `Cost per +1: ${sliderSpend.join(", ")}<br>`;
+        if (typeof opt.sliderSoftCapFormula === "string" && opt.sliderSoftCapFormula.trim()) {
+            const softCapRaw = evaluateExpressionAgainstPoints(opt.sliderSoftCapFormula);
+            if (Number.isFinite(softCapRaw)) {
+                const softCapValue = Math.max(0, Math.min(effectiveMaxRange, Math.round(softCapRaw)));
+                if (unlockGroup) {
+                    requirements.innerHTML += `Soft cap: ${softCapValue} (${unlocked ? "Unlocked" : "Locked"} via ${unlockGroup.name} ${assignedCount}/${unlockSlots})<br>`;
+                } else {
+                    requirements.innerHTML += `Soft cap: ${softCapValue}<br>`;
+                }
+            }
+        }
         if (currencyType && opt.id) {
             const sliderAllocationLine = document.createElement("div");
             sliderAllocationLine.id = `slider-allocation-${opt.id}`;
@@ -3298,49 +3540,27 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
 }
 
 function renderSliderControl(opt, contentWrapper) {
-    const { currencyType, attributeType } = getSliderTypes(opt.costPerPoint || {});
-    const sliderPointType = opt.sliderPointType || attributeType;
-    const attrName = sliderPointType || attributeType;
-    const effectiveMin = opt.min ?? attributeRanges[attrName]?.min ?? 0;
-    const effectiveMax = attributeRanges[attrName]?.max ?? opt.max ?? 40;
-    const sliderUsesBaseFormula = typeof opt.sliderBaseFormula === "string" && opt.sliderBaseFormula.trim().length > 0;
-    const baseFromFormulaRaw = sliderUsesBaseFormula ? evaluateExpressionAgainstPoints(opt.sliderBaseFormula) : null;
-    const baseFromFormula = Number.isFinite(baseFromFormulaRaw)
-        ? Math.max(effectiveMin, Math.min(effectiveMax, Math.round(baseFromFormulaRaw)))
-        : effectiveMin;
-    const effectiveSliderMin = sliderUsesBaseFormula ? Math.max(effectiveMin, baseFromFormula) : effectiveMin;
-    const bonusKey = `${opt.id}__bonus`;
+    const sliderState = getSliderConstraintState(opt);
+    const {
+        currencyType,
+        attributeType,
+        sliderPointType,
+        minWithFormula: effectiveSliderMin,
+        effectiveMax,
+        sliderUsesBaseFormula,
+        baseFromFormula,
+        unlockGroup,
+        unlockSlots,
+        assignedCount,
+        unlocked
+    } = sliderState;
 
-    let currentValue = attributeSliderValues[opt.id];
-    if (sliderUsesBaseFormula) {
-        let bonusValue = Number(sliderBonusValues[bonusKey]);
-        if (!Number.isFinite(bonusValue)) {
-            bonusValue = 0;
-        }
-        if (bonusValue < 0) {
-            bonusValue = 0;
-        }
-        currentValue = baseFromFormula + bonusValue;
-    } else if (!Number.isFinite(Number(currentValue))) {
-        currentValue = effectiveMin;
+    let currentValue = Number(attributeSliderValues[opt.id]);
+    if (!Number.isFinite(currentValue)) {
+        currentValue = effectiveSliderMin;
     }
-
-    if (!Number.isFinite(Number(currentValue))) {
-        currentValue = effectiveMin;
-    }
-    if (currentValue > effectiveMax) currentValue = effectiveMax;
-    if (currentValue < effectiveSliderMin) currentValue = effectiveSliderMin;
-
-    attributeSliderValues[opt.id] = currentValue;
-    if (sliderUsesBaseFormula) {
-        sliderBonusValues[bonusKey] = currentValue - baseFromFormula;
-    }
-    if (attributeType) {
-        attributeSliderValues[attributeType] = currentValue;
-    }
-    if (sliderPointType) {
-        points[sliderPointType] = currentValue;
-    }
+    currentValue = Math.max(effectiveSliderMin, Math.min(effectiveMax, currentValue));
+    applySliderValueState(opt, currentValue, sliderState);
     updateSliderAllocationIndicator(opt);
 
     const sliderWrapper = document.createElement("div");
@@ -3357,18 +3577,62 @@ function renderSliderControl(opt, contentWrapper) {
     slider.value = currentValue;
     slider.id = `${opt.id}-slider`;
 
-    slider.oninput = (e) => {
-        const newVal = parseInt(e.target.value);
-        const { currencyType: currentCurrency } = getSliderTypes(opt.costPerPoint || {});
-        const costPerPoint = opt.costPerPoint?.[currentCurrency] || 0;
-        const attrNameForCost = sliderPointType || attributeType;
+    if (unlockGroup) {
+        const unlockRow = document.createElement("div");
+        unlockRow.className = "slider-unlock-row";
 
-        const currentEffectiveMax = attributeRanges[attrNameForCost]?.max ?? parseInt(slider.max);
-        const currentBaseRaw = sliderUsesBaseFormula ? evaluateExpressionAgainstPoints(opt.sliderBaseFormula) : null;
-        const currentBase = Number.isFinite(currentBaseRaw)
-            ? Math.max(effectiveMin, Math.min(currentEffectiveMax, Math.round(currentBaseRaw)))
-            : effectiveMin;
-        const currentEffectiveMin = sliderUsesBaseFormula ? Math.max(effectiveMin, currentBase) : effectiveMin;
+        const unlockInfo = document.createElement("span");
+        unlockInfo.className = "slider-unlock-info";
+        unlockInfo.textContent = `${unlockGroup.name}: ${assignedCount}/${unlockSlots} unlocked`;
+
+        const unlockBtn = document.createElement("button");
+        unlockBtn.type = "button";
+        unlockBtn.className = "button-subtle";
+        unlockBtn.textContent = unlocked ? "Unlock slot: ON" : "Unlock slot: OFF";
+        const canUnlock = unlocked || assignedCount < unlockSlots;
+        unlockBtn.disabled = !canUnlock;
+        unlockBtn.title = canUnlock
+            ? "Toggle whether this slider is unlocked from its soft cap."
+            : `${unlockGroup.name} has no unlock slots left.`;
+        unlockBtn.addEventListener("click", () => {
+            const groupId = unlockGroup.id;
+            const existing = Array.isArray(sliderUnlockSelections[groupId]) ? sliderUnlockSelections[groupId] : [];
+            const unique = Array.from(new Set(existing));
+            const currentIndex = unique.indexOf(opt.id);
+            if (currentIndex >= 0) {
+                unique.splice(currentIndex, 1);
+            } else {
+                const maxSlots = evaluateSliderUnlockSlots(unlockGroup);
+                if (unique.length >= maxSlots) {
+                    alert(`${unlockGroup.name} has no unlock slots left.`);
+                    return;
+                }
+                unique.push(opt.id);
+            }
+            if (unique.length) {
+                sliderUnlockSelections[groupId] = unique;
+            } else {
+                delete sliderUnlockSelections[groupId];
+            }
+            sanitizeSliderUnlockSelections();
+            applyDynamicCosts();
+            updatePointsDisplay();
+            renderAccordion();
+        });
+
+        unlockRow.appendChild(unlockInfo);
+        unlockRow.appendChild(unlockBtn);
+        contentWrapper.appendChild(unlockRow);
+    }
+
+    slider.oninput = (e) => {
+        let newVal = parseInt(e.target.value, 10);
+        const nextState = getSliderConstraintState(opt);
+        const currentCurrency = nextState.currencyType;
+        const costPerPoint = Number(opt.costPerPoint?.[currentCurrency] || 0);
+        const attrNameForCost = nextState.sliderPointType || nextState.attributeType;
+        const currentEffectiveMax = nextState.effectiveMax;
+        const currentEffectiveMin = nextState.minWithFormula;
         slider.min = currentEffectiveMin;
         slider.max = currentEffectiveMax;
 
@@ -3383,11 +3647,11 @@ function renderSliderControl(opt, contentWrapper) {
             return;
         }
 
-        const oldVal = attributeSliderValues[opt.id] ?? effectiveMin;
+        const oldVal = Number(attributeSliderValues[opt.id] ?? currentEffectiveMin);
         let diff = newVal - oldVal;
         if (diff === 0) return;
 
-        if (sliderUsesBaseFormula) {
+        if (nextState.sliderUsesBaseFormula) {
             if (diff > 0) {
                 const cost = costPerPoint * diff;
                 if (points[currentCurrency] < cost && !allowNegativeTypes.has(currentCurrency)) {
@@ -3401,15 +3665,7 @@ function renderSliderControl(opt, contentWrapper) {
                 points[currentCurrency] += refund;
             }
 
-            const nextBonus = Math.max(0, newVal - currentBase);
-            sliderBonusValues[bonusKey] = nextBonus;
-            attributeSliderValues[opt.id] = newVal;
-            if (attributeType) {
-                attributeSliderValues[attributeType] = newVal;
-            }
-            if (sliderPointType) {
-                points[sliderPointType] = newVal;
-            }
+            applySliderValueState(opt, newVal, nextState);
 
             sliderLabel.textContent = `${opt.label}: ${newVal}`;
             applyDynamicCosts();
@@ -3460,13 +3716,7 @@ function renderSliderControl(opt, contentWrapper) {
             points[currentCurrency] += pointsChange;
         }
 
-        attributeSliderValues[opt.id] = newVal;
-        if (attributeType) {
-            attributeSliderValues[attributeType] = newVal;
-        }
-        if (sliderPointType) {
-            points[sliderPointType] = newVal;
-        }
+        applySliderValueState(opt, newVal, nextState);
 
         sliderLabel.textContent = `${opt.label}: ${newVal}`;
         applyDynamicCosts();

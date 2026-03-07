@@ -880,6 +880,19 @@ body.desktop-slideable-points #pointsDisplay {
     font-size: var(--font-label);
 }
 
+.slider-unlock-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.slider-unlock-info {
+    font-size: calc(var(--font-option-req) * 0.9);
+    color: var(--text-muted);
+}
+
 @media (max-width: 768px) {
     .points-tracker-mode-btn {
         display: none !important;
