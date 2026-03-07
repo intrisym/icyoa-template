@@ -1432,13 +1432,25 @@ function validateInputJson(data, pointsEntry) {
         throw new Error("Validation Errors:\n\n" + errors.map(err => `• ${err}`).join("\n\n"));
     }
 
-    // Validate slider attributes against defined points
+    // Validate slider attributes and point-based requirements against defined points
     const knownAttributes = Object.keys(pointsEntry?.values || {});
+    const knownPointTypes = new Set(knownAttributes);
     const knownSliderUnlockGroups = new Set(
         normalizeSliderUnlockGroups(pointsEntry?.sliderUnlockGroups).map(group => group.id)
     );
     for (const cat of data.filter(e => e.name)) { // Filter for actual categories
         forEachCategoryOption(cat, opt => {
+            if (opt.requiresPoints && typeof opt.requiresPoints === "object" && !Array.isArray(opt.requiresPoints)) {
+                Object.entries(opt.requiresPoints).forEach(([pointType, thresholdRaw]) => {
+                    if (!knownPointTypes.has(pointType)) {
+                        errors.push(`Option "${opt.id}" references unknown point type "${pointType}" in requiresPoints.`);
+                    }
+                    const threshold = Number(thresholdRaw);
+                    if (!Number.isFinite(threshold)) {
+                        errors.push(`Option "${opt.id}" has non-numeric requiresPoints threshold for "${pointType}".`);
+                    }
+                });
+            }
             if (opt.inputType === "slider") {
                 const sliderPointType = typeof opt.sliderPointType === "string" ? opt.sliderPointType.trim() : "";
                 if (sliderPointType && !knownAttributes.includes(sliderPointType)) {
@@ -2260,6 +2272,12 @@ function canSelect(option) {
     const categoryMaxSelections = getCategorySelectionLimit(option.id);
     const categorySelectionCount = getCategorySelectionCount(option.id);
     const underCategoryLimit = categorySelectionCount < categoryMaxSelections;
+    const meetsPointRequirements = !option.requiresPoints || Object.entries(option.requiresPoints).every(([pointType, thresholdRaw]) => {
+        const threshold = Number(thresholdRaw);
+        if (!Number.isFinite(threshold)) return true;
+        const currentValue = Number(points[pointType]);
+        return Number.isFinite(currentValue) && currentValue >= threshold;
+    });
 
     // Check if enough points (only for positive costs)
     const effectiveCost = getOptionEffectiveCost(option);
@@ -2269,7 +2287,7 @@ function canSelect(option) {
         return projected >= 0 || allowNegativeTypes.has(type);
     });
 
-    return meetsPrereq && hasPoints && hasNoOutgoingConflicts && hasNoIncomingConflicts && underOptionLimit && underSubcatLimit && underCategoryLimit;
+    return meetsPrereq && meetsPointRequirements && hasPoints && hasNoOutgoingConflicts && hasNoIncomingConflicts && underOptionLimit && underSubcatLimit && underCategoryLimit;
 }
 
 
@@ -3338,6 +3356,22 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
                 return `${symbol} ${label}`;
             });
             requirements.innerHTML += `<br>⚠️ Incompatible With:<br>${conflictLines.join("<br>")}`;
+        }
+    }
+
+    if (opt.requiresPoints && typeof opt.requiresPoints === "object" && !Array.isArray(opt.requiresPoints)) {
+        const pointReqLines = Object.entries(opt.requiresPoints)
+            .map(([pointType, thresholdRaw]) => {
+                const threshold = Number(thresholdRaw);
+                if (!Number.isFinite(threshold)) return null;
+                const currentValue = Number(points[pointType]);
+                const current = Number.isFinite(currentValue) ? currentValue : 0;
+                const met = current >= threshold;
+                return `${met ? "✅" : "❌"} ${pointType} ${threshold}+ (current ${current})`;
+            })
+            .filter(Boolean);
+        if (pointReqLines.length) {
+            requirements.innerHTML += `${opt.prerequisites ? "<br>" : ""}🔒 Requires Points:<br>${pointReqLines.join("<br>")}`;
         }
     }
 

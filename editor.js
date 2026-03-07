@@ -1,6 +1,6 @@
 (function () {
     const CORE_TYPES_ORDER = ["title", "description", "headerImage", "points"];
-    const BASE_OPTION_KEYS = new Set(["id", "label", "description", "image", "inputType", "inputLabel", "cost", "maxSelections", "countsAsOneSelection", "prerequisites", "conflictsWith", "discounts", "discountGrants", "dynamicCost", "attributeMultipliers", "sliderPointType", "sliderBaseFormula", "sliderSoftCapFormula", "sliderUnlockGroup"]);
+    const BASE_OPTION_KEYS = new Set(["id", "label", "description", "image", "inputType", "inputLabel", "cost", "maxSelections", "countsAsOneSelection", "prerequisites", "requiresPoints", "conflictsWith", "discounts", "discountGrants", "dynamicCost", "attributeMultipliers", "sliderPointType", "sliderBaseFormula", "sliderSoftCapFormula", "sliderUnlockGroup"]);
 
     const state = {
         data: [],
@@ -118,6 +118,7 @@
 
     let previewUpdateHandle = null;
     let pendingPreviewData = null;
+    let pendingPreviewDirty = false;
     let detachedPreviewWindow = null;
 
     function cloneData(data) {
@@ -422,6 +423,18 @@
                 }
             });
         };
+        const checkPointRequirementsMap = (requirementsMap, pathLabel) => {
+            if (!requirementsMap || typeof requirementsMap !== "object" || Array.isArray(requirementsMap)) return;
+            Object.entries(requirementsMap).forEach(([key, value]) => {
+                if (!allowed.has(key)) {
+                    invalid.push(`${pathLabel}: "${key}"`);
+                }
+                const threshold = Number(value);
+                if (!Number.isFinite(threshold)) {
+                    invalid.push(`${pathLabel}: "${key}" has non-numeric threshold`);
+                }
+            });
+        };
 
         const walkSubcats = (subcategories, parentPath) => {
             if (!Array.isArray(subcategories)) return;
@@ -433,6 +446,7 @@
                 (subcat?.options || []).forEach((opt, optIdx) => {
                     const optLabel = opt?.id || opt?.label || `#${optIdx + 1}`;
                     checkCostMap(opt?.cost, `${subPath} > Option "${optLabel}".cost`);
+                    checkPointRequirementsMap(opt?.requiresPoints, `${subPath} > Option "${optLabel}".requiresPoints`);
                     (opt?.discounts || []).forEach((rule, ruleIdx) => {
                         checkCostMap(rule?.cost, `${subPath} > Option "${optLabel}".discounts[${ruleIdx + 1}].cost`);
                     });
@@ -451,6 +465,7 @@
             (entry?.options || []).forEach((opt, optIdx) => {
                 const optLabel = opt?.id || opt?.label || `#${optIdx + 1}`;
                 checkCostMap(opt?.cost, `${catPath} > Option "${optLabel}".cost`);
+                checkPointRequirementsMap(opt?.requiresPoints, `${catPath} > Option "${optLabel}".requiresPoints`);
                 (opt?.discounts || []).forEach((rule, ruleIdx) => {
                     checkCostMap(rule?.cost, `${catPath} > Option "${optLabel}".discounts[${ruleIdx + 1}].cost`);
                 });
@@ -461,7 +476,7 @@
 
         if (invalid.length) {
             throw new Error(
-                `Invalid cost point type(s) not found in "type: points" values:\n- ${invalid.join("\n- ")}`
+                `Invalid point map entries (cost/requiresPoints) not found in "type: points" values:\n- ${invalid.join("\n- ")}`
             );
         }
     }
@@ -740,6 +755,19 @@
             if (id === selfId && selfId) warnings.push("Incompatible option list contains this option itself.");
             if (!allIds.has(id)) warnings.push(`Incompatible option ID "${id}" does not exist.`);
         });
+
+        if (option?.requiresPoints && typeof option.requiresPoints === "object" && !Array.isArray(option.requiresPoints)) {
+            const knownPointTypes = new Set(getDefinedPointTypes());
+            Object.entries(option.requiresPoints).forEach(([pointType, thresholdRaw]) => {
+                if (!knownPointTypes.has(pointType)) {
+                    warnings.push(`Point requirement references unknown point type "${pointType}".`);
+                }
+                const threshold = Number(thresholdRaw);
+                if (!Number.isFinite(threshold)) {
+                    warnings.push(`Point requirement for "${pointType}" must be a number.`);
+                }
+            });
+        }
 
         if (String(option?.inputType || "").trim().toLowerCase() === "slider") {
             const knownUnlockGroups = new Set(getDefinedSliderUnlockGroups().map(group => group.id));
@@ -1107,12 +1135,13 @@
     }
 
     function schedulePreviewUpdate() {
-        pendingPreviewData = cloneData(state.data);
+        pendingPreviewDirty = true;
+        pendingPreviewData = null;
         if (previewUpdateHandle) return;
         previewUpdateHandle = setTimeout(() => {
             previewUpdateHandle = null;
             flushPreviewUpdate();
-        }, 250);
+        }, 90);
     }
 
     function postPreviewUpdate(targetWindow, payload) {
@@ -1125,10 +1154,10 @@
     }
 
     function flushPreviewUpdate() {
-        if (!pendingPreviewData) return;
+        if (!pendingPreviewDirty && !pendingPreviewData) return;
         const hasDetachedPreview = !!(detachedPreviewWindow && !detachedPreviewWindow.closed);
         if (!state.previewReady && !hasDetachedPreview) return;
-        const payload = pendingPreviewData;
+        const payload = pendingPreviewData || cloneData(state.data);
         if (previewStatusEl) {
             previewStatusEl.textContent = "Updating preview…";
             previewStatusEl.dataset.state = "pending";
@@ -1141,6 +1170,7 @@
             postPreviewUpdate(detachedPreviewWindow, payload);
         }
         pendingPreviewData = null;
+        pendingPreviewDirty = false;
     }
 
     function preventSummaryToggle(element) {
@@ -3016,12 +3046,13 @@
 
                 const optionsContainer = document.createElement("div");
                 optionsContainer.className = "option-list";
+                const optionPath = [category.name, ...namePath, subcat.name];
                 renderOptionsList(
                     optionsContainer,
                     category,
                     subcat,
                     subIndex,
-                    [category.name, ...namePath, subcat.name]
+                    optionPath
                 );
                 subCommonBody.appendChild(optionsContainer);
 
@@ -3031,11 +3062,11 @@
                 addOptionBtn.textContent = "Add option";
                 addOptionBtn.addEventListener("click", () => {
                     subcat.options = subcat.options || [];
-                    const newOption = createDefaultOption([category.name, ...namePath, subcat.name]);
+                    const newOption = createDefaultOption(optionPath);
                     subcat.options.push(newOption);
                     optionOpenState.set(newOption, true);
                     keepPanelOpen(category, subcat);
-                    renderCategories();
+                    renderOptionsList(optionsContainer, category, subcat, subIndex, optionPath);
                     schedulePreviewUpdate();
                 });
                 subCommonBody.appendChild(addOptionBtn);
@@ -3850,6 +3881,31 @@
             costSection.appendChild(costLabel);
             costSection.appendChild(costContainer);
             commonBody.appendChild(costSection);
+
+            const pointReqSection = document.createElement("div");
+            pointReqSection.className = "field";
+            const pointReqLabel = document.createElement("label");
+            pointReqLabel.textContent = "Point Requirements (optional)";
+            const pointReqHint = document.createElement("div");
+            pointReqHint.className = "field-help";
+            pointReqHint.textContent = "Require minimum point values to select this option (e.g., STR: 15).";
+            const pointReqContainer = document.createElement("div");
+            pointReqContainer.className = "cost-list";
+            const syncPointRequirements = (nextMap) => {
+                if (nextMap && Object.keys(nextMap).length) {
+                    option.requiresPoints = nextMap;
+                } else {
+                    delete option.requiresPoints;
+                }
+                renderPointMapEditor(pointReqContainer, option.requiresPoints || {}, syncPointRequirements);
+                refreshOptionWarnings(prereqParseError ? [prereqParseError] : []);
+                schedulePreviewUpdate();
+            };
+            renderPointMapEditor(pointReqContainer, option.requiresPoints || {}, syncPointRequirements);
+            pointReqSection.appendChild(pointReqLabel);
+            pointReqSection.appendChild(pointReqHint);
+            pointReqSection.appendChild(pointReqContainer);
+            commonBody.appendChild(pointReqSection);
 
             const prereqSection = document.createElement("div");
             prereqSection.className = "field";
@@ -4683,7 +4739,8 @@
 
         reloadPreviewBtn?.addEventListener("click", () => {
             state.previewReady = false;
-            pendingPreviewData = cloneData(state.data);
+            pendingPreviewDirty = true;
+            pendingPreviewData = null;
             if (previewStatusEl) {
                 previewStatusEl.textContent = "Reloading preview…";
                 previewStatusEl.dataset.state = "pending";
@@ -4742,8 +4799,11 @@
                 previewStatusEl.dataset.state = "ready";
             }
             // Ensure the iframe gets the latest in-memory editor state after a hard reload.
-            postPreviewUpdate(previewFrame.contentWindow, cloneData(state.data));
-            flushPreviewUpdate();
+            if (pendingPreviewDirty || pendingPreviewData) {
+                flushPreviewUpdate();
+            } else {
+                postPreviewUpdate(previewFrame.contentWindow, cloneData(state.data));
+            }
         });
 
         window.addEventListener("message", (event) => {
