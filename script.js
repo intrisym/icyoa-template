@@ -321,6 +321,49 @@ function getOptionMaxSelections(option) {
     return 1;
 }
 
+function getOptionSlotUnlockPricing(option) {
+    const cfg = option?.slotUnlockPricing;
+    if (!cfg || typeof cfg !== "object" || Array.isArray(cfg)) return null;
+    const picksPerSlot = Math.max(1, Math.floor(Number(cfg.picksPerSlot) || 0));
+    const freeSlots = Math.max(0, Math.floor(Number(cfg.freeSlots) || 0));
+    const unlockCostRaw = (cfg.unlockCost && typeof cfg.unlockCost === "object" && !Array.isArray(cfg.unlockCost))
+        ? cfg.unlockCost
+        : {};
+    const unlockCost = {};
+    Object.entries(unlockCostRaw).forEach(([type, amountRaw]) => {
+        const amount = Number(amountRaw);
+        if (Number.isFinite(amount) && amount !== 0) {
+            unlockCost[type] = amount;
+        }
+    });
+    return {
+        picksPerSlot,
+        freeSlots,
+        unlockCost
+    };
+}
+
+function getSlotUnlockCostForPick(option, pickNumber) {
+    const cfg = getOptionSlotUnlockPricing(option);
+    if (!cfg || !Number.isFinite(Number(pickNumber)) || pickNumber < 1) return null;
+    const slotIndex = Math.ceil(pickNumber / cfg.picksPerSlot);
+    const firstPickOfSlot = ((pickNumber - 1) % cfg.picksPerSlot) === 0;
+    if (!firstPickOfSlot || slotIndex <= cfg.freeSlots) return null;
+    if (!Object.keys(cfg.unlockCost).length) return null;
+    return { ...cfg.unlockCost };
+}
+
+function addCostMaps(baseMap, extraMap) {
+    const merged = { ...(baseMap || {}) };
+    if (!extraMap || typeof extraMap !== "object") return merged;
+    Object.entries(extraMap).forEach(([type, amountRaw]) => {
+        const amount = Number(amountRaw);
+        if (!Number.isFinite(amount)) return;
+        merged[type] = (Number(merged[type]) || 0) + amount;
+    });
+    return merged;
+}
+
 function getOptionEffectiveCost(option, {
     includeFirstNPreview = true
 } = {}) {
@@ -577,7 +620,9 @@ function getOptionEffectiveCost(option, {
         }
     }
 
-    return bestCost;
+    const nextPickNumber = (selectedOptions[option.id] || 0) + 1;
+    const slotUnlockCost = getSlotUnlockCostForPick(option, nextPickNumber);
+    return addCostMaps(bestCost, slotUnlockCost);
 }
 
 function getSliderTypes(costPerPoint = {}) {
@@ -1478,6 +1523,32 @@ function validateInputJson(data, pointsEntry) {
                     }
                 });
             }
+            if (opt.slotUnlockPricing && typeof opt.slotUnlockPricing === "object" && !Array.isArray(opt.slotUnlockPricing)) {
+                const picksPerSlot = Number(opt.slotUnlockPricing.picksPerSlot);
+                const freeSlots = Number(opt.slotUnlockPricing.freeSlots);
+                if (!Number.isFinite(picksPerSlot) || picksPerSlot < 1) {
+                    errors.push(`Option "${opt.id}" has invalid slotUnlockPricing.picksPerSlot; it must be >= 1.`);
+                }
+                if (!Number.isFinite(freeSlots) || freeSlots < 0) {
+                    errors.push(`Option "${opt.id}" has invalid slotUnlockPricing.freeSlots; it must be >= 0.`);
+                }
+                const unlockCost = opt.slotUnlockPricing.unlockCost;
+                if (unlockCost != null) {
+                    if (typeof unlockCost !== "object" || Array.isArray(unlockCost)) {
+                        errors.push(`Option "${opt.id}" has invalid slotUnlockPricing.unlockCost; it must be an object map.`);
+                    } else {
+                        Object.entries(unlockCost).forEach(([pointType, amountRaw]) => {
+                            if (!knownPointTypes.has(pointType)) {
+                                errors.push(`Option "${opt.id}" references unknown point type "${pointType}" in slotUnlockPricing.unlockCost.`);
+                            }
+                            const amount = Number(amountRaw);
+                            if (!Number.isFinite(amount)) {
+                                errors.push(`Option "${opt.id}" has non-numeric slotUnlockPricing.unlockCost value for "${pointType}".`);
+                            }
+                        });
+                    }
+                }
+            }
             if (opt.inputType === "slider") {
                 const sliderPointType = typeof opt.sliderPointType === "string" ? opt.sliderPointType.trim() : "";
                 if (sliderPointType && !knownAttributes.includes(sliderPointType)) {
@@ -2020,8 +2091,11 @@ function applyDynamicCosts() {
         points[type] = originalPoints[type];
     });
 
-    // Then, apply dynamic selections (like Nephilim's boosts/caps)
-    // These modifications should happen *after* base formula evaluation but before final display.
+    const pendingPointEffects = [];
+
+    // Then, apply dynamic selections (like Nephilim's boosts/caps).
+    // Point-targeted effects are deferred until after slider synchronization,
+    // otherwise slider state can overwrite them for slider-backed point types.
     Object.entries(dynamicSelections).forEach(([optionId, selectedChoices]) => {
         const opt = findOptionById(optionId);
         const config = opt?.dynamicCost;
@@ -2076,12 +2150,12 @@ function applyDynamicCosts() {
                     attributeSliderValues[choiceName] = boostAmount;
                 }
             }
-            // Generic point adjustments from dropdown selections.
-            else if (isPointTarget && type !== "Formula Cost") {
-                if (!points.hasOwnProperty(choiceName)) {
-                    points[choiceName] = 0;
-                }
-                points[choiceName] += parseInt(value);
+            else if (isPointTarget) {
+                pendingPointEffects.push({
+                    choiceName,
+                    type,
+                    value
+                });
             }
             // Handle Multiply Attribute
             else if (type === "Multiply Attribute" && isAttributeTarget) {
@@ -2092,24 +2166,14 @@ function applyDynamicCosts() {
                 const baseValue = Number.isFinite(sliderValue) ? sliderValue : (Number.isFinite(pointValue) ? pointValue : 0);
                 points[choiceName] = baseValue * multiplier;
             }
-            // Handle Formula Cost for dynamic points (e.g., COIDL)
-            else if (isPointTarget && type === "Formula Cost") {
-                try {
-                    // If the point type doesn't exist, add it
-                    if (!points.hasOwnProperty(choiceName)) {
-                        points[choiceName] = 0;
-                    }
-                    // Evaluate the formula in the context of points
-                    const evalFunc = new Function("points", `return ${value}`);
-                    const result = evalFunc(points);
-                    // Add to the current value instead of setting
-                    points[choiceName] += result;
-                } catch (err) {
-                    console.warn(`Failed to evaluate dynamic formula for ${choiceName}:`, err);
-                }
-            }
         });
     });
+
+    sanitizeSliderUnlockSelections();
+
+    // Recompute slider values whose base comes from formulas (e.g., skill bases derived from attributes).
+    recomputeFormulaSliderPointValues();
+    enforceSliderConstraints();
 
     // Static multipliers applied directly by selected options (no dropdown required).
     // Example option JSON:
@@ -2136,11 +2200,27 @@ function applyDynamicCosts() {
         points[attrName] = baseValue * factor;
     });
 
-    sanitizeSliderUnlockSelections();
-
-    // Recompute slider values whose base comes from formulas (e.g., skill bases derived from attributes).
-    recomputeFormulaSliderPointValues();
-    enforceSliderConstraints();
+    // Apply deferred point-target dynamic effects last so they persist for slider-backed point types.
+    pendingPointEffects.forEach(({ choiceName, type, value }) => {
+        if (!points.hasOwnProperty(choiceName)) {
+            points[choiceName] = 0;
+        }
+        if (type === "Formula Cost") {
+            try {
+                // Evaluate the formula in the context of points and add to current value.
+                const evalFunc = new Function("points", `return ${value}`);
+                const result = evalFunc(points);
+                points[choiceName] += Number(result) || 0;
+            } catch (err) {
+                console.warn(`Failed to evaluate dynamic formula for ${choiceName}:`, err);
+            }
+            return;
+        }
+        const numeric = Number.parseInt(value, 10);
+        if (Number.isFinite(numeric)) {
+            points[choiceName] += numeric;
+        }
+    });
 }
 
 
@@ -3399,6 +3479,23 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
             .filter(Boolean);
         if (pointReqLines.length) {
             requirements.innerHTML += `${opt.prerequisites ? "<br>" : ""}🔒 Requires Points:<br>${pointReqLines.join("<br>")}`;
+        }
+    }
+
+    const slotCfg = getOptionSlotUnlockPricing(opt);
+    if (slotCfg) {
+        const unlockLine = Object.entries(slotCfg.unlockCost)
+            .map(([type, amount]) => `${type} ${amount}`)
+            .join(", ");
+        const currentCount = selectedOptions[opt.id] || 0;
+        const nextPick = currentCount + 1;
+        const nextSlot = Math.ceil(nextPick / slotCfg.picksPerSlot);
+        const nextUnlockCost = getSlotUnlockCostForPick(opt, nextPick);
+        const summary = `Slot Pricing: ${slotCfg.freeSlots} free slot(s), ${slotCfg.picksPerSlot} picks/slot${unlockLine ? `, paid slot unlock ${unlockLine}` : ""}`;
+        requirements.innerHTML += `${requirements.innerHTML ? "<br>" : ""}${summary}<br>`;
+        if (nextUnlockCost) {
+            const nextLine = Object.entries(nextUnlockCost).map(([type, amount]) => `${type} ${amount}`).join(", ");
+            requirements.innerHTML += `Next pick opens slot ${nextSlot}: ${nextLine}<br>`;
         }
     }
 

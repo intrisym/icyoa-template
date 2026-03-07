@@ -1,6 +1,6 @@
 (function () {
     const CORE_TYPES_ORDER = ["title", "description", "headerImage", "points"];
-    const BASE_OPTION_KEYS = new Set(["id", "label", "description", "image", "inputType", "inputLabel", "cost", "maxSelections", "countsAsOneSelection", "prerequisites", "requiresPoints", "conflictsWith", "discounts", "discountGrants", "dynamicCost", "attributeMultipliers", "sliderPointType", "sliderBaseFormula", "sliderSoftCapFormula", "sliderUnlockGroup"]);
+    const BASE_OPTION_KEYS = new Set(["id", "label", "description", "image", "inputType", "inputLabel", "cost", "maxSelections", "countsAsOneSelection", "prerequisites", "requiresPoints", "conflictsWith", "discounts", "discountGrants", "dynamicCost", "attributeMultipliers", "sliderPointType", "sliderBaseFormula", "sliderSoftCapFormula", "sliderUnlockGroup", "slotUnlockPricing"]);
 
     const state = {
         data: [],
@@ -767,6 +767,30 @@
                     warnings.push(`Point requirement for "${pointType}" must be a number.`);
                 }
             });
+        }
+
+        if (option?.slotUnlockPricing && typeof option.slotUnlockPricing === "object" && !Array.isArray(option.slotUnlockPricing)) {
+            const knownPointTypes = new Set(getDefinedPointTypes());
+            const picksPerSlot = Number(option.slotUnlockPricing.picksPerSlot);
+            const freeSlots = Number(option.slotUnlockPricing.freeSlots);
+            if (!Number.isFinite(picksPerSlot) || picksPerSlot < 1) {
+                warnings.push("Slot unlock pricing: picks per slot must be >= 1.");
+            }
+            if (!Number.isFinite(freeSlots) || freeSlots < 0) {
+                warnings.push("Slot unlock pricing: free slots must be >= 0.");
+            }
+            const unlockCost = option.slotUnlockPricing.unlockCost;
+            if (unlockCost && typeof unlockCost === "object" && !Array.isArray(unlockCost)) {
+                Object.entries(unlockCost).forEach(([pointType, amountRaw]) => {
+                    if (!knownPointTypes.has(pointType)) {
+                        warnings.push(`Slot unlock pricing uses unknown point type "${pointType}".`);
+                    }
+                    const amount = Number(amountRaw);
+                    if (!Number.isFinite(amount)) {
+                        warnings.push(`Slot unlock pricing amount for "${pointType}" must be numeric.`);
+                    }
+                });
+            }
         }
 
         if (String(option?.inputType || "").trim().toLowerCase() === "slider") {
@@ -3894,6 +3918,127 @@
             countAsOneToggle.appendChild(countAsOneText);
             countAsOneField.appendChild(countAsOneToggle);
             advancedBody.appendChild(countAsOneField);
+
+            const slotUnlockField = document.createElement("div");
+            slotUnlockField.className = "field";
+            const slotUnlockToggle = document.createElement("label");
+            slotUnlockToggle.className = "checkbox-option";
+            const slotUnlockCheckbox = document.createElement("input");
+            slotUnlockCheckbox.type = "checkbox";
+            const slotUnlockText = document.createElement("span");
+            slotUnlockText.textContent = "Slot unlock pricing (optional)";
+            slotUnlockToggle.appendChild(slotUnlockCheckbox);
+            slotUnlockToggle.appendChild(slotUnlockText);
+
+            const slotUnlockBody = document.createElement("div");
+            slotUnlockBody.className = "list-stack";
+
+            const slotCountsRow = document.createElement("div");
+            slotCountsRow.className = "field-inline";
+            const picksPerSlotLabel = document.createElement("label");
+            picksPerSlotLabel.textContent = "Picks per slot";
+            const picksPerSlotInput = document.createElement("input");
+            picksPerSlotInput.type = "number";
+            picksPerSlotInput.min = "1";
+            picksPerSlotInput.placeholder = "e.g. 15";
+
+            const freeSlotsLabel = document.createElement("label");
+            freeSlotsLabel.textContent = "Free slots";
+            const freeSlotsInput = document.createElement("input");
+            freeSlotsInput.type = "number";
+            freeSlotsInput.min = "0";
+            freeSlotsInput.placeholder = "e.g. 3";
+
+            slotCountsRow.appendChild(picksPerSlotLabel);
+            slotCountsRow.appendChild(picksPerSlotInput);
+            slotCountsRow.appendChild(freeSlotsLabel);
+            slotCountsRow.appendChild(freeSlotsInput);
+            slotUnlockBody.appendChild(slotCountsRow);
+
+            const unlockCostField = document.createElement("div");
+            unlockCostField.className = "field";
+            const unlockCostLabel = document.createElement("label");
+            unlockCostLabel.textContent = "Slot unlock cost";
+            const unlockCostContainer = document.createElement("div");
+            unlockCostContainer.className = "cost-list";
+            unlockCostField.appendChild(unlockCostLabel);
+            unlockCostField.appendChild(unlockCostContainer);
+            slotUnlockBody.appendChild(unlockCostField);
+
+            const slotUnlockHelp = document.createElement("div");
+            slotUnlockHelp.className = "field-help";
+            slotUnlockHelp.textContent = "Applies additional one-time cost when opening a new slot beyond free slots.";
+            slotUnlockBody.appendChild(slotUnlockHelp);
+
+            const getSlotConfig = () => {
+                if (!option.slotUnlockPricing || typeof option.slotUnlockPricing !== "object" || Array.isArray(option.slotUnlockPricing)) {
+                    option.slotUnlockPricing = {
+                        picksPerSlot: 15,
+                        freeSlots: 3,
+                        unlockCost: {}
+                    };
+                }
+                if (!option.slotUnlockPricing.unlockCost || typeof option.slotUnlockPricing.unlockCost !== "object" || Array.isArray(option.slotUnlockPricing.unlockCost)) {
+                    option.slotUnlockPricing.unlockCost = {};
+                }
+                return option.slotUnlockPricing;
+            };
+
+            const renderSlotUnlockPricingEditor = () => {
+                const enabled = !!slotUnlockCheckbox.checked;
+                slotUnlockBody.style.display = enabled ? "block" : "none";
+                if (!enabled) return;
+                const cfg = getSlotConfig();
+                picksPerSlotInput.value = cfg.picksPerSlot ?? 15;
+                freeSlotsInput.value = cfg.freeSlots ?? 3;
+                renderPointMapEditor(unlockCostContainer, cfg.unlockCost || {}, (nextMap) => {
+                    const current = getSlotConfig();
+                    current.unlockCost = nextMap || {};
+                    schedulePreviewUpdate();
+                });
+            };
+
+            const hasSlotPricing = !!(option.slotUnlockPricing && typeof option.slotUnlockPricing === "object" && !Array.isArray(option.slotUnlockPricing));
+            slotUnlockCheckbox.checked = hasSlotPricing;
+            if (hasSlotPricing) {
+                getSlotConfig();
+            }
+
+            slotUnlockCheckbox.addEventListener("change", () => {
+                if (slotUnlockCheckbox.checked) {
+                    getSlotConfig();
+                } else {
+                    delete option.slotUnlockPricing;
+                }
+                renderSlotUnlockPricingEditor();
+                refreshOptionWarnings(prereqParseError ? [prereqParseError] : []);
+                schedulePreviewUpdate();
+            });
+
+            picksPerSlotInput.addEventListener("input", () => {
+                if (!slotUnlockCheckbox.checked) return;
+                const cfg = getSlotConfig();
+                const value = Math.max(1, Number(picksPerSlotInput.value) || 1);
+                cfg.picksPerSlot = value;
+                picksPerSlotInput.value = String(value);
+                refreshOptionWarnings(prereqParseError ? [prereqParseError] : []);
+                schedulePreviewUpdate();
+            });
+
+            freeSlotsInput.addEventListener("input", () => {
+                if (!slotUnlockCheckbox.checked) return;
+                const cfg = getSlotConfig();
+                const value = Math.max(0, Number(freeSlotsInput.value) || 0);
+                cfg.freeSlots = value;
+                freeSlotsInput.value = String(value);
+                refreshOptionWarnings(prereqParseError ? [prereqParseError] : []);
+                schedulePreviewUpdate();
+            });
+
+            slotUnlockField.appendChild(slotUnlockToggle);
+            slotUnlockField.appendChild(slotUnlockBody);
+            advancedBody.appendChild(slotUnlockField);
+            renderSlotUnlockPricingEditor();
 
             const costSection = document.createElement("div");
             costSection.className = "field";
