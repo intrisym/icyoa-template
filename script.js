@@ -300,6 +300,27 @@ function getOptionBaseCost(option) {
     return { ...optionCost };
 }
 
+function getOptionMaxSelections(option) {
+    if (!option) return 1;
+    if (option.maxSelections === Infinity || option.maxSelections === "Infinity") {
+        return Infinity;
+    }
+    const explicit = Number(option.maxSelections);
+    if (Number.isFinite(explicit) && explicit > 0) {
+        return explicit;
+    }
+    const info = findSubcategoryInfo(option.id);
+    const inheritedRaw = info.subcat?.defaultOptionMaxSelections ?? info.cat?.defaultOptionMaxSelections;
+    if (inheritedRaw === Infinity || inheritedRaw === "Infinity") {
+        return Infinity;
+    }
+    const inherited = Number(inheritedRaw);
+    if (Number.isFinite(inherited) && inherited > 0) {
+        return inherited;
+    }
+    return 1;
+}
+
 function getOptionEffectiveCost(option, {
     includeFirstNPreview = true
 } = {}) {
@@ -1274,6 +1295,12 @@ function validateInputJson(data, pointsEntry) {
         });
 
         walkSubcategoryTree(entry.subcategories || [], (subcat) => {
+            if (Object.prototype.hasOwnProperty.call(subcat || {}, "defaultOptionMaxSelections")) {
+                const parsedDefaultMax = Number(subcat.defaultOptionMaxSelections);
+                if (!Number.isFinite(parsedDefaultMax) || parsedDefaultMax < 1) {
+                    errors.push(`Subcategory "${subcat?.name || '(unnamed)'}" has invalid defaultOptionMaxSelections; it must be >= 1.`);
+                }
+            }
             // Handle subcategory-level requiresOption applying to all options in this subcategory tree
             if (subcat?.requiresOption) {
                 const requiredItems = Array.isArray(subcat.requiresOption) ? subcat.requiresOption : [subcat.requiresOption];
@@ -1940,7 +1967,7 @@ function removeSelection(option) {
         points[type] += cost;
     });
 
-    if (option.maxSelections && count > 1) {
+    if (count > 1) {
         selectedOptions[option.id] = count - 1;
     } else {
         delete selectedOptions[option.id];
@@ -2266,7 +2293,7 @@ function canSelect(option) {
         (Number.isFinite(subcatMax) && subcatMax > 0 && currentSubcatCount > 0);
 
     // Check option-specific max selections
-    const maxPerOption = option.maxSelections || 1; // Default to 1 selection
+    const maxPerOption = getOptionMaxSelections(option); // Default to 1 selection
     const currentOptionCount = selectedOptions[option.id] || 0;
     const underOptionLimit = currentOptionCount < maxPerOption;
     const categoryMaxSelections = getCategorySelectionLimit(option.id);
@@ -3121,7 +3148,7 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
     wrapper.className = "option-wrapper";
 
     const selectedCount = selectedOptions[opt.id] || 0;
-    const maxSelections = opt.maxSelections || 1;
+    const maxSelections = getOptionMaxSelections(opt);
     const isSliderOption = opt.inputType === "slider";
     const isSingleChoice = maxSelections === 1;
 
@@ -3560,7 +3587,7 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
     if (opt.inputType === "slider") {
         renderSliderControl(opt, contentWrapper);
     } else {
-        const isSingleChoice = (opt.maxSelections || 1) === 1;
+        const isSingleChoice = getOptionMaxSelections(opt) === 1;
         if (!isSingleChoice) {
             renderSelectionButton(opt, contentWrapper);
         }
@@ -3768,7 +3795,7 @@ function renderSelectionButton(opt, contentWrapper) {
     controls.className = "option-controls";
 
     const count = selectedOptions[opt.id] || 0;
-    const max = opt.maxSelections || 1;
+    const max = getOptionMaxSelections(opt);
     const canAdd = canSelect(opt);
 
     if (max > 1) {

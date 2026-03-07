@@ -2909,10 +2909,31 @@
                     }
                     schedulePreviewUpdate();
                 });
+                const defaultOptionMaxLabel = document.createElement("label");
+                defaultOptionMaxLabel.textContent = "Default option max";
+                const defaultOptionMaxInput = document.createElement("input");
+                defaultOptionMaxInput.type = "number";
+                defaultOptionMaxInput.min = "1";
+                defaultOptionMaxInput.value = subcat.defaultOptionMaxSelections ?? "";
+                defaultOptionMaxInput.placeholder = "Default: 1";
+                defaultOptionMaxInput.title = "Applies to options under this subcategory unless an option defines its own max selections.";
+                defaultOptionMaxInput.addEventListener("input", () => {
+                    const value = defaultOptionMaxInput.value.trim();
+                    if (value === "") {
+                        delete subcat.defaultOptionMaxSelections;
+                    } else {
+                        const parsed = Math.max(1, Number(value) || 1);
+                        subcat.defaultOptionMaxSelections = parsed;
+                        defaultOptionMaxInput.value = String(parsed);
+                    }
+                    schedulePreviewUpdate();
+                });
                 maxRow.appendChild(maxLabel);
                 maxRow.appendChild(maxInput);
                 maxRow.appendChild(minLabel);
                 maxRow.appendChild(minInput);
+                maxRow.appendChild(defaultOptionMaxLabel);
+                maxRow.appendChild(defaultOptionMaxInput);
                 subAdvancedBody.appendChild(maxRow);
 
                 const discountRow = document.createElement("div");
@@ -3833,7 +3854,10 @@
             optionLimitInput.type = "number";
             optionLimitInput.min = "1";
             optionLimitInput.value = option.maxSelections ?? "";
-            optionLimitInput.placeholder = "Default: 1";
+            const inheritedOptionMax = Number(subcategory?.defaultOptionMaxSelections);
+            optionLimitInput.placeholder = Number.isFinite(inheritedOptionMax) && inheritedOptionMax > 0
+                ? `Default: ${inheritedOptionMax}`
+                : "Default: 1";
             optionLimitInput.addEventListener("input", () => {
                 const raw = optionLimitInput.value.trim();
                 if (!raw) {
