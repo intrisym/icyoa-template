@@ -199,6 +199,10 @@ select[multiple] {
     overflow: auto;
 }
 
+.point-type-picker-search {
+    width: 100%;
+}
+
 .point-type-option {
     text-align: left;
 }
@@ -206,6 +210,20 @@ select[multiple] {
 .point-type-option.is-selected {
     border-color: var(--accent);
     color: var(--accent-strong);
+}
+
+.attribute-range-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 100px 100px auto;
+    gap: 8px;
+    align-items: center;
+    min-width: 0;
+}
+
+.range-warning {
+    grid-column: 1 / -1;
+    display: none;
+    color: var(--warning-text);
 }
 
 .editor-layout {

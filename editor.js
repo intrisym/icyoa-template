@@ -416,6 +416,8 @@
 
     function createGroupedPointTypePicker(currentValue, {
         extraPointTypes = [],
+        excludedPointTypes = [],
+        enableSearch = false,
         onSelect = () => {}
     } = {}) {
         const picker = document.createElement("details");
@@ -428,6 +430,16 @@
         const menu = document.createElement("div");
         menu.className = "point-type-picker-menu";
         const groups = getGroupedPointTypes(state.data, [currentValue, ...extraPointTypes]);
+        const excluded = new Set((excludedPointTypes || []).map((type) => String(type || "").trim()).filter(Boolean));
+        let searchInput = null;
+
+        if (enableSearch) {
+            searchInput = document.createElement("input");
+            searchInput.type = "search";
+            searchInput.className = "point-type-picker-search";
+            searchInput.placeholder = "Search point types...";
+            menu.appendChild(searchInput);
+        }
 
         if (!groups.length) {
             const empty = document.createElement("div");
@@ -450,9 +462,13 @@
                 list.className = "point-group-list";
 
                 group.pointTypes.forEach((pointType) => {
+                    if (pointType !== currentValue && excluded.has(pointType)) {
+                        return;
+                    }
                     const btn = document.createElement("button");
                     btn.type = "button";
                     btn.className = "button-subtle point-type-option";
+                    btn.dataset.pointType = pointType.toLowerCase();
                     if (pointType === currentValue) {
                         btn.classList.add("is-selected");
                     }
@@ -470,6 +486,23 @@
 
                 groupDetails.appendChild(list);
                 menu.appendChild(groupDetails);
+            });
+        }
+
+        if (searchInput) {
+            searchInput.addEventListener("input", () => {
+                const query = searchInput.value.trim().toLowerCase();
+                const groupPanels = menu.querySelectorAll(".point-group-panel");
+                groupPanels.forEach((panel) => {
+                    const options = panel.querySelectorAll(".point-type-option");
+                    let visibleCount = 0;
+                    options.forEach((optionBtn) => {
+                        const match = !query || (optionBtn.dataset.pointType || "").includes(query);
+                        optionBtn.style.display = match ? "" : "none";
+                        if (match) visibleCount += 1;
+                    });
+                    panel.style.display = visibleCount > 0 ? "" : "none";
+                });
             });
         }
 
@@ -1680,31 +1713,49 @@
         negHeading.textContent = "Allow negative balances";
         body.appendChild(negHeading);
 
-        const checkboxGrid = document.createElement("div");
-        checkboxGrid.className = "checkbox-grid";
-        Object.keys(pointsEntry.values).forEach(currency => {
-            const label = document.createElement("label");
-            label.className = "checkbox-option";
-            const checkbox = document.createElement("input");
-            checkbox.type = "checkbox";
-            checkbox.checked = pointsEntry.allowNegative.includes(currency);
-            checkbox.addEventListener("change", () => {
-                const idx = pointsEntry.allowNegative.indexOf(currency);
-                if (checkbox.checked && idx === -1) {
-                    pointsEntry.allowNegative.push(currency);
-                }
-                if (!checkbox.checked && idx !== -1) {
-                    pointsEntry.allowNegative.splice(idx, 1);
-                }
-                schedulePreviewUpdate();
+        const negativeContainer = document.createElement("div");
+        negativeContainer.className = "point-type-checkbox-list";
+        const negativeGroups = getGroupedPointTypes(state.data, pointsEntry.allowNegative || []);
+        negativeGroups.forEach((group, groupIndex) => {
+            const groupDetails = document.createElement("details");
+            groupDetails.className = "point-group-panel";
+            if (groupIndex === 0 || group.id === "__invalid") {
+                groupDetails.open = true;
+            }
+
+            const groupSummary = document.createElement("summary");
+            groupSummary.textContent = `${group.name} (${group.pointTypes.length})`;
+            groupDetails.appendChild(groupSummary);
+
+            const pointList = document.createElement("div");
+            pointList.className = "point-group-list";
+            group.pointTypes.forEach((pointType) => {
+                const label = document.createElement("label");
+                label.className = "checkbox-option";
+                const checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.checked = pointsEntry.allowNegative.includes(pointType);
+                checkbox.addEventListener("change", () => {
+                    const idx = pointsEntry.allowNegative.indexOf(pointType);
+                    if (checkbox.checked && idx === -1) {
+                        pointsEntry.allowNegative.push(pointType);
+                    }
+                    if (!checkbox.checked && idx !== -1) {
+                        pointsEntry.allowNegative.splice(idx, 1);
+                    }
+                    schedulePreviewUpdate();
+                });
+                const span = document.createElement("span");
+                span.textContent = pointType;
+                label.appendChild(checkbox);
+                label.appendChild(span);
+                pointList.appendChild(label);
             });
-            label.appendChild(checkbox);
-            const span = document.createElement("span");
-            span.textContent = currency;
-            label.appendChild(span);
-            checkboxGrid.appendChild(label);
+
+            groupDetails.appendChild(pointList);
+            negativeContainer.appendChild(groupDetails);
         });
-        body.appendChild(checkboxGrid);
+        body.appendChild(negativeContainer);
 
         const rangesHeading = document.createElement("div");
         rangesHeading.className = "subheading";
@@ -1716,12 +1767,28 @@
 
         Object.entries(pointsEntry.attributeRanges).forEach(([attr, range]) => {
             const row = document.createElement("div");
-            row.className = "list-row";
+            row.className = "attribute-range-row";
 
-            const attrInput = document.createElement("input");
-            attrInput.type = "text";
-            attrInput.value = attr;
-            attrInput.placeholder = "Attribute (e.g., Strength)";
+            const attrPicker = createGroupedPointTypePicker(attr, {
+                extraPointTypes: Object.keys(pointsEntry.attributeRanges),
+                excludedPointTypes: Object.keys(pointsEntry.attributeRanges).filter((name) => name !== attr),
+                enableSearch: true,
+                onSelect: (newName) => {
+                    const nextName = String(newName || "").trim();
+                    if (!nextName || nextName === attr) {
+                        return;
+                    }
+                    if (pointsEntry.attributeRanges.hasOwnProperty(nextName)) {
+                        showEditorMessage(`Attribute "${nextName}" already exists.`, "warning");
+                        return;
+                    }
+                    const existing = pointsEntry.attributeRanges[attr];
+                    delete pointsEntry.attributeRanges[attr];
+                    pointsEntry.attributeRanges[nextName] = existing;
+                    renderGlobalSettings();
+                    schedulePreviewUpdate();
+                }
+            });
 
             const minInput = document.createElement("input");
             minInput.type = "number";
@@ -1731,36 +1798,33 @@
             maxInput.type = "number";
             maxInput.value = typeof range?.max === "number" ? range.max : 0;
 
+            const rangeWarning = document.createElement("div");
+            rangeWarning.className = "field-help range-warning";
+
             const removeBtn = document.createElement("button");
             removeBtn.type = "button";
             removeBtn.className = "button-icon danger";
             removeBtn.title = "Remove attribute";
             removeBtn.textContent = "✕";
 
+            const syncRangeValidation = () => {
+                const minVal = Number(minInput.value);
+                const maxVal = Number(maxInput.value);
+                const invalid = Number.isFinite(minVal) && Number.isFinite(maxVal) && maxVal < minVal;
+                minInput.classList.toggle("field-error", invalid);
+                maxInput.classList.toggle("field-error", invalid);
+                rangeWarning.style.display = invalid ? "block" : "none";
+                rangeWarning.textContent = invalid ? "Invalid range: max must be greater than or equal to min." : "";
+            };
+
             minInput.addEventListener("input", () => {
                 pointsEntry.attributeRanges[attr].min = Number(minInput.value) || 0;
+                syncRangeValidation();
                 schedulePreviewUpdate();
             });
             maxInput.addEventListener("input", () => {
                 pointsEntry.attributeRanges[attr].max = Number(maxInput.value) || 0;
-                schedulePreviewUpdate();
-            });
-
-            attrInput.addEventListener("blur", () => {
-                const newName = attrInput.value.trim();
-                if (!newName || newName === attr) {
-                    attrInput.value = attr;
-                    return;
-                }
-                if (pointsEntry.attributeRanges.hasOwnProperty(newName)) {
-                    showEditorMessage(`Attribute "${newName}" already exists.`, "warning");
-                    attrInput.value = attr;
-                    return;
-                }
-                const existing = pointsEntry.attributeRanges[attr];
-                delete pointsEntry.attributeRanges[attr];
-                pointsEntry.attributeRanges[newName] = existing;
-                renderGlobalSettings();
+                syncRangeValidation();
                 schedulePreviewUpdate();
             });
 
@@ -1770,10 +1834,12 @@
                 schedulePreviewUpdate();
             });
 
-            row.appendChild(attrInput);
+            row.appendChild(attrPicker);
             row.appendChild(minInput);
             row.appendChild(maxInput);
             row.appendChild(removeBtn);
+            row.appendChild(rangeWarning);
+            syncRangeValidation();
             rangesContainer.appendChild(row);
         });
 
@@ -1782,16 +1848,15 @@
         addAttrBtn.className = "button-subtle";
         addAttrBtn.textContent = "Add attribute";
         addAttrBtn.addEventListener("click", () => {
-            let base = "Attribute";
-            let suffix = 1;
-            let candidate = base;
-            while (pointsEntry.attributeRanges.hasOwnProperty(candidate)) {
-                suffix += 1;
-                candidate = `${base} ${suffix}`;
+            const pointTypes = Object.keys(pointsEntry.values || {});
+            const candidate = pointTypes.find((name) => !pointsEntry.attributeRanges.hasOwnProperty(name));
+            if (!candidate) {
+                showEditorMessage("No available point type to add. Remove an existing range first.", "warning", 4000);
+                return;
             }
             pointsEntry.attributeRanges[candidate] = {
                 min: 0,
-                max: 10
+                max: 40
             };
             renderGlobalSettings();
             schedulePreviewUpdate();
