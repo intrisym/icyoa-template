@@ -2929,10 +2929,19 @@
             const row = document.createElement("div");
             row.className = "cost-row";
 
-            const nameInput = document.createElement("input");
-            nameInput.type = "text";
-            nameInput.value = currency;
-            nameInput.placeholder = "Currency";
+            const pointTypeNames = getPointTypeNames();
+            const availablePointTypes = pointTypeNames.includes(currency)
+                ? pointTypeNames
+                : [currency, ...pointTypeNames];
+
+            const nameSelect = document.createElement("select");
+            availablePointTypes.forEach((pointType) => {
+                const opt = document.createElement("option");
+                opt.value = pointType;
+                opt.textContent = pointType;
+                nameSelect.appendChild(opt);
+            });
+            nameSelect.value = currency;
 
             const valueInput = document.createElement("input");
             valueInput.type = "number";
@@ -2949,15 +2958,15 @@
                 schedulePreviewUpdate();
             });
 
-            nameInput.addEventListener("blur", () => {
-                const newName = nameInput.value.trim();
+            nameSelect.addEventListener("change", () => {
+                const newName = nameSelect.value;
                 if (!newName || newName === currency) {
-                    nameInput.value = currency;
+                    nameSelect.value = currency;
                     return;
                 }
                 if (option.cost.hasOwnProperty(newName)) {
                     showEditorMessage(`Duplicate cost key "${newName}"`, "warning");
-                    nameInput.value = currency;
+                    nameSelect.value = currency;
                     return;
                 }
                 const existing = option.cost[currency];
@@ -2973,7 +2982,7 @@
                 schedulePreviewUpdate();
             });
 
-            row.appendChild(nameInput);
+            row.appendChild(nameSelect);
             row.appendChild(valueInput);
             row.appendChild(removeBtn);
             container.appendChild(row);
@@ -2984,12 +2993,10 @@
         addBtn.className = "button-subtle";
         addBtn.textContent = "Add cost";
         addBtn.addEventListener("click", () => {
-            let base = "Currency";
-            let suffix = 1;
-            let candidate = base;
-            while (option.cost.hasOwnProperty(candidate)) {
-                suffix += 1;
-                candidate = `${base} ${suffix}`;
+            const candidate = getPointTypeNames().find((pointType) => !option.cost.hasOwnProperty(pointType));
+            if (!candidate) {
+                showEditorMessage("All available point types are already used for this cost.", "warning");
+                return;
             }
             option.cost[candidate] = 0;
             renderCostEditor(container, option);
