@@ -296,25 +296,8 @@ function getOptionEffectiveCost(option, {
     let bestTotal = Object.entries(baseCost).reduce((sum, [_, val]) => val > 0 ? sum + val : sum, 0);
 
     (option.discounts || []).forEach(d => {
-        let qualifies = false;
-
-        // Existing behavior: require ALL of id/ids
-        if (d.id || d.ids) {
-            const target = d.ids || d.id;
-            const requiredIds = Array.isArray(target) ? target : [target];
-            if (requiredIds.every(req => meetsCountRequirement(req))) {
-                qualifies = true;
-            }
-        }
-
-        // NEW behavior: require at least N of idsAny
-        if (!qualifies && d.idsAny && Number.isInteger(d.minSelected)) {
-            const chosenCount = d.idsAny.reduce((n, depId) => n + ((selectedOptions[depId] || 0) > 0 ? 1 : 0), 0);
-            if (chosenCount >= d.minSelected) {
-                qualifies = true;
-            }
-        }
-
+        if (isConditionalGrantRule(d)) return;
+        const qualifies = doesDiscountRuleQualify(d);
         if (!qualifies) return;
 
         const mergedCost = { ...baseCost, ...(d.cost || {}) };
@@ -2053,6 +2036,10 @@ function buildOptionGrantKey(providerId, ruleIndex) {
     return `${providerId}::${ruleIndex}`;
 }
 
+function buildConditionalGrantKey(targetOptionId, ruleIndex) {
+    return `conditional::${targetOptionId}::${ruleIndex}`;
+}
+
 function getOptionGrantMap(key) {
     return getDiscountMap(optionGrantDiscountSelections, key) || {};
 }
@@ -2071,6 +2058,52 @@ function getAllOptions() {
         forEachCategoryOption(cat, opt => all.push(opt));
     });
     return all;
+}
+
+function getOptionById(optionId) {
+    return getAllOptions().find(opt => opt.id === optionId) || null;
+}
+
+function getDiscountRuleTriggerIds(rule) {
+    if (!rule) return [];
+    if (Array.isArray(rule.idsAny)) return rule.idsAny.filter(Boolean);
+    if (Array.isArray(rule.ids)) return rule.ids.filter(Boolean);
+    if (rule.id) return [rule.id];
+    return [];
+}
+
+function isConditionalGrantRule(rule) {
+    if (!rule || typeof rule !== 'object') return false;
+    const slots = Number(rule.slots) || 0;
+    return slots > 0 && (rule.mode === 'free' || rule.mode === 'half');
+}
+
+function doesDiscountRuleQualify(rule) {
+    if (!rule) return false;
+
+    if (rule.id || rule.ids) {
+        const requiredIds = getDiscountRuleTriggerIds(rule);
+        if (requiredIds.length && requiredIds.every(req => meetsCountRequirement(req))) {
+            return true;
+        }
+    }
+
+    if (rule.idsAny && Number.isInteger(rule.minSelected)) {
+        const chosenCount = rule.idsAny.reduce((n, depId) => n + (meetsCountRequirement(depId) ? 1 : 0), 0);
+        if (chosenCount >= rule.minSelected) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function getConditionalGrantProviderLabel(rule, ruleIndex) {
+    const ids = getDiscountRuleTriggerIds(rule);
+    if (!ids.length) return `Conditional Rule ${ruleIndex + 1}`;
+    const labels = ids.map(id => getOptionById(String(id).split('__')[0])?.label || id);
+    if (labels.length === 1) return labels[0];
+    return `${labels[0]} +${labels.length - 1}`;
 }
 
 function getActiveOptionGrantContexts(targetOptionId) {
@@ -2095,6 +2128,28 @@ function getActiveOptionGrantContexts(targetOptionId) {
                 limit: providerSelections * slotsPerSelection,
                 mode: rule.mode === 'free' ? 'free' : 'half'
             });
+        });
+    });
+    const targetOption = getOptionById(targetOptionId);
+    (targetOption?.discounts || []).forEach((rule, ruleIndex) => {
+        if (!isConditionalGrantRule(rule)) return;
+        if (!doesDiscountRuleQualify(rule)) return;
+        const slots = Math.max(0, Number(rule?.slots) || 0);
+        if (slots <= 0) return;
+        const key = buildConditionalGrantKey(targetOptionId, ruleIndex);
+        const map = getOptionGrantMap(key);
+        contexts.push({
+            provider: {
+                id: key,
+                label: getConditionalGrantProviderLabel(rule, ruleIndex)
+            },
+            rule,
+            ruleIndex,
+            key,
+            map,
+            targetIds: [targetOptionId],
+            limit: slots,
+            mode: rule.mode === 'free' ? 'free' : 'half'
         });
     });
     return contexts;

@@ -398,6 +398,7 @@
         rules.forEach((rule, index) => {
             const ruleNo = index + 1;
             const ids = normalizeIdList(rule?.idsAny || rule?.ids || (rule?.id ? [rule.id] : []));
+            const slotMode = (Number(rule?.slots) || 0) > 0 && (rule?.mode === "free" || rule?.mode === "half");
             if (!ids.length) warnings.push(`Rule ${ruleNo}: add at least one trigger option ID.`);
             ids.forEach(id => {
                 if (id === selfId && selfId) warnings.push(`Rule ${ruleNo}: trigger list includes this option itself.`);
@@ -409,7 +410,10 @@
                     warnings.push(`Rule ${ruleNo}: "Min selected" (${min}) is greater than trigger IDs (${ids.length}).`);
                 }
             }
-            if (!rule?.cost || !Object.keys(rule.cost).length) {
+            if (slotMode) {
+                const slots = Number(rule?.slots) || 0;
+                if (slots < 1) warnings.push(`Rule ${ruleNo}: slots must be at least 1.`);
+            } else if (!rule?.cost || !Object.keys(rule.cost).length) {
                 warnings.push(`Rule ${ruleNo}: discounted cost map is empty.`);
             }
         });
@@ -656,11 +660,12 @@
     }
 
     function createSectionContainer(title, {
-        defaultOpen = true
+        defaultOpen = true,
+        storageKey = title
     } = {}) {
         const details = document.createElement("details");
         details.className = "section-block";
-        const stored = sectionOpenState.has(title) ? sectionOpenState.get(title) : defaultOpen;
+        const stored = sectionOpenState.has(storageKey) ? sectionOpenState.get(storageKey) : defaultOpen;
         if (stored) {
             details.open = true;
         }
@@ -670,7 +675,7 @@
         body.className = "section-body";
         details.append(summary, body);
         details.addEventListener("toggle", () => {
-            sectionOpenState.set(title, details.open);
+            sectionOpenState.set(storageKey, details.open);
         });
         return {
             container: details,
@@ -695,6 +700,14 @@
 
     function slugifyKey(str) {
         return String(str || "").replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_\-]/g, '');
+    }
+
+    function normalizedPathKey(parts = []) {
+        return parts
+            .filter(part => part != null && String(part).trim() !== "")
+            .map(part => slugifyKey(String(part)))
+            .filter(Boolean)
+            .join("__") || "section";
     }
 
     function buildSubcategoryKey(catIndex, catName, subIndex, subName) {
@@ -1718,6 +1731,15 @@
             const body = document.createElement("div");
             body.className = "category-body";
 
+            const {
+                container: categoryAdvancedSection,
+                body: categoryAdvancedBody
+            } = createSectionContainer("Advanced Fields", {
+                storageKey: `category-advanced-${position}`,
+                defaultOpen: false
+            });
+            body.appendChild(categoryAdvancedSection);
+
             const nameField = document.createElement("div");
             nameField.className = "field";
             const nameLabel = document.createElement("label");
@@ -1776,7 +1798,7 @@
             });
             requiresField.appendChild(requiresLabel);
             requiresField.appendChild(requiresInput);
-            body.appendChild(requiresField);
+            categoryAdvancedBody.appendChild(requiresField);
 
             const categoryMaxRow = document.createElement("div");
             categoryMaxRow.className = "field-inline";
@@ -1806,7 +1828,7 @@
             });
             categoryMaxRow.appendChild(categoryMaxLabel);
             categoryMaxRow.appendChild(categoryMaxInput);
-            body.appendChild(categoryMaxRow);
+            categoryAdvancedBody.appendChild(categoryMaxRow);
 
             const categorySubviewField = document.createElement("div");
             categorySubviewField.className = "field-inline";
@@ -1828,7 +1850,7 @@
             });
             categorySubviewField.appendChild(categorySubviewLabel);
             categorySubviewField.appendChild(categorySubviewSelect);
-            body.appendChild(categorySubviewField);
+            categoryAdvancedBody.appendChild(categorySubviewField);
 
             const renderSubcategoryEditor = (parentArray, subcat, subIndex, container, namePath = []) => {
                 ensureSubcategoryDefaults(subcat);
@@ -1850,6 +1872,15 @@
 
                 const subBody = document.createElement("div");
                 subBody.className = "subcategory-body";
+
+                const {
+                    container: subAdvancedSection,
+                    body: subAdvancedBody
+                } = createSectionContainer("Advanced Fields", {
+                    storageKey: `${normalizedPathKey([category.name, ...namePath, subcat.name || `Subcategory${subIndex + 1}`])}-advanced`,
+                    defaultOpen: false
+                });
+                subBody.appendChild(subAdvancedSection);
 
                 const subNameField = document.createElement("div");
                 subNameField.className = "field";
@@ -1887,7 +1918,7 @@
                 });
                 subRequiresField.appendChild(subRequiresLabel);
                 subRequiresField.appendChild(subRequiresInput);
-                subBody.appendChild(subRequiresField);
+                subAdvancedBody.appendChild(subRequiresField);
 
                 const typeField = document.createElement("div");
                 typeField.className = "field-inline";
@@ -1907,7 +1938,7 @@
                 });
                 typeField.appendChild(typeLabel);
                 typeField.appendChild(typeInput);
-                subBody.appendChild(typeField);
+                subAdvancedBody.appendChild(typeField);
 
                 const nestedViewField = document.createElement("div");
                 nestedViewField.className = "field-inline";
@@ -1929,7 +1960,7 @@
                 });
                 nestedViewField.appendChild(nestedViewLabel);
                 nestedViewField.appendChild(nestedViewSelect);
-                subBody.appendChild(nestedViewField);
+                subAdvancedBody.appendChild(nestedViewField);
 
                 const maxRow = document.createElement("div");
                 maxRow.className = "field-inline";
@@ -1989,9 +2020,9 @@
                 });
                 discountRow.appendChild(discountFirstLabel);
                 discountRow.appendChild(discountFirstInput);
-                subBody.appendChild(discountRow);
+                subAdvancedBody.appendChild(discountRow);
 
-                renderPointTypeAmountControls(subBody, {
+                renderPointTypeAmountControls(subAdvancedBody, {
                     labelPrefix: "Discount Amount",
                     getMap: () => subcat.discountAmount,
                     setMap: (next) => {
@@ -2031,7 +2062,7 @@
                 });
                 columnsRow.appendChild(columnsLabel);
                 columnsRow.appendChild(columnsInput);
-                subBody.appendChild(columnsRow);
+                subAdvancedBody.appendChild(columnsRow);
 
                 const textField = document.createElement("div");
                 textField.className = "field";
@@ -2187,7 +2218,7 @@
         const normalizedPath = Array.isArray(fullPathParts) && fullPathParts.length
             ? fullPathParts.filter(Boolean)
             : [category.name, subcategory.name].filter(Boolean);
-        subcategory.options.forEach((option, optionIndex) => {
+            subcategory.options.forEach((option, optionIndex) => {
             const details = document.createElement("details");
             details.className = "option-item";
 
@@ -2279,6 +2310,15 @@
 
             const body = document.createElement("div");
             body.className = "option-body";
+
+            const {
+                container: optionAdvancedSection,
+                body: optionAdvancedBody
+            } = createSectionContainer("Advanced Fields", {
+                storageKey: `${normalizedPathKey([...normalizedPath, option.id || option.label || `Option${optionIndex + 1}`])}-advanced`,
+                defaultOpen: false
+            });
+            body.appendChild(optionAdvancedSection);
 
             const validationBox = document.createElement("div");
             validationBox.className = "inline-warning-list";
@@ -2407,7 +2447,7 @@
             inputTypeField.appendChild(inputTypeInput);
             inputTypeField.appendChild(inputLabelLabel);
             inputTypeField.appendChild(inputLabelInput);
-            body.appendChild(inputTypeField);
+            optionAdvancedBody.appendChild(inputTypeField);
 
             const optionLimitField = document.createElement("div");
             optionLimitField.className = "field-inline";
@@ -2453,7 +2493,7 @@
             countAsOneToggle.appendChild(countAsOneInput);
             countAsOneToggle.appendChild(countAsOneText);
             countAsOneField.appendChild(countAsOneToggle);
-            body.appendChild(countAsOneField);
+            optionAdvancedBody.appendChild(countAsOneField);
 
             const costSection = document.createElement("div");
             costSection.className = "field";
@@ -2498,7 +2538,7 @@
             prereqSection.appendChild(prereqLabel);
             prereqSection.appendChild(prereqHint);
             prereqSection.appendChild(prereqInput);
-            body.appendChild(prereqSection);
+            optionAdvancedBody.appendChild(prereqSection);
 
             const conflictSection = document.createElement("div");
             conflictSection.className = "field";
@@ -2532,7 +2572,7 @@
             conflictSection.appendChild(conflictLabel);
             conflictSection.appendChild(conflictHint);
             conflictSection.appendChild(conflictContainer);
-            body.appendChild(conflictSection);
+            optionAdvancedBody.appendChild(conflictSection);
 
             const discountSection = document.createElement("div");
             discountSection.className = "field";
@@ -2557,6 +2597,11 @@
                 rules.forEach((rule, ruleIndex) => {
                     const ruleCard = document.createElement("div");
                     ruleCard.className = "discount-rule-card";
+                    const getRuleBehavior = () => {
+                        return (Number(rule?.slots) || 0) > 0 && (rule?.mode === "free" || rule?.mode === "half")
+                            ? "slots"
+                            : "cost";
+                    };
 
                     const header = document.createElement("div");
                     header.className = "discount-rule-header";
@@ -2581,6 +2626,38 @@
                     header.appendChild(title);
                     header.appendChild(removeBtn);
                     ruleCard.appendChild(header);
+
+                    const behaviorRow = document.createElement("div");
+                    behaviorRow.className = "field-inline";
+                    const behaviorLabel = document.createElement("label");
+                    behaviorLabel.textContent = "Discount behavior";
+                    const behaviorInput = document.createElement("select");
+                    const costBehavior = document.createElement("option");
+                    costBehavior.value = "cost";
+                    costBehavior.textContent = "Set discounted cost";
+                    const slotBehavior = document.createElement("option");
+                    slotBehavior.value = "slots";
+                    slotBehavior.textContent = "Discount slots";
+                    behaviorInput.appendChild(costBehavior);
+                    behaviorInput.appendChild(slotBehavior);
+                    behaviorInput.value = getRuleBehavior();
+                    behaviorInput.addEventListener("change", () => {
+                        if (behaviorInput.value === "slots") {
+                            delete rule.cost;
+                            rule.slots = Math.max(1, Number(rule.slots) || 1);
+                            rule.mode = rule.mode === "free" ? "free" : "half";
+                        } else {
+                            delete rule.slots;
+                            delete rule.mode;
+                            rule.cost = rule.cost && Object.keys(rule.cost).length ? rule.cost : {};
+                        }
+                        renderDiscountRulesEditor();
+                        refreshOptionWarnings(prereqParseError ? [prereqParseError] : []);
+                        schedulePreviewUpdate();
+                    });
+                    behaviorRow.appendChild(behaviorLabel);
+                    behaviorRow.appendChild(behaviorInput);
+                    ruleCard.appendChild(behaviorRow);
 
                     const modeRow = document.createElement("div");
                     modeRow.className = "field-inline field-inline-three";
@@ -2676,24 +2753,64 @@
                     idsField.appendChild(idsContainer);
                     ruleCard.appendChild(idsField);
 
-                    const ruleCostField = document.createElement("div");
-                    ruleCostField.className = "field";
-                    const ruleCostLabel = document.createElement("label");
-                    ruleCostLabel.textContent = "Discounted cost when triggered";
-                    const ruleCostContainer = document.createElement("div");
-                    ruleCostContainer.className = "cost-list";
-                    renderPointMapEditor(ruleCostContainer, rule.cost || {}, (nextCost) => {
-                        if (nextCost) {
-                            rule.cost = nextCost;
-                        } else {
-                            delete rule.cost;
-                        }
-                        refreshOptionWarnings(prereqParseError ? [prereqParseError] : []);
-                        schedulePreviewUpdate();
-                    });
-                    ruleCostField.appendChild(ruleCostLabel);
-                    ruleCostField.appendChild(ruleCostContainer);
-                    ruleCard.appendChild(ruleCostField);
+                    if (behaviorInput.value === "slots") {
+                        const slotSettingsRow = document.createElement("div");
+                        slotSettingsRow.className = "field-inline field-inline-three";
+                        const slotsLabel = document.createElement("label");
+                        slotsLabel.textContent = "Slots";
+                        const slotsInput = document.createElement("input");
+                        slotsInput.type = "number";
+                        slotsInput.min = "1";
+                        slotsInput.value = String(Math.max(1, Number(rule.slots) || 1));
+                        const discountModeLabel = document.createElement("label");
+                        discountModeLabel.textContent = "Slot mode";
+                        const discountModeInput = document.createElement("select");
+                        const halfMode = document.createElement("option");
+                        halfMode.value = "half";
+                        halfMode.textContent = "Half cost";
+                        const freeMode = document.createElement("option");
+                        freeMode.value = "free";
+                        freeMode.textContent = "Free";
+                        discountModeInput.appendChild(halfMode);
+                        discountModeInput.appendChild(freeMode);
+                        discountModeInput.value = rule.mode === "free" ? "free" : "half";
+                        slotsInput.addEventListener("input", () => {
+                            const parsed = Math.max(1, Number(slotsInput.value) || 1);
+                            rule.slots = parsed;
+                            slotsInput.value = String(parsed);
+                            refreshOptionWarnings(prereqParseError ? [prereqParseError] : []);
+                            schedulePreviewUpdate();
+                        });
+                        discountModeInput.addEventListener("change", () => {
+                            rule.mode = discountModeInput.value === "free" ? "free" : "half";
+                            refreshOptionWarnings(prereqParseError ? [prereqParseError] : []);
+                            schedulePreviewUpdate();
+                        });
+                        slotSettingsRow.appendChild(slotsLabel);
+                        slotSettingsRow.appendChild(slotsInput);
+                        slotSettingsRow.appendChild(discountModeLabel);
+                        slotSettingsRow.appendChild(discountModeInput);
+                        ruleCard.appendChild(slotSettingsRow);
+                    } else {
+                        const ruleCostField = document.createElement("div");
+                        ruleCostField.className = "field";
+                        const ruleCostLabel = document.createElement("label");
+                        ruleCostLabel.textContent = "Discounted cost when triggered";
+                        const ruleCostContainer = document.createElement("div");
+                        ruleCostContainer.className = "cost-list";
+                        renderPointMapEditor(ruleCostContainer, rule.cost || {}, (nextCost) => {
+                            if (nextCost) {
+                                rule.cost = nextCost;
+                            } else {
+                                delete rule.cost;
+                            }
+                            refreshOptionWarnings(prereqParseError ? [prereqParseError] : []);
+                            schedulePreviewUpdate();
+                        });
+                        ruleCostField.appendChild(ruleCostLabel);
+                        ruleCostField.appendChild(ruleCostContainer);
+                        ruleCard.appendChild(ruleCostField);
+                    }
 
                     discountContainer.appendChild(ruleCard);
                 });
@@ -2722,7 +2839,7 @@
             discountSection.appendChild(discountLabel);
             discountSection.appendChild(discountHint);
             discountSection.appendChild(discountContainer);
-            body.appendChild(discountSection);
+            optionAdvancedBody.appendChild(discountSection);
 
             const grantsSection = document.createElement("div");
             grantsSection.className = "field";
@@ -2872,7 +2989,7 @@
             grantsSection.appendChild(grantsLabel);
             grantsSection.appendChild(grantsHint);
             grantsSection.appendChild(grantsContainer);
-            body.appendChild(grantsSection);
+            optionAdvancedBody.appendChild(grantsSection);
             refreshOptionWarnings();
 
             const advancedKeys = Object.keys(option).filter(key => !BASE_OPTION_KEYS.has(key));
@@ -2915,7 +3032,7 @@
             });
             advancedSection.appendChild(advancedLabel);
             advancedSection.appendChild(advancedTextarea);
-            body.appendChild(advancedSection);
+            optionAdvancedBody.appendChild(advancedSection);
 
             details.appendChild(body);
             container.appendChild(details);
