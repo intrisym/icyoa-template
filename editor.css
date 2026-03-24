@@ -48,6 +48,8 @@
     --warning-border: #8b6b1f;
     --input-bg: #0d1117;
     --modal-overlay: rgba(0, 0, 0, 0.75);
+    --shadow-soft: 0 18px 44px rgba(0, 0, 0, 0.42);
+    --shadow-subtle: 0 8px 24px rgba(0, 0, 0, 0.32);
 }
 
 * {
@@ -63,6 +65,12 @@ body {
     color: var(--text);
     height: 100vh;
     overflow: hidden;
+}
+
+:root[data-theme="dark"] body {
+    background:
+        radial-gradient(circle at top left, rgba(88, 166, 255, 0.14), transparent 30%),
+        linear-gradient(180deg, #111827 0%, var(--bg) 100%);
 }
 
 button {
@@ -154,6 +162,10 @@ textarea {
     backdrop-filter: blur(12px);
 }
 
+:root[data-theme="dark"] .editor-panel {
+    background: linear-gradient(180deg, rgba(13, 17, 23, 0.96), rgba(22, 27, 34, 0.94));
+}
+
 .preview-panel {
     flex: 1;
     display: flex;
@@ -172,6 +184,10 @@ textarea {
     padding: 6px 0 12px;
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.88));
     backdrop-filter: blur(14px);
+}
+
+:root[data-theme="dark"] .panel-header {
+    background: linear-gradient(180deg, rgba(13, 17, 23, 0.98), rgba(22, 27, 34, 0.9));
 }
 
 .panel-header h1 {
@@ -220,6 +236,10 @@ textarea {
     background: rgba(248, 251, 255, 0.92);
     box-shadow: var(--shadow-soft);
     backdrop-filter: blur(12px);
+}
+
+:root[data-theme="dark"] .editor-nav-shell {
+    background: rgba(22, 27, 34, 0.9);
 }
 
 .editor-nav-toolbar {
@@ -276,6 +296,10 @@ textarea {
     font-size: 13px;
 }
 
+:root[data-theme="dark"] .editor-overview-text {
+    background: rgba(13, 17, 23, 0.72);
+}
+
 .overview-card {
     display: flex;
     flex-direction: column;
@@ -285,6 +309,10 @@ textarea {
     border-radius: 12px;
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(238, 244, 251, 0.9));
     box-shadow: var(--shadow-subtle);
+}
+
+:root[data-theme="dark"] .overview-card {
+    background: linear-gradient(180deg, rgba(22, 27, 34, 0.96), rgba(31, 38, 48, 0.9));
 }
 
 .overview-card strong {
@@ -322,6 +350,10 @@ textarea {
     border-radius: 12px;
     background: rgba(255, 255, 255, 0.82);
     overflow: hidden;
+}
+
+:root[data-theme="dark"] .nav-group {
+    background: rgba(13, 17, 23, 0.56);
 }
 
 .nav-group-header {
@@ -371,6 +403,10 @@ textarea {
     background: var(--accent-soft);
     color: var(--accent);
     border-color: rgba(15, 118, 110, 0.18);
+}
+
+:root[data-theme="dark"] .nav-item:hover {
+    border-color: rgba(88, 166, 255, 0.24);
 }
 
 .nav-item-label {
@@ -502,6 +538,10 @@ textarea {
     box-shadow: var(--shadow-subtle);
 }
 
+:root[data-theme="dark"] .category-card {
+    background: linear-gradient(180deg, rgba(22, 27, 34, 0.98), rgba(26, 33, 43, 0.94));
+}
+
 .category-card summary {
     list-style: none;
     display: flex;
@@ -513,6 +553,10 @@ textarea {
     cursor: pointer;
     background: linear-gradient(180deg, rgba(238, 244, 251, 0.96), rgba(248, 251, 255, 0.92));
     border-bottom: 1px solid transparent;
+}
+
+:root[data-theme="dark"] .category-card summary {
+    background: linear-gradient(180deg, rgba(31, 38, 48, 0.96), rgba(26, 33, 43, 0.92));
 }
 
 .category-card summary::-webkit-details-marker {
@@ -567,6 +611,10 @@ textarea {
     box-shadow: var(--shadow-subtle);
 }
 
+:root[data-theme="dark"] .subcategory-item {
+    background: linear-gradient(180deg, rgba(22, 27, 34, 0.98), rgba(26, 33, 43, 0.94));
+}
+
 .subcategory-item summary {
     list-style: none;
     display: flex;
@@ -579,6 +627,10 @@ textarea {
     cursor: pointer;
     background: rgba(238, 244, 251, 0.9);
     border-bottom: 1px solid transparent;
+}
+
+:root[data-theme="dark"] .subcategory-item summary {
+    background: rgba(31, 38, 48, 0.9);
 }
 
 .subcategory-item[open] summary {
@@ -623,6 +675,10 @@ textarea {
     color: var(--accent);
     font-size: 11px;
     font-weight: 700;
+}
+
+:root[data-theme="dark"] .summary-badge {
+    background: rgba(88, 166, 255, 0.14);
 }
 
 .subcategory-body {
@@ -706,6 +762,10 @@ textarea {
     box-shadow: var(--shadow-subtle);
 }
 
+:root[data-theme="dark"] .option-item {
+    background: linear-gradient(180deg, rgba(22, 27, 34, 0.99), rgba(26, 33, 43, 0.95));
+}
+
 .option-item summary {
     list-style: none;
     display: flex;
@@ -717,6 +777,10 @@ textarea {
     cursor: pointer;
     background: rgba(255, 255, 255, 0.86);
     border-bottom: 1px solid transparent;
+}
+
+:root[data-theme="dark"] .option-item summary {
+    background: rgba(22, 27, 34, 0.9);
 }
 
 .option-item[open] summary {
