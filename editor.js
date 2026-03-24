@@ -6,7 +6,8 @@
         data: [],
         previewReady: false,
         lastPreviewError: null,
-        selectedFile: new URLSearchParams(window.location.search).get('cyoa') || null
+        selectedFile: new URLSearchParams(window.location.search).get('cyoa') || null,
+        filterQuery: ""
     };
     const CONFIG_ENDPOINT = "/api/config";
     const tempSyncState = {
@@ -78,6 +79,11 @@
     const selectCyoaBtn = document.getElementById("selectCyoaBtn");
     const editorThemeToggleBtn = document.getElementById("editorThemeToggle");
     const importFileInput = document.getElementById("importFileInput");
+    const editorSearchInput = document.getElementById("editorSearchInput");
+    const editorOverviewEl = document.getElementById("editorOverview");
+    const editorNavigatorEl = document.getElementById("editorNavigator");
+    const expandAllBtn = document.getElementById("expandAllBtn");
+    const collapseAllBtn = document.getElementById("collapseAllBtn");
     const EDITOR_THEME_STORAGE_KEY = "cyoa-editor-theme";
 
     let previewUpdateHandle = null;
@@ -708,6 +714,194 @@
             .map(part => slugifyKey(String(part)))
             .filter(Boolean)
             .join("__") || "section";
+    }
+
+    function buildEditorNodeId(kind, parts = []) {
+        return `editor-${kind}-${normalizedPathKey(parts)}`;
+    }
+
+    function normalizeFilterText(value) {
+        return String(value || "").trim().toLowerCase();
+    }
+
+    function optionMatchesFilter(option, query) {
+        if (!query) return true;
+        const haystack = [
+            option?.label,
+            option?.id,
+            option?.description,
+            option?.image
+        ].join(" ").toLowerCase();
+        return haystack.includes(query);
+    }
+
+    function subcategoryMatchesFilter(subcat, query) {
+        if (!query) return true;
+        const haystack = [
+            subcat?.name,
+            subcat?.text,
+            subcat?.type
+        ].join(" ").toLowerCase();
+        if (haystack.includes(query)) return true;
+        if ((subcat?.options || []).some(option => optionMatchesFilter(option, query))) return true;
+        return (subcat?.subcategories || []).some(child => subcategoryMatchesFilter(child, query));
+    }
+
+    function categoryMatchesFilter(category, query) {
+        if (!query) return true;
+        const haystack = [
+            category?.name,
+            category?.description
+        ].join(" ").toLowerCase();
+        if (haystack.includes(query)) return true;
+        return (category?.subcategories || []).some(subcat => subcategoryMatchesFilter(subcat, query));
+    }
+
+    function countSubcategoryNodes(subcategories = []) {
+        return subcategories.reduce((total, subcat) => total + 1 + countSubcategoryNodes(subcat?.subcategories || []), 0);
+    }
+
+    function countOptionNodes(subcategories = []) {
+        return subcategories.reduce((total, subcat) => total + (subcat?.options || []).length + countOptionNodes(subcat?.subcategories || []), 0);
+    }
+
+    function createSummaryHeader(labelText, badges = []) {
+        const wrapper = document.createElement("div");
+        wrapper.className = "summary-main";
+
+        const text = document.createElement("span");
+        text.className = "summary-text";
+        text.textContent = labelText;
+        wrapper.appendChild(text);
+
+        if (badges.length) {
+            const meta = document.createElement("div");
+            meta.className = "summary-meta";
+            badges.forEach(badgeText => {
+                const badge = document.createElement("span");
+                badge.className = "summary-badge";
+                badge.textContent = badgeText;
+                meta.appendChild(badge);
+            });
+            wrapper.appendChild(meta);
+        }
+
+        return wrapper;
+    }
+
+    function revealEditorNode(targetId) {
+        if (!targetId) return;
+        const target = document.getElementById(targetId);
+        if (!target) return;
+        let current = target.parentElement;
+        while (current) {
+            if (current.tagName === "DETAILS") {
+                current.open = true;
+            }
+            current = current.parentElement;
+        }
+        target.scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+        });
+    }
+
+    function setAllEditorDetailsOpen(open) {
+        categoryListEl?.querySelectorAll("details").forEach((node) => {
+            node.open = open;
+        });
+    }
+
+    function renderEditorNavigation(categorySnapshots = getCategorySnapshots()) {
+        if (!editorOverviewEl || !editorNavigatorEl) return;
+
+        const visibleCategories = categorySnapshots
+            .map((snapshot, position) => ({ ...snapshot, position }))
+            .filter(({ entry }) => categoryMatchesFilter(entry, state.filterQuery));
+
+        const totalSubcategories = visibleCategories.reduce((sum, { entry }) => sum + countSubcategoryNodes(entry.subcategories || []), 0);
+        const totalOptions = visibleCategories.reduce((sum, { entry }) => sum + countOptionNodes(entry.subcategories || []), 0);
+
+        editorOverviewEl.innerHTML = "";
+        const overviewText = document.createElement("div");
+        overviewText.className = "editor-overview-text";
+        overviewText.textContent = `${visibleCategories.length} categories, ${totalSubcategories} subcategories, ${totalOptions} options`;
+        editorOverviewEl.appendChild(overviewText);
+
+        editorNavigatorEl.innerHTML = "";
+        if (!visibleCategories.length) {
+            const empty = document.createElement("div");
+            empty.className = "navigator-empty";
+            empty.textContent = state.filterQuery
+                ? `No matches for "${state.filterQuery}".`
+                : "No categories yet.";
+            editorNavigatorEl.appendChild(empty);
+            return;
+        }
+
+        const searching = Boolean(state.filterQuery);
+        const list = document.createElement("div");
+        list.className = "nav-list";
+
+        visibleCategories.forEach(({ entry: category, position }) => {
+            const categoryName = category.name?.trim() ? category.name : `Category ${position + 1}`;
+            const categoryBtn = document.createElement("button");
+            categoryBtn.type = "button";
+            categoryBtn.className = "nav-item";
+            categoryBtn.dataset.targetId = buildEditorNodeId("category", [position + 1]);
+            categoryBtn.innerHTML = `
+                <span class="nav-item-label">
+                    <span class="nav-item-depth">C</span>
+                    <span class="nav-item-text">${categoryName}</span>
+                </span>
+                <span class="nav-item-meta">${countOptionNodes(category.subcategories || [])} options</span>
+            `;
+            list.appendChild(categoryBtn);
+
+            if (!searching) return;
+
+            const appendSubcategoryItems = (subcategories, indexPath = [], depth = 1, parentNames = []) => {
+                (subcategories || []).forEach((subcat, subIndex) => {
+                    if (!subcategoryMatchesFilter(subcat, state.filterQuery)) return;
+                    const nextIndexPath = [...indexPath, subIndex + 1];
+                    const nextNames = [...parentNames, subcat.name || `Subcategory ${subIndex + 1}`];
+                    const subBtn = document.createElement("button");
+                    subBtn.type = "button";
+                    subBtn.className = "nav-item";
+                    subBtn.dataset.targetId = buildEditorNodeId("subcategory", [position + 1, ...nextIndexPath]);
+                    subBtn.innerHTML = `
+                        <span class="nav-item-label">
+                            <span class="nav-item-depth">${depth}</span>
+                            <span class="nav-item-text">${nextNames.join(" / ")}</span>
+                        </span>
+                        <span class="nav-item-meta">${(subcat.options || []).length} direct</span>
+                    `;
+                    list.appendChild(subBtn);
+
+                    (subcat.options || []).forEach((option, optionIndex) => {
+                        if (!optionMatchesFilter(option, state.filterQuery)) return;
+                        const optionBtn = document.createElement("button");
+                        optionBtn.type = "button";
+                        optionBtn.className = "nav-item";
+                        optionBtn.dataset.targetId = buildEditorNodeId("option", [position + 1, ...nextIndexPath, optionIndex + 1]);
+                        optionBtn.innerHTML = `
+                            <span class="nav-item-label">
+                                <span class="nav-item-depth">•</span>
+                                <span class="nav-item-text">${option.label || `Option ${optionIndex + 1}`}</span>
+                            </span>
+                            <span class="nav-item-meta">${option.id || "auto id"}</span>
+                        `;
+                        list.appendChild(optionBtn);
+                    });
+
+                    appendSubcategoryItems(subcat.subcategories || [], nextIndexPath, depth + 1, nextNames);
+                });
+            };
+
+            appendSubcategoryItems(category.subcategories || []);
+        });
+
+        editorNavigatorEl.appendChild(list);
     }
 
     function buildSubcategoryKey(catIndex, catName, subIndex, subName) {
@@ -1640,6 +1834,7 @@
         const categories = getCategorySnapshots();
         snapshotOpenStates(categories);
         categoryListEl.innerHTML = "";
+        renderEditorNavigation(categories);
 
 
         if (!categories.length) {
@@ -1653,8 +1848,10 @@
         const categoryIndices = categories.map(cat => cat.index);
 
         categories.forEach(({ entry: category, index: dataIndex }, position) => {
+            if (!categoryMatchesFilter(category, state.filterQuery)) return;
             const details = document.createElement("details");
             details.className = "category-card";
+            details.id = buildEditorNodeId("category", [position + 1]);
             const storedOpen = categoryOpenState.has(category) ? categoryOpenState.get(category) : true;
             if (storedOpen) {
                 details.open = true;
@@ -1666,7 +1863,13 @@
             const summary = document.createElement("summary");
             const summaryLabel = document.createElement("span");
             summaryLabel.className = "summary-label";
-            summaryLabel.textContent = category.name?.trim() ? category.name : `Category ${position + 1}`;
+            summaryLabel.appendChild(createSummaryHeader(
+                category.name?.trim() ? category.name : `Category ${position + 1}`,
+                [
+                    `${countSubcategoryNodes(category.subcategories || [])} sections`,
+                    `${countOptionNodes(category.subcategories || [])} options`
+                ]
+            ));
             summary.appendChild(summaryLabel);
 
             const actions = document.createElement("div");
@@ -1750,11 +1953,19 @@
             nameInput.placeholder = "Category name";
             nameInput.addEventListener("input", () => {
                 category.name = nameInput.value;
-                summaryLabel.textContent = nameInput.value.trim() ? nameInput.value : `Category ${position + 1}`;
+                summaryLabel.innerHTML = "";
+                summaryLabel.appendChild(createSummaryHeader(
+                    nameInput.value.trim() ? nameInput.value : `Category ${position + 1}`,
+                    [
+                        `${countSubcategoryNodes(category.subcategories || [])} sections`,
+                        `${countOptionNodes(category.subcategories || [])} options`
+                    ]
+                ));
 
                 // Sync all options in this category
                 syncSubcategoryTreeOptionIds([category.name], category.subcategories || []);
 
+                renderEditorNavigation(getCategorySnapshots());
                 schedulePreviewUpdate();
             });
             nameField.appendChild(nameLabel);
@@ -1852,18 +2063,27 @@
             categorySubviewField.appendChild(categorySubviewSelect);
             categoryAdvancedBody.appendChild(categorySubviewField);
 
-            const renderSubcategoryEditor = (parentArray, subcat, subIndex, container, namePath = []) => {
+            const renderSubcategoryEditor = (parentArray, subcat, subIndex, container, namePath = [], indexPath = []) => {
                 ensureSubcategoryDefaults(subcat);
+                if (!subcategoryMatchesFilter(subcat, state.filterQuery)) return;
 
                 const subDetails = document.createElement("details");
                 subDetails.className = "subcategory-item";
+                const nextIndexPath = [...indexPath, subIndex + 1];
+                subDetails.id = buildEditorNodeId("subcategory", [position + 1, ...nextIndexPath]);
                 const storedSubOpen = subcategoryOpenState.has(subcat) ? subcategoryOpenState.get(subcat) : subIndex === 0;
                 if (storedSubOpen) subDetails.open = true;
 
                 const subSummary = document.createElement("summary");
                 const subSummaryLabel = document.createElement("span");
                 subSummaryLabel.className = "summary-label";
-                subSummaryLabel.textContent = subcat.name || `Subcategory ${subIndex + 1}`;
+                subSummaryLabel.appendChild(createSummaryHeader(
+                    subcat.name || `Subcategory ${subIndex + 1}`,
+                    [
+                        `${(subcat.options || []).length} options`,
+                        `${countSubcategoryNodes(subcat.subcategories || [])} nested`
+                    ]
+                ));
                 subSummary.appendChild(subSummaryLabel);
                 subDetails.appendChild(subSummary);
                 subDetails.addEventListener("toggle", () => {
@@ -1892,8 +2112,16 @@
                 subNameInput.placeholder = "Background";
                 subNameInput.addEventListener("input", () => {
                     subcat.name = subNameInput.value;
-                    subSummaryLabel.textContent = subcat.name || `Subcategory ${subIndex + 1}`;
+                    subSummaryLabel.innerHTML = "";
+                    subSummaryLabel.appendChild(createSummaryHeader(
+                        subcat.name || `Subcategory ${subIndex + 1}`,
+                        [
+                            `${(subcat.options || []).length} options`,
+                            `${countSubcategoryNodes(subcat.subcategories || [])} nested`
+                        ]
+                    ));
                     syncSubcategoryTreeOptionIds([category.name], [subcat]);
+                    renderEditorNavigation(getCategorySnapshots());
                     schedulePreviewUpdate();
                 });
                 subNameField.appendChild(subNameLabel);
@@ -2137,7 +2365,8 @@
                     category,
                     subcat,
                     subIndex,
-                    [category.name, ...namePath, subcat.name]
+                    [category.name, ...namePath, subcat.name],
+                    [position + 1, ...nextIndexPath]
                 );
                 subBody.appendChild(optionsContainer);
 
@@ -2157,7 +2386,7 @@
                 const nestedContainer = document.createElement("div");
                 nestedContainer.className = "subcategory-list";
                 (subcat.subcategories || []).forEach((childSubcat, childIdx) => {
-                    renderSubcategoryEditor(subcat.subcategories, childSubcat, childIdx, nestedContainer, [...namePath, subcat.name || `Subcategory${subIndex + 1}`]);
+                    renderSubcategoryEditor(subcat.subcategories, childSubcat, childIdx, nestedContainer, [...namePath, subcat.name || `Subcategory${subIndex + 1}`], nextIndexPath);
                 });
                 subBody.appendChild(nestedContainer);
 
@@ -2183,7 +2412,7 @@
             const subcategoriesContainer = document.createElement("div");
             subcategoriesContainer.className = "subcategory-list";
             (category.subcategories || []).forEach((subcat, subIndex) => {
-                renderSubcategoryEditor(category.subcategories, subcat, subIndex, subcategoriesContainer);
+                renderSubcategoryEditor(category.subcategories, subcat, subIndex, subcategoriesContainer, [], []);
             });
 
             body.appendChild(subcategoriesContainer);
@@ -2212,15 +2441,17 @@
         return `${label}${id}`;
     }
 
-    function renderOptionsList(container, category, subcategory, subIndex, fullPathParts = []) {
+    function renderOptionsList(container, category, subcategory, subIndex, fullPathParts = [], indexPath = []) {
         container.innerHTML = "";
         subcategory.options = subcategory.options || [];
         const normalizedPath = Array.isArray(fullPathParts) && fullPathParts.length
             ? fullPathParts.filter(Boolean)
             : [category.name, subcategory.name].filter(Boolean);
-            subcategory.options.forEach((option, optionIndex) => {
+        subcategory.options.forEach((option, optionIndex) => {
+            if (!optionMatchesFilter(option, state.filterQuery)) return;
             const details = document.createElement("details");
             details.className = "option-item";
+            details.id = buildEditorNodeId("option", [...indexPath, optionIndex + 1]);
 
             const storedOpen = optionOpenState.has(option) ? optionOpenState.get(option) : optionIndex < 2;
             if (storedOpen) {
@@ -2233,7 +2464,10 @@
             const summary = document.createElement("summary");
             const summaryLabel = document.createElement("span");
             summaryLabel.className = "summary-label";
-            summaryLabel.textContent = formatOptionSummary(option);
+            summaryLabel.appendChild(createSummaryHeader(
+                formatOptionSummary(option),
+                Object.keys(option.cost || {}).length ? [`${Object.keys(option.cost).length} cost type${Object.keys(option.cost).length === 1 ? "" : "s"}`] : []
+            ));
             summary.appendChild(summaryLabel);
 
             optionIdAutoMap.set(option, true);
@@ -2370,8 +2604,13 @@
                 option.id = newId;
                 optionIdAutoMap.set(option, true);
                 idInput.value = newId;
-                summaryLabel.textContent = formatOptionSummary(option);
+                summaryLabel.innerHTML = "";
+                summaryLabel.appendChild(createSummaryHeader(
+                    formatOptionSummary(option),
+                    Object.keys(option.cost || {}).length ? [`${Object.keys(option.cost).length} cost type${Object.keys(option.cost).length === 1 ? "" : "s"}`] : []
+                ));
                 refreshOptionWarnings();
+                renderEditorNavigation(getCategorySnapshots());
                 schedulePreviewUpdate();
             });
             labelField.appendChild(labelLabel);
@@ -3372,6 +3611,25 @@
     }
 
     function setupEventListeners() {
+        editorSearchInput?.addEventListener("input", () => {
+            state.filterQuery = normalizeFilterText(editorSearchInput.value);
+            renderCategories();
+        });
+
+        editorNavigatorEl?.addEventListener("click", (event) => {
+            const button = event.target.closest(".nav-item");
+            if (!button) return;
+            revealEditorNode(button.dataset.targetId);
+        });
+
+        expandAllBtn?.addEventListener("click", () => {
+            setAllEditorDetailsOpen(true);
+        });
+
+        collapseAllBtn?.addEventListener("click", () => {
+            setAllEditorDetailsOpen(false);
+        });
+
         editorThemeToggleBtn?.addEventListener("click", () => {
             const current = document.documentElement.dataset.theme === "dark" ? "dark" : "light";
             const next = current === "dark" ? "light" : "dark";

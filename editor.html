@@ -25,6 +25,20 @@
                 </div>
                 <input id="importFileInput" type="file" accept="application/json" hidden>
             </header>
+            <section class="editor-nav-shell" aria-label="Editor navigation">
+                <div class="editor-nav-toolbar">
+                    <div class="editor-search">
+                        <label for="editorSearchInput">Jump or filter</label>
+                        <input id="editorSearchInput" type="search" placeholder="Search categories, subcategories, options, or IDs">
+                    </div>
+                    <div class="editor-nav-actions">
+                        <button id="expandAllBtn" type="button" class="button-subtle">Expand All</button>
+                        <button id="collapseAllBtn" type="button" class="button-subtle">Collapse All</button>
+                    </div>
+                </div>
+                <div id="editorOverview" class="editor-overview"></div>
+                <div id="editorNavigator" class="editor-navigator"></div>
+            </section>
 
             <!-- CYOA Selection Modal -->
             <div id="cyoaSelectionModal" class="modal">
