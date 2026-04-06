@@ -43,7 +43,8 @@ const DARK_THEME_VARS = {
     "points-bg": "rgba(185, 28, 28, 0.95)",
     "points-border": "#fbbf24", /* Bright Yellow */
     "points-text": "#000000",
-    "shadow-color": "rgba(0, 0, 0, 0.5)"
+    "shadow-color": "rgba(0, 0, 0, 0.5)",
+    "selection-glow-color": "#2563eb"
 };
 
 function makeGlowShadow(color, blurPx, alpha) {
@@ -1076,6 +1077,7 @@ function applyCyoaData(rawData, {
 
         // Apply theme if present
         const themeEntry = data.find(entry => entry.type === "theme");
+        const darkThemeEntry = data.find(entry => entry.type === "darkTheme");
         const root = document.documentElement;
 
         function updateRootProperty(key, value) {
@@ -1141,22 +1143,31 @@ function applyCyoaData(rawData, {
 
         if (isDarkMode) {
             Object.entries(DARK_THEME_VARS).forEach(([key, value]) => updateRootProperty(key, value));
+            if (themeEntry) {
+                Object.entries(themeEntry).forEach(([key, value]) => {
+                    if (key === "type" || !TYPOGRAPHY_KEYS.has(key)) return;
+                    updateRootProperty(key, value);
+                });
+            }
+            if (darkThemeEntry) {
+                Object.entries(darkThemeEntry).forEach(([key, value]) => {
+                    if (key === "type") return;
+                    updateRootProperty(key, value);
+                });
+            }
         } else {
-            // Apply all defaults first as a base
             Object.entries(defaults).forEach(([key, value]) => updateRootProperty(key, value));
+            if (themeEntry) {
+                Object.entries(themeEntry).forEach(([key, value]) => {
+                    if (key === "type") return;
+                    updateRootProperty(key, value);
+                });
+            }
         }
 
-        if (themeEntry) {
-            Object.entries(themeEntry).forEach(([key, value]) => {
-                if (key === "type") return;
-                // If in dark mode, only override typography settings from themeEntry
-                if (isDarkMode && !TYPOGRAPHY_KEYS.has(key)) return;
-                updateRootProperty(key, value);
-            });
-        }
-
-        const glowColor = themeEntry?.["selection-glow-color"] || defaults["selection-glow-color"] || "#2563eb";
-        const hasExplicitGlow = !!(themeEntry && (Object.prototype.hasOwnProperty.call(themeEntry, "selection-glow") || Object.prototype.hasOwnProperty.call(themeEntry, "selection-glow-hover")));
+        const activeThemeEntry = isDarkMode ? (darkThemeEntry || themeEntry) : themeEntry;
+        const glowColor = activeThemeEntry?.["selection-glow-color"] || (isDarkMode ? DARK_THEME_VARS["selection-glow-color"] : defaults["selection-glow-color"]) || "#2563eb";
+        const hasExplicitGlow = !!(activeThemeEntry && (Object.prototype.hasOwnProperty.call(activeThemeEntry, "selection-glow") || Object.prototype.hasOwnProperty.call(activeThemeEntry, "selection-glow-hover")));
         if (!hasExplicitGlow) {
             updateRootProperty("selection-glow", makeGlowShadow(glowColor, 15, 0.6));
             updateRootProperty("selection-glow-hover", makeGlowShadow(glowColor, 20, 0.8));

@@ -22,6 +22,74 @@
     const sectionOpenState = new Map();
     const optionIdAutoMap = new WeakMap();
     const optionOpenState = new WeakMap();
+    const LIGHT_THEME_DEFAULTS = {
+        type: "theme",
+        "bg-color": "#f9f9f9",
+        "container-bg": "#ffffff",
+        "text-color": "#333333",
+        "text-muted": "#555555",
+        "accent-color": "#007acc",
+        "accent-text": "#ffffff",
+        "border-color": "#dddddd",
+        "item-bg": "#f4f4f4",
+        "item-header-bg": "#e0e0e0",
+        "points-bg": "#f0f0f0",
+        "points-border": "#cccccc",
+        "points-text": "#000000",
+        "selection-glow-color": "#2563eb",
+        "shadow-color": "rgba(0,0,0,0.1)",
+        "font-base": "20px",
+        "font-title": "44px",
+        "font-description": "22px",
+        "font-tab": "20px",
+        "font-accordion": "22px",
+        "font-subcategory": "24px",
+        "font-option-title": "24px",
+        "font-option-req": "19px",
+        "font-option-desc": "23px",
+        "font-story": "21px",
+        "font-story-input": "20px",
+        "font-points": "20px",
+        "font-points-value": "20px",
+        "font-prereq-help": "17px",
+        "font-label": "19px",
+        "font-heading": "Verdana, sans-serif",
+        "font-body": "'Quicksand', sans-serif"
+    };
+    const DARK_THEME_DEFAULTS = {
+        type: "darkTheme",
+        "bg-color": "#111827",
+        "container-bg": "#1f2937",
+        "text-color": "#f3f4f6",
+        "text-muted": "#9ca3af",
+        "accent-color": "#b91c1c",
+        "accent-text": "#ffffff",
+        "border-color": "#374151",
+        "item-bg": "#1f2937",
+        "item-header-bg": "#374151",
+        "points-bg": "rgba(185, 28, 28, 0.95)",
+        "points-border": "#fbbf24",
+        "points-text": "#000000",
+        "selection-glow-color": "#2563eb",
+        "shadow-color": "rgba(0, 0, 0, 0.5)",
+        "font-base": "20px",
+        "font-title": "44px",
+        "font-description": "22px",
+        "font-tab": "20px",
+        "font-accordion": "22px",
+        "font-subcategory": "24px",
+        "font-option-title": "24px",
+        "font-option-req": "19px",
+        "font-option-desc": "23px",
+        "font-story": "21px",
+        "font-story-input": "20px",
+        "font-points": "20px",
+        "font-points-value": "20px",
+        "font-prereq-help": "17px",
+        "font-label": "19px",
+        "font-heading": "Verdana, sans-serif",
+        "font-body": "'Quicksand', sans-serif"
+    };
 
     function walkEditorSubcategories(subcategories, callback, path = []) {
         if (!Array.isArray(subcategories)) return;
@@ -1065,44 +1133,16 @@
         })).entry;
         fragment.appendChild(renderBackpackSection(backpackEntry));
 
-        const themeEntry = ensureEntry("theme", () => ({
-            type: "theme",
-            "bg-color": "#f9f9f9",
-            "container-bg": "#ffffff",
-            "text-color": "#333333",
-            "text-muted": "#555555",
-            "accent-color": "#007acc",
-            "accent-text": "#ffffff",
-            "border-color": "#dddddd",
-            "item-bg": "#f4f4f4",
-            "item-header-bg": "#e0e0e0",
-            "points-bg": "#f0f0f0",
-            "points-border": "#cccccc",
-            "points-text": "#000000",
-            "selection-glow-color": "#2563eb",
-            "shadow-color": "rgba(0,0,0,0.1)",
-            "font-base": "20px",
-            "font-title": "44px",
-            "font-description": "22px",
-            "font-tab": "20px",
-            "font-accordion": "22px",
-            "font-subcategory": "24px",
-            "font-option-title": "24px",
-            "font-option-req": "19px",
-            "font-option-desc": "23px",
-            "font-story": "21px",
-            "font-story-input": "20px",
-            "font-points": "20px",
-            "font-points-value": "20px",
-            "font-prereq-help": "17px",
-            "font-label": "19px",
-            "font-heading": "Verdana, sans-serif",
-            "font-body": "'Quicksand', sans-serif"
-        }), {
+        const themeEntry = ensureEntry("theme", () => ({ ...LIGHT_THEME_DEFAULTS }), {
             mergeDefaults: true
         }).entry;
-        fragment.appendChild(renderThemeSection(themeEntry));
-        fragment.appendChild(renderTypographySection(themeEntry));
+        const darkThemeEntry = ensureEntry("darkTheme", () => ({ ...DARK_THEME_DEFAULTS }), {
+            mergeDefaults: true
+        }).entry;
+        fragment.appendChild(renderThemeSection(themeEntry, "Light Theme Settings"));
+        fragment.appendChild(renderTypographySection(themeEntry, "Light Typography Settings"));
+        fragment.appendChild(renderThemeSection(darkThemeEntry, "Dark Theme Settings"));
+        fragment.appendChild(renderTypographySection(darkThemeEntry, "Dark Typography Settings"));
 
         globalSettingsEl.innerHTML = "";
         globalSettingsEl.appendChild(fragment);
@@ -1360,11 +1400,11 @@
         return container;
     }
 
-    function renderThemeSection(themeEntry) {
+    function renderThemeSection(themeEntry, sectionTitle = "Theme Settings") {
         const {
             container,
             body
-        } = createSectionContainer("Theme Settings", {
+        } = createSectionContainer(sectionTitle, {
             defaultOpen: false
         });
 
@@ -1442,11 +1482,11 @@
         return container;
     }
 
-    function renderTypographySection(themeEntry) {
+    function renderTypographySection(themeEntry, sectionTitle = "Typography Settings") {
         const {
             container,
             body
-        } = createSectionContainer("Typography Settings", {
+        } = createSectionContainer(sectionTitle, {
             defaultOpen: false
         });
 
