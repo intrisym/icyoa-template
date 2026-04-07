@@ -220,6 +220,19 @@ button:disabled {
     border-color: var(--accent-color);
 }
 
+.subcategory-bulk-button {
+    border-color: var(--border-color);
+    background: var(--container-bg);
+    color: var(--text-color);
+    font-weight: 700;
+}
+
+.subcategory-bulk-button:hover:not(.locked) {
+    background-color: var(--accent-color);
+    color: var(--accent-text);
+    border-color: var(--accent-color);
+}
+
 .subcategory-tab-button.locked {
     opacity: 0.6;
     cursor: pointer;

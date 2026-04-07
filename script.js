@@ -2414,6 +2414,25 @@ function buildChildPath(path, index, child) {
     return path.concat([{ index, name: child?.name || "" }]);
 }
 
+function collectOpenableSubcategoryKeys(cat, catIndex, children, parentPath = []) {
+    if (!Array.isArray(children) || children.length === 0) return [];
+    const keys = [];
+
+    children.forEach((child, idx) => {
+        const path = buildChildPath(parentPath, idx, child);
+        const key = buildSubcategoryKey(catIndex, cat.name, null, null, path);
+        const subcatRequires = child?.requiresOption;
+        const reqItems = Array.isArray(subcatRequires) ? subcatRequires : subcatRequires ? [subcatRequires] : [];
+        const unlocked = evaluateRequirementList(reqItems);
+        if (!unlocked) return;
+
+        keys.push(key);
+        keys.push(...collectOpenableSubcategoryKeys(cat, catIndex, child?.subcategories || [], path));
+    });
+
+    return keys;
+}
+
 function renderSubcategoryTreeNode(subcat, parentContainer, {
     cat,
     catIndex,
@@ -2543,6 +2562,25 @@ function renderSubcategoryLevel(parentEntity, children, container, {
     if (hasTabbedNav) {
         const nav = document.createElement("div");
         nav.className = "subcategory-navigation";
+        const openableKeys = collectOpenableSubcategoryKeys(cat, catIndex, children, parentPath);
+        if (openableKeys.length > 1) {
+            const allOpen = openableKeys.every(key => openSubcategories.has(key));
+            const bulkButton = document.createElement("button");
+            bulkButton.className = "subcategory-tab-button subcategory-bulk-button";
+            bulkButton.textContent = allOpen ? "Close all" : "Open all";
+            bulkButton.onclick = () => {
+                if (allOpen) {
+                    openableKeys.forEach(key => openSubcategories.delete(key));
+                } else {
+                    openableKeys.forEach(key => {
+                        openSubcategories.add(key);
+                        subcategoriesToAnimate.add(key);
+                    });
+                }
+                renderAccordion();
+            };
+            nav.appendChild(bulkButton);
+        }
         childMeta.forEach((meta) => {
             const subButton = document.createElement("button");
             subButton.className = "subcategory-tab-button";
