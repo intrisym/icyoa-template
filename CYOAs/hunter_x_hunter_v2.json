@@ -1,0 +1,1028 @@
+[
+  {
+    "type": "title",
+    "text": "Hunter x Hunter v2"
+  },
+  {
+    "type": "description",
+    "text": "A new adventure begins.One day, as you are waking up naturally, you notice something amazing. For an unknown reason, you have been teleported in the world of Hunter x Hunter, in Yorknew City. For another unknown reason, you discovered that you are already able to use the basics of nen (and maybe more, as you will see later). You even already have a hatsu of your choice! And there is more than this! By examining your pocket, you quickly find a hunter license with your name on it! Yes, you are officially a hunter, without even having taken the exam! This is the beginning of a great adventure for you! And adventure you will live as a hunter! (By the way, as if your situation wasn't already wonderful enough, you also have the ability to switch between your native reality and the world of Hunter x Hunter as you want, knowing that you are unable to use nen in your reality, or any other skill you've obtained in the world of Hunter x Hunter.)"
+  },
+  {
+    "type": "headerImage",
+    "url": "https://wallpaperaccess.com/full/1078967.jpg"
+  },
+  {
+    "type": "points",
+    "values": {
+      "SP": 0
+    },
+    "allowNegative": [],
+    "attributeRanges": {}
+  },
+  {
+    "type": "backpack",
+    "enabled": false
+  },
+  {
+    "type": "theme",
+    "bg-color": "#eff3e8",
+    "container-bg": "#fffdf3",
+    "text-color": "#1d281f",
+    "text-muted": "#5a6c5d",
+    "accent-color": "#2d8f53",
+    "accent-text": "#ffffff",
+    "border-color": "#c6d5c4",
+    "item-bg": "#f4f8ef",
+    "item-header-bg": "#e1ecd9",
+    "points-bg": "#f3d978",
+    "points-border": "#2d8f53",
+    "points-text": "#1d281f",
+    "selection-glow-color": "#58b86c",
+    "shadow-color": "rgba(22, 38, 24, 0.16)",
+    "font-base": "20px",
+    "font-title": "48px",
+    "font-description": "22px",
+    "font-tab": "21px",
+    "font-accordion": "24px",
+    "font-subcategory": "26px",
+    "font-option-title": "24px",
+    "font-option-req": "19px",
+    "font-option-desc": "21px",
+    "font-story": "21px",
+    "font-story-input": "20px",
+    "font-points": "21px",
+    "font-points-value": "22px",
+    "font-prereq-help": "17px",
+    "font-label": "19px",
+    "font-heading": "Verdana, sans-serif",
+    "font-body": "'Quicksand', sans-serif"
+  },
+  {
+    "type": "darkTheme",
+    "bg-color": "#0b0f0d",
+    "container-bg": "#141c18",
+    "text-color": "#edf5ee",
+    "text-muted": "#b5c7b9",
+    "accent-color": "#77d461",
+    "accent-text": "#081108",
+    "border-color": "#2b3d31",
+    "item-bg": "#18251e",
+    "item-header-bg": "#223629",
+    "points-bg": "#f0d069",
+    "points-border": "#77d461",
+    "points-text": "#182014",
+    "selection-glow-color": "#8cff73",
+    "shadow-color": "rgba(0, 0, 0, 0.5)",
+    "font-base": "20px",
+    "font-title": "48px",
+    "font-description": "22px",
+    "font-tab": "21px",
+    "font-accordion": "24px",
+    "font-subcategory": "26px",
+    "font-option-title": "24px",
+    "font-option-req": "19px",
+    "font-option-desc": "21px",
+    "font-story": "21px",
+    "font-story-input": "20px",
+    "font-points": "21px",
+    "font-points-value": "22px",
+    "font-prereq-help": "17px",
+    "font-label": "19px",
+    "font-heading": "Verdana, sans-serif",
+    "font-body": "'Quicksand', sans-serif"
+  },
+  {
+    "name": "Nen",
+    "subcategories": [
+      {
+        "name": "Hatsu",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Nen Beast",
+            "description": "Roll a 1d10:\n\nIf you get a one, congratulations, you now have a nen beast at your side. It is up to you to decide on its appearance and its abilities, but try to create a beast of which appearance reflects your psychology.\n\nIf you have a nen beast, you are not allowed to choose the Rank 3 Aura Amount because the beast is always sucking your aura.",
+            "cost": {},
+            "id": "nenHatsuNenBeast"
+          }
+        ],
+        "subcategories": [
+          {
+            "name": "Aura Type",
+            "type": "storyBlock",
+            "text": "Here are the six types of aura. Choose the one which corresponds the most to your personality.",
+            "options": [
+              {
+                "label": "Enhancement",
+                "description": "Determined and simple. Often very selfish.",
+                "cost": {},
+                "id": "nenHatsuAuraTypeEnhancement"
+              },
+              {
+                "label": "Emission",
+                "description": "Impatient, not detailed oriented and quick tempered.",
+                "cost": {},
+                "id": "nenHatsuAuraTypeEmission"
+              },
+              {
+                "label": "Transmuter",
+                "description": "Whimsical and prone to deceit. Often regarded as weirdos.",
+                "cost": {},
+                "id": "nenHatsuAuraTypeTransmuter"
+              },
+              {
+                "label": "Manipulation",
+                "description": "Logical, calm, and advance at their own pace",
+                "cost": {},
+                "id": "nenHatsuAuraTypeManipulation"
+              },
+              {
+                "label": "Conjuration",
+                "description": "Overly serious and stoic. Always very cautious.",
+                "cost": {},
+                "id": "nenHatsuAuraTypeConjuration"
+              },
+              {
+                "label": "Specialization",
+                "description": "Individualistic and charismatic",
+                "cost": {},
+                "id": "nenHatsuAuraTypeSpecialization"
+              }
+            ],
+            "subcategories": [],
+            "maxSelections": 1
+          },
+          {
+            "name": "Hatsu",
+            "type": "storyBlock",
+            "text": "Create your hatsu depending on the aura type you chose:\n\nIt is up to you to decide in what consists your ability, but the easiest way to create an ability is to build one around one or two keywords that will represent the main idea of your power.\n\nHere are some possible keywords: protect, trap, paralyze, repel, project, create weapon, spy, harm, hit, burn, heal, flea, fly, move quickly, teleport, great pocket dimension, open ways to survive, steel, absorb, nullify, cut, break, manipulate, control, change form, disappear, communicate, create tool, shoot, analyze, fool senses...",
+            "options": [],
+            "subcategories": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Hunter Type",
+    "subcategories": [
+      {
+        "name": "Type",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Archaeological Hunter",
+            "description": "You will roam the world in search of mysterious and ancient ruins, seeking to put your hands on his historical relics, breathing the dangers of the vicious traps. The elder civilizations have left behind in order to protect the treasure from the tomb raiders.",
+            "cost": {},
+            "id": "hunterTypeTypeArchaeologicalHunter"
+          },
+          {
+            "label": "Beast Hunter",
+            "description": "Your job will be to travel across unexplored territories for the purpose of proving the existence of mythical creatures, or track and hunt down monstrous animals that threatened human life. But, the protection of overhunted and a danger animals is also one of your goals.",
+            "cost": {},
+            "id": "hunterTypeTypeBeastHunter"
+          },
+          {
+            "label": "Blscklist Hunter",
+            "description": "You will be about Hunter in which the job will consist of finding wanted criminals who have disappeared into the wilds and arrest them or, if they're too dangerous to be neutralized safely, execute them. It is up to you to decide if you will work with the government to hunt your targets or if you'll be hired by individuals, just like mercenaries.",
+            "cost": {},
+            "id": "hunterTypeTypeBlscklistHunter"
+          },
+          {
+            "label": "Botanical Hunter",
+            "description": "The nature is mysterious and abounds with strange plants of which the properties are still unknown. You will have to travel to exotic countries and brave their ferocious flora in order to find and recolt magical plants and flowers before studying them.",
+            "cost": {},
+            "id": "hunterTypeTypeBotanicalHunter"
+          },
+          {
+            "label": "Crime Hunter",
+            "description": "You will be an investigator, specialized in the resolve of sordid criminal cases involving, the use of nen. Working in cooperation with police forces, you will lead the manhunt and the arrest of dangerous S-Class criminal nen users. Expect yourself to venture into the worst corners of the HxH world's cities in order to investigate and interrogate.",
+            "cost": {},
+            "id": "hunterTypeTypeCrimeHunter"
+          },
+          {
+            "label": "Sea Hunter",
+            "description": "Your job will be to secure the coasts and protect the oceans from pirates and illegal fishermen. You will also have to hunt dangerous aquatic beasts whose existence poses a threat to mankind, much like a Beast Hunter does on land. As a protector of the seas, you also care about the issue of pollution.",
+            "cost": {},
+            "id": "hunterTypeTypeSeaHunter"
+          },
+          {
+            "label": "Gourmet Hunter",
+            "description": "Legendary food, mystical recipes forgotten for millennia, and abundant sources of delicious nutrition are all things that you hunt around the world. Your work also consists in arresting poachers that tamper with the food and sell it to the black market.",
+            "cost": {},
+            "id": "hunterTypeTypeGourmetHunter"
+          },
+          {
+            "label": "Sex Hunter",
+            "description": "An eccentric and provocative profession centered on pursuing unusual beauty and rare partners.",
+            "cost": {},
+            "id": "hunterTypeTypeSexHunter"
+          },
+          {
+            "label": "Hacker Hunter",
+            "description": "You will serve as a computer expert, using your Nen abilities to identify and pursue individuals who misuse the internet for harmful purposes. Governments and corporations will seek your expertise to ensure data security, while the Hunter Association will entrust you with managing its official website.",
+            "cost": {},
+            "id": "hunterTypeTypeHackerHunter"
+          },
+          {
+            "label": "Head Hunter",
+            "description": "You will travel around the world in order to find potential future hunters or genius nen users and shepherd them for the sake of the association. It will also be your job to decide who will be the examinees of the next hunter exams. Expect a lot of administrative work though.",
+            "cost": {},
+            "id": "hunterTypeTypeHeadHunter"
+          },
+          {
+            "label": "Poaching Hunter",
+            "description": "Protecting nature is your main goal. You will spend most of your time in the wild, hunting poachers and polluters, protecting fauna and flora, and helping anyone in need, such as lost tourists or travelers stuck in hostile environments. You will also be a great support to Beast Hunters, Sea Hunters, and Botanical Hunters.",
+            "cost": {},
+            "id": "hunterTypeTypePoachingHunter"
+          },
+          {
+            "label": "Music Hunters",
+            "description": "It is said that it exists: Magical melodies and symphonies which have strange properties like healing those that listen to them. Some disturbing rumors also describe musics that can harm those that are listening to them and cause great pain. They are scattered through the world and your job will be to find them in order to protect mankind.",
+            "cost": {},
+            "id": "hunterTypeTypeMusicHunters"
+          },
+          {
+            "label": "Lost Hunter",
+            "description": "When someone goes missing, you are the one called to investigate and find them. You work as a private detective specializing in the disappearance of high-profile individuals whom the government needs to locate quickly, no matter where they are or what has happened to them.",
+            "cost": {},
+            "id": "hunterTypeTypeLostHunter"
+          },
+          {
+            "label": "Art Hunter",
+            "description": "Your work resembles that of a Music Hunter, with one key difference: you track down magical paintings, some benevolent and others dangerous. The most harmless pieces may end up in museums, while the more unstable ones must be destroyed or secured in hidden locations, guarded by fellow Art Hunters.",
+            "cost": {},
+            "id": "hunterTypeTypeArtHunter"
+          },
+          {
+            "label": "Poison Hunter",
+            "description": "Your life revolves around studying and creating exceptionally potent poisons, developing cures for the world’s deadliest toxins, and hunting the creatures that produce them. As a Poison Hunter, you are equal parts adventurer, doctor, and scientist, working in some of the most hostile environments on Earth as well as in highly secure laboratories.",
+            "cost": {},
+            "id": "hunterTypeTypePoisonHunter"
+          },
+          {
+            "label": "Virus Hunter",
+            "description": "Protecting civilization from bacteriological attacks and studying the world’s most dangerous diseases will make up most of your work. In the field, you will observe and seek to understand the effects of deadly viruses on human or animal populations, doing everything you can to contain and stop the spread of an epidemic.",
+            "cost": {},
+            "id": "hunterTypeTypeVirusHunter"
+          },
+          {
+            "label": "Terrorist Hunter",
+            "description": "War is eternal and the enemies are countless. You will work as a soldier directly on the battlefields, in the middle of countries shattered by war or as a tactician, in cooperation with local armies. Expect to put your life in danger and to fight between battle tanks and rain of bullets.",
+            "cost": {},
+            "id": "hunterTypeTypeTerroristHunter"
+          },
+          {
+            "label": "Treasure Hunter",
+            "description": "If there is treasure somewhere and that it has some value, you will try to find it, whatever it costs you. It can be some magical artifact or a hidden fortune in the depths of an ancient temple. A lot of people will call you a pillager, but you define yourself more like an explorer in search of wealth.",
+            "cost": {},
+            "id": "hunterTypeTypeTreasureHunter"
+          },
+          {
+            "label": "Wandering Hunter",
+            "description": "You do not have a specific goal or a defined profession. You are a wanderer in search of adventure wherever it may be found. With no set path to follow, you have a great deal of freedom and plenty of time to explore.",
+            "cost": {},
+            "id": "hunterTypeTypeWanderingHunter"
+          },
+          {
+            "label": "Professional Assassin",
+            "description": "You will be a professional killer, trained to carry out assassinations with precision. Fulfilling your contracts will require infiltrating highly guarded locations with absolute stealth. You can expect to make many enemies, but the rewards are far greater than in any other profession. It is up to you to decide what kind of killer you want to be. Will you work for the mafia, serve the government, or be hired by businessmen to eliminate their rivals?",
+            "cost": {},
+            "id": "hunterTypeTypeProfessionalAssassin"
+          },
+          {
+            "label": "Criminal",
+            "description": "Being a hunter does not mean you are a good person, nor that you will follow the law. As a criminal, your fellow hunters will have the right to hunt you down, especially Blacklist Hunters. Will you be a cold and sadistic murderer that will try to join the infamous Phantom Troupe, or will you prefer to become a charismatic and mysterious thief? ",
+            "cost": {},
+            "id": "hunterTypeTypeCriminal"
+          },
+          {
+            "label": "Heaven's Arena Fighter",
+            "description": "Facing ferocious opponents, dedicating your life to nen battles, becoming floor master and participating to the famous Battle Olympia will be your main goals. You will spend most of your time in the glorious Heavens Arena, fighting under the screams and applause of hundreds of thousands of people. ",
+            "cost": {},
+            "id": "hunterTypeTypeHeavenSArenaFighter"
+          },
+          {
+            "label": "Nen Teacher",
+            "description": "You will be the master of one or more disciples, guiding them daily in the use of their Nen. If they prove skilled, you may even rise to become a Double Star Hunter. What kind of teacher will you be? A patient and nurturing mentor, or the kind of master who constantly tests their pupils by putting them in danger?",
+            "cost": {},
+            "id": "hunterTypeTypeNenTeacher",
+            "prerequisites": "potentialSkillsMartialArtsRank2MartialArts && potentialSkillsExperienceRank2Experience"
+          }
+        ],
+        "subcategories": [],
+        "maxSelections": 1
+      }
+    ],
+    "description": "What kind of hunter will you be? choose one"
+  },
+  {
+    "name": "Potential & Skills",
+    "subcategories": [
+      {
+        "name": "Potential",
+        "type": "storyBlock",
+        "text": "Roll a 1d10: \n\nIf you get a: 1,2,3,4: You are Average\n\nIf you get a: 5,6,7: You are Good\n\nIf you get a: 8,9: You are Gifted\n\nIf you get a: 10: You are a Genius",
+        "options": [
+          {
+            "label": "Average",
+            "description": "Well, it is not easy to tell you this, but... you are just an average person. You have no particular potential in the use of nen. Yup, as a clown once said, reality sure knows how to give you a wake-up call. You will have to train hard and to put a lot of effort in it to progress. To gain something, you will have to go through sweat and pain. Theoretically, you can reach any level but... that's just the theory. In fact, you will probably never be a legendary nen user. But a very good one with the time!",
+            "cost": {
+              "SP": -20
+            },
+            "id": "potentialSkillsPotentialAverage"
+          },
+          {
+            "label": "Good",
+            "description": "Through your training, you or your master discovered that you were naturally pretty good in the use of nen. You have approximately the potential of one in 100,000. It does not mean everything is easy for you, no, but you learn faster than the average nen user. When one will have to train a year to mater something, you will achieve it in a month or a little bit more. But, you must train a lot and suffer a lot to reach a high level, be sure of that. ",
+            "cost": {
+              "SP": -22
+            },
+            "id": "potentialSkillsPotentialGood"
+          },
+          {
+            "label": "Gifted",
+            "description": "Life is not fair, and you are living proof of that. You were born with a natural talent for Nen, as if some god had gifted it to you. You possess a potential that only one in ten million achieves. What takes others a year to master, you can learn in a week—or even less. With dedication and hard training, you are certain to reach an extraordinary level of Nen mastery, and you will do it faster than anyone else.",
+            "cost": {
+              "SP": -25
+            },
+            "id": "potentialSkillsPotentialGifted"
+          },
+          {
+            "label": "Genius",
+            "description": "You! Yes, you! You are a genius sir. A true genius. To be honest, there must not be more than a handful of people as naturally skilled as you are in the use of nen in this world. You do not even need a master. You were born with an instinctive understanding of the deep nature of your aura. It is only a matter of hours for you to completely master a new concept of nen, even a concept that would need years to be learn for an average user. There is no doubt the world will remember you as a legendary nen user that has pulverized every conceivable limit. ",
+            "cost": {
+              "SP": -30
+            },
+            "id": "potentialSkillsPotentialGenius"
+          }
+        ],
+        "subcategories": [],
+        "maxSelections": 1
+      },
+      {
+        "name": "Defensive Nen",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Rank 1",
+            "description": "Your Ren is pretty good and you knows the basics of Ken to protect yourself in battle. Your Ren can last up to 30-40 minutes.",
+            "cost": {
+              "SP": 1
+            },
+            "id": "potentialSkillsDefensiveNenRank1"
+          },
+          {
+            "label": "Rank 2",
+            "description": "Your Ren is the one of an expert fighter. It can last up to 3 hours. You can use Ken naturally and with fluidity.",
+            "cost": {
+              "SP": 2
+            },
+            "id": "potentialSkillsDefensiveNenRank2"
+          },
+          {
+            "label": "Rank 3",
+            "description": "Your Ren could last up to dozens of hours if you wanted to. You perfectly master every aspect of the Nen, in terms of defensive skills and only powerful techniques can hurt you.",
+            "cost": {
+              "SP": 3
+            },
+            "id": "potentialSkillsDefensiveNenRank3"
+          }
+        ],
+        "subcategories": [],
+        "maxSelections": 1
+      },
+      {
+        "name": "Offensive Nen",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Rank 1",
+            "description": "You have mastered Gyo, even if raw striking power is not your strength. You also know how to use Shu and have a basic understanding of Ko, though do not expect to rely on it in an actual fight.",
+            "cost": {
+              "SP": 1
+            },
+            "id": "potentialSkillsOffensiveNenRank1"
+          },
+          {
+            "label": "Rank 2",
+            "description": "You can smash massive rocks with your fists and send your opponents flying dozens of meters. Your mastery of Ko is nearly perfect.",
+            "cost": {
+              "SP": 2
+            },
+            "id": "potentialSkillsOffensiveNenRank2"
+          },
+          {
+            "label": "Rank 3",
+            "description": "You can totally rely on your striking power during a fight. Nen users who are able to survive against your punches or your kicks are very rare. Against you, dodging is by far the best solution. \n\nCan only be chosen by an enhancer",
+            "cost": {
+              "SP": 3
+            },
+            "id": "potentialSkillsOffensiveNenRank3",
+            "prerequisites": "nenHatsuAuraTypeEnhancement"
+          }
+        ],
+        "subcategories": [],
+        "maxSelections": 1
+      },
+      {
+        "name": "Neutral Nen",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Rank 1",
+            "description": "Your Ten is highly developed, and your overall aura power is that of a skilled fighter.",
+            "cost": {
+              "SP": 1
+            },
+            "id": "potentialSkillsNeutralNenRank1"
+          },
+          {
+            "label": "Rank 2",
+            "description": "Your Ten is excellent, slowing your aging process and significantly enhancing your healing abilities as well as your overall vitality.",
+            "cost": {
+              "SP": 2
+            },
+            "id": "potentialSkillsNeutralNenRank2"
+          },
+          {
+            "label": "Rank 3",
+            "description": "Your Ten is on the level of a great Nen master. Your aura allows you to live for centuries and exudes such intensity that it can intimidate others. You can end a fight simply by overwhelming your opponent with the sheer pressure of your presence.",
+            "cost": {
+              "SP": 3
+            },
+            "id": "potentialSkillsNeutralNenRank3"
+          }
+        ],
+        "subcategories": [],
+        "maxSelections": 1
+      },
+      {
+        "name": "En",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Rank 1",
+            "description": "You are a pretty good En user. The max range of your en is 6-7 meters, but it tires you quickly. ",
+            "cost": {
+              "SP": 1
+            },
+            "id": "potentialSkillsEnRank1"
+          },
+          {
+            "label": "Rank 2",
+            "description": "You are an excellent En user. The max range of your En is 45 meters, but it can vary depending on your mood and your mental state. ",
+            "cost": {
+              "SP": 2
+            },
+            "id": "potentialSkillsEnRank2"
+          },
+          {
+            "label": "Rank 3",
+            "description": "You are a legendary master of En. The max range of your En is 300 meters. Of course, expanding your En this much is exhausting. ",
+            "cost": {
+              "SP": 3
+            },
+            "id": "potentialSkillsEnRank3"
+          }
+        ],
+        "subcategories": [],
+        "maxSelections": 1
+      },
+      {
+        "name": "Aura Amount",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Rank 1",
+            "description": "You have around 20,000 auras, which is pretty good (about the amount of Aura Gon had during the Chimera Ant Arc) ",
+            "cost": {
+              "SP": 1
+            },
+            "id": "potentialSkillsAuraAmountRank1"
+          },
+          {
+            "label": "Rank 2",
+            "description": "You have around 70,000 auras, which is excellent. This is the level of a great nen user like Morel.",
+            "cost": {
+              "SP": 2
+            },
+            "id": "potentialSkillsAuraAmountRank2"
+          },
+          {
+            "label": "Rank 3",
+            "description": "You have more than 100,000 auras. There is only a few nen users who can reach this level. You can fight for hours without emptying your energy reserve. ",
+            "cost": {
+              "SP": 3
+            },
+            "id": "potentialSkillsAuraAmountRank3",
+            "conflictsWith": [
+              "nenHatsuNenBeast"
+            ]
+          }
+        ],
+        "subcategories": [],
+        "maxSelections": 1
+      },
+      {
+        "name": "Stealth & Dissimulation",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Rank 1",
+            "description": "Your zetsu is pretty good but you can still be spotted by someone who is on his guards. ",
+            "cost": {
+              "SP": 1
+            },
+            "id": "potentialSkillsStealthDissimulationRank1"
+          },
+          {
+            "label": "Rank 2",
+            "description": "Your zetsu is really good. It is just like you were an animal in the woods. You also master In, the ability to hide your aura without being in zetsu.",
+            "cost": {
+              "SP": 2
+            },
+            "id": "potentialSkillsStealthDissimulationRank2"
+          },
+          {
+            "label": "Rank 3",
+            "description": "Your zetsu is purely undetectable, even by the most sensitive nen users. If you are tracking someone, he will never know unless you want him to.",
+            "cost": {
+              "SP": 3
+            },
+            "id": "potentialSkillsStealthDissimulationRank3"
+          }
+        ],
+        "subcategories": [],
+        "maxSelections": 1
+      },
+      {
+        "name": "Technicity",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Rank 1",
+            "description": "In combat, you possess a large panel of feints and tricks. You also trained yourself a lot in order to master the adjacent nen categories. ",
+            "cost": {
+              "SP": 1
+            },
+            "id": "potentialSkillsTechnicityRank1"
+          },
+          {
+            "label": "Rank 2",
+            "description": "You master the Ryu. The movements of your aura are really difficult to detect and only an experienced fighter would be able to predict your next move. ",
+            "cost": {
+              "SP": 2
+            },
+            "id": "potentialSkillsTechnicityRank2"
+          },
+          {
+            "label": "Rank 3",
+            "description": "You know how to displace your aura at an extreme speed in your body and nobody would be able to follow it with their eyes. You are also totally polyvalent in the mastering of nen because you reached perfection in the use of the other nen categories. ",
+            "cost": {
+              "SP": 3
+            },
+            "id": "potentialSkillsTechnicityRank3"
+          }
+        ],
+        "subcategories": [],
+        "maxSelections": 1
+      },
+      {
+        "name": "Vow and Limitation",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Rank 1",
+            "description": "You affixed some annoying rules to your nen ability in order to make it stronger. They are not too harsh, but you have to think twice before using your hatsu.",
+            "cost": {
+              "SP": 1
+            },
+            "id": "potentialSkillsVowAndLimitationRank1"
+          },
+          {
+            "label": "Rank 2",
+            "description": "The limitations of your ability are really tough. It can be some mutilations you did to yourself or the promise to only use your ability in some precise conditions. The power of your hatsu has been greatly improved by these restrictions. ",
+            "cost": {
+              "SP": 2
+            },
+            "id": "potentialSkillsVowAndLimitationRank2"
+          },
+          {
+            "label": "Rank 3",
+            "description": "Your limitations are so harsh they constantly put your life in danger, or worse, but in exchange of them, you obtained a hatsu that can be described as \"broken as fuck\" ",
+            "cost": {
+              "SP": 3
+            },
+            "id": "potentialSkillsVowAndLimitationRank3"
+          }
+        ],
+        "subcategories": [],
+        "maxSelections": 1
+      },
+      {
+        "name": "Determination",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Rank 1",
+            "description": "When you have a goal, few obstacles are able to slow you down. You are often described as very brave. ",
+            "cost": {
+              "SP": 1
+            },
+            "id": "potentialSkillsDeterminationRank1"
+          },
+          {
+            "label": "Rank 2",
+            "description": "You got nerves of steel and your mind is more solid than a brick. Your pain tolerance is also really high in comparison with other people. ",
+            "cost": {
+              "SP": 2
+            },
+            "id": "potentialSkillsDeterminationRank2"
+          },
+          {
+            "label": "Rank 3",
+            "description": "Your determination is so extreme that it borders on madness. No enemy, no matter how terrifying or monstrously strong, can stop you from pursuing your objective. You would leap into the jaws of hell without a moment’s hesitation to achieve your goal.",
+            "cost": {
+              "SP": 3
+            },
+            "id": "potentialSkillsDeterminationRank3"
+          }
+        ],
+        "subcategories": [],
+        "maxSelections": 1
+      },
+      {
+        "name": "Long Term Thinking",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Rank 1",
+            "description": "You are truly intelligent and possess vast knowledge. It allows you to create some excellent fighting or political strategies, if you have time for it. ",
+            "cost": {
+              "SP": 1
+            },
+            "id": "potentialSkillsLongTermThinkingRank1"
+          },
+          {
+            "label": "Rank 2",
+            "description": "One could call you a genius. Your predictions are almost always correct when it concerns the actions of your enemies, and you are able to plan your moves and those of your allies like they were pawns on a chessboard. ",
+            "cost": {
+              "SP": 2
+            },
+            "id": "potentialSkillsLongTermThinkingRank2"
+          },
+          {
+            "label": "Rank 3",
+            "description": "There is only a handful of people in the world that are able to reach your intellectual level. Your mind is able to take into account millions of variables and combine them to develop an astonishing plans whose consequences will only be felt in decades. ",
+            "cost": {
+              "SP": 3
+            },
+            "id": "potentialSkillsLongTermThinkingRank3"
+          }
+        ],
+        "subcategories": [],
+        "maxSelections": 1
+      },
+      {
+        "name": "Tactics & Improvisation",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Rank 1",
+            "description": "You think really quickly during a fight and you are able to fully exploit your environment in order to optimally use your ability against your opponent.",
+            "cost": {
+              "SP": 1
+            },
+            "id": "potentialSkillsTacticsImprovisationRank1"
+          },
+          {
+            "label": "Rank 2",
+            "description": "Your mind works at superhuman speed and when you gain new information during a fight about your opponent's ability, it is only a matter of seconds for you to end up with a totally new tactic, according to what you have learnt. ",
+            "cost": {
+              "SP": 2
+            },
+            "id": "potentialSkillsTacticsImprovisationRank2"
+          },
+          {
+            "label": "Rank 3",
+            "description": "Your brain is like a super fast computer. In a blink of an eye, you can develop dozens of strategies and adapt yourself to your opponent's moves. These strategies are not only created quickly but are also extremely complex and hard to understand for someone who not as intelligent as you are. ",
+            "cost": {
+              "SP": 3
+            },
+            "id": "potentialSkillsTacticsImprovisationRank3"
+          }
+        ],
+        "subcategories": [],
+        "maxSelections": 1
+      },
+      {
+        "name": "Composure",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Rank 1",
+            "description": "Even in a delicate situation, you are able to keep your calm and to think logically. There are only few kind of dangers that could make you panic. ",
+            "cost": {
+              "SP": 1
+            },
+            "id": "potentialSkillsComposureRank1"
+          },
+          {
+            "label": "Rank 2",
+            "description": "Your mind is so strong that as desperate as your situation may be, whatever the degree of pressure, you remain able to analyze your opponent and his abilities and create plans to fulfill your goal. ",
+            "cost": {
+              "SP": 2
+            },
+            "id": "potentialSkillsComposureRank2"
+          },
+          {
+            "label": "Rank 3",
+            "description": "You have no fear of death. In front of danger, you are just as calm as you would be if you were drinking a coffee with friends. In a fight, your blood is colder than ice. ",
+            "cost": {
+              "SP": 3
+            },
+            "id": "potentialSkillsComposureRank3"
+          }
+        ],
+        "subcategories": [],
+        "maxSelections": 1
+      },
+      {
+        "name": "Experience",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Rank 1",
+            "description": "You have won dozens of fights and have experienced numerous adventures. It allows you to deal with a lot of different situations pretty naturally. ",
+            "cost": {
+              "SP": 1
+            },
+            "id": "potentialSkillsExperienceRank1"
+          },
+          {
+            "label": "Rank 2 Experience",
+            "description": "Your moves, your fighting intelligence, your gaze... All these things testify to your great experience and the hundreds of fights you have waged. You are a true veteran of the battlefield.",
+            "cost": {
+              "SP": 1
+            },
+            "id": "potentialSkillsExperienceRank2Experience",
+            "prerequisites": "potentialSkillsExperienceRank1"
+          },
+          {
+            "label": "Rank 3",
+            "description": "Nothing can surprise you now. You have seen everything, you have lived everything, you have survived every possible situation and you have faced every kind of ability a human mind can conceive. The number of duels you have won is in the thousands. In fact, it is just like you have in your head a plan for every kind of opponent you can find, now, because you defeated them all. ",
+            "cost": {
+              "SP": 1
+            },
+            "id": "potentialSkillsExperienceRank3",
+            "prerequisites": "potentialSkillsExperienceRank2Experience"
+          }
+        ],
+        "subcategories": []
+      },
+      {
+        "name": "Martial Arts",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Rank 1",
+            "description": "You are the equivalent of a black belt in karate or any other martial art you desire. You mater a large number of martial arts skills. ",
+            "cost": {
+              "SP": 1
+            },
+            "id": "potentialSkillsMartialArtsRank1"
+          },
+          {
+            "label": "Rank 2 Martial Arts",
+            "description": "You went through an extremely harsh training and you have surpassed by far the Olympic level of 2 or 3 martial arts of your choice. Your body is now a living weapon, with or without nen.",
+            "cost": {
+              "SP": 1
+            },
+            "id": "potentialSkillsMartialArtsRank2MartialArts",
+            "prerequisites": "potentialSkillsMartialArtsRank1"
+          },
+          {
+            "label": "Rank 3",
+            "description": "You mastered dozens of martial arts to perfection, including the legendary kung fu shinden. The skills you gained are absolutely frightening. You are also able to use a lot of skills dedicated to assassination. ",
+            "cost": {
+              "SP": 1
+            },
+            "id": "potentialSkillsMartialArtsRank3",
+            "prerequisites": "potentialSkillsMartialArtsRank2MartialArts && potentialSkillsExperienceRank2Experience"
+          }
+        ],
+        "subcategories": []
+      }
+    ]
+  },
+  {
+    "name": "Companions",
+    "subcategories": [
+      {
+        "name": "Companions",
+        "type": "storyBlock",
+        "text": "Choose 3 companions to follow you in your adventures\n\nYou will meet them shortly after waking up in the world of Hunter x Hunter. They will always be loyal and never betray you.",
+        "options": [
+          {
+            "label": "Hector Banon",
+            "description": "Transmuter / Crime Hunter (Single Star) \n\nKnown among criminals as \"The Zealot.\" He never goes anywhere without his bible and his cross but it's weird because he always blaspheme and repeats: \"If my actions do not please him, our dear Lord can go fuck himself.\" \n\nExtremely violent with criminals. He often practices torture to obtain confessions.\n\nCynical humor and really smart\n\nDoes not get along with the other crime hunters, seeing them as totally incompetent.\n\nMerciless fighter. When he hits, it is for killing.",
+            "cost": {},
+            "id": "companionsCompanionsHectorBanon"
+          },
+          {
+            "label": "Margareth Louvier",
+            "description": "Conjurer / Nen Teacher / Former Art Hunter (Triple Star)\n\nShe can become your master and teach you a lot about nen.\n\nCold. She demands a great discipline amongst her disciples.\n\nShe never liked the way Netero ran the association but she she had a lot of respect for him. On the contrary, she despises Pariston. She refused to take part in the election of the next chairman, considering it a \"pathetic spectacle\" \n\nIn her youth, she was a famous art hunter. Later, she became a head hunter. Recently, she decided to dedicate her life to the teaching of nen.",
+            "cost": {},
+            "id": "companionsCompanionsMargarethLouvier"
+          },
+          {
+            "label": "Maggie Water",
+            "description": "Enhancer / Gourmet Hunter\n\nYoung genius with regards to nen\n\nShe's hunting the legendary \"Cornucopia\" a mythical container that is said to be able to produce an infinite amount of liquid named \"Hydromelia\" which is known as the most savory drink in the world.\n\nHer mother was a famous cook who gave her the passion of the food.\n\nShe does not like fighting, but if she has to, she is really proficient at it.\n\nShe only thinks about the adventure.",
+            "cost": {},
+            "id": "companionsCompanionsMaggieWater"
+          },
+          {
+            "label": "Geover Terrow",
+            "description": "Transmuter / Blacklist Hunter\n\nEdgelord\n\nHe is 17. He is making his period of teenage rebellion. But, outside of that, he is really competent.\n\nHigh-level fighter\n\nHe gives his nen the property of void. When he surrounds his target with his aura, it begins to suffocate, deprived of oxygen.\n\nTouchy when you talk about his look. He seriously thinks his black clothes, his bandages on his forearms, his torn pant and his constantly serious face gives him a cool look.",
+            "cost": {},
+            "id": "companionsCompanionsGeoverTerrow"
+          },
+          {
+            "label": "Clarice de Côte",
+            "description": "Manipulator / Treasure Hunter\n\nHeiress of a noble family\n\nWealthy. Her father is the 184th largest fortune in the world.\n\nShe is obsessed with the treasure of an ancient king who disappeared in a travel toward the Dark Continent.\n\nShe can control the limbs of any living being she has wounded with her saber. For example, if she cuts your hand, she can take control of your arm and force you to strangle yourself.\n\nShe travels constantly and can not bear to stay long in the same place. \n\n",
+            "cost": {},
+            "id": "companionsCompanionsClariceDeCTe"
+          },
+          {
+            "label": "Zong Keï",
+            "description": "Conjurer / Bodyguard\n\nHis right eye is a conjured eye made of nen. When he looks at someone with it, he can literally his stats: Strength, speed, intelligence, vitality, aura...\n\nHe does not talk too much. His clients prefer him silent.\n\nHe made 11 years of prison before becoming a hunter. When he was young, he was trained by the mafia to be a professional killer, but he assassinated his master.",
+            "cost": {},
+            "id": "companionsCompanionsZongKe"
+          },
+          {
+            "label": "Lynda Fyr",
+            "description": "Emitter / Terrorist Hunter\n\nBoruvota's Sister\n\nCrazy\n\nShe sincerely does not know what fear means\n\nMonstrous Fighter\n\nShe has been trained by Botobai Gigante himself and he made her a ferocious fighter.\n\nShe only feels good in the middle of a battlefield.\n\nShe shoots nen beams with her guns.\n\nOne of them could easily go through a steel plate 5cm thick. Her hatsu is named \"The Penetrator\"",
+            "cost": {},
+            "id": "companionsCompanionsLyndaFyr"
+          },
+          {
+            "label": "Boruvota Fyr",
+            "description": "Manipulator / Terrorist Hunter\n\nLynda's Brother\n\nBrilliant Tactician and first-rate strategist\n\nHe never smiles. \"Stay focused\" is his motto\n\nHe's a correct fighter but it's not his specialty.\n\nHe has been trained by Botobai Gigante and he taught him everything about the art of war. \n\nHe seems cold but when you know him, he's a real bro.\n\nHe hates the slackers and the cowards.\n\nHe has a rigid conception about what a 'real man' is",
+            "cost": {},
+            "id": "companionsCompanionsBoruvotaFyr"
+          },
+          {
+            "label": "Jozuyo Atachi",
+            "description": "Conjurer / Beast Hunter (Single Star) \n\nHe can materialize arrows that are able to fragilize any surface they touch, making it as delicate as glass. With his hatsu, he can take down easily even the monsters with the hardest skin or shell. \n\nHe meditates a lot.\n\nGreat philosopher who can talk during hours about the relation between men and nature.\n\nHe often needs solitude to recharge his batteries. If he becomes one of your companions, he will sometimes disappear for several days, then come back without explanation. ",
+            "cost": {},
+            "id": "companionsCompanionsJozuyoAtachi"
+          },
+          {
+            "label": "Mazuka Oko",
+            "description": "Emitter / Blacklist Hunter\n\nFamous Fighter. He was once a floor master of the Heaven's Arena\n\nHe gained his star by eradicating an entire group of S-Class criminals who were trying to make a coup in a single night.\n\nHis ability consists in clapping his hands against each other and emitting an incredibly powerful shockwave around him, able to make fly an assault tank dozens of meters away. \n\nHe's a little bit arrogant about his strength.",
+            "cost": {},
+            "id": "companionsCompanionsMazukaOko"
+          },
+          {
+            "label": "Luigi Vermont",
+            "description": "Manipulator / Archaeological Hunter\n\nRemarkably Intelligent\n\nRenowned physicist and historian\n\nProfessor in a great university\n\nHe specializes in the ruins of a vanished civilization, believed to have originated from the Dark Continent and possibly wiped out by an unknown calamity they themselves unleashed.\n\nHis power consists in causing an instantaneous sleep to anyone who looks at the tattoo he has on the back of his left hand for more than 5 seconds.\n\n",
+            "cost": {},
+            "id": "companionsCompanionsLuigiVermont"
+          },
+          {
+            "label": "E.N.D",
+            "description": "Specialist / Hacker Hunter\n\nNobody knows her real name. \n\nShe's accompanied by a weird robot bear of which the only functions are joking about how ugly you are and predicting the future with 95% accuracy. \n\nHer ability allows her to literally project her mind in computers and travel through the web. \n\nShe's mute\n\nShe absolutely doesn't know how to fight.\n\nThe way she looks at you, there is no doubt she is attracted to you.",
+            "cost": {},
+            "id": "companionsCompanionsEND"
+          },
+          {
+            "label": "Sister Adela",
+            "description": "Conjurer / Archaeological Hunter\n\nShe searches a set of saint and ancient relics that are said to have been used by God as his weapons against a demon that was threatening the world in a far past. \n\nShe runs the orphanage. \n\nShe's able to conjure a rifle that shoots bullets of 'bad luck.' A person touched by one of these bullets will know a period of incredibly bad luck that can last up to a week.",
+            "cost": {},
+            "id": "companionsCompanionsSisterAdela"
+          },
+          {
+            "label": "Vladmir Povinktsi",
+            "description": "Manipulator / Beast Hunter\n\nFormer soldier, traumatized by way\n\nHe prefers the company of animals to that of men\n\nHis ability consists of giving life to his coat and manipulating it to make it become a gigantic polar bear with devastating physical skills.\n\nHis specialty is to hunt beasts in mountains and tundras. He has developed some extremely efficient survival skills. \n\nBehind his fierce and proud air, he is in reality a someone quite shy and fond of refined pleasures like literature and chess.\n\nHe pretends his coat is inhabited by the spirit of an ancient warrior whom he has managed to subdue. ",
+            "cost": {},
+            "id": "companionsCompanionsVladmirPovinktsi"
+          },
+          {
+            "label": "Elonore lance",
+            "description": "Enhancer / Head Hunter\n\nShe demands that the knowledge of nen be spread among the general populace, and she dreams to open a school to teach the use of nen to children in a good moral way.\n\nShe is young but has already a lot of influence in the Association, She is a friend of Geru, in the Zodiacs. \n\nHer intelligence is second to none, as she is a real genius of long-term thinking. \n\nIf you chose her as your companion, she will not follow you in your travels because she works in the bureau, but she will provide you with a lot of information about every possible subject and be a great support in all your adventures, thanks to her political influence and power. ",
+            "cost": {},
+            "id": "companionsCompanionsElonoreLance"
+          },
+          {
+            "label": "Pedro Coliente",
+            "description": "Enhancer / Professional Assassin\n\nHe grew up in the most violent neighborhood in Yuorknew City and quickly joined a gang in which he learnt how to fight and kill. But, his dream is to leave this world of murder and blood. \n\nUnfortunately, this is harder to say than do.\n\nHe is a total bro who loves to drink and smoke with his friends after having fulfilled a 'contract'.\n\nHis ability consists in increasing the strength of his blows when he orally describes his next move. More precise the description, the more powerful his blow. For example, if he tell you: \"I will hit you in the jaw with my left fist in two seconds\" you really out to dodge his next attack.",
+            "cost": {},
+            "id": "companionsCompanionsPedroColiente"
+          },
+          {
+            "label": "Iva Murkoff",
+            "description": "Still learning nen / Wants to become a music hunter\n\nShe does not know what her aura type is, and only knows the basics of nen like Ten and Ren. Her training only began recently. \n\nIf you choose her as one of your companions, you can become her master and teach her the use of nen.\n\nShe is always joyful and in searching of excitement. \n\nVery skilled violinist.\n\nHer personal quest is to find the legendary violin of Simka Keglor, a mythical musician who created an instrucment which is said able to provoke a incredible pleasure when heard.",
+            "cost": {},
+            "id": "companionsCompanionsIvaMurkoff"
+          },
+          {
+            "label": "The Nameless",
+            "description": "Conjurer / Lost Hunter\n\nHe never failed one of his missions. When asked to find someone missing, his success rate is 100%. If the person is dead, he will find the corpse. \n\nHe is quite the mysterious legend. Nobody ever saw his face nor knows his name. He never met his clients and is really difficult to contact.\n\nIt is said that he is a close friend of Ging Freecs and that he is one of the rare people who is able to find him when he disappears. \n\nHe has an IQ of 255.\n\nHe speaks about 12 different languages. ",
+            "cost": {},
+            "id": "companionsCompanionsTheNameless"
+          },
+          {
+            "label": "The Fool",
+            "description": "Transmuter / Conjurer\n\nExtravagant killer who is always laughing when he is fighting. \n\nHe never removes his mask and it is impossible to guess whether it is a man or a woman from his voice.\n\nHe can give his aura the properties of the light and create numerous mirages and visual illusions with which he fools his opponent in many ways. \n\nIf you choose him as your companion, you will be able to convince him to find another game than killing people for fun, but he will always be an unstable psychopath.\n\nHis moves are really strange. They are not particularly fast but they are absolutely impossible to follow or to predict. His gestures are like a constant dance. ",
+            "cost": {},
+            "id": "companionsCompanionsTheFool"
+          },
+          {
+            "label": "Elliot Pincon",
+            "description": "Emitter / Poaching Hunter\n\nStill a teen, but really mature and smart. \n\nHe was found and raised by a wolf horde when he was a a baby. \n\nHe loves nature more than anything else and watching someone destroying it or polluting it is more painful for him than any physical injury.\n\nHe does not give his confidence easily, but when he does, he becomes an amazing friend. \n\nHis ability allows him to create an animal made of pure aura. The animal can take 3 forms: A wolf (polyvariant form), a bear (offensive form), and a snake (stealth form). Wherever is the animal, he can see through its eyes and hear through its ears. The animal is also endowed with a capacity for self-destruction. When this function is activated, it explodes and destroys everything in a little area around it. ",
+            "cost": {},
+            "id": "companionsCompanionsElliotPincon"
+          },
+          {
+            "label": "Alexander Jokaïev",
+            "description": "Manipulator / Sex Hunter\n\nRich businessman who became a hunter because he was bored.\n\nHis goal is to have relations with every possible kind of partner in the world. \n\nHe has already tried a lot: Women, men, animals, magical beasts, plants, robots, nen beings... But he is still convinced there are other partners to find in an unexplored territories of the world. \n\nHis ability allows him to manipulate tissue. He can harden it to use it as a weapon or just take control over the clothes of someone and manipulate the person like a puppet.",
+            "cost": {},
+            "id": "companionsCompanionsAlexanderJokaEv"
+          },
+          {
+            "label": "Adam Verfide",
+            "description": "Conjurer / Poison Hunter (Single Star)\n\nHis goal is to find a cure to counteract a poison that has slowly weakened him and damaged his body over many years.\n\nHe is a traveler who studies venomous insects and snakes.\n\nHe made some great discoveries about the nature of some lethal poisons and gained a star because of that. \n\nHe always has a sad face and often looks at the sky with a mysterious gaze.\n\nHis ability to conjure a backpack of which the inside is gigantic. The weight of what is stocked inside is divided by one hundred. He can even enter himself in the bag and use it as a shelter. The inside of the bag is similar to a huge house. There is a bed, bath, and even a laboratory to study poisons. ",
+            "cost": {},
+            "id": "companionsCompanionsAdamVerfide"
+          },
+          {
+            "label": "Jacob Gargstein",
+            "description": "Transmuter and Specialist / Virus Hunter\n\nSeverely schizophrenic\n\nHis first personality is his main personality: Jacob Gargstein. He is a famous foctor, extremely intelligent, and his type of aura is transmutation. In this state, his ability is to give his nen anesthetic properties to appease the suffering of his patients and to slow down the movements of his opponents. \n\nHis second personality is the one who of a mad surgeon obsessed with the notion of death. In this state, he becomes a specialist and his ability allows him to keep any human being alive regardless of their injuries. With this power, even a beheaded man can stay alive for days and days. \n\nThe second personality loves to practice vivisection on people he kidnapped.\n\nIf he becomes your companion, he will be able to heal your wounds and his second personality will never try to harm you.",
+            "cost": {},
+            "id": "companionsCompanionsJacobGargstein"
+          },
+          {
+            "label": "Ulf Hodik",
+            "description": "Enhancer / Heaven's Arena Master\n\nHe is not a floor master yet, but he came out victorious of 7 fights on the 200th floor without being hit once. \n\nHe is a calm and determined man who has a great respect for those who put their life at risk in nen duels. When he does not fight, he is very cool and relaxed. But, when he steps in the arena, he instantly turns berserk and fights like a savage beast, hardening his teeth and his fingernails with his aura. \n\nHe is an elite fighter and even some Floor Masters fear the day he will reach their floor and will be allowed to defy them.\n\nHe has a passion for wines and possesses great knowledge about it.",
+            "cost": {},
+            "id": "companionsCompanionsUlfHodik"
+          },
+          {
+            "label": "Leonine Calypso",
+            "description": "Transmuter / Criminal\n\nShe looks like a little girl but she is actually 35 years old and she is very experienced in using nen. She uses the same process as Biscuit to change her appearance.\n\nExtremely strong fighter: She is able to give her aura the properties of fire.\n\nShe is angry against the world and wants to make everyone pay for the death of her family, when she was still a baby. If you choose her as one of your companions, you will be able to calm her down a little bit but there will always be a dark wrath deep inside her soul, only waiting to explode. \n\nAs a criminal who killed numerous people, she has been hunted by a lot of Blacklist Hunters in her life. Nobody heard from them again...\n\nShe will accept to become your nen teacher, but her training is extremely hard, almost crazy, and she will have no consideration for your pain of your tears. ",
+            "cost": {},
+            "id": "companionsCompanionsLeonineCalypso"
+          },
+          {
+            "label": "Edward Grey",
+            "description": "Specialist / Professional Assassin\n\nHe was a policeman before becoming a hunter, but he was disgusted by the lack of justice in this world and the corruption of his colleagues. Now, he uses his skills as a professional killer and he always chooses targets he considers as \"bad people\" \n\nIf he sees the hatsu of his opponent in action once, his own ability allows him to create a cube of space the size of a small room in which the concerning hatsu is unable to work. \n\nHe always has a stock of punchlines to say just before killing a target.\n\nSerious guy who does not tolerate weakness, but if you become his friend, then you will find in him a man of great value capable of sacrificing himself for you.",
+            "cost": {},
+            "id": "companionsCompanionsEdwardGrey"
+          },
+          {
+            "label": "Jeanne Sylvia",
+            "description": "Emitter / Sea Hunter\n\nShe is an explorer in the soul whose goal is to strike out the mention \"Terra Incognita\" of all world maps. Her dream is to go into the Dark Continent. \n\nShe has a bad temper and she does not like being contradicted.\n\nIn bed, it's a domina.\n\nHer ability is to create a cloud of aura that appears in the sky, above her, when the hatsu is activated. The cloud expands several meters per minute in all directions. It's max size is the one of a large city. At any moment, she can decide to stop the expansion of the cloud. Then, it begins to rain drops of aura that are only visible of nen users. The area touched by the rain of aura is considered to be the \"En\" of Jeanne. Moreover, Jeanne has a limited control on the drops: She can freeze them in the space and make them become solid. Then, she can use the frozen drops to immobilize the people who are drenched in her aura, or use them as little platforms to move into the sky. ",
+            "cost": {},
+            "id": "companionsCompanionsJeanneSylvia"
+          },
+          {
+            "label": "Yassar Kalid",
+            "description": "Enhancer / Blacklist Hunter\n\nA total bro\n\nHe has a tragic past, involving the loss of his wife and his son in horrible circumstances, because of a bastard he hunts since this time. But, if you do not ask him he will never talk to you about that. \n\nHe hates those who harm children.\n\nHis ability consists in concentrating his aura into his throat and his vocal cords, then producing a powerful shockwave with his voice, able to deploy the internal organs of his opponent \n\nHe has regular nightmares during which he wakes up screaming and hitting the closest people with his fists like they were his enemies",
+            "cost": {},
+            "id": "companionsCompanionsYassarKalid"
+          },
+          {
+            "label": "Agent N8",
+            "description": "Manipulator / Bodyguard\n\nHe is part of a mysterious organization of bodyguards in which all members wear masks \n\nMost of the time, he works for extremely rich businessmen because his services are really expensive. \n\nRemarkable marksman\n\nHe ensures the security of his clients by standing on the roof of a high building and watching the surroundings with his precision rifle.\n\nHis main ability, called \"Zoom,\" allows him to enhance his vision until the point he can see a fly at dozens of kilometers away. \n\nHe possesses a second ability consisting in manipulating the bullets of his rifle and increasing the range of his shots by 15-20 kilometers. ",
+            "cost": {},
+            "id": "companionsCompanionsAgentN8"
+          },
+          {
+            "label": "Robert Faurice",
+            "description": "Emitter / Terrorist Hunter\n\nGeneral in the army\n\nHighly respected veteran\n\nHe can create a a squad of hundreds of small nen soldiers, 15cm high. Each soldier has a little weapon with which. they can shoot. A single shot is too weak to cause damage to a nen user, but a hail of bullets delivered by dozens of soldiers at the same time can be extremely dangerous even for a fighter protecting himself with Ken. \n\nA painful experience in his past has taught him to have no compassion for the enemy, but he sees every man under his orders on the battlefield as his own son.\n\nIf you choose him as a companion, he will become your mentor and teach you a lot of things about psychological war and military tactics. ",
+            "cost": {},
+            "id": "companionsCompanionsRobertFaurice"
+          }
+        ],
+        "subcategories": [],
+        "maxSelections": 3
+      }
+    ]
+  }
+]
