@@ -5,11 +5,15 @@
   },
   {
     "filename": "hunter_x_hunter_v2.json",
-    "title": "Hunter x Hunter v2"
+    "title": "Hunter x Hunter"
   },
   {
     "filename": "naruto.json",
     "title": "Naruto Jumpchain CYOA"
+  },
+  {
+    "filename": "path_of_a_super.json",
+    "title": "Path of a Super"
   },
   {
     "filename": "superheroAmalgam.json",
