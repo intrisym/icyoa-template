@@ -131,7 +131,7 @@ button:disabled {
 
 .tab-button.active {
     background: var(--accent-color);
-    color: var(--points-border);
+    color: var(--accent-text);
 }
 
 .tab-content {
