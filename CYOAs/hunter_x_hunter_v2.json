@@ -828,6 +828,39 @@
           }
         ],
         "subcategories": []
+      },
+      {
+        "name": "Agility & Speed",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Rank 1",
+            "description": "You are pretty quick and your reflexes are high enough to allow you to see most of your opponent's blows come.",
+            "cost": {
+              "SP": 1
+            },
+            "id": "potentialSkillsAgilitySpeedRank1"
+          },
+          {
+            "label": "Rank 2",
+            "description": "Your body is endowed with a really high speed and agility, allowing you to move faster than a car launched at full speed, when you sprint, and to outperform your opponent's moves during a fight. ",
+            "cost": {
+              "SP": 2
+            },
+            "id": "potentialSkillsAgilitySpeedRank2"
+          },
+          {
+            "label": "Rank 3",
+            "description": "You probably reached the highest speed a human body can attain. Your blows are almost as fast as bullets. When you move, only a few fighters' eyes can follow you.",
+            "cost": {
+              "SP": 3
+            },
+            "id": "potentialSkillsAgilitySpeedRank3"
+          }
+        ],
+        "subcategories": [],
+        "maxSelections": 1
       }
     ]
   },
