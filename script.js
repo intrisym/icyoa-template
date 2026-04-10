@@ -563,6 +563,8 @@ const assetLoadingPercent = document.getElementById("assetLoadingPercent");
 const initialTitleText = document.getElementById("cyoaTitle")?.textContent || "";
 const initialDescriptionHTML = document.getElementById("cyoaDescription")?.innerHTML || "";
 const initialHeaderImageHTML = document.getElementById("headerImageContainer")?.innerHTML || "";
+const SHARE_CODE_PREFIX_GZIP = "cyoa1:";
+const SHARE_CODE_PREFIX_RAW = "cyoa0:";
 
 function escapeHtml(text = "") {
     return String(text).replace(/[&<>"']/g, (ch) => ({
@@ -577,6 +579,122 @@ function escapeHtml(text = "") {
 function setMultilineText(element, text = "") {
     if (!element) return;
     element.innerHTML = escapeHtml(text).replace(/\n/g, "<br>");
+}
+
+function buildExportState() {
+    return {
+        selectedOptions,
+        points,
+        discountedSelections,
+        storyInputs,
+        attributeSliderValues,
+        dynamicSelections,
+        subcategoryDiscountSelections,
+        categoryDiscountSelections,
+        optionGrantDiscountSelections
+    };
+}
+
+function hasOwnEntries(obj) {
+    return !!obj && typeof obj === "object" && Object.keys(obj).length > 0;
+}
+
+function buildPackedExportState() {
+    const full = buildExportState();
+    const packed = {
+        v: 1,
+        s: full.selectedOptions,
+        p: full.points
+    };
+
+    if (hasOwnEntries(full.discountedSelections)) packed.d = full.discountedSelections;
+    if (hasOwnEntries(full.storyInputs)) packed.t = full.storyInputs;
+    if (hasOwnEntries(full.attributeSliderValues)) packed.a = full.attributeSliderValues;
+    if (hasOwnEntries(full.dynamicSelections)) packed.y = full.dynamicSelections;
+    if (hasOwnEntries(full.subcategoryDiscountSelections)) packed.u = full.subcategoryDiscountSelections;
+    if (hasOwnEntries(full.categoryDiscountSelections)) packed.c = full.categoryDiscountSelections;
+    if (hasOwnEntries(full.optionGrantDiscountSelections)) packed.g = full.optionGrantDiscountSelections;
+
+    return packed;
+}
+
+function unpackImportedState(importedData) {
+    if (!importedData || typeof importedData !== "object") return importedData;
+    if (!Object.prototype.hasOwnProperty.call(importedData, "v")) return importedData;
+
+    return {
+        selectedOptions: importedData.s || {},
+        points: importedData.p || {},
+        discountedSelections: importedData.d || {},
+        storyInputs: importedData.t || {},
+        attributeSliderValues: importedData.a || {},
+        dynamicSelections: importedData.y || {},
+        subcategoryDiscountSelections: importedData.u || {},
+        categoryDiscountSelections: importedData.c || {},
+        optionGrantDiscountSelections: importedData.g || {}
+    };
+}
+
+function toBase64Url(bytes) {
+    let binary = "";
+    const chunkSize = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+        const chunk = bytes.subarray(i, i + chunkSize);
+        binary += String.fromCharCode(...chunk);
+    }
+    return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+function fromBase64Url(str) {
+    const padded = str.replace(/-/g, "+").replace(/_/g, "/") + "=".repeat((4 - (str.length % 4 || 4)) % 4);
+    const binary = atob(padded);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes;
+}
+
+async function gzipBytes(bytes) {
+    const stream = new Blob([bytes]).stream().pipeThrough(new CompressionStream("gzip"));
+    const compressedBuffer = await new Response(stream).arrayBuffer();
+    return new Uint8Array(compressedBuffer);
+}
+
+async function gunzipBytes(bytes) {
+    const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
+    const decompressedBuffer = await new Response(stream).arrayBuffer();
+    return new Uint8Array(decompressedBuffer);
+}
+
+async function encodeShareCode(data) {
+    const json = JSON.stringify(buildPackedExportState());
+    const jsonBytes = new TextEncoder().encode(json);
+
+    if (typeof CompressionStream === "function") {
+        const compressedBytes = await gzipBytes(jsonBytes);
+        return `${SHARE_CODE_PREFIX_GZIP}${toBase64Url(compressedBytes)}`;
+    }
+
+    return `${SHARE_CODE_PREFIX_RAW}${toBase64Url(jsonBytes)}`;
+}
+
+async function decodeShareCode(text) {
+    const trimmed = String(text || "").trim();
+    if (!trimmed.startsWith(SHARE_CODE_PREFIX_GZIP) && !trimmed.startsWith(SHARE_CODE_PREFIX_RAW)) {
+        return unpackImportedState(JSON.parse(trimmed));
+    }
+
+    if (trimmed.startsWith(SHARE_CODE_PREFIX_GZIP)) {
+        const encoded = trimmed.slice(SHARE_CODE_PREFIX_GZIP.length);
+        const compressedBytes = fromBase64Url(encoded);
+        const jsonBytes = await gunzipBytes(compressedBytes);
+        return unpackImportedState(JSON.parse(new TextDecoder().decode(jsonBytes)));
+    }
+
+    const encoded = trimmed.slice(SHARE_CODE_PREFIX_RAW.length);
+    const jsonBytes = fromBase64Url(encoded);
+    return unpackImportedState(JSON.parse(new TextDecoder().decode(jsonBytes)));
 }
 
 function syncPointsTrackerHeight() {
@@ -680,9 +798,9 @@ window.onclick = (e) => {
     if (e.target === modal) closeModal();
 };
 
-modalConfirmBtn.onclick = () => {
+modalConfirmBtn.onclick = async () => {
     try {
-        const importedData = JSON.parse(modalTextarea.value);
+        const importedData = await decodeShareCode(modalTextarea.value);
 
         if (typeof importedData !== 'object' || !importedData.points || !importedData.selectedOptions) {
             throw new Error("Invalid format");
@@ -779,19 +897,21 @@ function openModal(mode) {
     modal.style.display = "block";
     if (mode === "export") {
         modalTitle.textContent = "Export Your Choices";
-        modalTextarea.value = JSON.stringify({
-            selectedOptions,
-            points,
-            discountedSelections,
-            storyInputs,
-            attributeSliderValues,
-            dynamicSelections,
-            subcategoryDiscountSelections,
-            categoryDiscountSelections,
-            optionGrantDiscountSelections,
-
-        }, null, 2);
+        modalTextarea.value = "Generating share code...";
         modalConfirmBtn.style.display = "none";
+        encodeShareCode(buildExportState())
+            .then(code => {
+                if (modalMode === "export") {
+                    modalTextarea.value = code;
+                }
+            })
+            .catch(err => {
+                if (modalMode === "export") {
+                    modalTextarea.value = "";
+                    alert("Export failed: " + err.message);
+                    closeModal();
+                }
+            });
     } else {
         modalTitle.textContent = "Import Your Choices";
         modalTextarea.value = "";
