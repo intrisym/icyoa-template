@@ -576,9 +576,81 @@ function escapeHtml(text = "") {
     })[ch]);
 }
 
+function isSafeTextColor(value = "") {
+    const color = String(value).trim();
+    return /^#[0-9a-f]{3,8}$/i.test(color)
+        || /^rgba?\(\s*(\d{1,3}%?\s*,\s*){2}\d{1,3}%?(\s*,\s*(0|1|0?\.\d+|[1-9]\d*%))?\s*\)$/i.test(color)
+        || /^hsla?\(\s*-?\d+(\.\d+)?(deg|rad|turn)?\s*,\s*\d{1,3}%\s*,\s*\d{1,3}%(\s*,\s*(0|1|0?\.\d+|[1-9]\d*%))?\s*\)$/i.test(color)
+        || /^[a-z]+$/i.test(color);
+}
+
+function isSafeTextSize(value = "") {
+    const size = String(value).trim();
+    return /^[+-]?(\d+(\.\d+)?)(px|em|rem|%)$/i.test(size);
+}
+
+function buildTextSizeStyle(value = "") {
+    const size = String(value).trim();
+    const match = size.match(/^([+-])(\d+(\.\d+)?)(px|em|rem|%)$/i);
+    if (!match) return `font-size: ${size};`;
+
+    const sign = match[1];
+    const amount = match[2];
+    const unit = match[4];
+    const operator = sign === "-" ? "-" : "+";
+    return `font-size: calc(1em ${operator} ${amount}${unit});`;
+}
+
+// Supports nested formatting tags while escaping all non-markup text.
+function renderFormattedText(text = "") {
+    const source = String(text);
+    const tagPattern = /\[\/(color|size)\]|\[(color|size)=([^\]\s]+)\]/gi;
+    let html = "";
+    let lastIndex = 0;
+    const openTags = [];
+    let match;
+
+    while ((match = tagPattern.exec(source)) !== null) {
+        html += escapeHtml(source.slice(lastIndex, match.index));
+
+        if (match[1]) {
+            const closingTag = match[1].toLowerCase();
+            if (openTags[openTags.length - 1] === closingTag) {
+                html += "</span>";
+                openTags.pop();
+            } else {
+                html += escapeHtml(match[0]);
+            }
+        } else {
+            const openingTag = match[2].toLowerCase();
+            const value = match[3].trim();
+            if (openingTag === "color" && isSafeTextColor(value)) {
+                html += `<span style="color: ${value};">`;
+                openTags.push(openingTag);
+            } else if (openingTag === "size" && isSafeTextSize(value)) {
+                html += `<span style="${buildTextSizeStyle(value)}">`;
+                openTags.push(openingTag);
+            } else {
+                html += escapeHtml(match[0]);
+            }
+        }
+
+        lastIndex = tagPattern.lastIndex;
+    }
+
+    html += escapeHtml(source.slice(lastIndex));
+
+    while (openTags.length > 0) {
+        html += "</span>";
+        openTags.pop();
+    }
+
+    return html.replace(/\n/g, "<br>");
+}
+
 function setMultilineText(element, text = "") {
     if (!element) return;
-    element.innerHTML = escapeHtml(text).replace(/\n/g, "<br>");
+    element.innerHTML = renderFormattedText(text);
 }
 
 function buildExportState() {

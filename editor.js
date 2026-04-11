@@ -1058,7 +1058,7 @@
         const descriptionTextarea = document.createElement("textarea");
         descriptionTextarea.id = "globalDescriptionInput";
         descriptionTextarea.value = descriptionEntry.text || "";
-        descriptionTextarea.placeholder = "World overview shown under the header.";
+        descriptionTextarea.placeholder = "World overview shown under the header. Use [color=#d32f2f]red[/color], [size=28px]large[/size], or [size=-2px]smaller[/size]. Tags can be nested.";
         descriptionTextarea.addEventListener("input", () => {
             descriptionEntry.text = descriptionTextarea.value;
             schedulePreviewUpdate();
@@ -2018,7 +2018,7 @@
             descriptionLabel.textContent = "Description (Optional)";
             const descriptionInput = document.createElement("textarea");
             descriptionInput.value = category.description || "";
-            descriptionInput.placeholder = "Shown below the category tab title.";
+            descriptionInput.placeholder = "Shown below the category tab title. Use [color=#d32f2f]red[/color], [size=28px]large[/size], or [size=-2px]smaller[/size]. Tags can be nested.";
             descriptionInput.addEventListener("input", () => {
                 if (descriptionInput.value.trim()) {
                     category.description = descriptionInput.value;
@@ -2663,7 +2663,7 @@
             descLabel.textContent = "Description";
             const descTextarea = document.createElement("textarea");
             descTextarea.value = option.description || "";
-            descTextarea.placeholder = "Explain what this choice does.";
+            descTextarea.placeholder = "Explain what this choice does. Use [color=#d32f2f]red[/color], [size=28px]large[/size], or [size=-2px]smaller[/size]. Tags can be nested.";
             descTextarea.addEventListener("input", () => {
                 option.description = descTextarea.value;
                 schedulePreviewUpdate();
