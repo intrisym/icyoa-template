@@ -1,0 +1,695 @@
+[
+  {
+    "type": "title",
+    "text": "Lantern Corps Recruit"
+  },
+  {
+    "type": "description",
+    "text": "[Insert name here] of [Insert home planet here], you have great [insert emotion here] and have been chosen by the [insert color here] lantern corps. \n\nReport to [insert headquarters here] for further training. Always remember: [Error: Power Ring AI must be updated]"
+  },
+  {
+    "type": "headerImage",
+    "url": ""
+  },
+  {
+    "type": "points",
+    "values": {
+      "Points": 50,
+      "Color": 1
+    },
+    "allowNegative": [],
+    "attributeRanges": {}
+  },
+  {
+    "type": "settings",
+    "themeMode": "light"
+  },
+  {
+    "type": "backpack",
+    "enabled": false
+  },
+  {
+    "type": "theme",
+    "bg-color": "#f9f9f9",
+    "container-bg": "#ffffff",
+    "text-color": "#333333",
+    "text-muted": "#555555",
+    "accent-color": "#007acc",
+    "accent-text": "#ffffff",
+    "border-color": "#dddddd",
+    "item-bg": "#f4f4f4",
+    "item-header-bg": "#e0e0e0",
+    "points-bg": "#f0f0f0",
+    "points-border": "#cccccc",
+    "points-text": "#000000",
+    "selection-glow-color": "#2563eb",
+    "shadow-color": "rgba(0,0,0,0.1)",
+    "font-base": "20px",
+    "font-title": "44px",
+    "font-description": "22px",
+    "font-tab": "20px",
+    "font-accordion": "22px",
+    "font-subcategory": "24px",
+    "font-option-title": "24px",
+    "font-option-req": "19px",
+    "font-option-desc": "23px",
+    "font-story": "21px",
+    "font-story-input": "20px",
+    "font-points": "20px",
+    "font-points-value": "20px",
+    "font-prereq-help": "17px",
+    "font-label": "19px",
+    "font-heading": "Verdana, sans-serif",
+    "font-body": "'Quicksand', sans-serif"
+  },
+  {
+    "type": "darkTheme",
+    "bg-color": "#111827",
+    "container-bg": "#1f2937",
+    "text-color": "#f3f4f6",
+    "text-muted": "#9ca3af",
+    "accent-color": "#b91c1c",
+    "accent-text": "#ffffff",
+    "border-color": "#374151",
+    "item-bg": "#1f2937",
+    "item-header-bg": "#374151",
+    "points-bg": "rgba(185, 28, 28, 0.95)",
+    "points-border": "#fbbf24",
+    "points-text": "#000000",
+    "selection-glow-color": "#2563eb",
+    "shadow-color": "rgba(0, 0, 0, 0.5)",
+    "font-base": "20px",
+    "font-title": "44px",
+    "font-description": "22px",
+    "font-tab": "20px",
+    "font-accordion": "22px",
+    "font-subcategory": "24px",
+    "font-option-title": "24px",
+    "font-option-req": "19px",
+    "font-option-desc": "23px",
+    "font-story": "21px",
+    "font-story-input": "20px",
+    "font-points": "20px",
+    "font-points-value": "20px",
+    "font-prereq-help": "17px",
+    "font-label": "19px",
+    "font-heading": "Verdana, sans-serif",
+    "font-body": "'Quicksand', sans-serif"
+  },
+  {
+    "name": "Emotional Spectrum",
+    "subcategories": [
+      {
+        "name": "Emotional Spectrum",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "[color=#8B0000]Infrared[/color]",
+            "description": "\n[weight=600]Emotion[/weight]: \nUnknown\n\n[weight=600]Origin[/weight]: \nIt is unclear what emotions you felt when the Infrared Power Ring found you, but as it is diametrically opposed to the [weight=500]Ultraviolet Lantern Corps[/weight], it is likely you were overly emotional when you should have been calm.\n\n[weight=600]Corps Goal[/weight]: \nUndecided (Insufficient Leadership)\n\n[weight=600]Balance[/weight]: \nAverage",
+            "cost": {
+              "Points": 5,
+              "Color": 1
+            },
+            "id": "emotionalSpectrumEmotionalSpectrumColor8b0000InfraredColor"
+          },
+          {
+            "label": "[color=Red]Red[/color]",
+            "description": "\n[weight=600]Emotion[/weight]: \nRage\n\n[weight=600]Origin[/weight]: \nYou felt incredible rage, likely due to a great injustice done to you or a tragic loss you suffered, and were found by a Red Power Ring.\n\n[weight=600]Corps Goal[/weight]: \nPunish Criminals\n\n[weight=600]Corps Headquarters[/weight]: \nYsmault (Sector 2814)\n\n[weight=600]Balance[/weight]: \nWeak to [color=Blue]Blue[/color] and [color=violet]Violet[/color]. Empowered by [color=gray]Gray[/color]",
+            "cost": {
+              "Color": 1
+            },
+            "id": "emotionalSpectrumEmotionalSpectrumColorRedRedColor"
+          },
+          {
+            "label": "[color=orange]Orange[/color]",
+            "description": "\n[weight=600]Emotion[/weight]: \nGreed\n\n[weight=600]Origin[/weight]: \nThe Orange Power Ring did not find you: You learned about it and were so greedy that you hunted it down and stole it. \n\n[weight=600]Corps Goal[/weight]: \nThere is no [weight=500]Orange Lantern Corps[/weight] since no one with an Orange Power Ring would share. Instead, there is the [weight=500]Agent Orange[/weight] with the Power Battery and potential \"recruits\" trying to steal it.\n\n[weight=600]Goal[/weight]: \nAcquire and keep valuables\n\n[weight=600]Corps Headquarters[/weight]: \nOkaara (Sector 2818) or None (Deadbeat)\n\n[weight=600]Balance[/weight]: \nWeak to [color=Blue]Blue[/color] and [color=violet]Violet[/color]. ",
+            "cost": {
+              "Color": 1
+            },
+            "id": "emotionalSpectrumEmotionalSpectrumColorOrangeOrangeColor"
+          },
+          {
+            "label": "[color=#D5B60A]Yellow[/color]",
+            "description": "\n[weight=600]Emotion[/weight]: \nFear\n\n[weight=600]Origin[/weight]: \nYou are capable of causing great Fear and were found by a Yellow Lantern Ring.\n\n[weight=600]Corps[/weight]: \nThe [weight=500]Sinestro Corps[/weight] was founded by Sinestro, a former member of the [weight=500]Green Lantern Corps[/weight] who was expelled for his tyrannical methods. The [weight=500]Sinestro Corps[/weight] has a similar goal to the Green Lantern Corps, but they believe in maintaining order with fear. \n\n[weight=600]Corps Goal[/weight]: \nBring order to the universe\n\n[weight=600]Corps Headquarters[/weight]: \nQward (Sector -1) \nKorugar (Sector 1417) \nNew Korugar or Rank (Mobile) \n\n[weight=600]Balance[/weight]: \nStrong to [color=Green]Green[/color], weak to [color=blue]Blue[/color]",
+            "cost": {
+              "Color": 1
+            },
+            "id": "emotionalSpectrumEmotionalSpectrumColorD5b60aYellowColor"
+          },
+          {
+            "label": "[color=Green]Green[/color]",
+            "description": "\n[weight=600]Emotion[/weight]: \nWill\n\n[weight=600]Origin[/weight]: \nYou had great willpower and were found by a Green Power Ring\n\n[weight=600]Corps[/weight]: \nThe [weight=500]Green Lantern Corps[/weight] was founded by the Guardians of the Universe, a branch of Malthusians. The [weight=500]Green Lantern Corps[/weight] function as peacekeepers or police, maintaining order in the Oan Protectorate.  \n\n[weight=600]Corps Goal[/weight]: \nBring order to the universe\n\n[weight=600]Corps Headquarters[/weight]: \nOa (Sector 0) \nMogo (Mobile) \n\n[weight=600]Balance[/weight]: \nWeak to [color=#D5B60A]Yellow[/color], empowered by [color=Blue]Blue[/color]",
+            "cost": {
+              "Color": 1
+            },
+            "id": "emotionalSpectrumEmotionalSpectrumColorGreenGreenColor"
+          },
+          {
+            "label": "[color=Blue]Blue[/color]",
+            "description": "\n[weight=600]Emotion[/weight]: \nHope\n\n[weight=600]Origin[/weight]: \nWhen looking at the universe, you still had a sense of Hope. You were discovered by a Blue Lantern Ring, and after being thoroughly  tested, you were granted a Blue Lantern Ring.\n\n[weight=600]Corps[/weight]: \nGuardians of the Universe, Ganthed and Sayd, formed the [weight=500]Blue Lantern Corps[/weight] to help the [weight=500]Green Lantern Corps[/weight] in their work.\n\n[weight=600]Corps Goal[/weight]: \nBring peace to the universe\n\n[weight=600]Corps Headquarters[/weight]: \nOdym (Sector 2628) or Elpis\n\n[weight=600]Balance[/weight]: \nEmpowers [color=green]Green[/color], weakens [color=red]Red[/color], [color=orange]Orange[/color], and [color=#D5B60A]Yellow[/color]",
+            "cost": {
+              "Color": 1
+            },
+            "id": "emotionalSpectrumEmotionalSpectrumColorBlueBlueColor"
+          },
+          {
+            "label": "[color=indigo]Indigo[/color]",
+            "description": "\n[weight=600]Emotion[/weight]: \nCompassion\n\n[weight=600]Origin[/weight]: \nYou were a sociopath with no compassion for the suffering you caused. The [weight=500]Indigo Tribe[/weight] found you and forced an indigo ring on you to induce compassion.\n\n[weight=600]Corps[/weight]: \nThe Green Lantern Abin Sur founded the [weight=500]Indigo Tribe[/weight] as an experiment on rehabilitation. The [weight=500]Indigo Tribe[/weight] is a nomadic group, searching out for suffering in the universe to spread or force compassion.\n\n[weight=600]Corps Goal[/weight]: \nRehabilitate Criminals\n\n[weight=600]Corps Headquarters[/weight]: \nNok (Sector 2814)\nNo Sector (Mobile)\n\n[weight=600]Balance[/weight]: \nAverage",
+            "cost": {
+              "Color": 1
+            },
+            "id": "emotionalSpectrumEmotionalSpectrumColorIndigoIndigoColor"
+          },
+          {
+            "label": "[color=violet]Violet[/color]",
+            "description": "\n[weight=600]Emotion[/weight]: \nLove\n\n[weight=600]Origin[/weight]: \nYou felt great love for someone and were found by a Violet Power Ring.\n\n[weight=600]Corps[/weight]: \nThe [weight=500]Star Sapphire Corps[/weight] was founded by the Zamarons, a bunch of the Malthusians. The titular Star Sapphire was carved into rings, which were given to women who had been loved and spurned, providing them the opportunity for revenge. Over time, they also recruited women who suffered the loss of a loved one. Later, whoever was convenient.\n\n[weight=600]Corps Goal[/weight]: \nPreserve Love\n\n[weight=600]Corps Headquarters[/weight]: \nZamaron (2813)\n\n[weight=600]Balance[/weight]: \nStrong against [color=orange]Orange[/color] and [color=#D5B60A]Yellow[/color]",
+            "cost": {
+              "Color": 1
+            },
+            "id": "emotionalSpectrumEmotionalSpectrumColorVioletVioletColor"
+          },
+          {
+            "label": "[color=#E75480]Ultraviolet[/color]",
+            "description": "\n[weight=600]Emotion[/weight]: \nRepressed Emotions\n\n[weight=600]Origin[/weight]: \nYou were feeling strong emotions, but you were suppressing them (for good or ill). You were discovered by Umbrax, who conscripted you with a Ultraviolet Power Ring.\n\n[weight=600]Corps[/weight]: \nThe [weight=500]Ultraviolet Power Lantern Corps[/weight] was created by Umbrax, an Emotional Entity imprisoned by the Source Wall. The Ultraviolet Lantern Corps seeks to assimilate the entire universe to the [weight=500]Ultraviolet Power Lantern Corps[/weight]\n\n[weight=600]Corps Goal[/weight]: \nEnslave all life\n\n[weight=600]Balance[/weight]: \nAverage",
+            "cost": {
+              "Color": 1
+            },
+            "id": "emotionalSpectrumEmotionalSpectrumColorE75480UltravioletColor"
+          },
+          {
+            "label": "[color=Black]Black[/color]",
+            "description": "\n[weight=600]Emotion[/weight]: \nNone (Death)\n\n[weight=600]Origin[/weight]: \nYou had a violent death, but Nekron considered you a useful tool and used a Black Power Ring to reanimate you.\n\n[weight=600]Corps[/weight]: \nThe [weight=500]Black Power Lantern Corps[/weight] is the army of Nekron, the Lord of the Unliving, and is made of the deceased from all across the universe. Nekron is the physical manifestation of the concept of death as a cosmic entity. \n\n[weight=600]Corps Goal[/weight]: \nExtermination of all life\n\n[weight=600]Balance[/weight]: \nWeak to [color=#808080]White[/color] (or a combination of colors) ",
+            "cost": {
+              "Points": 5,
+              "Color": 1
+            },
+            "id": "emotionalSpectrumEmotionalSpectrumColorBlackBlackColor"
+          },
+          {
+            "label": "[color=#808080]White[/color]",
+            "description": "\n[weight=600]Emotion[/weight]: \nAll (Life)\n\n[weight=600]Origin[/weight]: \nYou were alive and therefore good enough for the White Ring.\n\n[weight=600]Corps[/weight]: \nThe [weight=500]White Power Lantern Corps[/weight] was created by the Life Entity to fight the [weight=500]Black Power Lantern Corps[/weight]. Once that was completed, the Life Entity had the White Lanterns do unusual tasks to maintain life in the universe.  \n\n[weight=600]Corps Goal[/weight]: \nMaintain Life\n\n[weight=600]Balance[/weight]: \nStrong against Black",
+            "cost": {
+              "Points": 5,
+              "Color": 1
+            },
+            "id": "emotionalSpectrumEmotionalSpectrumColor808080WhiteColor"
+          },
+          {
+            "label": "[color=#CD7F32]Gold[/color]",
+            "description": "\n[weight=600]Emotion[/weight]: \nUnknown\n\n[weight=600]Corps[/weight]: \nThe [weight=500]Gold Lantern Corps[/weight] is supposed to be from a thousand years into the future and is said to be the combination of the [weight=500]Green Lantern Corps[/weight] and [weight=500]Sinestro Corps[/weight]. Not all the evidence backs this up.\n\n[weight=600]Corps Goal[/weight]: \nBring order to the universe\n\n[weight=600]Balance[/weight]: \nAverage",
+            "cost": {
+              "Color": 1
+            },
+            "id": "emotionalSpectrumEmotionalSpectrumColorCd7f32GoldColor"
+          },
+          {
+            "label": "[color=#696969]Fractal Lanterns[/color]",
+            "description": "More of a phenomenon than a true Lantern Corps. The Fractal Lanterns spontaneously appeared due to fluctuations in the Emotional Spectrum. Anyone who feels a strong connection can generate a matching Power Ring; though some of the rings were of the seven basic colors, there are also some anomolous color and emotion combinations such as Sorrow, Digust, Envy, Jealousy, and Happiness. As their creation was anomalous, they have no Corps to lead them and no [weight=500]Power Batteries[/weight] to recharge with. \n\n[Counts as one of the seven basic colors or one of the 5 anomalous colors]",
+            "cost": {
+              "Color": 1
+            },
+            "id": "emotionalSpectrumEmotionalSpectrumColor696969FractalLanternsColor"
+          },
+          {
+            "label": "[color=#696969]Colorless Rings[/color]",
+            "description": "There have been several attempts to create Power Rings that access the entire Emotional Spectrum, such as the prototypical Phantom Ring or Universal Ring. In every case, this attempt ends badly; no mortal can handle the full force of the Emotional Spectrum. These Power Rings are hidden away, but people inevitably find them and think they are different. Though created by the [weight=500]Green Lantern Corps[/weight], none of the users of the Colorless Rings have stayed loyal. \n\nDoes not count as any color. Any characteristic Power can be bought with a 2 point discount. Must take Emotional Instability without a gain to points. ",
+            "cost": {
+              "Color": 1
+            },
+            "id": "emotionalSpectrumEmotionalSpectrumColor696969ColorlessRingsColor"
+          },
+          {
+            "label": "[color=#696969]Power Prism[/color]",
+            "description": "The origin depends on the universe, but the Power Prism tends to be a crystal made by (or  made from) the Skrulls that functions much like a Power Ring. The Power Prism has the same powers as a standard Power Ring, but it has no connection to the Emotional Spectrum as there is only one prism, no analogue to a Lantern Corps.\n\n[Does not count as any color. Must take crossover]",
+            "cost": {
+              "Color": 1
+            },
+            "id": "emotionalSpectrumEmotionalSpectrumColor696969PowerPrismColor"
+          },
+          {
+            "label": "[color=#696969]Black Sun Orb[/color]",
+            "description": "The [weight=500]Order of the Black Sun[/weight] is an anologue to a Lantern Corp who use hand-held orbs to manipulate the universe. They were secretly created by the Faction Paradox to sabotage the Time Lords of Gallifrey and are best known for the 4-D war with the Time Lords. Unlike the Lantern Corps, the Order of the Black Sun does not have a lofty goal and is only interested in maintaining their own power. ",
+            "cost": {
+              "Color": 1
+            },
+            "id": "emotionalSpectrumEmotionalSpectrumColor696969BlackSunOrbColor"
+          }
+        ],
+        "subcategories": []
+      },
+      {
+        "name": "Optional Adjustments",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Two Colors",
+            "description": "You are so emotionally stable (or emotionally unstable) that you can wield two rings at once. \n\n[Choose a second color]",
+            "cost": {
+              "Color": -1,
+              "Points": 6
+            },
+            "id": "emotionalSpectrumOptionalAdjustmentsTwoColors"
+          },
+          {
+            "label": "Yellow Belied",
+            "description": "There was a bit of a mix-up; you do not cause great fear, you have great fear. You may be able to recharge your own ring, but other Yellow Lanterns will consider you a victim to feed from. ",
+            "cost": {
+              "Points": 1
+            },
+            "id": "emotionalSpectrumOptionalAdjustmentsYellowBelied",
+            "prerequisites": "emotionalSpectrumEmotionalSpectrumColorD5b60aYellowColor"
+          },
+          {
+            "label": "Compassionate Soul",
+            "description": "There was a bit of a mix-up. You already had great Compassion before you got the Indigo Power Ring. Your Power Ring does not have to expand as much energy to impose compassion on you, which you can use yourself. ",
+            "cost": {
+              "Points": 1
+            },
+            "id": "emotionalSpectrumOptionalAdjustmentsCompassionateSoul",
+            "prerequisites": "emotionalSpectrumEmotionalSpectrumColorIndigoIndigoColor"
+          },
+          {
+            "label": "Close Enough",
+            "description": "You cannot see Electromagnetic Radiation from 380 to 750nm, which is normally how the Emotional Spectrum is perceived and therefore manipulated. Instead, you use an analogue-like sound or radiowaves. This is slightly harder for other Lanterns to counteract.",
+            "cost": {
+              "Points": 1
+            },
+            "id": "emotionalSpectrumOptionalAdjustmentsCloseEnough"
+          }
+        ],
+        "subcategories": []
+      }
+    ],
+    "description": "All lantern Corps rely on the emotional spectrum to manipulate the universe. \n\nThe emotional spectrum is a form of energy that is generated by sentient life and which corresponds to the visible spectrum of life. There are three negative emotions: ([color=red]Red[/color], [color=orange]Orange[/color], and [color=#D5B60A]Yellow[/color]), a neutral state ([color=green]Green[/color]) and the three positive emotions ([color=blue]Blue[/color], [color=indigo]Indigo[/color], and [color=violet]Violet[/color]). \n\nBeyond the two extremes is the invisible spectrum ([color=#8B0000]Infrared[/color] and [color=#E75480]Ultraviolet[/color]), which was hidden until recently. The further away the colors are from the midpoint of [color=green]Green[/color], the more the spectrum controls the user instead of the other way around. \n\nThere is also [weight=500]Black[/weight] (the absence of the emotional spectrum) and [color=#808080]White[/color] (the combination of all of the emotional spectrum). Besides the existing colors, there are also anomalies like [color=#CD7F32]Gold[/color] and the colors of the **Fractal Lanterns** which does not seem to exist naturally. \n\nDifferent factions have have made use of the Emotional Spectrum for their own purposes. The Green Lantern Corps is the most famous, and deliberately or not, the other Lantern Corps follow their examples. Lantern Corps choose members (**Lanterns**) who epitomize their emotion, who are granted **Power Rings ** to manifest their powers using the Emotional Spectrum. Some Corps are considered enemies or allies, since some of the colors of the Emotional Spectrum are strong or weak to others. \n\nPick **One Color** Your choice in color will change what later options you can pick and the cost of some of those options. Options with \"**Any**\" or \"**Points**\" can be chosen by any lantern."
+  },
+  {
+    "name": "Universe",
+    "subcategories": [
+      {
+        "name": "Divergences",
+        "type": "storyBlock",
+        "text": "Pick One",
+        "options": [
+          {
+            "label": "Standard",
+            "description": "Like most parallel worlds and timelines, your universe looks unremarkable. Sure, there are differences, but it is not noticeable on the cosmic scale. ",
+            "cost": {},
+            "id": "universeDivergencesStandard"
+          },
+          {
+            "label": "Mirror Universe",
+            "description": "Like Earth-3 or Earth-148, everyone in your universe has reversed morality compared to a [weight=500]Standard[/weight] universe.\n\n[Morals of any individuals mentioned in the CYOA are flipped.]",
+            "cost": {},
+            "id": "universeDivergencesMirrorUniverse"
+          },
+          {
+            "label": "Rule 63",
+            "description": "Like Earth-11, everyone in your universe has the opposite sex compared to a [weight=500]Standard[/weight] universe.\n\n[Any people mentioned in the CYOA are the opposite sex.]",
+            "cost": {},
+            "id": "universeDivergencesRule63"
+          },
+          {
+            "label": "Crossover",
+            "description": "Like Earth-7642 or Eatth-1996, your universe formed from the melding of two other universes, leaving it strangely crowded.",
+            "cost": {},
+            "id": "universeDivergencesCrossover"
+          },
+          {
+            "label": "Animal Universe",
+            "description": "Like Earth-C or Earth-26, planets in your universe are inhabited by a mix of anthropomorphic animals.",
+            "cost": {},
+            "id": "universeDivergencesAnimalUniverse"
+          },
+          {
+            "label": "Dinosaur Universe",
+            "description": "Like Earth-27, planets in your universe are inhabited by a mix of prehistoric animals, particularly those from the Mesozoic.",
+            "cost": {},
+            "id": "universeDivergencesDinosaurUniverse"
+          },
+          {
+            "label": "Lego Dimensions",
+            "description": "Like Earth-13122, everything in your universe is strangely rigid but easy to use in construction.",
+            "cost": {},
+            "id": "universeDivergencesLegoDimensions"
+          },
+          {
+            "label": "Cowboy Planet",
+            "description": "Like Earth-18 or Earth-1890, you come from a wild west world. \n\nIs the whole universe like that? Sure, why not.",
+            "cost": {},
+            "id": "universeDivergencesCowboyPlanet"
+          }
+        ],
+        "subcategories": [],
+        "maxSelections": 1
+      },
+      {
+        "name": "Optional",
+        "type": "storyBlock",
+        "text": "Pick as many as you want",
+        "options": [
+          {
+            "label": "Duochrome Universe",
+            "description": "In your universe, there is only your Lantern Corps and a Lantern Corps of a contrasting color. You will rarely encounter someone with Lantern powers and they will clearly only be enemies or allies.",
+            "cost": {
+              "Points": 2
+            },
+            "id": "universeOptionalDuochromeUniverse",
+            "conflictsWith": [
+              "emotionalSpectrumEmotionalSpectrumColorCd7f32GoldColor",
+              "emotionalSpectrumEmotionalSpectrumColor696969FractalLanternsColor",
+              "emotionalSpectrumEmotionalSpectrumColor696969ColorlessRingsColor",
+              "emotionalSpectrumEmotionalSpectrumColor696969PowerPrismColor",
+              "emotionalSpectrumEmotionalSpectrumColor696969BlackSunOrbColor",
+              "universeOptionalRoyGBiv"
+            ]
+          },
+          {
+            "label": "Roy G. Biv",
+            "description": "In your universe, there are only the Lanterns Corps of the basic seven colors. Though you may encounter Lanterns enemies and allies, they will be fairly predictable. ",
+            "cost": {
+              "Points": 1
+            },
+            "id": "universeOptionalRoyGBiv",
+            "conflictsWith": [
+              "emotionalSpectrumEmotionalSpectrumColorE75480UltravioletColor",
+              "emotionalSpectrumEmotionalSpectrumColorBlackBlackColor",
+              "emotionalSpectrumEmotionalSpectrumColorCd7f32GoldColor",
+              "emotionalSpectrumEmotionalSpectrumColor808080WhiteColor",
+              "emotionalSpectrumEmotionalSpectrumColor696969FractalLanternsColor",
+              "emotionalSpectrumEmotionalSpectrumColor8b0000InfraredColor",
+              "emotionalSpectrumEmotionalSpectrumColor696969ColorlessRingsColor",
+              "emotionalSpectrumEmotionalSpectrumColor696969PowerPrismColor",
+              "emotionalSpectrumEmotionalSpectrumColor696969BlackSunOrbColor",
+              "universeOptionalDuochromeUniverse"
+            ]
+          },
+          {
+            "label": "Copernican Principle",
+            "description": "In your universe, Earth is *not* the most important planet in existence and is just one world out of many. Universe-ending crises can occur anywhere, whether it's in your [weight=500]Sector[/weight] or a trillion light years away.",
+            "cost": {
+              "Points": -1
+            },
+            "id": "universeOptionalCopernicanPrinciple"
+          },
+          {
+            "label": "Infinite Crises on Infinite Earths",
+            "description": "In your universe, Earth was the location of Crisis on Infinite Earths, Zero Hour, Final Crisis, Flashpoint, Dark Crisis, and many other universe-ending threats. \n\nThat is not important, since *every* planet has a few of those every few years. You will be run ragged being involved in every crisis on every planet in your [weight=500]Sector[/weight]",
+            "cost": {
+              "Points": -25
+            },
+            "id": "universeOptionalInfiniteCrisesOnInfiniteEarths"
+          },
+          {
+            "label": "Unemotional Source",
+            "description": "In your universe, the Emotional Spectrum has no connection to emotions and the goals of the Lantern Corps have no emotional connection. Though Lantern Corps may have preferences when choosing potential Lanterns, these recruits do not need any strong emotional connection to use their Power Rings. ",
+            "cost": {
+              "Points": 3
+            },
+            "id": "universeOptionalUnemotionalSource",
+            "conflictsWith": [
+              "emotionalSpectrumEmotionalSpectrumColorCd7f32GoldColor",
+              "emotionalSpectrumEmotionalSpectrumColor696969FractalLanternsColor",
+              "emotionalSpectrumEmotionalSpectrumColor696969ColorlessRingsColor",
+              "emotionalSpectrumEmotionalSpectrumColor696969PowerPrismColor",
+              "emotionalSpectrumEmotionalSpectrumColor696969BlackSunOrbColor"
+            ]
+          },
+          {
+            "label": "Shared Emotions",
+            "description": "In your universe, the Emotional Spectrum is limited, the more Lanterns there are, the less powerful each individual one is. Unless there is high attrition or mass recruitment, it is unlikely you will detect any difference.\n\n",
+            "cost": {
+              "Points": -1
+            },
+            "id": "universeOptionalSharedEmotions",
+            "discounts": [
+              {
+                "ids": [
+                  "emotionalSpectrumEmotionalSpectrumColorOrangeOrangeColor",
+                  "universeOptionalLightIntoTheDarkness"
+                ],
+                "cost": {
+                  "Point": 5
+                }
+              },
+              {
+                "ids": [
+                  "universeOptionalLightIntoTheDarkness",
+                  "emotionalSpectrumEmotionalSpectrumColor696969PowerPrismColor"
+                ],
+                "cost": {
+                  "Point": 5
+                },
+                "priority": 2
+              },
+              {
+                "ids": [
+                  "emotionalSpectrumEmotionalSpectrumColor696969BlackSunOrbColor",
+                  "universeOptionalLightIntoTheDarkness"
+                ],
+                "cost": {
+                  "Point": 5
+                },
+                "priority": 3
+              },
+              {
+                "ids": [
+                  "emotionalSpectrumEmotionalSpectrumColorOrangeOrangeColor"
+                ],
+                "cost": {
+                  "Point": 0
+                },
+                "priority": 4
+              },
+              {
+                "ids": [
+                  "emotionalSpectrumEmotionalSpectrumColor696969PowerPrismColor"
+                ],
+                "cost": {
+                  "Point": 0
+                },
+                "priority": 5
+              },
+              {
+                "ids": [
+                  "emotionalSpectrumEmotionalSpectrumColor696969BlackSunOrbColor"
+                ],
+                "cost": {
+                  "Point": 0
+                },
+                "priority": 6
+              },
+              {
+                "ids": [
+                  "universeOptionalLightIntoTheDarkness"
+                ],
+                "cost": {
+                  "Point": 4
+                },
+                "priority": 7
+              }
+            ]
+          },
+          {
+            "label": "Limited Emotions",
+            "description": "In your universe, the Emotional Spectrum is limited and nonrenewable; each use of a Lantern power reduces this finite resource. Even wrose, the Emotional Spectrum is required for the structure of the universe and once it is depleted, the universe will die. It will be difficult to convince the other Lantern Corps that this is true or that *your* usage is justified. ",
+            "cost": {
+              "Points": -5
+            },
+            "id": "universeOptionalLimitedEmotions"
+          },
+          {
+            "label": "Choose Doom",
+            "description": "Like Earth 3 or the Dark Multiverse, in your universe, evil will always triumph over good in the end. There can be short-term victories for good and different factions of evil can conflict, so success is never guaranteed. \n\n[Cost is reversed with Mirror universe.]",
+            "cost": {},
+            "id": "universeOptionalChooseDoom",
+            "discounts": [
+              {
+                "ids": [
+                  "emotionalSpectrumEmotionalSpectrumColorE75480UltravioletColor",
+                  "universeDivergencesMirrorUniverse"
+                ],
+                "cost": {
+                  "Point": -15
+                },
+                "priority": 1
+              },
+              {
+                "ids": [
+                  "universeDivergencesMirrorUniverse",
+                  "emotionalSpectrumEmotionalSpectrumColorBlackBlackColor"
+                ],
+                "cost": {
+                  "Point": -15
+                },
+                "priority": 2
+              },
+              {
+                "ids": [
+                  "universeDivergencesMirrorUniverse",
+                  "emotionalSpectrumEmotionalSpectrumColorGreenGreenColor"
+                ],
+                "cost": {
+                  "Point": 15
+                },
+                "priority": 3
+              },
+              {
+                "ids": [
+                  "universeDivergencesMirrorUniverse",
+                  "emotionalSpectrumEmotionalSpectrumColorBlueBlueColor"
+                ],
+                "cost": {
+                  "Point": 15
+                },
+                "priority": 4
+              },
+              {
+                "ids": [
+                  "universeDivergencesMirrorUniverse",
+                  "emotionalSpectrumEmotionalSpectrumColorIndigoIndigoColor"
+                ],
+                "cost": {
+                  "Point": 15
+                },
+                "priority": 5
+              },
+              {
+                "ids": [
+                  "universeDivergencesMirrorUniverse",
+                  "emotionalSpectrumEmotionalSpectrumColorCd7f32GoldColor"
+                ],
+                "cost": {
+                  "Point": 15
+                },
+                "priority": 6
+              },
+              {
+                "ids": [
+                  "emotionalSpectrumEmotionalSpectrumColor808080WhiteColor",
+                  "universeDivergencesMirrorUniverse"
+                ],
+                "cost": {
+                  "Point": 15
+                },
+                "priority": 7
+              },
+              {
+                "ids": [
+                  "emotionalSpectrumEmotionalSpectrumColorE75480UltravioletColor"
+                ],
+                "cost": {
+                  "Point": 15
+                },
+                "priority": 8
+              },
+              {
+                "ids": [
+                  "emotionalSpectrumEmotionalSpectrumColorBlackBlackColor"
+                ],
+                "cost": {
+                  "Point": 15
+                },
+                "priority": 9
+              },
+              {
+                "ids": [
+                  "emotionalSpectrumEmotionalSpectrumColorGreenGreenColor"
+                ],
+                "cost": {
+                  "Point": -15
+                },
+                "priority": 10
+              },
+              {
+                "ids": [
+                  "emotionalSpectrumEmotionalSpectrumColorBlueBlueColor"
+                ],
+                "cost": {
+                  "Point": -15
+                },
+                "priority": 11
+              },
+              {
+                "ids": [
+                  "emotionalSpectrumEmotionalSpectrumColorIndigoIndigoColor"
+                ],
+                "cost": {
+                  "Point": -15
+                },
+                "priority": 12
+              },
+              {
+                "ids": [
+                  "emotionalSpectrumEmotionalSpectrumColorCd7f32GoldColor"
+                ],
+                "cost": {
+                  "Point": -15
+                },
+                "priority": 13
+              },
+              {
+                "ids": [
+                  "emotionalSpectrumEmotionalSpectrumColor808080WhiteColor"
+                ],
+                "cost": {
+                  "Point": -15
+                },
+                "priority": 14
+              }
+            ]
+          },
+          {
+            "label": "Relict Population",
+            "description": "In your universe, one of the species that is normally extinct (Kryptonian, Martian, or Czarnian) is not extinct. Perhaps sending their potential fate, they have expanded their territory. They may have a mix of morality, but billions of people with enough power to match a Lantern will greatly disrupt the balance of power. ",
+            "cost": {
+              "Points": -3
+            },
+            "id": "universeOptionalRelictPopulation",
+            "maxSelections": 3
+          },
+          {
+            "label": "Grounded Species",
+            "description": "In your universe, superpowered species are not that powerful. They can be harmed by excessive force and are pared down to their essential powers. Lanterns will have less trouble fighting them.\n\n[[weight=500]Superpowered Species[/weight] cost 3 points less, to a minimum of -1 points.]",
+            "cost": {
+              "Points": 7
+            },
+            "id": "universeOptionalGroundedSpecies",
+            "conflictsWith": [
+              "universeOptionalOverpoweredSpecies"
+            ]
+          },
+          {
+            "label": "Overpowered Species",
+            "description": "In your universe, superpowered species are overpowered; it seems like they can only be stopped with their special weaknesses and they have more powers than they need. Lanterns can easily be overpowered when fighting them.\n\n[[weight=500]Superpowered Species[/weight] cost 3 points more.]",
+            "cost": {
+              "Points": 7
+            },
+            "id": "universeOptionalOverpoweredSpecies",
+            "conflictsWith": [
+              "universeOptionalGroundedSpecies"
+            ]
+          },
+          {
+            "label": "Light into the Darkness",
+            "description": "Your Lantern Corps is now defunct; it has been exterminated and you were chosen as a futile replacement. You have no support from other Lanterns and it is unlikely all the Corps enemies were destroyed at the same time.\n\n[Must take [weight=500]Light into the Darkness Duties[/weight].]",
+            "cost": {
+              "Points": -3
+            },
+            "id": "universeOptionalLightIntoTheDarkness",
+            "conflictsWith": [
+              "emotionalSpectrumEmotionalSpectrumColorOrangeOrangeColor",
+              "emotionalSpectrumEmotionalSpectrumColorCd7f32GoldColor",
+              "emotionalSpectrumEmotionalSpectrumColor696969FractalLanternsColor",
+              "emotionalSpectrumEmotionalSpectrumColor696969ColorlessRingsColor",
+              "emotionalSpectrumEmotionalSpectrumColor696969PowerPrismColor"
+            ]
+          }
+        ],
+        "subcategories": []
+      }
+    ],
+    "description": "It is not clear which universe you are from, since there are 52 universes in the multiverse to search through. Or rather, you must be from one of the permutations in Hypertime in the only universe. Or rather, you are from one of the 52 universes or their echoes in the Dark Multiverse. Or rather, you could be from any of the multiverses in the omniverse. Or rather...\n\nThere are a few certainties of which universe you are from. Your universe must have planets in star systems in galaxies in galactic clusters.  Though there are physical laws of your universe, they can be defied with Superpowers. Some superpowers are caused by sufficiently advanced technology, much like your Power Ring. Some superpowers are caused by magic, which is often considered the enemy of the Lantern Corps. Some superpowers cannot be explained by technology or magic, but can still match the power of your Power Ring. Beyond these constraints, there are many potential divergences for your universe. "
+  }
+]

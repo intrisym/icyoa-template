@@ -1,6 +1,6 @@
 (function () {
-    const CORE_TYPES_ORDER = ["title", "description", "headerImage", "points"];
-    const BASE_OPTION_KEYS = new Set(["id", "label", "description", "image", "inputType", "inputLabel", "cost", "maxSelections", "countsAsOneSelection", "prerequisites", "conflictsWith", "discounts", "discountGrants"]);
+    const CORE_TYPES_ORDER = ["title", "description", "headerImage", "points", "settings"];
+    const BASE_OPTION_KEYS = new Set(["id", "label", "description", "image", "inputType", "inputLabel", "cost", "maxSelections", "countsAsOneSelection", "prerequisites", "conflictsWith", "autoGrants", "discounts", "discountGrants"]);
 
     const state = {
         data: [],
@@ -489,6 +489,9 @@
                 if (slots < 1) warnings.push(`Rule ${ruleNo}: slots must be at least 1.`);
             } else if (!rule?.cost || !Object.keys(rule.cost).length) {
                 warnings.push(`Rule ${ruleNo}: discounted cost map is empty.`);
+            }
+            if (rule?.priority !== undefined && !Number.isFinite(Number(rule.priority))) {
+                warnings.push(`Rule ${ruleNo}: priority must be a number.`);
             }
         });
 
@@ -1058,7 +1061,7 @@
         const descriptionTextarea = document.createElement("textarea");
         descriptionTextarea.id = "globalDescriptionInput";
         descriptionTextarea.value = descriptionEntry.text || "";
-        descriptionTextarea.placeholder = "World overview shown under the header. Use [color=#d32f2f]red[/color], [size=28px]large[/size], or [size=-2px]smaller[/size]. Tags can be nested.";
+        descriptionTextarea.placeholder = "World overview shown under the header. Use *italic*, **bold**, [weight=600]semi-bold[/weight], [color=#d32f2f]red[/color], or [size=-2px]smaller[/size].";
         descriptionTextarea.addEventListener("input", () => {
             descriptionEntry.text = descriptionTextarea.value;
             schedulePreviewUpdate();
@@ -1127,6 +1130,17 @@
         if (!pointsEntry.attributeRanges) pointsEntry.attributeRanges = {};
         fragment.appendChild(renderPointsSection(pointsEntry));
 
+        const settingsEntry = ensureEntry("settings", () => ({
+            type: "settings",
+            themeMode: "toggle"
+        }), {
+            mergeDefaults: true
+        }).entry;
+        fragment.appendChild(renderThemeModeSection(settingsEntry));
+        const currentThemeMode = settingsEntry.themeMode === "light" || settingsEntry.themeMode === "dark" || settingsEntry.themeMode === "toggle"
+            ? settingsEntry.themeMode
+            : "toggle";
+
         const backpackEntry = ensureEntry("backpack", () => ({
             type: "backpack",
             enabled: false
@@ -1139,10 +1153,14 @@
         const darkThemeEntry = ensureEntry("darkTheme", () => ({ ...DARK_THEME_DEFAULTS }), {
             mergeDefaults: true
         }).entry;
-        fragment.appendChild(renderThemeSection(themeEntry, "Light Theme Settings"));
-        fragment.appendChild(renderTypographySection(themeEntry, "Light Typography Settings"));
-        fragment.appendChild(renderThemeSection(darkThemeEntry, "Dark Theme Settings"));
-        fragment.appendChild(renderTypographySection(darkThemeEntry, "Dark Typography Settings"));
+        if (currentThemeMode === "toggle" || currentThemeMode === "light") {
+            fragment.appendChild(renderThemeSection(themeEntry, "Light Theme Settings"));
+            fragment.appendChild(renderTypographySection(themeEntry, "Light Typography Settings"));
+        }
+        if (currentThemeMode === "toggle" || currentThemeMode === "dark") {
+            fragment.appendChild(renderThemeSection(darkThemeEntry, "Dark Theme Settings"));
+            fragment.appendChild(renderTypographySection(darkThemeEntry, "Dark Typography Settings"));
+        }
 
         globalSettingsEl.innerHTML = "";
         globalSettingsEl.appendChild(fragment);
@@ -1396,6 +1414,52 @@
         description.style.color = "var(--text-muted)";
         description.innerHTML = "When enabled, shows a button at the bottom of the page that displays all selected choices in a modal that can be downloaded as an image.";
         body.appendChild(description);
+
+        return container;
+    }
+
+    function renderThemeModeSection(settingsEntry) {
+        const {
+            container,
+            body
+        } = createSectionContainer("Theme Availability", {
+            defaultOpen: true
+        });
+
+        const field = document.createElement("div");
+        field.className = "field";
+
+        const label = document.createElement("label");
+        label.textContent = "Player theme mode";
+
+        const select = document.createElement("select");
+        select.innerHTML = `
+            <option value="toggle">Allow light/dark toggle</option>
+            <option value="light">Light mode only</option>
+            <option value="dark">Dark mode only</option>
+        `;
+        const currentMode = settingsEntry.themeMode === "light" || settingsEntry.themeMode === "dark" || settingsEntry.themeMode === "toggle"
+            ? settingsEntry.themeMode
+            : settingsEntry.darkModeEnabled === false
+                ? "light"
+                : "toggle";
+        select.value = currentMode;
+        settingsEntry.themeMode = currentMode;
+        delete settingsEntry.darkModeEnabled;
+
+        select.addEventListener("change", () => {
+            settingsEntry.themeMode = select.value;
+            renderGlobalSettings();
+            schedulePreviewUpdate();
+        });
+
+        const description = document.createElement("p");
+        description.style.fontSize = "12px";
+        description.style.color = "var(--text-muted)";
+        description.textContent = "Use light-only or dark-only when a CYOA is designed for one specific visual style. Existing CYOAs default to allowing the toggle.";
+
+        field.append(label, select);
+        body.append(field, description);
 
         return container;
     }
@@ -2018,7 +2082,7 @@
             descriptionLabel.textContent = "Description (Optional)";
             const descriptionInput = document.createElement("textarea");
             descriptionInput.value = category.description || "";
-            descriptionInput.placeholder = "Shown below the category tab title. Use [color=#d32f2f]red[/color], [size=28px]large[/size], or [size=-2px]smaller[/size]. Tags can be nested.";
+            descriptionInput.placeholder = "Shown below the category tab title. Use *italic*, **bold**, [weight=600]semi-bold[/weight], [color=#d32f2f]red[/color], or [size=-2px]smaller[/size].";
             descriptionInput.addEventListener("input", () => {
                 if (descriptionInput.value.trim()) {
                     category.description = descriptionInput.value;
@@ -2634,7 +2698,7 @@
             const labelInput = document.createElement("input");
             labelInput.type = "text";
             labelInput.value = option.label || "";
-            labelInput.placeholder = "Displayed choice text";
+            labelInput.placeholder = "Displayed choice text. Supports *italic*, **bold**, [weight=600], [color=#d32f2f], and [size=120%].";
             labelInput.addEventListener("input", () => {
                 option.label = labelInput.value;
                 const newId = generateOptionId(option.label, {
@@ -2663,7 +2727,7 @@
             descLabel.textContent = "Description";
             const descTextarea = document.createElement("textarea");
             descTextarea.value = option.description || "";
-            descTextarea.placeholder = "Explain what this choice does. Use [color=#d32f2f]red[/color], [size=28px]large[/size], or [size=-2px]smaller[/size]. Tags can be nested.";
+            descTextarea.placeholder = "Explain what this choice does. Use *italic*, **bold**, [weight=600]semi-bold[/weight], [color=#d32f2f]red[/color], or [size=-2px]smaller[/size].";
             descTextarea.addEventListener("input", () => {
                 option.description = descTextarea.value;
                 schedulePreviewUpdate();
@@ -2853,13 +2917,157 @@
             conflictSection.appendChild(conflictContainer);
             optionAdvancedBody.appendChild(conflictSection);
 
+            const autoGrantSection = document.createElement("div");
+            autoGrantSection.className = "field";
+            const autoGrantLabel = document.createElement("label");
+            autoGrantLabel.textContent = "Automatically grants options";
+            const autoGrantHint = document.createElement("div");
+            autoGrantHint.className = "field-help";
+            autoGrantHint.textContent = "When this option is selected, the listed options are selected automatically at no extra point cost.";
+            const autoGrantContainer = document.createElement("div");
+            autoGrantContainer.className = "list-stack";
+
+            const getAutoGrantRules = () => {
+                if (!Array.isArray(option.autoGrants)) return [];
+                return option.autoGrants
+                    .map(rule => {
+                        if (typeof rule === "string") {
+                            return {
+                                id: rule,
+                                canDeselect: false
+                            };
+                        }
+                        if (rule && typeof rule === "object" && typeof rule.id === "string") {
+                            return {
+                                id: rule.id,
+                                canDeselect: rule.canDeselect === true
+                            };
+                        }
+                        return null;
+                    })
+                    .filter(Boolean);
+            };
+
+            const setAutoGrantRules = (rules) => {
+                const normalizedRules = rules
+                    .map(rule => ({
+                        id: String(rule.id || "").trim(),
+                        canDeselect: rule.canDeselect === true
+                    }))
+                    .filter(rule => rule.id);
+                if (normalizedRules.length) {
+                    option.autoGrants = normalizedRules;
+                } else {
+                    delete option.autoGrants;
+                }
+            };
+
+            function renderAutoGrantRulesEditor() {
+                autoGrantContainer.innerHTML = "";
+                const rules = getAutoGrantRules();
+
+                if (!rules.length) {
+                    const empty = document.createElement("div");
+                    empty.className = "empty-state";
+                    empty.textContent = "No automatic grants set.";
+                    autoGrantContainer.appendChild(empty);
+                }
+
+                rules.forEach((rule, ruleIndex) => {
+                    const row = document.createElement("div");
+                    row.className = "option-rule-row";
+                    row.style.gridTemplateColumns = "1fr auto auto";
+
+                    const idInput = document.createElement("input");
+                    idInput.type = "text";
+                    idInput.value = rule.id;
+                    const datalist = document.createElement("datalist");
+                    const datalistId = `auto-grant-options-${++optionDatalistCounter}`;
+                    datalist.id = datalistId;
+                    getSortedOptionIds([option.id || ""]).forEach(id => {
+                        const opt = document.createElement("option");
+                        opt.value = id;
+                        datalist.appendChild(opt);
+                    });
+                    idInput.setAttribute("list", datalistId);
+                    idInput.addEventListener("input", () => {
+                        const next = getAutoGrantRules();
+                        next[ruleIndex] = {
+                            ...next[ruleIndex],
+                            id: idInput.value.trim()
+                        };
+                        setAutoGrantRules(next);
+                        schedulePreviewUpdate();
+                    });
+
+                    const canDeselectLabel = document.createElement("label");
+                    canDeselectLabel.className = "inline-checkbox";
+                    const canDeselectInput = document.createElement("input");
+                    canDeselectInput.type = "checkbox";
+                    canDeselectInput.checked = rule.canDeselect === true;
+                    canDeselectInput.addEventListener("change", () => {
+                        const next = getAutoGrantRules();
+                        next[ruleIndex] = {
+                            ...next[ruleIndex],
+                            canDeselect: canDeselectInput.checked
+                        };
+                        setAutoGrantRules(next);
+                        schedulePreviewUpdate();
+                    });
+                    const canDeselectText = document.createElement("span");
+                    canDeselectText.textContent = "Can be deselected";
+                    canDeselectLabel.append(canDeselectInput, canDeselectText);
+
+                    const removeBtn = document.createElement("button");
+                    removeBtn.type = "button";
+                    removeBtn.className = "button-icon danger";
+                    removeBtn.title = "Remove grant";
+                    removeBtn.textContent = "✕";
+                    removeBtn.addEventListener("click", () => {
+                        const next = getAutoGrantRules();
+                        next.splice(ruleIndex, 1);
+                        setAutoGrantRules(next);
+                        renderAutoGrantRulesEditor();
+                        schedulePreviewUpdate();
+                    });
+
+                    row.append(idInput, canDeselectLabel, removeBtn, datalist);
+                    autoGrantContainer.appendChild(row);
+                });
+
+                const addBtn = document.createElement("button");
+                addBtn.type = "button";
+                addBtn.className = "button-subtle";
+                addBtn.textContent = "Add automatic grant";
+                addBtn.addEventListener("click", () => {
+                    const availableIds = getSortedOptionIds([option.id || ""]);
+                    if (!availableIds.length) {
+                        showEditorMessage("No other option IDs are available to grant.", "warning", 3000);
+                        return;
+                    }
+                    const next = getAutoGrantRules();
+                    next.push({
+                        id: availableIds[0],
+                        canDeselect: false
+                    });
+                    setAutoGrantRules(next);
+                    renderAutoGrantRulesEditor();
+                    schedulePreviewUpdate();
+                });
+                autoGrantContainer.appendChild(addBtn);
+            }
+
+            renderAutoGrantRulesEditor();
+            autoGrantSection.append(autoGrantLabel, autoGrantHint, autoGrantContainer);
+            optionAdvancedBody.appendChild(autoGrantSection);
+
             const discountSection = document.createElement("div");
             discountSection.className = "field";
             const discountLabel = document.createElement("label");
             discountLabel.textContent = "Conditional discounts";
             const discountHint = document.createElement("div");
             discountHint.className = "field-help";
-            discountHint.textContent = "Create rules that change this option's cost when required option IDs are selected.";
+            discountHint.textContent = "Create rules that change this option's cost when required option IDs are selected. If multiple cost rules match, the highest priority rule wins.";
             const discountContainer = document.createElement("div");
             discountContainer.className = "list-stack";
 
@@ -2907,7 +3115,7 @@
                     ruleCard.appendChild(header);
 
                     const behaviorRow = document.createElement("div");
-                    behaviorRow.className = "field-inline";
+                    behaviorRow.className = "field-inline field-inline-three";
                     const behaviorLabel = document.createElement("label");
                     behaviorLabel.textContent = "Discount behavior";
                     const behaviorInput = document.createElement("select");
@@ -2934,8 +3142,29 @@
                         refreshOptionWarnings(prereqParseError ? [prereqParseError] : []);
                         schedulePreviewUpdate();
                     });
+                    const priorityLabel = document.createElement("label");
+                    priorityLabel.textContent = "Priority";
+                    const priorityInput = document.createElement("input");
+                    priorityInput.type = "number";
+                    priorityInput.value = Number.isFinite(Number(rule.priority)) ? String(rule.priority) : String(ruleIndex + 1);
+                    priorityInput.title = "Higher priority matching cost rules override lower priority matching rules.";
+                    priorityInput.addEventListener("input", () => {
+                        const value = priorityInput.value.trim();
+                        if (value === "") {
+                            delete rule.priority;
+                        } else {
+                            const parsed = Number(value);
+                            if (Number.isFinite(parsed)) {
+                                rule.priority = parsed;
+                            }
+                        }
+                        refreshOptionWarnings(prereqParseError ? [prereqParseError] : []);
+                        schedulePreviewUpdate();
+                    });
                     behaviorRow.appendChild(behaviorLabel);
                     behaviorRow.appendChild(behaviorInput);
+                    behaviorRow.appendChild(priorityLabel);
+                    behaviorRow.appendChild(priorityInput);
                     ruleCard.appendChild(behaviorRow);
 
                     const modeRow = document.createElement("div");
@@ -3101,7 +3330,8 @@
                 addRuleBtn.addEventListener("click", () => {
                     const nextRule = {
                         ids: [],
-                        cost: {}
+                        cost: {},
+                        priority: Array.isArray(option.discounts) ? option.discounts.length + 1 : 1
                     };
                     if (!Array.isArray(option.discounts)) {
                         option.discounts = [];

@@ -6,6 +6,7 @@ const openCategories = new Set();
 const storyInputs = {};
 let currentTab = null; // Track current active tab
 let backpackEnabled = false; // Track if backpack is enabled
+let themeMode = "toggle";
 
 const openSubcategories = new Set();
 let animateMainTab = false;
@@ -19,6 +20,7 @@ let originalAttributeRanges = {}; // Stores the initial, base ranges from input.
 const subcategoryDiscountSelections = {};
 const categoryDiscountSelections = {};
 const optionGrantDiscountSelections = {};
+const autoGrantedSelections = {};
 const selectionHistory = [];
 const optionGridLayouts = new Set();
 const OPTION_CARD_MIN_WIDTH = 280;
@@ -69,6 +71,22 @@ function makeGlowShadow(color, blurPx, alpha) {
 function clearObject(obj) {
     if (!obj) return;
     Object.keys(obj).forEach(key => delete obj[key]);
+}
+
+function normalizeThemeMode(settingsEntry = {}) {
+    if (settingsEntry.themeMode === "light" || settingsEntry.themeMode === "dark" || settingsEntry.themeMode === "toggle") {
+        return settingsEntry.themeMode;
+    }
+    if (settingsEntry.darkModeEnabled === false) {
+        return "light";
+    }
+    return "toggle";
+}
+
+function getEffectiveDarkMode() {
+    if (themeMode === "dark") return true;
+    if (themeMode === "light") return false;
+    return isDarkMode;
 }
 
 function normalizeAssetUrl(url) {
@@ -251,6 +269,7 @@ function resetGlobalState() {
     clearObject(subcategoryDiscountSelections);
     clearObject(categoryDiscountSelections);
     clearObject(optionGrantDiscountSelections);
+    clearObject(autoGrantedSelections);
     openCategories.clear();
     openSubcategories.clear();
     animateMainTab = false;
@@ -296,18 +315,15 @@ function getOptionEffectiveCost(option, {
     let bestCost = baseCost;
     let bestTotal = Object.entries(baseCost).reduce((sum, [_, val]) => val > 0 ? sum + val : sum, 0);
 
-    (option.discounts || []).forEach(d => {
-        if (isConditionalGrantRule(d)) return;
-        const qualifies = doesDiscountRuleQualify(d);
-        if (!qualifies) return;
+    const matchingCostRules = (option.discounts || [])
+        .map((rule, index) => ({ rule, index }))
+        .filter(({ rule }) => !isConditionalGrantRule(rule) && doesDiscountRuleQualify(rule))
+        .sort((a, b) => getDiscountRulePriority(a.rule, a.index) - getDiscountRulePriority(b.rule, b.index) || a.index - b.index);
 
-        const mergedCost = { ...baseCost, ...(d.cost || {}) };
-        const total = Object.entries(mergedCost).reduce((sum, [_, val]) => val > 0 ? sum + val : sum, 0);
-        if (total < bestTotal) {
-            bestTotal = total;
-            bestCost = mergedCost;
-        }
+    matchingCostRules.forEach(({ rule }) => {
+        bestCost = { ...bestCost, ...(rule.cost || {}) };
     });
+    bestTotal = Object.entries(bestCost).reduce((sum, [_, val]) => val > 0 ? sum + val : sum, 0);
 
     const grantContexts = getActiveOptionGrantContexts(option.id);
     const alreadySelectedThis = selectedOptions[option.id] || 0;
@@ -589,6 +605,11 @@ function isSafeTextSize(value = "") {
     return /^[+-]?(\d+(\.\d+)?)(px|em|rem|%)$/i.test(size);
 }
 
+function isSafeTextWeight(value = "") {
+    const weight = String(value).trim();
+    return /^[1-9]00$/.test(weight) && Number(weight) <= 900;
+}
+
 function buildTextSizeStyle(value = "") {
     const size = String(value).trim();
     const match = size.match(/^([+-])(\d+(\.\d+)?)(px|em|rem|%)$/i);
@@ -604,7 +625,7 @@ function buildTextSizeStyle(value = "") {
 // Supports nested formatting tags while escaping all non-markup text.
 function renderFormattedText(text = "") {
     const source = String(text);
-    const tagPattern = /\[\/(color|size)\]|\[(color|size)=([^\]\s]+)\]/gi;
+    const tagPattern = /\*\*|\*|\[\/(color|size|weight)\]|\[(color|size|weight)=([^\]\s]+)\]/gi;
     let html = "";
     let lastIndex = 0;
     const openTags = [];
@@ -613,7 +634,23 @@ function renderFormattedText(text = "") {
     while ((match = tagPattern.exec(source)) !== null) {
         html += escapeHtml(source.slice(lastIndex, match.index));
 
-        if (match[1]) {
+        if (match[0] === "**") {
+            if (openTags[openTags.length - 1] === "bold") {
+                html += "</strong>";
+                openTags.pop();
+            } else {
+                html += "<strong>";
+                openTags.push("bold");
+            }
+        } else if (match[0] === "*") {
+            if (openTags[openTags.length - 1] === "italic") {
+                html += "</em>";
+                openTags.pop();
+            } else {
+                html += "<em>";
+                openTags.push("italic");
+            }
+        } else if (match[1]) {
             const closingTag = match[1].toLowerCase();
             if (openTags[openTags.length - 1] === closingTag) {
                 html += "</span>";
@@ -630,6 +667,9 @@ function renderFormattedText(text = "") {
             } else if (openingTag === "size" && isSafeTextSize(value)) {
                 html += `<span style="${buildTextSizeStyle(value)}">`;
                 openTags.push(openingTag);
+            } else if (openingTag === "weight" && isSafeTextWeight(value)) {
+                html += `<span style="font-weight: ${value};">`;
+                openTags.push(openingTag);
             } else {
                 html += escapeHtml(match[0]);
             }
@@ -641,11 +681,17 @@ function renderFormattedText(text = "") {
     html += escapeHtml(source.slice(lastIndex));
 
     while (openTags.length > 0) {
-        html += "</span>";
-        openTags.pop();
+        const tag = openTags.pop();
+        html += tag === "bold" ? "</strong>" : tag === "italic" ? "</em>" : "</span>";
     }
 
     return html.replace(/\n/g, "<br>");
+}
+
+function stripFormattingMarkup(text = "") {
+    return String(text)
+        .replace(/\*/g, "")
+        .replace(/\[\/?(color|size|weight)(=[^\]\s]+)?\]/gi, "");
 }
 
 function setMultilineText(element, text = "") {
@@ -663,7 +709,8 @@ function buildExportState() {
         dynamicSelections,
         subcategoryDiscountSelections,
         categoryDiscountSelections,
-        optionGrantDiscountSelections
+        optionGrantDiscountSelections,
+        autoGrantedSelections
     };
 }
 
@@ -686,6 +733,7 @@ function buildPackedExportState() {
     if (hasOwnEntries(full.subcategoryDiscountSelections)) packed.u = full.subcategoryDiscountSelections;
     if (hasOwnEntries(full.categoryDiscountSelections)) packed.c = full.categoryDiscountSelections;
     if (hasOwnEntries(full.optionGrantDiscountSelections)) packed.g = full.optionGrantDiscountSelections;
+    if (hasOwnEntries(full.autoGrantedSelections)) packed.r = full.autoGrantedSelections;
 
     return packed;
 }
@@ -703,7 +751,8 @@ function unpackImportedState(importedData) {
         dynamicSelections: importedData.y || {},
         subcategoryDiscountSelections: importedData.u || {},
         categoryDiscountSelections: importedData.c || {},
-        optionGrantDiscountSelections: importedData.g || {}
+        optionGrantDiscountSelections: importedData.g || {},
+        autoGrantedSelections: importedData.r || {}
     };
 }
 
@@ -851,6 +900,7 @@ document.getElementById("resetBtn").onclick = () => {
     for (let key in subcategoryDiscountSelections) delete subcategoryDiscountSelections[key];
     for (let key in categoryDiscountSelections) delete categoryDiscountSelections[key];
     for (let key in optionGrantDiscountSelections) delete optionGrantDiscountSelections[key];
+    for (let key in autoGrantedSelections) delete autoGrantedSelections[key];
 
 
     // Reset points and attribute ranges to their original states from input.json
@@ -887,6 +937,7 @@ modalConfirmBtn.onclick = async () => {
         for (let key in subcategoryDiscountSelections) delete subcategoryDiscountSelections[key];
         for (let key in categoryDiscountSelections) delete categoryDiscountSelections[key];
         for (let key in optionGrantDiscountSelections) delete optionGrantDiscountSelections[key];
+        for (let key in autoGrantedSelections) delete autoGrantedSelections[key];
 
         // Apply imported states
         points = {
@@ -947,6 +998,14 @@ modalConfirmBtn.onclick = async () => {
                     if (num > 0) map[id] = num;
                 });
                 optionGrantDiscountSelections[key] = map;
+            }
+        });
+        Object.entries(importedData.autoGrantedSelections || {}).forEach(([key, val]) => {
+            if (val && typeof val === 'object') {
+                autoGrantedSelections[key] = {
+                    sourceId: val.sourceId,
+                    canDeselect: val.canDeselect === true
+                };
             }
         });
 
@@ -1268,6 +1327,9 @@ function applyCyoaData(rawData, {
         validateInputJson(data, pointsEntry);
 
         // Apply theme if present
+        const settingsEntry = data.find(entry => entry.type === "settings") || {};
+        themeMode = normalizeThemeMode(settingsEntry);
+        const effectiveDarkMode = getEffectiveDarkMode();
         const themeEntry = data.find(entry => entry.type === "theme");
         const darkThemeEntry = data.find(entry => entry.type === "darkTheme");
         const root = document.documentElement;
@@ -1333,7 +1395,7 @@ function applyCyoaData(rawData, {
             "font-body": "'Quicksand', sans-serif"
         };
 
-        if (isDarkMode) {
+        if (effectiveDarkMode) {
             Object.entries(DARK_THEME_VARS).forEach(([key, value]) => updateRootProperty(key, value));
             if (themeEntry) {
                 Object.entries(themeEntry).forEach(([key, value]) => {
@@ -1357,8 +1419,8 @@ function applyCyoaData(rawData, {
             }
         }
 
-        const activeThemeEntry = isDarkMode ? (darkThemeEntry || themeEntry) : themeEntry;
-        const glowColor = activeThemeEntry?.["selection-glow-color"] || (isDarkMode ? DARK_THEME_VARS["selection-glow-color"] : defaults["selection-glow-color"]) || "#2563eb";
+        const activeThemeEntry = effectiveDarkMode ? (darkThemeEntry || themeEntry) : themeEntry;
+        const glowColor = activeThemeEntry?.["selection-glow-color"] || (effectiveDarkMode ? DARK_THEME_VARS["selection-glow-color"] : defaults["selection-glow-color"]) || "#2563eb";
         const hasExplicitGlow = !!(activeThemeEntry && (Object.prototype.hasOwnProperty.call(activeThemeEntry, "selection-glow") || Object.prototype.hasOwnProperty.call(activeThemeEntry, "selection-glow-hover")));
         if (!hasExplicitGlow) {
             updateRootProperty("selection-glow", makeGlowShadow(glowColor, 15, 0.6));
@@ -1586,7 +1648,7 @@ function removeDependentOptions(deselectedId) {
     for (const cat of categories) {
         forEachCategoryOption(cat, opt => {
             if (prereqReferencesId(opt.prerequisites, deselectedId) && selectedOptions[opt.id]) {
-                removeSelection(opt);
+                removeSelection(opt, { force: true });
                 removeDependentOptions(opt.id); // Recursively remove dependents
             }
         });
@@ -1613,7 +1675,7 @@ function removeOptionsFromInactiveCategoriesAndSubcategories() {
         walkSubcategoryTree([subcat], node => {
             (node.options || []).forEach(opt => {
                 if (selectedOptions[opt.id]) {
-                    removeSelection(opt);
+                    removeSelection(opt, { force: true });
                 }
             });
         });
@@ -1640,7 +1702,7 @@ function removeOptionsFromInactiveCategoriesAndSubcategories() {
         if (!categoryUnlocked) {
             forEachCategoryOption(cat, opt => {
                 if (selectedOptions[opt.id]) {
-                    removeSelection(opt);
+                    removeSelection(opt, { force: true });
                 }
             });
         } else {
@@ -1654,11 +1716,12 @@ function removeOptionsFromInactiveCategoriesAndSubcategories() {
  * Removes an option from selectedOptions and refunds its cost.
  * @param {Object} option - The option object to remove.
  */
-function removeSelection(option) {
+function removeSelection(option, options = {}) {
     const scrollY = window.scrollY; // Preserve scroll position
 
     const count = typeof selectedOptions[option.id] === 'number' ? selectedOptions[option.id] : 1;
     if (!selectedOptions[option.id]) return; // Option not selected
+    if (!options.force && isAutoGrantedLocked(option.id)) return;
 
     // Update selection history
     const historyIndex = selectionHistory.indexOf(option.id);
@@ -1720,14 +1783,21 @@ function removeSelection(option) {
     } else {
         delete selectedOptions[option.id];
         delete discountedSelections[option.id]; // Clear all recorded discounts for this option
+        delete autoGrantedSelections[option.id];
+        removeAutoGrantsFromSource(option.id, {
+            skipRender: true,
+            force: true
+        });
         removeDependentOptions(option.id); // Remove any options that depended on this one
     }
 
     removeOptionsFromInactiveCategoriesAndSubcategories(); // Clear options from categories that no longer meet requirements
     applyDynamicCosts(); // Re-evaluate formulas to reflect changes
     updatePointsDisplay();
-    renderAccordion(); // Re-render to update UI elements (sliders, etc.)
-    window.scrollTo(0, scrollY); // Restore scroll position
+    if (!options.skipRender) {
+        renderAccordion(); // Re-render to update UI elements (sliders, etc.)
+        window.scrollTo(0, scrollY); // Restore scroll position
+    }
 }
 
 /**
@@ -1863,9 +1933,10 @@ function applyDynamicCosts() {
  * Handles maxSelections, subcategory limits, and discounts.
  * @param {Object} option - The option object to add.
  */
-function addSelection(option) {
+function addSelection(option, options = {}) {
     const scrollY = window.scrollY; // Preserve scroll position
     const current = selectedOptions[option.id] || 0;
+    const isAutoGrant = !!options.autoGrantSourceId;
 
     const subcat = findSubcategoryOfOption(option.id);
     const subcatOptions = subcat?.options || [];
@@ -1883,20 +1954,22 @@ function addSelection(option) {
         }
     }
 
-    const effectiveCost = getOptionEffectiveCost(option, { includeFirstNPreview: false });
     const actualCost = {};
-    Object.entries(effectiveCost).forEach(([type, cost]) => {
-        let finalCost;
-        if (cost < 0) { // If cost is negative (a gain), it's never discounted
-            finalCost = cost;
-            points[type] -= cost; // Direct addition for gains
-        } else {
-            const discount = discounted ? (subcat?.discountAmount?.[type] || 0) : 0;
-            finalCost = Math.max(0, cost - discount);
-            points[type] -= finalCost;
-        }
-        actualCost[type] = finalCost;
-    });
+    if (!isAutoGrant) {
+        const effectiveCost = getOptionEffectiveCost(option, { includeFirstNPreview: false });
+        Object.entries(effectiveCost).forEach(([type, cost]) => {
+            let finalCost;
+            if (cost < 0) { // If cost is negative (a gain), it's never discounted
+                finalCost = cost;
+                points[type] -= cost; // Direct addition for gains
+            } else {
+                const discount = discounted ? (subcat?.discountAmount?.[type] || 0) : 0;
+                finalCost = Math.max(0, cost - discount);
+                points[type] -= finalCost;
+            }
+            actualCost[type] = finalCost;
+        });
+    }
 
     if (!discountedSelections[option.id]) {
         discountedSelections[option.id] = [];
@@ -1905,12 +1978,21 @@ function addSelection(option) {
 
     selectedOptions[option.id] = current + 1;
     selectionHistory.push(option.id);
+    if (isAutoGrant) {
+        autoGrantedSelections[option.id] = {
+            sourceId: options.autoGrantSourceId,
+            canDeselect: options.grantCanDeselect === true
+        };
+    }
 
     removeOptionsFromInactiveCategoriesAndSubcategories(); // Clear options from categories that no longer meet requirements
+    applyAutoGrants(option, options.visited || new Set());
     applyDynamicCosts();
     updatePointsDisplay();
-    renderAccordion();
-    window.scrollTo(0, scrollY); // Restore scroll position
+    if (!options.skipRender) {
+        renderAccordion();
+        window.scrollTo(0, scrollY); // Restore scroll position
+    }
 }
 
 /**
@@ -1964,7 +2046,7 @@ function canSelect(option) {
     const subcatCount = getSubcategorySelectionCount(subcat, option.id);
     const subcatMax = subcat?.maxSelections || Infinity; // Default to no limit
     // Allow selecting even if at limit, provided there IS a limit (so we can auto-unselect)
-    const underSubcatLimit = (subcatCount < subcatMax) || (subcatMax !== Infinity);
+    const underSubcatLimit = (subcatCount < subcatMax) || (subcatMax !== Infinity && hasRemovableSelectionInSubcategory(subcat));
 
     // Check option-specific max selections
     const maxPerOption = option.maxSelections || 1; // Default to 1 selection
@@ -2034,6 +2116,11 @@ function getSubcategorySelectionCount(subcat, optionIdToIncrement = null) {
     return total;
 }
 
+function hasRemovableSelectionInSubcategory(subcat) {
+    const subcatOptionIds = new Set((subcat?.options || []).map(opt => opt.id));
+    return selectionHistory.some(id => subcatOptionIds.has(id) && selectedOptions[id] > 0 && !isAutoGrantedLocked(id));
+}
+
 function getCategorySelectionCount(optionId) {
     const info = findSubcategoryInfo(optionId);
     const cat = info?.cat;
@@ -2091,6 +2178,69 @@ function findOptionById(id) {
     return null;
 }
 
+function normalizeAutoGrantRules(option) {
+    const rules = Array.isArray(option?.autoGrants) ? option.autoGrants : [];
+    return rules
+        .map(rule => {
+            if (typeof rule === "string") {
+                return {
+                    id: rule,
+                    canDeselect: false
+                };
+            }
+            if (rule && typeof rule === "object" && typeof rule.id === "string") {
+                return {
+                    id: rule.id,
+                    canDeselect: rule.canDeselect === true
+                };
+            }
+            return null;
+        })
+        .filter(rule => rule && rule.id);
+}
+
+function isAutoGrantedLocked(optionId) {
+    const grant = autoGrantedSelections[optionId];
+    return !!grant && grant.canDeselect !== true;
+}
+
+function removeAutoGrantsFromSource(sourceId, options = {}) {
+    Object.entries(autoGrantedSelections).forEach(([targetId, grant]) => {
+        if (grant?.sourceId !== sourceId) return;
+        const target = findOptionById(targetId);
+        if (target && selectedOptions[targetId]) {
+            removeSelection(target, {
+                ...options,
+                force: true
+            });
+        } else {
+            delete autoGrantedSelections[targetId];
+        }
+    });
+}
+
+function applyAutoGrants(option, visited = new Set()) {
+    if (!option?.id || visited.has(option.id)) return;
+    visited.add(option.id);
+
+    normalizeAutoGrantRules(option).forEach(rule => {
+        if (visited.has(rule.id) || selectedOptions[rule.id]) return;
+        const grantedOption = findOptionById(rule.id);
+        if (!grantedOption) {
+            console.warn(`Auto-grant target not found: ${rule.id}`);
+            return;
+        }
+
+        ensureSubcategoryLimit(grantedOption);
+        addSelection(grantedOption, {
+            autoGrantSourceId: option.id,
+            grantCanDeselect: rule.canDeselect,
+            skipRender: true,
+            visited
+        });
+    });
+}
+
 /**
  * Ensures a subcategory's selection limit is not exceeded by auto-removing the oldest selection.
  * @param {Object} option - The option being selected.
@@ -2111,6 +2261,7 @@ function ensureSubcategoryLimit(option) {
         for (let i = 0; i < selectionHistory.length; i++) {
             const id = selectionHistory[i];
             if (!subcatOptionIds.has(id)) continue;
+            if (isAutoGrantedLocked(id)) continue;
 
             const oldestOption = findOptionById(id);
             const currentCount = selectedOptions[id] || 0;
@@ -2130,6 +2281,7 @@ function ensureSubcategoryLimit(option) {
             for (let i = 0; i < selectionHistory.length; i++) {
                 const id = selectionHistory[i];
                 if (!subcatOptionIds.has(id)) continue;
+                if (isAutoGrantedLocked(id)) continue;
                 const oldestOption = findOptionById(id);
                 if (!oldestOption) continue;
                 removeSelection(oldestOption);
@@ -2154,6 +2306,14 @@ function ensureSubcategoryLimit(option) {
 function getOptionLabel(id) {
     const match = findOptionById(id);
     return match ? match.label : id;
+}
+
+function getOptionLabelMarkup(id) {
+    return renderFormattedText(getOptionLabel(id) || id);
+}
+
+function getOptionLabelPlainText(id) {
+    return stripFormattingMarkup(getOptionLabel(id) || id);
 }
 
 // Redundant function, can be removed or alias getOptionLabel
@@ -2273,6 +2433,11 @@ function getDiscountRuleTriggerIds(rule) {
     if (Array.isArray(rule.ids)) return rule.ids.filter(Boolean);
     if (rule.id) return [rule.id];
     return [];
+}
+
+function getDiscountRulePriority(rule, index = 0) {
+    const priority = Number(rule?.priority);
+    return Number.isFinite(priority) ? priority : index + 1;
 }
 
 function isConditionalGrantRule(rule) {
@@ -2578,7 +2743,7 @@ function buildRequirementsMarkup(requiredItems = []) {
                 if (seen.has(tok)) return;
                 seen.add(tok);
                 const [id] = tok.split('__');
-                const label = getOptionLabel(id) || id;
+                const label = getOptionLabelPlainText(id) || id;
                 const esc = tok.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                 human = human.replace(new RegExp('\\b' + esc + '\\b', 'g'), `"${label}"`);
             });
@@ -2587,7 +2752,7 @@ function buildRequirementsMarkup(requiredItems = []) {
             lines.push(`${satisfied ? '✅' : '❌'} ${human}`);
         } else {
             const id = req;
-            const label = getOptionLabel(id);
+            const label = getOptionLabelMarkup(id);
             lines.push(`${selectedOptions[id] ? "✅" : "❌"} ${label}`);
         }
     });
@@ -2955,7 +3120,7 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
     contentWrapper.className = "option-content";
 
     const label = document.createElement("strong");
-    label.textContent = opt.label;
+    setMultilineText(label, opt.label || "");
 
     const requirements = document.createElement("div");
     requirements.className = "option-requirements";
@@ -3032,12 +3197,12 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
                     const actual = selectedOptions[id] || 0;
                     satisfied = negated ? actual < requiredCount : actual >= requiredCount;
                 }
-                const label = getOptionLabel(id) + (requiredCount > 1 ? ` (x${requiredCount})` : "");
+                const label = getOptionLabelMarkup(id) + (requiredCount > 1 ? ` (x${requiredCount})` : "");
                 prereqLines.push(`${satisfied ? "✅" : "❌"} ${label}`);
             });
         } else if (Array.isArray(opt.prerequisites)) {
             prereqLines = opt.prerequisites.map(id => {
-                const label = getOptionLabel(id);
+                const label = getOptionLabelMarkup(id);
                 const isSelected = selectedOptions[id];
                 const symbol = isSelected ? "✅" : "❌";
                 return `${symbol} ${label}`;
@@ -3048,14 +3213,14 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
             let orAccepted = orList.some(id => selectedOptions[id]);
             if (andList.length)
                 prereqLines.push(...andList.map(id => {
-                    const label = getOptionLabel(id);
+                    const label = getOptionLabelMarkup(id);
                     const isSelected = selectedOptions[id];
                     const symbol = isSelected ? "✅" : "❌";
                     return `${symbol} ${label}`;
                 }));
             if (orList.length)
                 prereqLines.push(...orList.map(id => {
-                    const label = getOptionLabel(id);
+                    const label = getOptionLabelMarkup(id);
                     const symbol = orAccepted ? "✅" : (selectedOptions[id] ? "✅" : "❌");
                     return `${symbol} ${label}`;
                 }));
@@ -3070,7 +3235,7 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
                 const [id] = tok.split('__');
                 if (seenIds.has(tok)) return;
                 seenIds.add(tok);
-                const label = getOptionLabel(id) || id;
+                const label = getOptionLabelPlainText(id) || id;
                 const esc = tok.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                 human = human.replace(new RegExp('\\b' + esc + '\\b', 'g'), `"${label}"`);
             });
@@ -3082,7 +3247,7 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
 
         if (opt.conflictsWith && Array.isArray(opt.conflictsWith) && opt.conflictsWith.length > 0) {
             const conflictLines = opt.conflictsWith.map(id => {
-                const label = getOptionLabel(id) || id;
+                const label = getOptionLabelMarkup(id) || id;
                 const selected = !!selectedOptions[id];
                 const symbol = selected ? '❌' : '✅';
                 return `${symbol} ${label}`;
@@ -3093,7 +3258,7 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
 
     if ((!requirements.innerHTML || !requirements.innerHTML.includes('Incompatible With')) && opt.conflictsWith && Array.isArray(opt.conflictsWith) && opt.conflictsWith.length > 0) {
         const conflictLines = opt.conflictsWith.map(id => {
-            const label = getOptionLabel(id) || id;
+            const label = getOptionLabelMarkup(id) || id;
             const selected = !!selectedOptions[id];
             const symbol = selected ? '❌' : '✅';
             return `${symbol} ${label}`;
@@ -3413,6 +3578,9 @@ function renderSelectionButton(opt, contentWrapper) {
     const count = selectedOptions[opt.id] || 0;
     const max = opt.maxSelections || 1;
     const canAdd = canSelect(opt);
+    const grant = autoGrantedSelections[opt.id];
+    const lockedAutoGrant = isAutoGrantedLocked(opt.id);
+    const grantSourceLabel = grant?.sourceId ? (getOptionLabel(grant.sourceId) || grant.sourceId) : "";
 
     if (max > 1) {
         const stepper = document.createElement("div");
@@ -3441,7 +3609,12 @@ function renderSelectionButton(opt, contentWrapper) {
         decrementBtn.type = "button";
         decrementBtn.className = "stepper-btn remove-btn";
         decrementBtn.textContent = "-";
-        decrementBtn.disabled = count <= 0;
+        decrementBtn.disabled = count <= 0 || lockedAutoGrant;
+        if (lockedAutoGrant) {
+            decrementBtn.title = grantSourceLabel
+                ? `Granted by ${grantSourceLabel} and cannot be removed directly.`
+                : "This granted option cannot be removed directly.";
+        }
         decrementBtn.onclick = (e) => {
             e.stopPropagation();
             removeSelection(opt);
@@ -3453,8 +3626,13 @@ function renderSelectionButton(opt, contentWrapper) {
         controls.appendChild(stepper);
     } else {
         const btn = document.createElement("button");
-        btn.textContent = count > 0 ? "✓ Selected" : "Select";
-        btn.disabled = !canAdd && count === 0;
+        btn.textContent = count > 0 ? (grant ? "✓ Granted" : "✓ Selected") : "Select";
+        btn.disabled = (!canAdd && count === 0) || lockedAutoGrant;
+        if (lockedAutoGrant) {
+            btn.title = grantSourceLabel
+                ? `Granted by ${grantSourceLabel} and cannot be removed directly.`
+                : "This granted option cannot be removed directly.";
+        }
         btn.onclick = () => {
             if (count > 0) {
                 removeSelection(opt);
@@ -3555,14 +3733,35 @@ function prereqReferencesId(prereq, id) {
     return false;
 }
 
+function createThemeToggleButton() {
+    const btn = document.createElement("button");
+    btn.id = "themeToggle";
+    btn.className = "theme-toggle";
+    btn.type = "button";
+    btn.addEventListener("click", toggleDarkMode);
+    return btn;
+}
+
 function updateThemeToggleButton() {
-    const btn = document.getElementById('themeToggle');
-    if (btn) {
-        btn.textContent = isDarkMode ? '☀️' : '🌙';
+    const canToggleTheme = themeMode === "toggle";
+    let btn = document.getElementById("themeToggle");
+
+    if (!canToggleTheme) {
+        btn?.remove();
+        return;
     }
+
+    if (!btn) {
+        btn = createThemeToggleButton();
+        document.querySelector(".container")?.prepend(btn);
+    }
+
+    btn.textContent = getEffectiveDarkMode() ? '☀️' : '🌙';
+    btn.title = "Toggle Dark Mode";
 }
 
 function toggleDarkMode() {
+    if (themeMode !== "toggle") return;
     isDarkMode = !isDarkMode;
     localStorage.setItem('cyoa-dark-mode', isDarkMode);
     // Re-apply the theme with the new dark mode state
