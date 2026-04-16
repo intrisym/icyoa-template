@@ -1,0 +1,11 @@
+{
+  "name": "icyoa-template",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "check:js": "node --check script.js && node --check editor.js && node --check logicExpr.js && node --check server.js && node --check generate-manifest.js",
+    "test:cyoas": "node scripts/validate-cyoas.js",
+    "verify": "npm run check:js && npm run test:cyoas",
+    "test": "npm run verify"
+  }
+}

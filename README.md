@@ -28,6 +28,28 @@ An open-source **Interactive Choose Your Own Adventure (ICYOA)** template. Build
 
 ---
 
+## Testing
+
+Run the full pre-push verification suite before publishing changes:
+
+```bash
+npm test
+```
+
+This runs JavaScript syntax checks and validates every existing `CYOAs/*.json` file as a regression fixture. The CYOA validator checks that files parse, required core entries exist, option IDs are unique, referenced IDs exist, point maps are valid, prerequisite expressions are safe, modified-cost rules are coherent, and theme settings use supported values.
+
+Useful focused commands:
+
+```bash
+npm run check:js
+npm run test:cyoas
+npm run verify
+```
+
+Validation warnings are non-blocking compatibility notes. Validation errors should be fixed before pushing to GitHub.
+
+---
+
 ## How to Create Your Own CYOA
 
 Follow these simple steps to go from a template to your own unique adventure.
