@@ -24,6 +24,10 @@
     "attributeRanges": {}
   },
   {
+    "type": "settings",
+    "themeMode": "light"
+  },
+  {
     "type": "formulas",
     "values": {}
   },
@@ -1896,7 +1900,7 @@
             "label": "Higher Paying",
             "description": "You are higher paid than most people in your chosen field are. This can be as high as 25% higher or 50% if you have charismatic. ",
             "cost": {
-              "Currency": 0
+              "Points": 0
             },
             "id": "adultBenefitsHigherPaying",
             "prerequisites": "powersSuperpowersSmart",
@@ -2578,5 +2582,39 @@
     "font-heading": "Verdana, sans-serif",
     "font-body": "'Quicksand', sans-serif",
     "selection-glow-color": "#dc2626"
+  },
+  {
+    "type": "darkTheme",
+    "bg-color": "#111827",
+    "container-bg": "#1f2937",
+    "text-color": "#f3f4f6",
+    "text-muted": "#9ca3af",
+    "accent-color": "#b91c1c",
+    "accent-text": "#ffffff",
+    "border-color": "#374151",
+    "item-bg": "#1f2937",
+    "item-header-bg": "#374151",
+    "points-bg": "rgba(185, 28, 28, 0.95)",
+    "points-border": "#fbbf24",
+    "points-text": "#000000",
+    "selection-glow-color": "#2563eb",
+    "shadow-color": "rgba(0, 0, 0, 0.5)",
+    "font-base": "20px",
+    "font-title": "44px",
+    "font-description": "22px",
+    "font-tab": "20px",
+    "font-accordion": "22px",
+    "font-subcategory": "24px",
+    "font-option-title": "24px",
+    "font-option-req": "19px",
+    "font-option-desc": "23px",
+    "font-story": "21px",
+    "font-story-input": "20px",
+    "font-points": "20px",
+    "font-points-value": "20px",
+    "font-prereq-help": "17px",
+    "font-label": "19px",
+    "font-heading": "Verdana, sans-serif",
+    "font-body": "'Quicksand', sans-serif"
   }
 ]
