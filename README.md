@@ -6,7 +6,7 @@ An open-source **Interactive Choose Your Own Adventure (ICYOA)** template. Build
 
 - Browser-based player and visual editor.
 - Multiple CYOA files stored as JSON in `CYOAs/`.
-- Categories, nested subcategories, options, costs, prerequisites, conflicts, and discounts.
+- Categories, nested subcategories, options, costs, prerequisites, conflicts, and modified costs.
 - Automatic option grants, where selecting one option can select other options for free.
 - Multiple point systems and configurable starting values.
 - Light and dark themes, with creator control over whether players can toggle themes or are locked to one mode.
@@ -153,7 +153,8 @@ icyoa-template/
 * **Point Systems:** You can have multiple types of points (e.g., Health, Mana, Gold) by editing the `points` section in the editor.
 * **Text Formatting:** Use `*italic*`, `**bold**`, `[weight=...]...[/weight]`, `[color=...]...[/color]`, and `[size=...]...[/size]` in description text for local emphasis.
 * **Automatic Grants:** Use the option editor's **Automatically grants options** section to make one option select another option at no extra point cost. Each granted option can be locked, or marked as user-deselectable.
-* **Discount Priority:** Conditional discount cost rules can set a priority. If multiple cost rules match, the highest priority matching rule determines the final discounted cost.
+* **Modified Costs:** Use per-option or subcategory-wide `modifiedCosts` rules to change costs conditionally. Rules can set absolute replacement costs with `cost`, apply relative changes with `costDelta`, and define optional `minCost` / `maxCost` maps to clamp the final modified price. Legacy `discounts` rules are still supported for older CYOAs.
+* **Modified Cost Priority:** Conditional modified cost rules can set a priority. Subcategory rules apply first, then option rules apply on top; within the same scope, higher-priority matching rules determine the final modified cost.
 * **Sharing Builds:** Players can export and import their selections through the app's import/export modal.
 
 ---

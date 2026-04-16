@@ -1,6 +1,6 @@
 (function () {
     const CORE_TYPES_ORDER = ["title", "description", "headerImage", "points", "settings"];
-    const BASE_OPTION_KEYS = new Set(["id", "label", "description", "image", "inputType", "inputLabel", "cost", "maxSelections", "countsAsOneSelection", "prerequisites", "conflictsWith", "autoGrants", "discounts", "discountGrants"]);
+    const BASE_OPTION_KEYS = new Set(["id", "label", "description", "image", "inputType", "inputLabel", "cost", "maxSelections", "countsAsOneSelection", "prerequisites", "conflictsWith", "autoGrants", "modifiedCosts", "discounts", "discountGrants"]);
 
     const state = {
         data: [],
@@ -376,6 +376,35 @@
         return Array.from(new Set(raw.map(id => String(id || "").trim()).filter(Boolean)));
     }
 
+    function getModifiedCostRulesForEditor(entity) {
+        if (!entity || typeof entity !== "object") return [];
+        if (Array.isArray(entity.modifiedCosts)) return entity.modifiedCosts;
+        if (Array.isArray(entity.discounts)) return entity.discounts;
+        return [];
+    }
+
+    function ensureModifiedCostRulesForEditor(entity) {
+        if (!entity || typeof entity !== "object") return [];
+        if (Array.isArray(entity.modifiedCosts)) return entity.modifiedCosts;
+        if (Array.isArray(entity.discounts)) {
+            entity.modifiedCosts = entity.discounts;
+            delete entity.discounts;
+            return entity.modifiedCosts;
+        }
+        entity.modifiedCosts = [];
+        return entity.modifiedCosts;
+    }
+
+    function setModifiedCostRulesForEditor(entity, rules) {
+        if (!entity || typeof entity !== "object") return;
+        if (Array.isArray(rules) && rules.length) {
+            entity.modifiedCosts = rules;
+        } else {
+            delete entity.modifiedCosts;
+        }
+        delete entity.discounts;
+    }
+
     const RESERVED_EXPR_IDENTIFIERS = new Set([
         "true", "false", "null", "undefined", "if", "else", "return", "let", "var", "const",
         "function", "while", "for", "do", "switch", "case", "break", "continue", "default",
@@ -450,7 +479,16 @@
     function getOptionValidationWarnings(option) {
         const warnings = [];
         const allIds = collectOptionIds();
+        const pointTypes = new Set(getPointTypeNames());
         const selfId = String(option?.id || "").trim();
+        const warnUnknownPointTypes = (costMap, context) => {
+            if (!costMap || typeof costMap !== "object") return;
+            Object.keys(costMap).forEach(type => {
+                if (!pointTypes.has(type)) warnings.push(`${context}: point type "${type}" is not defined in the CYOA points.`);
+            });
+        };
+
+        warnUnknownPointTypes(option?.cost, "Base cost");
 
         const prereqIds = Array.from(extractReferencedIds(option?.prerequisites));
         prereqIds.forEach(id => {
@@ -468,7 +506,7 @@
             if (!allIds.has(id)) warnings.push(`Incompatible option ID "${id}" does not exist.`);
         });
 
-        const rules = Array.isArray(option?.discounts) ? option.discounts : [];
+        const rules = getModifiedCostRulesForEditor(option);
         rules.forEach((rule, index) => {
             const ruleNo = index + 1;
             const ids = normalizeIdList(rule?.idsAny || rule?.ids || (rule?.id ? [rule.id] : []));
@@ -487,9 +525,25 @@
             if (slotMode) {
                 const slots = Number(rule?.slots) || 0;
                 if (slots < 1) warnings.push(`Rule ${ruleNo}: slots must be at least 1.`);
-            } else if (!rule?.cost || !Object.keys(rule.cost).length) {
-                warnings.push(`Rule ${ruleNo}: discounted cost map is empty.`);
+            } else if (
+                (!rule?.cost || !Object.keys(rule.cost).length)
+                && (!rule?.costDelta || !Object.keys(rule.costDelta).length)
+                && (!rule?.minCost || !Object.keys(rule.minCost).length)
+                && (!rule?.maxCost || !Object.keys(rule.maxCost).length)
+            ) {
+                warnings.push(`Rule ${ruleNo}: add a modified, relative, minimum, or maximum cost map.`);
             }
+            warnUnknownPointTypes(rule?.cost, `Rule ${ruleNo} modified cost`);
+            warnUnknownPointTypes(rule?.costDelta, `Rule ${ruleNo} relative cost change`);
+            warnUnknownPointTypes(rule?.minCost, `Rule ${ruleNo} minimum cost`);
+            warnUnknownPointTypes(rule?.maxCost, `Rule ${ruleNo} maximum cost`);
+            Object.keys(rule?.minCost || {}).forEach(type => {
+                const min = Number(rule.minCost[type]);
+                const max = Number(rule?.maxCost?.[type]);
+                if (Number.isFinite(min) && Number.isFinite(max) && min > max) {
+                    warnings.push(`Rule ${ruleNo}: minimum cost for "${type}" is greater than maximum cost.`);
+                }
+            });
             if (rule?.priority !== undefined && !Number.isFinite(Number(rule.priority))) {
                 warnings.push(`Rule ${ruleNo}: priority must be a number.`);
             }
@@ -1019,6 +1073,316 @@
         option.id = generateOptionId(option.label, { path });
         optionIdAutoMap.set(option, true);
         return option;
+    }
+
+    function renderModifiedCostRulesEditor(container, owner, {
+        emptyText = "No modified cost rules yet.",
+        addButtonText = "Add modified cost rule",
+        includeSlotBehavior = false,
+        onChange = () => {}
+    } = {}) {
+        container.innerHTML = "";
+        const rules = Array.isArray(owner?.modifiedCosts) || Array.isArray(owner?.discounts)
+            ? ensureModifiedCostRulesForEditor(owner)
+            : [];
+        if (!rules.length) {
+            const empty = document.createElement("div");
+            empty.className = "empty-state";
+            empty.textContent = emptyText;
+            container.appendChild(empty);
+        }
+
+        rules.forEach((rule, ruleIndex) => {
+            const ruleCard = document.createElement("div");
+            ruleCard.className = "discount-rule-card";
+            const getRuleBehavior = () => {
+                if (includeSlotBehavior && (Number(rule?.slots) || 0) > 0 && (rule?.mode === "free" || rule?.mode === "half")) {
+                    return "slots";
+                }
+                if (Object.prototype.hasOwnProperty.call(rule || {}, "costDelta")) {
+                    return "relative";
+                }
+                return "cost";
+            };
+
+            const header = document.createElement("div");
+            header.className = "discount-rule-header";
+            const title = document.createElement("strong");
+            title.textContent = `Rule ${ruleIndex + 1}`;
+            const removeBtn = document.createElement("button");
+            removeBtn.type = "button";
+            removeBtn.className = "button-icon danger";
+            removeBtn.textContent = "✕";
+            removeBtn.title = "Delete rule";
+            removeBtn.addEventListener("click", () => {
+                rules.splice(ruleIndex, 1);
+                setModifiedCostRulesForEditor(owner, rules);
+                renderModifiedCostRulesEditor(container, owner, { emptyText, addButtonText, includeSlotBehavior, onChange });
+                onChange();
+            });
+            header.append(title, removeBtn);
+            ruleCard.appendChild(header);
+
+            const behaviorRow = document.createElement("div");
+            behaviorRow.className = "field-inline field-inline-three";
+            const behaviorLabel = document.createElement("label");
+            behaviorLabel.textContent = includeSlotBehavior ? "Rule behavior" : "Behavior";
+            const behaviorInput = document.createElement("select");
+            const costBehavior = document.createElement("option");
+            costBehavior.value = "cost";
+            costBehavior.textContent = "Set modified cost";
+            behaviorInput.appendChild(costBehavior);
+            const relativeBehavior = document.createElement("option");
+            relativeBehavior.value = "relative";
+            relativeBehavior.textContent = "Adjust cost relatively";
+            behaviorInput.appendChild(relativeBehavior);
+            if (includeSlotBehavior) {
+                const slotBehavior = document.createElement("option");
+                slotBehavior.value = "slots";
+                slotBehavior.textContent = "Discount slots";
+                behaviorInput.appendChild(slotBehavior);
+            }
+            behaviorInput.value = getRuleBehavior();
+            behaviorInput.addEventListener("change", () => {
+                if (behaviorInput.value === "slots") {
+                    delete rule.cost;
+                    delete rule.costDelta;
+                    delete rule.minCost;
+                    delete rule.maxCost;
+                    rule.slots = Math.max(1, Number(rule.slots) || 1);
+                    rule.mode = rule.mode === "free" ? "free" : "half";
+                } else if (behaviorInput.value === "relative") {
+                    delete rule.slots;
+                    delete rule.mode;
+                    delete rule.cost;
+                    rule.costDelta = rule.costDelta && Object.keys(rule.costDelta).length ? rule.costDelta : {};
+                } else {
+                    delete rule.slots;
+                    delete rule.mode;
+                    delete rule.costDelta;
+                    rule.cost = rule.cost && Object.keys(rule.cost).length ? rule.cost : {};
+                }
+                renderModifiedCostRulesEditor(container, owner, { emptyText, addButtonText, includeSlotBehavior, onChange });
+                onChange();
+            });
+
+            const priorityLabel = document.createElement("label");
+            priorityLabel.textContent = "Priority";
+            const priorityInput = document.createElement("input");
+            priorityInput.type = "number";
+            priorityInput.value = Number.isFinite(Number(rule.priority)) ? String(rule.priority) : String(ruleIndex + 1);
+            priorityInput.title = "Higher priority matching modified cost rules override lower priority matching rules.";
+            priorityInput.addEventListener("input", () => {
+                const value = priorityInput.value.trim();
+                if (value === "") {
+                    delete rule.priority;
+                } else {
+                    const parsed = Number(value);
+                    if (Number.isFinite(parsed)) rule.priority = parsed;
+                }
+                onChange();
+            });
+            behaviorRow.append(behaviorLabel, behaviorInput, priorityLabel, priorityInput);
+            ruleCard.appendChild(behaviorRow);
+
+            const modeRow = document.createElement("div");
+            modeRow.className = "field-inline field-inline-three";
+            const modeLabel = document.createElement("label");
+            modeLabel.textContent = "Trigger mode";
+            const modeInput = document.createElement("select");
+            const modeAll = document.createElement("option");
+            modeAll.value = "all";
+            modeAll.textContent = "Require all listed IDs";
+            const modeAny = document.createElement("option");
+            modeAny.value = "any";
+            modeAny.textContent = "Require at least N IDs";
+            modeInput.append(modeAll, modeAny);
+
+            const isAnyMode = Array.isArray(rule.idsAny) && rule.idsAny.length > 0;
+            modeInput.value = isAnyMode ? "any" : "all";
+
+            const minLabel = document.createElement("label");
+            minLabel.textContent = "Min selected";
+            const minInput = document.createElement("input");
+            minInput.type = "number";
+            minInput.min = "1";
+            minInput.value = Number.isFinite(rule.minSelected) && rule.minSelected > 0 ? String(rule.minSelected) : "1";
+            minInput.disabled = modeInput.value !== "any";
+
+            modeInput.addEventListener("change", () => {
+                const triggerIds = normalizeIdList(modeInput.value === "any"
+                    ? rule.idsAny
+                    : (Array.isArray(rule.ids) ? rule.ids : (rule.id ? [rule.id] : [])));
+                if (modeInput.value === "any") {
+                    rule.idsAny = triggerIds;
+                    rule.minSelected = Math.max(1, Number(rule.minSelected) || 1);
+                    delete rule.ids;
+                    delete rule.id;
+                } else {
+                    rule.ids = triggerIds;
+                    delete rule.idsAny;
+                    delete rule.minSelected;
+                    delete rule.id;
+                }
+                renderModifiedCostRulesEditor(container, owner, { emptyText, addButtonText, includeSlotBehavior, onChange });
+                onChange();
+            });
+
+            minInput.addEventListener("input", () => {
+                const parsed = Math.max(1, Number(minInput.value) || 1);
+                rule.minSelected = parsed;
+                minInput.value = String(parsed);
+                onChange();
+            });
+            modeRow.append(modeLabel, modeInput, minLabel, minInput);
+            ruleCard.appendChild(modeRow);
+
+            const idsField = document.createElement("div");
+            idsField.className = "field";
+            const idsLabel = document.createElement("label");
+            idsLabel.textContent = "Trigger option IDs";
+            const idsContainer = document.createElement("div");
+            const setTriggerIds = (nextIds) => {
+                if (modeInput.value === "any") {
+                    rule.idsAny = nextIds;
+                    rule.minSelected = Math.max(1, Number(rule.minSelected) || 1);
+                    delete rule.ids;
+                    delete rule.id;
+                } else {
+                    rule.ids = nextIds;
+                    delete rule.idsAny;
+                    delete rule.minSelected;
+                    delete rule.id;
+                }
+                mountIdListEditor(idsContainer, {
+                    ids: modeInput.value === "any" ? rule.idsAny : rule.ids,
+                    emptyText: "No trigger IDs added yet.",
+                    onChange: setTriggerIds
+                });
+                onChange();
+            };
+            mountIdListEditor(idsContainer, {
+                ids: modeInput.value === "any" ? rule.idsAny : rule.ids,
+                emptyText: "No trigger IDs added yet.",
+                onChange: setTriggerIds
+            });
+            idsField.append(idsLabel, idsContainer);
+            ruleCard.appendChild(idsField);
+
+            if (behaviorInput.value === "slots") {
+                const slotSettingsRow = document.createElement("div");
+                slotSettingsRow.className = "field-inline field-inline-three";
+                const slotsLabel = document.createElement("label");
+                slotsLabel.textContent = "Slots";
+                const slotsInput = document.createElement("input");
+                slotsInput.type = "number";
+                slotsInput.min = "1";
+                slotsInput.value = String(Math.max(1, Number(rule.slots) || 1));
+                const discountModeLabel = document.createElement("label");
+                discountModeLabel.textContent = "Slot mode";
+                const discountModeInput = document.createElement("select");
+                const halfMode = document.createElement("option");
+                halfMode.value = "half";
+                halfMode.textContent = "Half cost";
+                const freeMode = document.createElement("option");
+                freeMode.value = "free";
+                freeMode.textContent = "Free";
+                discountModeInput.append(halfMode, freeMode);
+                discountModeInput.value = rule.mode === "free" ? "free" : "half";
+                slotsInput.addEventListener("input", () => {
+                    const parsed = Math.max(1, Number(slotsInput.value) || 1);
+                    rule.slots = parsed;
+                    slotsInput.value = String(parsed);
+                    onChange();
+                });
+                discountModeInput.addEventListener("change", () => {
+                    rule.mode = discountModeInput.value === "free" ? "free" : "half";
+                    onChange();
+                });
+                slotSettingsRow.append(slotsLabel, slotsInput, discountModeLabel, discountModeInput);
+                ruleCard.appendChild(slotSettingsRow);
+            } else {
+                const ruleCostField = document.createElement("div");
+                ruleCostField.className = "field";
+                const ruleCostLabel = document.createElement("label");
+                ruleCostLabel.textContent = behaviorInput.value === "relative"
+                    ? "Relative cost change when triggered"
+                    : "Modified cost when triggered";
+                const ruleCostHint = document.createElement("div");
+                ruleCostHint.className = "field-help";
+                ruleCostHint.textContent = behaviorInput.value === "relative"
+                    ? "Adds these values to the current cost. Use positive numbers to increase price and negative numbers to reduce it."
+                    : "Replaces the current cost for the listed point types.";
+                const ruleCostContainer = document.createElement("div");
+                ruleCostContainer.className = "cost-list";
+                if (behaviorInput.value === "relative") {
+                    renderPointMapEditor(ruleCostContainer, rule.costDelta || {}, (nextCost) => {
+                        rule.costDelta = nextCost || {};
+                        onChange();
+                    });
+                } else {
+                    renderPointMapEditor(ruleCostContainer, rule.cost || {}, (nextCost) => {
+                        if (nextCost) rule.cost = nextCost;
+                        else delete rule.cost;
+                        onChange();
+                    });
+                }
+                ruleCostField.append(ruleCostLabel, ruleCostHint, ruleCostContainer);
+                ruleCard.appendChild(ruleCostField);
+
+                const minCostField = document.createElement("div");
+                minCostField.className = "field";
+                const minCostLabel = document.createElement("label");
+                minCostLabel.textContent = "Minimum cost after modifiers";
+                const minCostHint = document.createElement("div");
+                minCostHint.className = "field-help";
+                minCostHint.textContent = "Optional lower bound. Example: set Points 0 to prevent this rule from making the option grant points.";
+                const minCostContainer = document.createElement("div");
+                minCostContainer.className = "cost-list";
+                renderPointMapEditor(minCostContainer, rule.minCost || {}, (nextCost) => {
+                    if (nextCost) rule.minCost = nextCost;
+                    else delete rule.minCost;
+                    onChange();
+                });
+                minCostField.append(minCostLabel, minCostHint, minCostContainer);
+                ruleCard.appendChild(minCostField);
+
+                const maxCostField = document.createElement("div");
+                maxCostField.className = "field";
+                const maxCostLabel = document.createElement("label");
+                maxCostLabel.textContent = "Maximum cost after modifiers";
+                const maxCostHint = document.createElement("div");
+                maxCostHint.className = "field-help";
+                maxCostHint.textContent = "Optional upper bound. Example: set Points 10 to prevent this rule from costing more than 10.";
+                const maxCostContainer = document.createElement("div");
+                maxCostContainer.className = "cost-list";
+                renderPointMapEditor(maxCostContainer, rule.maxCost || {}, (nextCost) => {
+                    if (nextCost) rule.maxCost = nextCost;
+                    else delete rule.maxCost;
+                    onChange();
+                });
+                maxCostField.append(maxCostLabel, maxCostHint, maxCostContainer);
+                ruleCard.appendChild(maxCostField);
+            }
+
+            container.appendChild(ruleCard);
+        });
+
+        const addRuleBtn = document.createElement("button");
+        addRuleBtn.type = "button";
+        addRuleBtn.className = "button-subtle";
+        addRuleBtn.textContent = addButtonText;
+        addRuleBtn.addEventListener("click", () => {
+            const rules = ensureModifiedCostRulesForEditor(owner);
+            rules.push({
+                ids: [],
+                cost: {},
+                priority: rules.length + 1
+            });
+            renderModifiedCostRulesEditor(container, owner, { emptyText, addButtonText, includeSlotBehavior, onChange });
+            onChange();
+        });
+        container.appendChild(addRuleBtn);
     }
 
     function renderGlobalSettings() {
@@ -2372,6 +2736,24 @@
                     }
                 });
 
+                const subModifiedCostSection = document.createElement("div");
+                subModifiedCostSection.className = "field";
+                const subModifiedCostLabel = document.createElement("label");
+                subModifiedCostLabel.textContent = "Modified costs for all options";
+                const subModifiedCostHint = document.createElement("div");
+                subModifiedCostHint.className = "field-help";
+                subModifiedCostHint.textContent = "Rules here apply to every option in this subcategory. Option-specific modified costs with the same or higher priority can override them.";
+                const subModifiedCostContainer = document.createElement("div");
+                subModifiedCostContainer.className = "list-stack";
+                renderModifiedCostRulesEditor(subModifiedCostContainer, subcat, {
+                    emptyText: "No subcategory-wide modified cost rules yet.",
+                    addButtonText: "Add subcategory modified cost rule",
+                    includeSlotBehavior: false,
+                    onChange: schedulePreviewUpdate
+                });
+                subModifiedCostSection.append(subModifiedCostLabel, subModifiedCostHint, subModifiedCostContainer);
+                subAdvancedBody.appendChild(subModifiedCostSection);
+
                 const columnsRow = document.createElement("div");
                 columnsRow.className = "field-inline";
                 const columnsLabel = document.createElement("label");
@@ -3061,294 +3443,26 @@
             autoGrantSection.append(autoGrantLabel, autoGrantHint, autoGrantContainer);
             optionAdvancedBody.appendChild(autoGrantSection);
 
-            const discountSection = document.createElement("div");
-            discountSection.className = "field";
-            const discountLabel = document.createElement("label");
-            discountLabel.textContent = "Conditional discounts";
-            const discountHint = document.createElement("div");
-            discountHint.className = "field-help";
-            discountHint.textContent = "Create rules that change this option's cost when required option IDs are selected. If multiple cost rules match, the highest priority rule wins.";
-            const discountContainer = document.createElement("div");
-            discountContainer.className = "list-stack";
-
-            function renderDiscountRulesEditor() {
-                discountContainer.innerHTML = "";
-                const rules = Array.isArray(option.discounts) ? option.discounts : [];
-                if (!rules.length) {
-                    const empty = document.createElement("div");
-                    empty.className = "empty-state";
-                    empty.textContent = "No conditional discount rules yet.";
-                    discountContainer.appendChild(empty);
-                }
-
-                rules.forEach((rule, ruleIndex) => {
-                    const ruleCard = document.createElement("div");
-                    ruleCard.className = "discount-rule-card";
-                    const getRuleBehavior = () => {
-                        return (Number(rule?.slots) || 0) > 0 && (rule?.mode === "free" || rule?.mode === "half")
-                            ? "slots"
-                            : "cost";
-                    };
-
-                    const header = document.createElement("div");
-                    header.className = "discount-rule-header";
-                    const title = document.createElement("strong");
-                    title.textContent = `Rule ${ruleIndex + 1}`;
-                    const removeBtn = document.createElement("button");
-                    removeBtn.type = "button";
-                    removeBtn.className = "button-icon danger";
-                    removeBtn.textContent = "✕";
-                    removeBtn.title = "Delete rule";
-                    removeBtn.addEventListener("click", () => {
-                        rules.splice(ruleIndex, 1);
-                        if (rules.length) {
-                            option.discounts = rules;
-                        } else {
-                            delete option.discounts;
-                        }
-                        renderDiscountRulesEditor();
-                        refreshOptionWarnings(prereqParseError ? [prereqParseError] : []);
-                        schedulePreviewUpdate();
-                    });
-                    header.appendChild(title);
-                    header.appendChild(removeBtn);
-                    ruleCard.appendChild(header);
-
-                    const behaviorRow = document.createElement("div");
-                    behaviorRow.className = "field-inline field-inline-three";
-                    const behaviorLabel = document.createElement("label");
-                    behaviorLabel.textContent = "Discount behavior";
-                    const behaviorInput = document.createElement("select");
-                    const costBehavior = document.createElement("option");
-                    costBehavior.value = "cost";
-                    costBehavior.textContent = "Set discounted cost";
-                    const slotBehavior = document.createElement("option");
-                    slotBehavior.value = "slots";
-                    slotBehavior.textContent = "Discount slots";
-                    behaviorInput.appendChild(costBehavior);
-                    behaviorInput.appendChild(slotBehavior);
-                    behaviorInput.value = getRuleBehavior();
-                    behaviorInput.addEventListener("change", () => {
-                        if (behaviorInput.value === "slots") {
-                            delete rule.cost;
-                            rule.slots = Math.max(1, Number(rule.slots) || 1);
-                            rule.mode = rule.mode === "free" ? "free" : "half";
-                        } else {
-                            delete rule.slots;
-                            delete rule.mode;
-                            rule.cost = rule.cost && Object.keys(rule.cost).length ? rule.cost : {};
-                        }
-                        renderDiscountRulesEditor();
-                        refreshOptionWarnings(prereqParseError ? [prereqParseError] : []);
-                        schedulePreviewUpdate();
-                    });
-                    const priorityLabel = document.createElement("label");
-                    priorityLabel.textContent = "Priority";
-                    const priorityInput = document.createElement("input");
-                    priorityInput.type = "number";
-                    priorityInput.value = Number.isFinite(Number(rule.priority)) ? String(rule.priority) : String(ruleIndex + 1);
-                    priorityInput.title = "Higher priority matching cost rules override lower priority matching rules.";
-                    priorityInput.addEventListener("input", () => {
-                        const value = priorityInput.value.trim();
-                        if (value === "") {
-                            delete rule.priority;
-                        } else {
-                            const parsed = Number(value);
-                            if (Number.isFinite(parsed)) {
-                                rule.priority = parsed;
-                            }
-                        }
-                        refreshOptionWarnings(prereqParseError ? [prereqParseError] : []);
-                        schedulePreviewUpdate();
-                    });
-                    behaviorRow.appendChild(behaviorLabel);
-                    behaviorRow.appendChild(behaviorInput);
-                    behaviorRow.appendChild(priorityLabel);
-                    behaviorRow.appendChild(priorityInput);
-                    ruleCard.appendChild(behaviorRow);
-
-                    const modeRow = document.createElement("div");
-                    modeRow.className = "field-inline field-inline-three";
-                    const modeLabel = document.createElement("label");
-                    modeLabel.textContent = "Trigger mode";
-                    const modeInput = document.createElement("select");
-                    const modeAll = document.createElement("option");
-                    modeAll.value = "all";
-                    modeAll.textContent = "Require all listed IDs";
-                    const modeAny = document.createElement("option");
-                    modeAny.value = "any";
-                    modeAny.textContent = "Require at least N IDs";
-                    modeInput.appendChild(modeAll);
-                    modeInput.appendChild(modeAny);
-
-                    const isAnyMode = Array.isArray(rule.idsAny) && rule.idsAny.length > 0;
-                    modeInput.value = isAnyMode ? "any" : "all";
-
-                    const minLabel = document.createElement("label");
-                    minLabel.textContent = "Min selected";
-                    const minInput = document.createElement("input");
-                    minInput.type = "number";
-                    minInput.min = "1";
-                    minInput.value = Number.isFinite(rule.minSelected) && rule.minSelected > 0 ? String(rule.minSelected) : "1";
-                    minInput.disabled = modeInput.value !== "any";
-
-                    modeInput.addEventListener("change", () => {
-                        const triggerIds = normalizeIdList(modeInput.value === "any"
-                            ? rule.idsAny
-                            : (Array.isArray(rule.ids) ? rule.ids : (rule.id ? [rule.id] : [])));
-                        if (modeInput.value === "any") {
-                            rule.idsAny = triggerIds;
-                            rule.minSelected = Math.max(1, Number(rule.minSelected) || 1);
-                            delete rule.ids;
-                            delete rule.id;
-                        } else {
-                            rule.ids = triggerIds;
-                            delete rule.idsAny;
-                            delete rule.minSelected;
-                            delete rule.id;
-                        }
-                        minInput.disabled = modeInput.value !== "any";
-                        renderDiscountRulesEditor();
-                        refreshOptionWarnings(prereqParseError ? [prereqParseError] : []);
-                        schedulePreviewUpdate();
-                    });
-
-                    minInput.addEventListener("input", () => {
-                        const parsed = Math.max(1, Number(minInput.value) || 1);
-                        rule.minSelected = parsed;
-                        minInput.value = String(parsed);
-                        refreshOptionWarnings(prereqParseError ? [prereqParseError] : []);
-                        schedulePreviewUpdate();
-                    });
-
-                    modeRow.appendChild(modeLabel);
-                    modeRow.appendChild(modeInput);
-                    modeRow.appendChild(minLabel);
-                    modeRow.appendChild(minInput);
-                    ruleCard.appendChild(modeRow);
-
-                    const idsField = document.createElement("div");
-                    idsField.className = "field";
-                    const idsLabel = document.createElement("label");
-                    idsLabel.textContent = "Trigger option IDs";
-                    const idsContainer = document.createElement("div");
-                    const setTriggerIds = (nextIds) => {
-                        if (modeInput.value === "any") {
-                            rule.idsAny = nextIds;
-                            rule.minSelected = Math.max(1, Number(rule.minSelected) || 1);
-                            delete rule.ids;
-                            delete rule.id;
-                        } else {
-                            rule.ids = nextIds;
-                            delete rule.idsAny;
-                            delete rule.minSelected;
-                            delete rule.id;
-                        }
-                        mountIdListEditor(idsContainer, {
-                            ids: modeInput.value === "any" ? rule.idsAny : rule.ids,
-                            emptyText: "No trigger IDs added yet.",
-                            onChange: setTriggerIds
-                        });
-                        refreshOptionWarnings(prereqParseError ? [prereqParseError] : []);
-                        schedulePreviewUpdate();
-                    };
-                    mountIdListEditor(idsContainer, {
-                        ids: modeInput.value === "any" ? rule.idsAny : rule.ids,
-                        emptyText: "No trigger IDs added yet.",
-                        onChange: setTriggerIds
-                    });
-                    idsField.appendChild(idsLabel);
-                    idsField.appendChild(idsContainer);
-                    ruleCard.appendChild(idsField);
-
-                    if (behaviorInput.value === "slots") {
-                        const slotSettingsRow = document.createElement("div");
-                        slotSettingsRow.className = "field-inline field-inline-three";
-                        const slotsLabel = document.createElement("label");
-                        slotsLabel.textContent = "Slots";
-                        const slotsInput = document.createElement("input");
-                        slotsInput.type = "number";
-                        slotsInput.min = "1";
-                        slotsInput.value = String(Math.max(1, Number(rule.slots) || 1));
-                        const discountModeLabel = document.createElement("label");
-                        discountModeLabel.textContent = "Slot mode";
-                        const discountModeInput = document.createElement("select");
-                        const halfMode = document.createElement("option");
-                        halfMode.value = "half";
-                        halfMode.textContent = "Half cost";
-                        const freeMode = document.createElement("option");
-                        freeMode.value = "free";
-                        freeMode.textContent = "Free";
-                        discountModeInput.appendChild(halfMode);
-                        discountModeInput.appendChild(freeMode);
-                        discountModeInput.value = rule.mode === "free" ? "free" : "half";
-                        slotsInput.addEventListener("input", () => {
-                            const parsed = Math.max(1, Number(slotsInput.value) || 1);
-                            rule.slots = parsed;
-                            slotsInput.value = String(parsed);
-                            refreshOptionWarnings(prereqParseError ? [prereqParseError] : []);
-                            schedulePreviewUpdate();
-                        });
-                        discountModeInput.addEventListener("change", () => {
-                            rule.mode = discountModeInput.value === "free" ? "free" : "half";
-                            refreshOptionWarnings(prereqParseError ? [prereqParseError] : []);
-                            schedulePreviewUpdate();
-                        });
-                        slotSettingsRow.appendChild(slotsLabel);
-                        slotSettingsRow.appendChild(slotsInput);
-                        slotSettingsRow.appendChild(discountModeLabel);
-                        slotSettingsRow.appendChild(discountModeInput);
-                        ruleCard.appendChild(slotSettingsRow);
-                    } else {
-                        const ruleCostField = document.createElement("div");
-                        ruleCostField.className = "field";
-                        const ruleCostLabel = document.createElement("label");
-                        ruleCostLabel.textContent = "Discounted cost when triggered";
-                        const ruleCostContainer = document.createElement("div");
-                        ruleCostContainer.className = "cost-list";
-                        renderPointMapEditor(ruleCostContainer, rule.cost || {}, (nextCost) => {
-                            if (nextCost) {
-                                rule.cost = nextCost;
-                            } else {
-                                delete rule.cost;
-                            }
-                            refreshOptionWarnings(prereqParseError ? [prereqParseError] : []);
-                            schedulePreviewUpdate();
-                        });
-                        ruleCostField.appendChild(ruleCostLabel);
-                        ruleCostField.appendChild(ruleCostContainer);
-                        ruleCard.appendChild(ruleCostField);
-                    }
-
-                    discountContainer.appendChild(ruleCard);
-                });
-
-                const addRuleBtn = document.createElement("button");
-                addRuleBtn.type = "button";
-                addRuleBtn.className = "button-subtle";
-                addRuleBtn.textContent = "Add discount rule";
-                addRuleBtn.addEventListener("click", () => {
-                    const nextRule = {
-                        ids: [],
-                        cost: {},
-                        priority: Array.isArray(option.discounts) ? option.discounts.length + 1 : 1
-                    };
-                    if (!Array.isArray(option.discounts)) {
-                        option.discounts = [];
-                    }
-                    option.discounts.push(nextRule);
-                    renderDiscountRulesEditor();
+            const modifiedCostSection = document.createElement("div");
+            modifiedCostSection.className = "field";
+            const modifiedCostLabel = document.createElement("label");
+            modifiedCostLabel.textContent = "Conditional modified costs";
+            const modifiedCostHint = document.createElement("div");
+            modifiedCostHint.className = "field-help";
+            modifiedCostHint.textContent = "Create rules that increase or decrease this option's cost when required option IDs are selected. If multiple cost rules match, the highest priority rule wins.";
+            const modifiedCostContainer = document.createElement("div");
+            modifiedCostContainer.className = "list-stack";
+            renderModifiedCostRulesEditor(modifiedCostContainer, option, {
+                emptyText: "No conditional modified cost rules yet.",
+                addButtonText: "Add modified cost rule",
+                includeSlotBehavior: true,
+                onChange: () => {
                     refreshOptionWarnings(prereqParseError ? [prereqParseError] : []);
                     schedulePreviewUpdate();
-                });
-                discountContainer.appendChild(addRuleBtn);
-            }
-
-            renderDiscountRulesEditor();
-            discountSection.appendChild(discountLabel);
-            discountSection.appendChild(discountHint);
-            discountSection.appendChild(discountContainer);
-            optionAdvancedBody.appendChild(discountSection);
+                }
+            });
+            modifiedCostSection.append(modifiedCostLabel, modifiedCostHint, modifiedCostContainer);
+            optionAdvancedBody.appendChild(modifiedCostSection);
 
             const grantsSection = document.createElement("div");
             grantsSection.className = "field";
@@ -3695,11 +3809,13 @@
         addBtn.className = "button-subtle";
         addBtn.textContent = "Add point type";
         addBtn.addEventListener("click", () => {
-            let candidate = "Point";
+            const configuredPointTypes = getPointTypeNames();
+            const preferredPointType = configuredPointTypes.find(type => !Object.prototype.hasOwnProperty.call(valueMap, type));
+            let candidate = preferredPointType || configuredPointTypes[0] || "Points";
             let suffix = 1;
             while (Object.prototype.hasOwnProperty.call(valueMap, candidate)) {
                 suffix += 1;
-                candidate = `Point ${suffix}`;
+                candidate = `${preferredPointType || configuredPointTypes[0] || "Points"} ${suffix}`;
             }
             valueMap[candidate] = 0;
             onChange({ ...valueMap });

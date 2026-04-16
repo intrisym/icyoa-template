@@ -312,16 +312,23 @@ function getOptionEffectiveCost(option, {
     includeFirstNPreview = true
 } = {}) {
     const baseCost = getOptionBaseCost(option);
+    const info = findSubcategoryInfo(option.id);
     let bestCost = baseCost;
     let bestTotal = Object.entries(baseCost).reduce((sum, [_, val]) => val > 0 ? sum + val : sum, 0);
 
-    const matchingCostRules = (option.discounts || [])
-        .map((rule, index) => ({ rule, index }))
+    const matchingCostRules = [
+        ...getModifiedCostRules(info.subcat).map((rule, index) => ({ rule, index, scopeOrder: 0 })),
+        ...getModifiedCostRules(option).map((rule, index) => ({ rule, index, scopeOrder: 1 }))
+    ]
         .filter(({ rule }) => !isConditionalGrantRule(rule) && doesDiscountRuleQualify(rule))
-        .sort((a, b) => getDiscountRulePriority(a.rule, a.index) - getDiscountRulePriority(b.rule, b.index) || a.index - b.index);
+        .sort((a, b) =>
+            a.scopeOrder - b.scopeOrder
+            || getModifiedCostRulePriority(a.rule, a.index) - getModifiedCostRulePriority(b.rule, b.index)
+            || a.index - b.index
+        );
 
     matchingCostRules.forEach(({ rule }) => {
-        bestCost = { ...bestCost, ...(rule.cost || {}) };
+        bestCost = applyModifiedCostRule(bestCost, rule);
     });
     bestTotal = Object.entries(bestCost).reduce((sum, [_, val]) => val > 0 ? sum + val : sum, 0);
 
@@ -342,7 +349,6 @@ function getOptionEffectiveCost(option, {
         }
     });
 
-    const info = findSubcategoryInfo(option.id);
     let discountApplied = false;
     const allowSubcatDiscount = option.disableSubcategoryDiscount !== true;
     const allowCatDiscount = option.disableCategoryDiscount !== true;
@@ -1772,7 +1778,7 @@ function removeSelection(option, options = {}) {
     }
 
 
-    // Get the last recorded discounted cost for this selection instance
+    // Refund the exact cost paid for this selection instance.
     const refundCost = (discountedSelections[option.id]?.pop()) ?? getOptionBaseCost(option);
     Object.entries(refundCost).forEach(([type, cost]) => {
         points[type] += cost;
@@ -2046,7 +2052,7 @@ function canSelect(option) {
     const subcatCount = getSubcategorySelectionCount(subcat, option.id);
     const subcatMax = subcat?.maxSelections || Infinity; // Default to no limit
     // Allow selecting even if at limit, provided there IS a limit (so we can auto-unselect)
-    const underSubcatLimit = (subcatCount < subcatMax) || (subcatMax !== Infinity && hasRemovableSelectionInSubcategory(subcat));
+    const underSubcatLimit = (subcatCount <= subcatMax) || (subcatMax !== Infinity && hasRemovableSelectionInSubcategory(subcat));
 
     // Check option-specific max selections
     const maxPerOption = option.maxSelections || 1; // Default to 1 selection
@@ -2435,9 +2441,48 @@ function getDiscountRuleTriggerIds(rule) {
     return [];
 }
 
+function getModifiedCostRules(entity) {
+    if (!entity || typeof entity !== 'object') return [];
+    if (Array.isArray(entity.modifiedCosts)) return entity.modifiedCosts;
+    if (Array.isArray(entity.discounts)) return entity.discounts;
+    return [];
+}
+
 function getDiscountRulePriority(rule, index = 0) {
     const priority = Number(rule?.priority);
     return Number.isFinite(priority) ? priority : index + 1;
+}
+
+function getModifiedCostRulePriority(rule, index = 0) {
+    return getDiscountRulePriority(rule, index);
+}
+
+function applyModifiedCostRule(currentCost = {}, rule = {}) {
+    const nextCost = { ...currentCost, ...(rule.cost || {}) };
+    if (rule.costDelta && typeof rule.costDelta === 'object') {
+        Object.entries(rule.costDelta).forEach(([type, delta]) => {
+            const deltaValue = Number(delta);
+            if (!Number.isFinite(deltaValue)) return;
+            const currentValue = Number(nextCost[type]);
+            nextCost[type] = (Number.isFinite(currentValue) ? currentValue : 0) + deltaValue;
+        });
+    }
+    return clampCostMap(nextCost, rule.minCost, rule.maxCost);
+}
+
+function clampCostMap(cost = {}, minCost, maxCost) {
+    const result = { ...cost };
+    Object.keys(result).forEach(type => {
+        const value = Number(result[type]);
+        if (!Number.isFinite(value)) return;
+        let nextValue = value;
+        const minValue = Number(minCost?.[type]);
+        const maxValue = Number(maxCost?.[type]);
+        if (Number.isFinite(minValue)) nextValue = Math.max(nextValue, minValue);
+        if (Number.isFinite(maxValue)) nextValue = Math.min(nextValue, maxValue);
+        result[type] = nextValue;
+    });
+    return result;
 }
 
 function isConditionalGrantRule(rule) {
@@ -2499,7 +2544,7 @@ function getActiveOptionGrantContexts(targetOptionId) {
         });
     });
     const targetOption = getOptionById(targetOptionId);
-    (targetOption?.discounts || []).forEach((rule, ruleIndex) => {
+    getModifiedCostRules(targetOption).forEach((rule, ruleIndex) => {
         if (!isConditionalGrantRule(rule)) return;
         if (!doesDiscountRuleQualify(rule)) return;
         const slots = Math.max(0, Number(rule?.slots) || 0);
@@ -3125,7 +3170,7 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
     const requirements = document.createElement("div");
     requirements.className = "option-requirements";
 
-    // Default display cost is what the next selection would cost (considering discounts)
+    // Default display cost is what the next selection would cost after modifiers.
     const displayCost = getOptionEffectiveCost(opt);
     const originalCost = getOptionBaseCost(opt);
 
@@ -3145,7 +3190,7 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
         } else {
             const orig = originalCost[type];
             if (orig !== undefined && orig !== val) {
-                // Show discounted price and original in parentheses
+                // Show modified price and original in parentheses.
                 spend.push(`${type} ${val} (was ${orig})`);
             } else {
                 spend.push(`${type} ${val}`);
@@ -3156,18 +3201,16 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
     if (gain.length) requirements.innerHTML += `Gain: ${gain.join(', ')}<br>`;
     if (spend.length) requirements.innerHTML += `Cost: ${spend.join(', ')}<br>`;
 
-    // Indicate discount availability/applied for this item
+    // Indicate modified cost availability/applied for this item.
     const displayDiffers = Object.entries(displayCost || {}).some(([type, val]) => val !== (originalCost[type] ?? val));
     const currentPaidDiffers = Object.entries(costToShow || {}).some(([type, val]) => val !== (originalCost[type] ?? val));
     const displayShowsFree = Object.entries(displayCost || {}).some(([type, val]) => val === 0 && (originalCost[type] ?? 0) > 0);
     const currentShowsFree = Object.entries(costToShow || {}).some(([type, val]) => val === 0 && (originalCost[type] ?? 0) > 0);
 
     if (selectedCount > 0 && currentPaidDiffers) {
-        // A paid (or free) discount has been applied to an existing selection
-        requirements.innerHTML += currentShowsFree ? `🔻 Discount Applied (Free)<br>` : `🔻 Discount Applied<br>`;
+        requirements.innerHTML += currentShowsFree ? `Modified Cost Applied (Free)<br>` : `Modified Cost Applied<br>`;
     } else if (selectedCount === 0 && displayDiffers) {
-        // Discount is available for this item (but not yet used)
-        requirements.innerHTML += displayShowsFree ? `🔻 Discount Available (Free)<br>` : `🔻 Discount Available<br>`;
+        requirements.innerHTML += displayShowsFree ? `Modified Cost Available (Free)<br>` : `Modified Cost Available<br>`;
     }
 
     // Show prerequisites...
