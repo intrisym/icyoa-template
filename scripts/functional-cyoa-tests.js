@@ -16,7 +16,13 @@ const FEATURE_COVERAGE = [
     "string, array, object, negated, OR, AND, and count-suffix prerequisites",
     "dependent selections are removed when prerequisites become false",
     "one-way outgoing and incoming conflicts",
+    "category requiresOption and category maxSelections",
+    "category and nested subcategory display mode metadata",
+    "adding and removing categories, subcategories, and options",
+    "subcategory requiresOption",
+    "subcategory discountFirstN with discountAmount",
     "subcategory defaultCost",
+    "subcategory columnsPerRow metadata",
     "option-level absolute modified costs",
     "subcategory-wide relative modified costs",
     "modified cost minCost and maxCost clamps",
@@ -24,6 +30,8 @@ const FEATURE_COVERAGE = [
     "legacy discounts fallback for old CYOAs",
     "idsAny/minSelected conditional cost rules",
     "automatic option grants, locked grants, and free granted selections",
+    "option-granted discount slots across target options",
+    "custom JSON option fields are preserved and ignored by runtime logic",
     "packed export/import state round trips",
     "safe text formatting markup for color, size, weight, bold, and italic"
 ];
@@ -122,7 +130,18 @@ class CyoaEngine {
                         name: "Grants",
                         options: [
                             { id: "grantSource", label: "Grant Source", cost: { Points: 2 }, autoGrants: [{ id: "grantedLocked", canDeselect: false }] },
-                            { id: "grantedLocked", label: "Granted Locked", cost: { Points: 5 } }
+                            { id: "grantedLocked", label: "Granted Locked", cost: { Points: 5 } },
+                            {
+                                id: "discountGrantSource",
+                                label: "Discount Grant Source",
+                                cost: {},
+                                discountGrants: [
+                                    { slots: 1, mode: "half", targetIds: ["discountGrantTargetA", "discountGrantTargetB"] }
+                                ]
+                            },
+                            { id: "discountGrantTargetA", label: "Discount Grant Target A", cost: { Points: 6 } },
+                            { id: "discountGrantTargetB", label: "Discount Grant Target B", cost: { Points: 5 } },
+                            { id: "customFields", label: "Custom Fields", cost: {}, creatorNotes: "runtime should preserve this", customMetadata: { tier: 2 } }
                         ]
                     },
                     {
@@ -143,6 +162,53 @@ class CyoaEngine {
                         ]
                     }
                 ]
+            },
+            {
+                name: "Category Controls",
+                requiresOption: "preA",
+                maxSelections: 1,
+                subcategoryDisplayMode: "all",
+                subcategories: [
+                    {
+                        name: "Category Limit Choices",
+                        options: [
+                            { id: "categoryLimitA", label: "Category Limit A", cost: {} },
+                            { id: "categoryLimitB", label: "Category Limit B", cost: {} }
+                        ]
+                    }
+                ]
+            },
+            {
+                name: "Subcategory Controls",
+                subcategories: [
+                    {
+                        name: "Subcategory Gate",
+                        requiresOption: "preA",
+                        subcategoryDisplayMode: "all",
+                        columnsPerRow: 3,
+                        options: [
+                            { id: "subcategoryRequiresOption", label: "Subcategory Requires Option", cost: {} }
+                        ],
+                        subcategories: [
+                            {
+                                name: "Nested Gate",
+                                subcategoryDisplayMode: "all",
+                                options: [
+                                    { id: "nestedSubcategoryOption", label: "Nested Subcategory Option", cost: {} }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        name: "First N Discounts",
+                        discountFirstN: 1,
+                        discountAmount: { Points: 2 },
+                        options: [
+                            { id: "firstNDiscountA", label: "First N Discount A", cost: { Points: 5 } },
+                            { id: "firstNDiscountB", label: "First N Discount B", cost: { Points: 5 } }
+                        ]
+                    }
+                ]
             }
         ], "synthetic");
     }
@@ -156,17 +222,33 @@ class CyoaEngine {
     findSubcategoryInfo(optionId) {
         for (const category of this.categories) {
             if ((category.options || []).some(option => option.id === optionId)) {
-                return { category, subcat: null };
+                return { category, subcat: null, subcatPath: [] };
             }
             let found = null;
-            walkSubcategories(category.subcategories, subcat => {
+            walkSubcategories(category.subcategories, (subcat, path) => {
                 if (!found && (subcat.options || []).some(option => option.id === optionId)) {
-                    found = { category, subcat };
+                    found = {
+                        category,
+                        subcat,
+                        subcatPath: this.getSubcategoryPath(category, path)
+                    };
                 }
             });
             if (found) return found;
         }
-        return { category: null, subcat: null };
+        return { category: null, subcat: null, subcatPath: [] };
+    }
+
+    getSubcategoryPath(category, path = []) {
+        const result = [];
+        let currentList = category.subcategories || [];
+        for (const index of path) {
+            const subcat = currentList[index];
+            if (!subcat) break;
+            result.push(subcat);
+            currentList = subcat.subcategories || [];
+        }
+        return result;
     }
 
     findSubcategoryOfOption(optionId) {
@@ -223,6 +305,65 @@ class CyoaEngine {
         return this.clampCost(nextCost, rule.minCost, rule.maxCost);
     }
 
+    applyDiscountCost(cost = {}, mode = "half") {
+        const updated = { ...cost };
+        Object.entries(updated).forEach(([type, value]) => {
+            if (value > 0) {
+                updated[type] = mode === "free" ? 0 : Math.ceil(value / 2);
+            }
+        });
+        return updated;
+    }
+
+    applyDiscountAmount(cost = {}, discountAmount) {
+        if (!discountAmount || typeof discountAmount !== "object") return cost;
+        const updated = { ...cost };
+        Object.entries(discountAmount).forEach(([type, amount]) => {
+            if (typeof updated[type] === "number" && updated[type] > 0 && typeof amount === "number") {
+                updated[type] = Math.max(0, updated[type] - amount);
+            }
+        });
+        return updated;
+    }
+
+    discountTotalCount(map = {}) {
+        return Object.values(map || {}).reduce((sum, value) => sum + (Number(value) || 0), 0);
+    }
+
+    buildOptionGrantKey(providerId, ruleIndex) {
+        return `${providerId}::${ruleIndex}`;
+    }
+
+    getGrantTargetIds(rule) {
+        if (!rule) return [];
+        if (Array.isArray(rule.targetIds)) return rule.targetIds.filter(Boolean);
+        if (Array.isArray(rule.targets)) return rule.targets.filter(Boolean);
+        if (rule.targetId) return [rule.targetId];
+        return [];
+    }
+
+    getActiveOptionGrantContexts(targetOptionId) {
+        const contexts = [];
+        this.optionMap.forEach(provider => {
+            const providerSelections = this.selectedOptions[provider.id] || 0;
+            if (providerSelections <= 0) return;
+            (provider.discountGrants || []).forEach((rule, ruleIndex) => {
+                const slotsPerSelection = Math.max(0, Number(rule?.slots) || 0);
+                if (slotsPerSelection <= 0) return;
+                const targetIds = this.getGrantTargetIds(rule);
+                if (!targetIds.includes(targetOptionId)) return;
+                const key = this.buildOptionGrantKey(provider.id, ruleIndex);
+                contexts.push({
+                    key,
+                    map: this.optionGrantDiscountSelections[key] || {},
+                    limit: providerSelections * slotsPerSelection,
+                    mode: rule.mode === "free" ? "free" : "half"
+                });
+            });
+        });
+        return contexts;
+    }
+
     clampCost(cost, minCost, maxCost) {
         const result = { ...cost };
         Object.keys(result).forEach(type => {
@@ -256,7 +397,34 @@ class CyoaEngine {
         matchingRules.forEach(({ rule }) => {
             cost = this.applyModifiedCostRule(cost, rule);
         });
-        return cost;
+
+        let bestCost = cost;
+        let bestTotal = Object.values(bestCost).reduce((sum, value) => value > 0 ? sum + value : sum, 0);
+        const alreadySelectedThis = this.selectedOptions[option.id] || 0;
+        this.getActiveOptionGrantContexts(option.id).forEach(ctx => {
+            const assignedForThis = ctx.map[option.id] || 0;
+            const totalAssigned = this.discountTotalCount(ctx.map);
+            const totalOthers = totalAssigned - assignedForThis;
+            const allowedForThis = Math.max(0, Math.min(assignedForThis, ctx.limit - totalOthers));
+            if (allowedForThis <= alreadySelectedThis) return;
+
+            const candidate = this.applyDiscountCost(bestCost, ctx.mode);
+            const candidateTotal = Object.values(candidate).reduce((sum, value) => value > 0 ? sum + value : sum, 0);
+            if (candidateTotal < bestTotal) {
+                bestCost = candidate;
+                bestTotal = candidateTotal;
+            }
+        });
+
+        const subcatSelectionCount = (info.subcat?.options || []).reduce((sum, optionInSubcat) => {
+            return sum + (this.selectedOptions[optionInSubcat.id] || 0);
+        }, 0);
+        if (info.subcat && typeof info.subcat.discountFirstN === "number" && subcatSelectionCount < info.subcat.discountFirstN && !this.selectedOptions[option.id]) {
+            bestCost = info.subcat.discountAmount
+                ? this.applyDiscountAmount(bestCost, info.subcat.discountAmount)
+                : this.applyDiscountCost(bestCost, info.subcat.discountMode || "half");
+        }
+        return bestCost;
     }
 
     isConditionalGrantRule(rule) {
@@ -292,6 +460,26 @@ class CyoaEngine {
         return outgoing && incoming;
     }
 
+    categorySelectionCount(category) {
+        if (!category) return 0;
+        let total = 0;
+        (category.options || []).forEach(option => {
+            total += this.selectedOptions[option.id] || 0;
+        });
+        walkSubcategories(category.subcategories, subcat => {
+            (subcat.options || []).forEach(option => {
+                total += this.selectedOptions[option.id] || 0;
+            });
+        });
+        return total;
+    }
+
+    structuralRequirementsMet(option) {
+        const info = this.findSubcategoryInfo(option.id);
+        if (!this.prerequisiteMet(info.category?.requiresOption)) return false;
+        return (info.subcatPath || []).every(subcat => this.prerequisiteMet(subcat.requiresOption));
+    }
+
     optionCountForLimit(option, rawCount) {
         const count = Number(rawCount) || 0;
         if (count <= 0) return 0;
@@ -320,6 +508,8 @@ class CyoaEngine {
         const underSubcatLimit = (subcatCount <= subcatMax) || (subcatMax !== Infinity && this.hasRemovableSelection(subcat));
         const maxPerOption = option.maxSelections || 1;
         const underOptionLimit = (this.selectedOptions[option.id] || 0) < maxPerOption;
+        const categoryMax = Number(this.findSubcategoryInfo(option.id).category?.maxSelections);
+        const underCategoryLimit = !Number.isFinite(categoryMax) || categoryMax <= 0 || this.categorySelectionCount(this.findSubcategoryInfo(option.id).category) < categoryMax;
         const hasPoints = Object.entries(this.effectiveCost(option)).every(([type, cost]) => {
             if (cost < 0) return true;
             const current = Number(this.points[type]);
@@ -327,9 +517,11 @@ class CyoaEngine {
             return projected >= 0 || this.allowNegativeTypes.has(type);
         });
 
-        return this.prerequisiteMet(option.prerequisites)
+        return this.structuralRequirementsMet(option)
+            && this.prerequisiteMet(option.prerequisites)
             && this.hasNoConflicts(option)
             && underSubcatLimit
+            && underCategoryLimit
             && underOptionLimit
             && hasPoints;
     }
@@ -431,7 +623,7 @@ class CyoaEngine {
             removedAny = false;
             for (const id of Object.keys(this.selectedOptions)) {
                 const option = this.optionMap.get(id);
-                if (option && !this.prerequisiteMet(option.prerequisites)) {
+                if (option && (!this.structuralRequirementsMet(option) || !this.prerequisiteMet(option.prerequisites))) {
                     this.remove(id);
                     removedAny = true;
                     break;
@@ -593,6 +785,10 @@ function assertDeepEqual(actual, expected, message) {
     assert.deepStrictEqual(actual, expected, message);
 }
 
+function findCategory(data, name) {
+    return data.find(entry => entry && entry.name === name);
+}
+
 const tests = [];
 function test(name, fn) {
     tests.push({ name, fn });
@@ -682,6 +878,7 @@ test("superhero prerequisites block and unlock dependent options", () => {
     const engine = new CyoaEngine("superheroAmalgam.json");
     assert.strictEqual(engine.canSelect("adultBenefitsHigherPaying"), false);
     engine.select("powersDifficultySpectacularmanMode");
+    engine.select("youAgeYoungAdult");
     engine.select("powersSuperpowersSmart");
     assert.strictEqual(engine.canSelect("adultBenefitsHigherPaying"), true);
 });
@@ -705,6 +902,120 @@ test("string, array, object, negated, OR, AND, and count prerequisites work", ()
 
     engine.select("preB");
     assert.strictEqual(engine.canSelect("requiresString"), false);
+});
+
+test("category requiresOption and maxSelections work", () => {
+    const engine = CyoaEngine.synthetic();
+    assert.strictEqual(engine.canSelect("categoryLimitA"), false);
+
+    engine.select("preA");
+    assert.strictEqual(engine.canSelect("categoryLimitA"), true);
+    engine.select("categoryLimitA");
+    assert.strictEqual(engine.selectedOptions.categoryLimitA, 1);
+    assert.strictEqual(engine.canSelect("categoryLimitB"), false);
+});
+
+test("subcategory requiresOption works for nested options", () => {
+    const engine = CyoaEngine.synthetic();
+    assert.strictEqual(engine.canSelect("subcategoryRequiresOption"), false);
+    assert.strictEqual(engine.canSelect("nestedSubcategoryOption"), false);
+
+    engine.select("preA");
+    assert.strictEqual(engine.canSelect("subcategoryRequiresOption"), true);
+    assert.strictEqual(engine.canSelect("nestedSubcategoryOption"), true);
+});
+
+test("category and nested subcategory display metadata is preserved", () => {
+    const engine = CyoaEngine.synthetic();
+    const category = engine.categories.find(entry => entry.name === "Category Controls");
+    const subcategory = engine.categories
+        .find(entry => entry.name === "Subcategory Controls")
+        .subcategories.find(entry => entry.name === "Subcategory Gate");
+    const nested = subcategory.subcategories.find(entry => entry.name === "Nested Gate");
+
+    assert.strictEqual(category.subcategoryDisplayMode, "all");
+    assert.strictEqual(subcategory.subcategoryDisplayMode, "all");
+    assert.strictEqual(nested.subcategoryDisplayMode, "all");
+});
+
+test("adding and removing options updates selectable data", () => {
+    const data = CyoaEngine.synthetic().data;
+    const subcategory = findCategory(data, "Core").subcategories.find(entry => entry.name === "Choices");
+    subcategory.options.push({ id: "addedOption", label: "Added Option", cost: { Points: 2 } });
+
+    let engine = new CyoaEngine(data, "synthetic option add/remove");
+    assert.strictEqual(engine.canSelect("addedOption"), true);
+    engine.select("addedOption");
+    assert.strictEqual(engine.points.Points, 8);
+
+    subcategory.options.splice(subcategory.options.findIndex(option => option.id === "addedOption"), 1);
+    engine = new CyoaEngine(data, "synthetic option removed");
+    assert.strictEqual(engine.optionMap.has("addedOption"), false);
+});
+
+test("adding and removing subcategories updates selectable data", () => {
+    const data = CyoaEngine.synthetic().data;
+    const category = findCategory(data, "Core");
+    category.subcategories.push({
+        name: "Added Subcategory",
+        options: [
+            { id: "addedSubcategoryOption", label: "Added Subcategory Option", cost: { Points: 1 } }
+        ]
+    });
+
+    let engine = new CyoaEngine(data, "synthetic subcategory add/remove");
+    assert.strictEqual(engine.canSelect("addedSubcategoryOption"), true);
+    engine.select("addedSubcategoryOption");
+    assert.strictEqual(engine.points.Points, 9);
+
+    category.subcategories.splice(category.subcategories.findIndex(subcat => subcat.name === "Added Subcategory"), 1);
+    engine = new CyoaEngine(data, "synthetic subcategory removed");
+    assert.strictEqual(engine.optionMap.has("addedSubcategoryOption"), false);
+});
+
+test("adding and removing categories updates selectable data", () => {
+    const data = CyoaEngine.synthetic().data;
+    data.push({
+        name: "Added Category",
+        subcategories: [
+            {
+                name: "Added Category Subcategory",
+                options: [
+                    { id: "addedCategoryOption", label: "Added Category Option", cost: { Points: 1 } }
+                ]
+            }
+        ]
+    });
+
+    let engine = new CyoaEngine(data, "synthetic category add/remove");
+    assert.strictEqual(engine.canSelect("addedCategoryOption"), true);
+    engine.select("addedCategoryOption");
+    assert.strictEqual(engine.points.Points, 9);
+
+    data.splice(data.findIndex(entry => entry.name === "Added Category"), 1);
+    engine = new CyoaEngine(data, "synthetic category removed");
+    assert.strictEqual(engine.optionMap.has("addedCategoryOption"), false);
+});
+
+test("subcategory discountFirstN and discountAmount work", () => {
+    const engine = CyoaEngine.synthetic();
+    assertDeepEqual(engine.effectiveCost("firstNDiscountA"), { Points: 3 });
+    engine.select("firstNDiscountA");
+    assert.strictEqual(engine.points.Points, 7);
+    assertDeepEqual(engine.discountedSelections.firstNDiscountA[0], { Points: 3 });
+
+    assertDeepEqual(engine.effectiveCost("firstNDiscountB"), { Points: 5 });
+    engine.select("firstNDiscountB");
+    assert.strictEqual(engine.points.Points, 2);
+    assertDeepEqual(engine.discountedSelections.firstNDiscountB[0], { Points: 5 });
+});
+
+test("subcategory columnsPerRow metadata is preserved", () => {
+    const engine = CyoaEngine.synthetic();
+    const subcategory = engine.categories
+        .find(entry => entry.name === "Subcategory Controls")
+        .subcategories.find(entry => entry.name === "Subcategory Gate");
+    assert.strictEqual(subcategory.columnsPerRow, 3);
 });
 
 test("one-way conflicts block the reverse selection", () => {
@@ -774,6 +1085,37 @@ test("automatic grants select targets for free and remove locked grants with the
     assert.strictEqual(engine.selectedOptions.grantSource, undefined);
     assert.strictEqual(engine.selectedOptions.grantedLocked, undefined);
     assert.strictEqual(engine.autoGrantedSelections.grantedLocked, undefined);
+});
+
+test("option-granted discount slots apply to selected target options", () => {
+    const engine = CyoaEngine.synthetic();
+    engine.select("discountGrantSource");
+    assertDeepEqual(engine.effectiveCost("discountGrantTargetA"), { Points: 6 });
+
+    engine.optionGrantDiscountSelections["discountGrantSource::0"] = { discountGrantTargetA: 1 };
+    assertDeepEqual(engine.effectiveCost("discountGrantTargetA"), { Points: 3 });
+    assertDeepEqual(engine.effectiveCost("discountGrantTargetB"), { Points: 5 });
+
+    engine.select("discountGrantTargetA");
+    assert.strictEqual(engine.points.Points, 7);
+    assertDeepEqual(engine.discountedSelections.discountGrantTargetA[0], { Points: 3 });
+
+    engine.optionGrantDiscountSelections["discountGrantSource::0"] = {
+        discountGrantTargetA: 1,
+        discountGrantTargetB: 1
+    };
+    assertDeepEqual(engine.effectiveCost("discountGrantTargetB"), { Points: 5 }, "A one-slot grant should not discount a second target");
+});
+
+test("custom JSON option fields are preserved and ignored by runtime logic", () => {
+    const engine = CyoaEngine.synthetic();
+    const option = engine.option("customFields");
+    assert.strictEqual(option.creatorNotes, "runtime should preserve this");
+    assert.deepStrictEqual(option.customMetadata, { tier: 2 });
+    assert.strictEqual(engine.canSelect("customFields"), true);
+    engine.select("customFields");
+    assert.strictEqual(engine.selectedOptions.customFields, 1);
+    assert.strictEqual(engine.points.Points, 10);
 });
 
 test("packed export/import preserves selections, points, and granted state", () => {

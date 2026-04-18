@@ -50,7 +50,13 @@ Current functional coverage includes:
 - String, array, object, negated, OR, AND, and count-suffix prerequisites.
 - Automatic removal when an already-selected option's prerequisites become false.
 - One-way and two-way incompatibility/conflict enforcement.
+- Category `requiresOption` gates and category `maxSelections`.
+- Category and nested subcategory display-mode metadata.
+- Adding and removing categories, subcategories, and options.
+- Subcategory `requiresOption` gates, including inherited gates for nested options.
+- Subcategory `discountFirstN` with `discountAmount`.
 - Subcategory `defaultCost`.
+- Subcategory `columnsPerRow` metadata.
 - Absolute option-level modified costs.
 - Subcategory-wide relative modified costs.
 - `minCost` and `maxCost` clamps.
@@ -58,6 +64,8 @@ Current functional coverage includes:
 - Legacy `discounts` compatibility for older CYOAs.
 - `idsAny` / `minSelected` conditional-cost rules.
 - Automatic option grants, locked grants, and free granted selections.
+- Option-granted discount slots across target options.
+- Custom JSON option fields being preserved without changing runtime selection logic.
 - Packed export/import state round trips.
 - Safe text formatting for color, size, weight, bold, italic, nesting, escaping, and plain-label stripping.
 
