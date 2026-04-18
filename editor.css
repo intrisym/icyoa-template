@@ -479,6 +479,25 @@ textarea {
     gap: 12px;
 }
 
+.section-body .section-block {
+    border-color: var(--border-subtle);
+    background: var(--surface-soft);
+}
+
+.section-body .section-block summary {
+    padding: 10px 12px;
+    font-size: 13px;
+    background: rgba(255, 255, 255, 0.58);
+}
+
+:root[data-theme="dark"] .section-body .section-block summary {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.section-body .section-block .section-body {
+    padding: 12px;
+}
+
 .list-stack {
     display: flex;
     flex-direction: column;

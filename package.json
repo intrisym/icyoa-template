@@ -5,7 +5,8 @@
   "scripts": {
     "check:js": "node --check script.js && node --check editor.js && node --check logicExpr.js && node --check server.js && node --check generate-manifest.js",
     "test:cyoas": "node scripts/validate-cyoas.js",
-    "verify": "npm run check:js && npm run test:cyoas",
+    "test:functional": "node scripts/functional-cyoa-tests.js",
+    "verify": "npm run check:js && npm run test:cyoas && npm run test:functional",
     "test": "npm run verify"
   }
 }

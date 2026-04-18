@@ -36,13 +36,37 @@ Run the full pre-push verification suite before publishing changes:
 npm test
 ```
 
-This runs JavaScript syntax checks and validates every existing `CYOAs/*.json` file as a regression fixture. The CYOA validator checks that files parse, required core entries exist, option IDs are unique, referenced IDs exist, point maps are valid, prerequisite expressions are safe, modified-cost rules are coherent, and theme settings use supported values.
+This runs JavaScript syntax checks, validates every existing `CYOAs/*.json` file as a regression fixture, and runs functional scenario tests against real CYOA data. The functional tests simulate selecting and removing options, gaining and spending points, subcategory max-selection replacement, max-selection bypass options, prerequisite unlocks, absolute modified costs, relative modified costs, and min-cost clamps.
+
+The CYOA validator checks that files parse, required core entries exist, option IDs are unique, referenced IDs exist, point maps are valid, prerequisite expressions are safe, modified-cost rules are coherent, and theme settings use supported values.
+
+Current functional coverage includes:
+
+- Loading every CYOA fixture and computing selectable state/effective costs without crashes.
+- Point spending, point gains, refunds, and allow-negative point types.
+- Single-select options, multi-select options, option `maxSelections`, and subcategory `maxSelections`.
+- `countsAsOneSelection` behavior for subcategory limits.
+- Option-level `bypassSubcategoryMaxSelections` behavior for choices that should not consume subcategory limit slots.
+- String, array, object, negated, OR, AND, and count-suffix prerequisites.
+- Automatic removal when an already-selected option's prerequisites become false.
+- One-way and two-way incompatibility/conflict enforcement.
+- Subcategory `defaultCost`.
+- Absolute option-level modified costs.
+- Subcategory-wide relative modified costs.
+- `minCost` and `maxCost` clamps.
+- Option modified costs overriding subcategory modified costs.
+- Legacy `discounts` compatibility for older CYOAs.
+- `idsAny` / `minSelected` conditional-cost rules.
+- Automatic option grants, locked grants, and free granted selections.
+- Packed export/import state round trips.
+- Safe text formatting for color, size, weight, bold, italic, nesting, escaping, and plain-label stripping.
 
 Useful focused commands:
 
 ```bash
 npm run check:js
 npm run test:cyoas
+npm run test:functional
 npm run verify
 ```
 

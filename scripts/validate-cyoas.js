@@ -313,6 +313,9 @@ function validateCyoa(file) {
         if (option.maxSelections !== undefined && Number(option.maxSelections) < 1) {
             pushIssue(errors, file, `${context}.maxSelections must be at least 1.`);
         }
+        if (option.bypassSubcategoryMaxSelections !== undefined && typeof option.bypassSubcategoryMaxSelections !== "boolean") {
+            pushIssue(errors, file, `${context}.bypassSubcategoryMaxSelections must be a boolean.`);
+        }
     });
 
     collectSubcategories(data).forEach(({ subcat, path: subcatPath }) => {

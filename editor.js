@@ -1,6 +1,6 @@
 (function () {
     const CORE_TYPES_ORDER = ["title", "description", "headerImage", "points", "settings"];
-    const BASE_OPTION_KEYS = new Set(["id", "label", "description", "image", "inputType", "inputLabel", "cost", "maxSelections", "countsAsOneSelection", "prerequisites", "conflictsWith", "autoGrants", "modifiedCosts", "discounts", "discountGrants"]);
+    const BASE_OPTION_KEYS = new Set(["id", "label", "description", "image", "inputType", "inputLabel", "cost", "maxSelections", "countsAsOneSelection", "bypassSubcategoryMaxSelections", "prerequisites", "conflictsWith", "autoGrants", "modifiedCosts", "discounts", "discountGrants"]);
 
     const state = {
         data: [],
@@ -3040,6 +3040,44 @@
             });
             body.appendChild(optionAdvancedSection);
 
+            const optionSectionKeyBase = normalizedPathKey([...normalizedPath, option.id || option.label || `Option${optionIndex + 1}`]);
+            const {
+                container: inputSelectionSection,
+                body: inputSelectionBody
+            } = createSectionContainer("Input & Selection", {
+                storageKey: `${optionSectionKeyBase}-advanced-input-selection`,
+                defaultOpen: false
+            });
+            const {
+                container: dependenciesSection,
+                body: dependenciesBody
+            } = createSectionContainer("Dependencies", {
+                storageKey: `${optionSectionKeyBase}-advanced-dependencies`,
+                defaultOpen: false
+            });
+            const {
+                container: automationSection,
+                body: automationBody
+            } = createSectionContainer("Automatic Grants", {
+                storageKey: `${optionSectionKeyBase}-advanced-automation`,
+                defaultOpen: false
+            });
+            const {
+                container: pricingSection,
+                body: pricingBody
+            } = createSectionContainer("Conditional Pricing", {
+                storageKey: `${optionSectionKeyBase}-advanced-pricing`,
+                defaultOpen: false
+            });
+            const {
+                container: customJsonSection,
+                body: customJsonBody
+            } = createSectionContainer("Custom JSON Fields", {
+                storageKey: `${optionSectionKeyBase}-advanced-custom-json`,
+                defaultOpen: false
+            });
+            optionAdvancedBody.append(inputSelectionSection, dependenciesSection, automationSection, pricingSection, customJsonSection);
+
             const validationBox = document.createElement("div");
             validationBox.className = "inline-warning-list";
             const refreshOptionWarnings = (extraWarnings = []) => {
@@ -3172,7 +3210,7 @@
             inputTypeField.appendChild(inputTypeInput);
             inputTypeField.appendChild(inputLabelLabel);
             inputTypeField.appendChild(inputLabelInput);
-            optionAdvancedBody.appendChild(inputTypeField);
+            inputSelectionBody.appendChild(inputTypeField);
 
             const optionLimitField = document.createElement("div");
             optionLimitField.className = "field-inline";
@@ -3196,7 +3234,7 @@
             });
             optionLimitField.appendChild(optionLimitLabel);
             optionLimitField.appendChild(optionLimitInput);
-            body.appendChild(optionLimitField);
+            inputSelectionBody.appendChild(optionLimitField);
 
             const countAsOneField = document.createElement("div");
             countAsOneField.className = "field";
@@ -3218,7 +3256,29 @@
             countAsOneToggle.appendChild(countAsOneInput);
             countAsOneToggle.appendChild(countAsOneText);
             countAsOneField.appendChild(countAsOneToggle);
-            optionAdvancedBody.appendChild(countAsOneField);
+            inputSelectionBody.appendChild(countAsOneField);
+
+            const bypassSubcatLimitField = document.createElement("div");
+            bypassSubcatLimitField.className = "field";
+            const bypassSubcatLimitToggle = document.createElement("label");
+            bypassSubcatLimitToggle.className = "checkbox-option";
+            const bypassSubcatLimitInput = document.createElement("input");
+            bypassSubcatLimitInput.type = "checkbox";
+            bypassSubcatLimitInput.checked = option.bypassSubcategoryMaxSelections === true;
+            const bypassSubcatLimitText = document.createElement("span");
+            bypassSubcatLimitText.textContent = "Bypass subcategory max selections";
+            bypassSubcatLimitInput.addEventListener("change", () => {
+                if (bypassSubcatLimitInput.checked) {
+                    option.bypassSubcategoryMaxSelections = true;
+                } else {
+                    delete option.bypassSubcategoryMaxSelections;
+                }
+                schedulePreviewUpdate();
+            });
+            bypassSubcatLimitToggle.appendChild(bypassSubcatLimitInput);
+            bypassSubcatLimitToggle.appendChild(bypassSubcatLimitText);
+            bypassSubcatLimitField.appendChild(bypassSubcatLimitToggle);
+            inputSelectionBody.appendChild(bypassSubcatLimitField);
 
             const costSection = document.createElement("div");
             costSection.className = "field";
@@ -3263,7 +3323,7 @@
             prereqSection.appendChild(prereqLabel);
             prereqSection.appendChild(prereqHint);
             prereqSection.appendChild(prereqInput);
-            optionAdvancedBody.appendChild(prereqSection);
+            dependenciesBody.appendChild(prereqSection);
 
             const conflictSection = document.createElement("div");
             conflictSection.className = "field";
@@ -3297,7 +3357,7 @@
             conflictSection.appendChild(conflictLabel);
             conflictSection.appendChild(conflictHint);
             conflictSection.appendChild(conflictContainer);
-            optionAdvancedBody.appendChild(conflictSection);
+            dependenciesBody.appendChild(conflictSection);
 
             const autoGrantSection = document.createElement("div");
             autoGrantSection.className = "field";
@@ -3441,7 +3501,7 @@
 
             renderAutoGrantRulesEditor();
             autoGrantSection.append(autoGrantLabel, autoGrantHint, autoGrantContainer);
-            optionAdvancedBody.appendChild(autoGrantSection);
+            automationBody.appendChild(autoGrantSection);
 
             const modifiedCostSection = document.createElement("div");
             modifiedCostSection.className = "field";
@@ -3462,7 +3522,7 @@
                 }
             });
             modifiedCostSection.append(modifiedCostLabel, modifiedCostHint, modifiedCostContainer);
-            optionAdvancedBody.appendChild(modifiedCostSection);
+            pricingBody.appendChild(modifiedCostSection);
 
             const grantsSection = document.createElement("div");
             grantsSection.className = "field";
@@ -3612,7 +3672,7 @@
             grantsSection.appendChild(grantsLabel);
             grantsSection.appendChild(grantsHint);
             grantsSection.appendChild(grantsContainer);
-            optionAdvancedBody.appendChild(grantsSection);
+            pricingBody.appendChild(grantsSection);
             refreshOptionWarnings();
 
             const advancedKeys = Object.keys(option).filter(key => !BASE_OPTION_KEYS.has(key));
@@ -3655,7 +3715,7 @@
             });
             advancedSection.appendChild(advancedLabel);
             advancedSection.appendChild(advancedTextarea);
-            optionAdvancedBody.appendChild(advancedSection);
+            customJsonBody.appendChild(advancedSection);
 
             details.appendChild(body);
             container.appendChild(details);

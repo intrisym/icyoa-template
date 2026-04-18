@@ -1993,6 +1993,7 @@ function addSelection(option, options = {}) {
 
     removeOptionsFromInactiveCategoriesAndSubcategories(); // Clear options from categories that no longer meet requirements
     applyAutoGrants(option, options.visited || new Set());
+    removeOptionsWithUnmetPrerequisites();
     applyDynamicCosts();
     updatePointsDisplay();
     if (!options.skipRender) {
@@ -2018,24 +2019,7 @@ function updatePointsDisplay() {
  * @returns {boolean} True if the option can be selected, false otherwise.
  */
 function canSelect(option) {
-    // String-based logical prerequisites
-    let meetsPrereq = true;
-    if (typeof option.prerequisites === 'string') {
-        try {
-            meetsPrereq = window.evaluatePrereqExpr(option.prerequisites, id => selectedOptions[id] || 0);
-        } catch (e) {
-            console.error('Invalid prerequisite expression:', option.prerequisites, e);
-            meetsPrereq = false;
-        }
-    } else if (Array.isArray(option.prerequisites)) {
-        meetsPrereq = option.prerequisites.every(id => selectedOptions[id]);
-    } else if (typeof option.prerequisites === 'object') {
-        const andList = option.prerequisites.and || [];
-        const orList = option.prerequisites.or || [];
-        const andMet = andList.every(id => selectedOptions[id]);
-        const orMet = orList.length === 0 || orList.some(id => selectedOptions[id]);
-        meetsPrereq = andMet && orMet;
-    }
+    const meetsPrereq = optionPrerequisitesMet(option);
 
     // Check outgoing conflicts (option conflicts with an already selected option)
     const hasNoOutgoingConflicts = !option.conflictsWith || option.conflictsWith.every(id => !selectedOptions[id]);
@@ -2073,6 +2057,48 @@ function canSelect(option) {
     return meetsPrereq && hasPoints && hasNoOutgoingConflicts && hasNoIncomingConflicts && underOptionLimit && underSubcatLimit && underCategoryLimit;
 }
 
+function optionPrerequisitesMet(option) {
+    if (!option || !option.prerequisites) return true;
+    if (typeof option.prerequisites === 'string') {
+        try {
+            return !!window.evaluatePrereqExpr(option.prerequisites, id => selectedOptions[id] || 0);
+        } catch (e) {
+            console.error('Invalid prerequisite expression:', option.prerequisites, e);
+            return false;
+        }
+    }
+    if (Array.isArray(option.prerequisites)) {
+        return option.prerequisites.every(id => selectedOptions[id]);
+    }
+    if (typeof option.prerequisites === 'object') {
+        const andList = option.prerequisites.and || [];
+        const orList = option.prerequisites.or || [];
+        const andMet = andList.every(id => selectedOptions[id]);
+        const orMet = orList.length === 0 || orList.some(id => selectedOptions[id]);
+        return andMet && orMet;
+    }
+    return true;
+}
+
+function removeOptionsWithUnmetPrerequisites() {
+    let removedAny = true;
+    while (removedAny) {
+        removedAny = false;
+        for (const cat of categories) {
+            forEachCategoryOption(cat, opt => {
+                if (!removedAny && selectedOptions[opt.id] && !optionPrerequisitesMet(opt)) {
+                    removeSelection(opt, {
+                        force: true,
+                        skipRender: true
+                    });
+                    removedAny = true;
+                }
+            });
+            if (removedAny) break;
+        }
+    }
+}
+
 
 /**
  * Finds the subcategory object that contains a given option.
@@ -2107,6 +2133,7 @@ function findSubcategoryOfOption(optionId) {
 function getOptionCountForSubcategoryLimit(option, rawCount) {
     const count = Number(rawCount) || 0;
     if (count <= 0) return 0;
+    if (option?.bypassSubcategoryMaxSelections === true) return 0;
     if (option?.countsAsOneSelection === true) return 1;
     return count;
 }
@@ -2290,6 +2317,7 @@ function ensureSubcategoryLimit(option) {
                 if (isAutoGrantedLocked(id)) continue;
                 const oldestOption = findOptionById(id);
                 if (!oldestOption) continue;
+                if (oldestOption.bypassSubcategoryMaxSelections === true) continue;
                 removeSelection(oldestOption);
                 removed = true;
                 break;
@@ -3288,8 +3316,9 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
         const helpHtml = `<span class=\"prereq-help\" title=\"${prereqHelpTitle.replace(/\"/g, '&quot;')}\">?</span>`;
         requirements.innerHTML += `🔒 Requires: ${helpHtml}<br>${prereqLines.join("<br>")}`;
 
-        if (opt.conflictsWith && Array.isArray(opt.conflictsWith) && opt.conflictsWith.length > 0) {
-            const conflictLines = opt.conflictsWith.map(id => {
+        const conflictIds = getOptionConflictIds(opt);
+        if (conflictIds.length > 0) {
+            const conflictLines = conflictIds.map(id => {
                 const label = getOptionLabelMarkup(id) || id;
                 const selected = !!selectedOptions[id];
                 const symbol = selected ? '❌' : '✅';
@@ -3299,8 +3328,9 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
         }
     }
 
-    if ((!requirements.innerHTML || !requirements.innerHTML.includes('Incompatible With')) && opt.conflictsWith && Array.isArray(opt.conflictsWith) && opt.conflictsWith.length > 0) {
-        const conflictLines = opt.conflictsWith.map(id => {
+    const conflictIds = getOptionConflictIds(opt);
+    if ((!requirements.innerHTML || !requirements.innerHTML.includes('Incompatible With')) && conflictIds.length > 0) {
+        const conflictLines = conflictIds.map(id => {
             const label = getOptionLabelMarkup(id) || id;
             const selected = !!selectedOptions[id];
             const symbol = selected ? '❌' : '✅';
@@ -3774,6 +3804,16 @@ function prereqReferencesId(prereq, id) {
     }
 
     return false;
+}
+
+function getOptionConflictIds(option) {
+    if (!option?.id) return [];
+    const ids = new Set(Array.isArray(option.conflictsWith) ? option.conflictsWith : []);
+    getAllOptions().forEach(other => {
+        if (!other || other.id === option.id || !Array.isArray(other.conflictsWith)) return;
+        if (other.conflictsWith.includes(option.id)) ids.add(other.id);
+    });
+    return Array.from(ids);
 }
 
 function createThemeToggleButton() {
