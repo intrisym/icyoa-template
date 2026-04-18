@@ -2539,6 +2539,86 @@ function doesDiscountRuleQualify(rule) {
     return false;
 }
 
+function formatConditionalCostResult(cost = {}) {
+    return Object.entries(cost || {})
+        .filter(([_, value]) => Number.isFinite(Number(value)))
+        .map(([type, value]) => {
+            const numeric = Number(value);
+            return numeric < 0
+                ? `Gain: ${type} ${Math.abs(numeric)}`
+                : `Cost: ${type} ${numeric}`;
+        })
+        .join("; ");
+}
+
+function formatModifiedCostRuleCondition(rule = {}) {
+    if (Array.isArray(rule.idsAny) && rule.idsAny.length > 0) {
+        const minSelected = Number.isInteger(rule.minSelected) ? rule.minSelected : 1;
+        const labels = rule.idsAny.map(id => getOptionLabelMarkup(String(id).split('__')[0]) || id);
+        return `at least ${minSelected} of ${labels.join(", ")}`;
+    }
+    const triggerIds = getDiscountRuleTriggerIds(rule);
+    if (triggerIds.length > 0) {
+        return triggerIds
+            .map(id => {
+                const [baseId, countSuffix] = String(id).split('__');
+                const label = getOptionLabelMarkup(baseId) || baseId;
+                return countSuffix ? `${label} (x${countSuffix})` : label;
+            })
+            .join(" + ");
+    }
+    return "condition met";
+}
+
+function getModifiedCostRuleConditionKey(rule = {}) {
+    if (Array.isArray(rule.idsAny) && rule.idsAny.length > 0) {
+        const minSelected = Number.isInteger(rule.minSelected) ? rule.minSelected : 1;
+        return `any:${minSelected}:${rule.idsAny.join('|')}`;
+    }
+    const triggerIds = getDiscountRuleTriggerIds(rule);
+    if (triggerIds.length > 0) {
+        return `all:${triggerIds.join('|')}`;
+    }
+    return "conditionless";
+}
+
+function getModifiedCostDisplayRows(option, subcat) {
+    const rowsByCondition = new Map();
+    const baseCost = getOptionBaseCost(option);
+    const rules = [
+        ...getModifiedCostRules(subcat).map((rule, index) => ({ rule, index, scopeOrder: 0 })),
+        ...getModifiedCostRules(option).map((rule, index) => ({ rule, index, scopeOrder: 1 }))
+    ]
+        .filter(({ rule }) => !isConditionalGrantRule(rule))
+        .sort((a, b) =>
+            a.scopeOrder - b.scopeOrder
+            || getModifiedCostRulePriority(a.rule, a.index) - getModifiedCostRulePriority(b.rule, b.index)
+            || a.index - b.index
+        );
+
+    rules.forEach(({ rule }) => {
+        const condition = formatModifiedCostRuleCondition(rule);
+        if (!condition) return;
+        const conditionKey = getModifiedCostRuleConditionKey(rule);
+        const previous = rowsByCondition.get(conditionKey);
+        const resolvedCost = applyModifiedCostRule(previous?.resolvedCost || baseCost, rule);
+        const result = formatConditionalCostResult(resolvedCost);
+        if (!result) return;
+        rowsByCondition.set(conditionKey, {
+            active: doesDiscountRuleQualify(rule),
+            condition,
+            result,
+            resolvedCost
+        });
+    });
+
+    return Array.from(rowsByCondition.values()).map(({ active, condition, result }) => ({
+        active,
+        condition,
+        result
+    }));
+}
+
 function getConditionalGrantProviderLabel(rule, ruleIndex) {
     const ids = getDiscountRuleTriggerIds(rule);
     if (!ids.length) return `Conditional Rule ${ruleIndex + 1}`;
@@ -3228,6 +3308,15 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
 
     if (gain.length) requirements.innerHTML += `Gain: ${gain.join(', ')}<br>`;
     if (spend.length) requirements.innerHTML += `Cost: ${spend.join(', ')}<br>`;
+
+    const conditionalCostRows = getModifiedCostDisplayRows(opt, subcat);
+    if (conditionalCostRows.length > 0) {
+        const rows = conditionalCostRows.map(row => {
+            const status = row.active ? "✅" : "❌";
+            return `${status} if ${row.condition}, ${row.result}`;
+        });
+        requirements.innerHTML += `Conditional Costs:<br>${rows.join("<br>")}<br>`;
+    }
 
     // Indicate modified cost availability/applied for this item.
     const displayDiffers = Object.entries(displayCost || {}).some(([type, val]) => val !== (originalCost[type] ?? val));

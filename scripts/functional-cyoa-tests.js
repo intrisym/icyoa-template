@@ -27,6 +27,7 @@ const FEATURE_COVERAGE = [
     "subcategory-wide relative modified costs",
     "modified cost minCost and maxCost clamps",
     "option modified costs override subcategory modified costs",
+    "conditional cost display rows show resulting gain/cost without scope prefixes",
     "legacy discounts fallback for old CYOAs",
     "idsAny/minSelected conditional cost rules",
     "automatic option grants, locked grants, and free granted selections",
@@ -430,6 +431,78 @@ class CyoaEngine {
     isConditionalGrantRule(rule) {
         const slots = Number(rule?.slots) || 0;
         return slots > 0 && (rule.mode === "free" || rule.mode === "half");
+    }
+
+    formatConditionalCostResult(cost = {}) {
+        return Object.entries(cost || {})
+            .filter(([_, value]) => Number.isFinite(Number(value)))
+            .map(([type, value]) => {
+                const numeric = Number(value);
+                return numeric < 0
+                    ? `Gain: ${type} ${Math.abs(numeric)}`
+                    : `Cost: ${type} ${numeric}`;
+            })
+            .join("; ");
+    }
+
+    formatModifiedCostRuleCondition(rule = {}) {
+        if (Array.isArray(rule.idsAny) && rule.idsAny.length > 0) {
+            const minSelected = Number.isInteger(rule.minSelected) ? rule.minSelected : 1;
+            const labels = rule.idsAny.map(id => this.optionMap.get(String(id).split("__")[0])?.label || id);
+            return `at least ${minSelected} of ${labels.join(", ")}`;
+        }
+        const ids = rule.ids || (rule.id ? [rule.id] : []);
+        if (ids.length > 0) {
+            return ids.map(id => {
+                const [baseId, countSuffix] = String(id).split("__");
+                const label = this.optionMap.get(baseId)?.label || baseId;
+                return countSuffix ? `${label} (x${countSuffix})` : label;
+            }).join(" + ");
+        }
+        return "condition met";
+    }
+
+    modifiedCostRuleConditionKey(rule = {}) {
+        if (Array.isArray(rule.idsAny) && rule.idsAny.length > 0) {
+            const minSelected = Number.isInteger(rule.minSelected) ? rule.minSelected : 1;
+            return `any:${minSelected}:${rule.idsAny.join("|")}`;
+        }
+        const ids = rule.ids || (rule.id ? [rule.id] : []);
+        if (ids.length > 0) return `all:${ids.join("|")}`;
+        return "conditionless";
+    }
+
+    conditionalCostDisplayLines(optionOrId) {
+        const option = typeof optionOrId === "string" ? this.option(optionOrId) : optionOrId;
+        const info = this.findSubcategoryInfo(option.id);
+        const baseCost = this.getBaseCost(option);
+        const rowsByCondition = new Map();
+        const rules = [
+            ...this.getModifiedCostRules(info.subcat).map((rule, index) => ({ rule, index, scopeOrder: 0 })),
+            ...this.getModifiedCostRules(option).map((rule, index) => ({ rule, index, scopeOrder: 1 }))
+        ]
+            .filter(({ rule }) => !this.isConditionalGrantRule(rule))
+            .sort((a, b) =>
+                a.scopeOrder - b.scopeOrder
+                || this.rulePriority(a.rule, a.index) - this.rulePriority(b.rule, b.index)
+                || a.index - b.index
+            );
+
+        rules.forEach(({ rule }) => {
+            const key = this.modifiedCostRuleConditionKey(rule);
+            const previous = rowsByCondition.get(key);
+            const status = this.ruleQualifies(rule) ? "✅" : "❌";
+            const condition = this.formatModifiedCostRuleCondition(rule);
+            const resolvedCost = this.applyModifiedCostRule(previous?.resolvedCost || baseCost, rule);
+            const result = this.formatConditionalCostResult(resolvedCost);
+            if (condition && result) {
+                rowsByCondition.set(key, {
+                    line: `${status} if ${condition}, ${result}`,
+                    resolvedCost
+                });
+            }
+        });
+        return Array.from(rowsByCondition.values()).map(row => row.line);
     }
 
     prerequisiteMet(requirement) {
@@ -1068,6 +1141,29 @@ test("modified cost hierarchy, legacy discounts, idsAny, and maxCost work", () =
     const maxEngine = CyoaEngine.synthetic();
     maxEngine.select("surchargeTrigger");
     assertDeepEqual(maxEngine.effectiveCost("maxClampBase"), { Points: 5 });
+});
+
+test("conditional cost display rows show resulting costs without scope prefixes", () => {
+    const inactiveEngine = CyoaEngine.synthetic();
+    assert.deepStrictEqual(inactiveEngine.conditionalCostDisplayLines("legacyDiscounted"), [
+        "❌ if Legacy Trigger, Cost: Points 1"
+    ]);
+
+    const activeEngine = CyoaEngine.synthetic();
+    activeEngine.select("discountTrigger");
+    const lines = activeEngine.conditionalCostDisplayLines("freeDefault");
+    assert(lines.includes("✅ if Discount Trigger, Cost: Points 0"));
+    assert(lines.every(line => !line.includes("option:") && !line.includes("subcategory:")));
+    assert(lines.every(line => !line.includes("(was")));
+});
+
+test("conditional cost display hides subcategory rows overridden by option rows", () => {
+    const engine = new CyoaEngine("lantern_corps_recruit.json");
+    const lines = engine.conditionalCostDisplayLines("speciesSpeciesPowerlessSpecies");
+    assert(lines.includes("❌ if Grounded Species, Gain: Points 1"));
+    assert(lines.includes("❌ if Overpowered Species, Cost: Points 0"));
+    assert.strictEqual(lines.filter(line => line.includes("Overpowered Species")).length, 1);
+    assert(!lines.includes("❌ if Overpowered Species, Cost: Points 3"));
 });
 
 test("automatic grants select targets for free and remove locked grants with their source", () => {
