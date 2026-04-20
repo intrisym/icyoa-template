@@ -26,10 +26,11 @@ const FEATURE_COVERAGE = [
     "option-level absolute modified costs",
     "subcategory-wide relative modified costs",
     "modified cost minCost and maxCost clamps",
-    "option modified costs override subcategory modified costs",
+    "option modified costs override subcategory modified costs and highest-priority matching rules win",
     "conditional cost display rows show resulting gain/cost without scope prefixes",
     "legacy discounts fallback for old CYOAs",
     "idsAny/minSelected conditional cost rules",
+    "Lantern Colorless Rings grant forced zero-point Emotional Instability and Characteristic Power discounts",
     "automatic option grants, locked grants, and free granted selections",
     "option-granted discount slots across target options",
     "custom JSON option fields are preserved and ignored by runtime logic",
@@ -110,6 +111,15 @@ class CyoaEngine {
                                 cost: { Points: 2 },
                                 modifiedCosts: [
                                     { ids: ["discountTrigger"], cost: { Points: 7 }, priority: 1 }
+                                ]
+                            },
+                            {
+                                id: "optionPriorityTarget",
+                                label: "Option Priority Target",
+                                cost: { Points: 9 },
+                                modifiedCosts: [
+                                    { ids: ["preA"], cost: { Points: 5 }, priority: 1 },
+                                    { ids: ["preB"], cost: { Points: 2 }, priority: 5 }
                                 ]
                             }
                         ]
@@ -384,20 +394,10 @@ class CyoaEngine {
         const option = typeof optionOrId === "string" ? this.option(optionOrId) : optionOrId;
         const info = this.findSubcategoryInfo(option.id);
         let cost = this.getBaseCost(option);
-        const matchingRules = [
-            ...this.getModifiedCostRules(info.subcat).map((rule, index) => ({ rule, index, scopeOrder: 0 })),
-            ...this.getModifiedCostRules(option).map((rule, index) => ({ rule, index, scopeOrder: 1 }))
-        ]
-            .filter(({ rule }) => !this.isConditionalGrantRule(rule) && this.ruleQualifies(rule))
-            .sort((a, b) =>
-                a.scopeOrder - b.scopeOrder
-                || this.rulePriority(a.rule, a.index) - this.rulePriority(b.rule, b.index)
-                || a.index - b.index
-            );
-
-        matchingRules.forEach(({ rule }) => {
-            cost = this.applyModifiedCostRule(cost, rule);
-        });
+        const winningRule = this.winningModifiedCostRule(option, info.subcat);
+        if (winningRule) {
+            cost = this.applyModifiedCostRule(cost, winningRule.rule);
+        }
 
         let bestCost = cost;
         let bestTotal = Object.values(bestCost).reduce((sum, value) => value > 0 ? sum + value : sum, 0);
@@ -426,6 +426,26 @@ class CyoaEngine {
                 : this.applyDiscountCost(bestCost, info.subcat.discountMode || "half");
         }
         return bestCost;
+    }
+
+    highestPriorityModifiedCostRule(rules = []) {
+        return rules
+            .filter(({ rule }) => !this.isConditionalGrantRule(rule) && this.ruleQualifies(rule))
+            .sort((a, b) =>
+                this.rulePriority(b.rule, b.index) - this.rulePriority(a.rule, a.index)
+                || b.index - a.index
+            )[0] || null;
+    }
+
+    winningModifiedCostRule(option, subcat) {
+        const optionRule = this.highestPriorityModifiedCostRule(
+            this.getModifiedCostRules(option).map((rule, index) => ({ rule, index }))
+        );
+        if (optionRule) return optionRule;
+
+        return this.highestPriorityModifiedCostRule(
+            this.getModifiedCostRules(subcat).map((rule, index) => ({ rule, index }))
+        );
     }
 
     isConditionalGrantRule(rule) {
@@ -1129,14 +1149,20 @@ test("modified cost hierarchy, legacy discounts, idsAny, and maxCost work", () =
     assertDeepEqual(engine.effectiveCost("freeDefault"), { Points: 0 });
     assertDeepEqual(engine.effectiveCost("optionOverride"), { Points: 7 });
 
+    const subcategoryPriorityEngine = CyoaEngine.synthetic();
+    subcategoryPriorityEngine.select("discountTrigger");
+    subcategoryPriorityEngine.select("surchargeTrigger");
+    assertDeepEqual(subcategoryPriorityEngine.effectiveCost("freeDefault"), { Points: 4 }, "Higher-priority subcategory rule should win instead of stacking");
+    assertDeepEqual(subcategoryPriorityEngine.effectiveCost("optionOverride"), { Points: 7 }, "Option-level rule should outrank subcategory rules regardless of priority");
+
     engine.select("legacyTrigger");
     assertDeepEqual(engine.effectiveCost("legacyDiscounted"), { Points: 1 });
 
     engine.select("preA");
     assertDeepEqual(engine.effectiveCost("anyRule"), { Points: 3 });
 
-    engine.select("surchargeTrigger");
-    assertDeepEqual(engine.effectiveCost("freeDefault"), { Points: 4 });
+    engine.select("preB");
+    assertDeepEqual(engine.effectiveCost("optionPriorityTarget"), { Points: 2 }, "Higher-priority option-level rule should win when multiple option rules match");
 
     const maxEngine = CyoaEngine.synthetic();
     maxEngine.select("surchargeTrigger");
@@ -1164,6 +1190,22 @@ test("conditional cost display hides subcategory rows overridden by option rows"
     assert(lines.includes("❌ if Overpowered Species, Cost: Points 0"));
     assert.strictEqual(lines.filter(line => line.includes("Overpowered Species")).length, 1);
     assert(!lines.includes("❌ if Overpowered Species, Cost: Points 3"));
+});
+
+test("lantern Colorless Rings force Emotional Instability and discount Characteristic Powers", () => {
+    const engine = new CyoaEngine("lantern_corps_recruit.json");
+    const startingPoints = engine.points.Points;
+    engine.select("emotionalSpectrumEmotionalSpectrumColor696969ColorlessRingsColor");
+
+    assert.strictEqual(engine.selectedOptions.weaknessesWeaknessesEmotionalInstability, 1);
+    assert.deepStrictEqual(engine.autoGrantedSelections.weaknessesWeaknessesEmotionalInstability, {
+        sourceId: "emotionalSpectrumEmotionalSpectrumColor696969ColorlessRingsColor",
+        canDeselect: false
+    });
+    assert.strictEqual(engine.points.Points, startingPoints);
+    assertDeepEqual(engine.effectiveCost("weaknessesWeaknessesEmotionalInstability"), { Points: 0 });
+    assertDeepEqual(engine.effectiveCost("ringPowersCharacteristicPowersEmotionalConstruct"), { Points: 0 });
+    assertDeepEqual(engine.effectiveCost("ringPowersCharacteristicPowersDeathEmpowerment"), { Points: 4 });
 });
 
 test("automatic grants select targets for free and remove locked grants with their source", () => {

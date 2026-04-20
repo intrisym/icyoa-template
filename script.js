@@ -316,20 +316,10 @@ function getOptionEffectiveCost(option, {
     let bestCost = baseCost;
     let bestTotal = Object.entries(baseCost).reduce((sum, [_, val]) => val > 0 ? sum + val : sum, 0);
 
-    const matchingCostRules = [
-        ...getModifiedCostRules(info.subcat).map((rule, index) => ({ rule, index, scopeOrder: 0 })),
-        ...getModifiedCostRules(option).map((rule, index) => ({ rule, index, scopeOrder: 1 }))
-    ]
-        .filter(({ rule }) => !isConditionalGrantRule(rule) && doesDiscountRuleQualify(rule))
-        .sort((a, b) =>
-            a.scopeOrder - b.scopeOrder
-            || getModifiedCostRulePriority(a.rule, a.index) - getModifiedCostRulePriority(b.rule, b.index)
-            || a.index - b.index
-        );
-
-    matchingCostRules.forEach(({ rule }) => {
-        bestCost = applyModifiedCostRule(bestCost, rule);
-    });
+    const winningRule = getWinningModifiedCostRule(option, info.subcat);
+    if (winningRule) {
+        bestCost = applyModifiedCostRule(baseCost, winningRule.rule);
+    }
     bestTotal = Object.entries(bestCost).reduce((sum, [_, val]) => val > 0 ? sum + val : sum, 0);
 
     const grantContexts = getActiveOptionGrantContexts(option.id);
@@ -2483,6 +2473,26 @@ function getDiscountRulePriority(rule, index = 0) {
 
 function getModifiedCostRulePriority(rule, index = 0) {
     return getDiscountRulePriority(rule, index);
+}
+
+function getHighestPriorityModifiedCostRule(rules = []) {
+    return rules
+        .filter(({ rule }) => !isConditionalGrantRule(rule) && doesDiscountRuleQualify(rule))
+        .sort((a, b) =>
+            getModifiedCostRulePriority(b.rule, b.index) - getModifiedCostRulePriority(a.rule, a.index)
+            || b.index - a.index
+        )[0] || null;
+}
+
+function getWinningModifiedCostRule(option, subcat) {
+    const optionRule = getHighestPriorityModifiedCostRule(
+        getModifiedCostRules(option).map((rule, index) => ({ rule, index }))
+    );
+    if (optionRule) return optionRule;
+
+    return getHighestPriorityModifiedCostRule(
+        getModifiedCostRules(subcat).map((rule, index) => ({ rule, index }))
+    );
 }
 
 function applyModifiedCostRule(currentCost = {}, rule = {}) {
