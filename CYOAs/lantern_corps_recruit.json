@@ -15,35 +15,36 @@
     "type": "points",
     "values": {
       "Points": 50,
-      "Color": 1
+      "Color": 1,
+      "Complications": 5
     },
     "allowNegative": [],
     "attributeRanges": {}
   },
   {
     "type": "settings",
-    "themeMode": "toggle"
+    "themeMode": "light"
   },
   {
     "type": "backpack",
-    "enabled": false
+    "enabled": true
   },
   {
     "type": "theme",
-    "bg-color": "#f9f9f9",
+    "bg-color": "#f3f7ff",
     "container-bg": "#ffffff",
-    "text-color": "#333333",
-    "text-muted": "#555555",
-    "accent-color": "#007acc",
+    "text-color": "#101828",
+    "text-muted": "#475467",
+    "accent-color": "#123c69",
     "accent-text": "#ffffff",
-    "border-color": "#dddddd",
-    "item-bg": "#f4f4f4",
-    "item-header-bg": "#e0e0e0",
-    "points-bg": "#f0f0f0",
-    "points-border": "#cccccc",
-    "points-text": "#000000",
-    "selection-glow-color": "#2563eb",
-    "shadow-color": "rgba(0,0,0,0.1)",
+    "border-color": "#b8c7e0",
+    "item-bg": "#eef4ff",
+    "item-header-bg": "#d9e7ff",
+    "points-bg": "linear-gradient(90deg, #b91c1c 0%, #f97316 16%, #facc15 32%, #16a34a 48%, #2563eb 64%, #7c3aed 80%, #111827 100%)",
+    "points-border": "#f8fafc",
+    "points-text": "#ffffff",
+    "selection-glow-color": "#facc15",
+    "shadow-color": "rgba(18, 60, 105, 0.18)",
     "font-base": "20px",
     "font-title": "44px",
     "font-description": "22px",
@@ -60,7 +61,15 @@
     "font-prereq-help": "17px",
     "font-label": "19px",
     "font-heading": "Verdana, sans-serif",
-    "font-body": "'Quicksand', sans-serif"
+    "font-body": "'Quicksand', sans-serif",
+    "option-meta-bg": "#f8fbff",
+    "option-meta-heading-bg": "rgba(18, 60, 105, 0.12)",
+    "option-meta-heading-text": "#101828",
+    "option-meta-points-color": "#facc15",
+    "option-meta-conditional-color": "#2563eb",
+    "option-meta-auto-grants-color": "#16a34a",
+    "option-meta-prerequisites-color": "#f97316",
+    "option-meta-conflicts-color": "#b91c1c"
   },
   {
     "type": "darkTheme",
@@ -94,7 +103,15 @@
     "font-prereq-help": "17px",
     "font-label": "19px",
     "font-heading": "Verdana, sans-serif",
-    "font-body": "'Quicksand', sans-serif"
+    "font-body": "'Quicksand', sans-serif",
+    "option-meta-bg": "#111827",
+    "option-meta-heading-bg": "rgba(185, 28, 28, 0.18)",
+    "option-meta-heading-text": "#f3f4f6",
+    "option-meta-points-color": "#fbbf24",
+    "option-meta-conditional-color": "#38bdf8",
+    "option-meta-auto-grants-color": "#22c55e",
+    "option-meta-prerequisites-color": "#f59e0b",
+    "option-meta-conflicts-color": "#f87171"
   },
   {
     "name": "Emotional Spectrum",
@@ -217,7 +234,13 @@
             "cost": {
               "Color": 1
             },
-            "id": "emotionalSpectrumEmotionalSpectrumColor696969ColorlessRingsColor"
+            "id": "emotionalSpectrumEmotionalSpectrumColor696969ColorlessRingsColor",
+            "autoGrants": [
+              {
+                "id": "weaknessesWeaknessesEmotionalInstability",
+                "canDeselect": false
+              }
+            ]
           },
           {
             "label": "[color=#696969]Power Prism[/color]",
@@ -225,7 +248,13 @@
             "cost": {
               "Color": 1
             },
-            "id": "emotionalSpectrumEmotionalSpectrumColor696969PowerPrismColor"
+            "id": "emotionalSpectrumEmotionalSpectrumColor696969PowerPrismColor",
+            "autoGrants": [
+              {
+                "id": "universeDivergencesCrossover",
+                "canDeselect": false
+              }
+            ]
           },
           {
             "label": "[color=#696969]Black Sun Orb[/color]",
@@ -233,7 +262,13 @@
             "cost": {
               "Color": 1
             },
-            "id": "emotionalSpectrumEmotionalSpectrumColor696969BlackSunOrbColor"
+            "id": "emotionalSpectrumEmotionalSpectrumColor696969BlackSunOrbColor",
+            "autoGrants": [
+              {
+                "id": "universeDivergencesCrossover",
+                "canDeselect": false
+              }
+            ]
           }
         ],
         "subcategories": []
@@ -256,7 +291,7 @@
             "label": "Yellow Belied",
             "description": "There was a bit of a mix-up; you do not cause great fear, you have great fear. You may be able to recharge your own ring, but other Yellow Lanterns will consider you a victim to feed from. ",
             "cost": {
-              "Points": 1
+              "Points": -1
             },
             "id": "emotionalSpectrumOptionalAdjustmentsYellowBelied",
             "prerequisites": "emotionalSpectrumEmotionalSpectrumColorD5b60aYellowColor"
@@ -284,7 +319,7 @@
       {
         "name": "Fractal Lanterns",
         "type": "storyBlock",
-        "text": "emotionalSpectrumEmotionalSpectrumColor696969FractalLanternsColor",
+        "text": "",
         "options": [
           {
             "label": "[color=#CC7722]Ochre[/color]",
@@ -318,7 +353,8 @@
           }
         ],
         "subcategories": [],
-        "maxSelections": 1
+        "maxSelections": 1,
+        "requiresOption": "emotionalSpectrumEmotionalSpectrumColor696969FractalLanternsColor"
       }
     ],
     "description": "All lantern Corps rely on the emotional spectrum to manipulate the universe. \n\nThe emotional spectrum is a form of energy that is generated by sentient life and which corresponds to the visible spectrum of life. There are three negative emotions: ([color=red]Red[/color], [color=orange]Orange[/color], and [color=#D5B60A]Yellow[/color]), a neutral state ([color=green]Green[/color]) and the three positive emotions ([color=blue]Blue[/color], [color=indigo]Indigo[/color], and [color=violet]Violet[/color]). \n\nBeyond the two extremes is the invisible spectrum ([color=#8B0000]Infrared[/color] and [color=#E75480]Ultraviolet[/color]), which was hidden until recently. The further away the colors are from the midpoint of [color=green]Green[/color], the more the spectrum controls the user instead of the other way around. \n\nThere is also [weight=500]Black[/weight] (the absence of the emotional spectrum) and [color=#808080]White[/color] (the combination of all of the emotional spectrum). Besides the existing colors, there are also anomalies like [color=#CD7F32]Gold[/color] and the colors of the **Fractal Lanterns** which does not seem to exist naturally. \n\nDifferent factions have have made use of the Emotional Spectrum for their own purposes. The Green Lantern Corps is the most famous, and deliberately or not, the other Lantern Corps follow their examples. Lantern Corps choose members (**Lanterns**) who epitomize their emotion, who are granted **Power Rings ** to manifest their powers using the Emotional Spectrum. Some Corps are considered enemies or allies, since some of the colors of the Emotional Spectrum are strong or weak to others. \n\nPick **One Color** Your choice in color will change what later options you can pick and the cost of some of those options. Options with \"**Any**\" or \"**Points**\" can be chosen by any lantern."
@@ -457,7 +493,7 @@
           },
           {
             "label": "Shared Emotions",
-            "description": "In your universe, the Emotional Spectrum is limited, the more Lanterns there are, the less powerful each individual one is. Unless there is high attrition or mass recruitment, it is unlikely you will detect any difference.\n\n",
+            "description": "In your universe, the Emotional Spectrum is limited, the more Lanterns there are, the less powerful each individual one is. Unless there is high attrition or mass recruitment, it is unlikely you will detect any difference.\n\n[-5 Points with Light Into the Darkness]\n\n[0 [color=orange]Orange[/color], [color=#696969]Power Prism[/color], [color=#696969]Black Sun Orb[/color], +1 Any]",
             "cost": {
               "Points": -1
             },
@@ -465,7 +501,6 @@
             "modifiedCosts": [
               {
                 "ids": [
-                  "emotionalSpectrumEmotionalSpectrumColorOrangeOrangeColor",
                   "universeOptionalLightIntoTheDarkness"
                 ],
                 "cost": {
@@ -474,32 +509,12 @@
               },
               {
                 "ids": [
-                  "universeOptionalLightIntoTheDarkness",
-                  "emotionalSpectrumEmotionalSpectrumColor696969PowerPrismColor"
-                ],
-                "cost": {
-                  "Points": 5
-                },
-                "priority": 2
-              },
-              {
-                "ids": [
-                  "emotionalSpectrumEmotionalSpectrumColor696969BlackSunOrbColor",
-                  "universeOptionalLightIntoTheDarkness"
-                ],
-                "cost": {
-                  "Points": 5
-                },
-                "priority": 3
-              },
-              {
-                "ids": [
                   "emotionalSpectrumEmotionalSpectrumColorOrangeOrangeColor"
                 ],
                 "cost": {
                   "Points": 0
                 },
-                "priority": 4
+                "priority": 2
               },
               {
                 "ids": [
@@ -508,7 +523,7 @@
                 "cost": {
                   "Points": 0
                 },
-                "priority": 5
+                "priority": 3
               },
               {
                 "ids": [
@@ -517,16 +532,7 @@
                 "cost": {
                   "Points": 0
                 },
-                "priority": 6
-              },
-              {
-                "ids": [
-                  "universeOptionalLightIntoTheDarkness"
-                ],
-                "cost": {
-                  "Points": 4
-                },
-                "priority": 7
+                "priority": 4
               }
             ]
           },
@@ -540,7 +546,7 @@
           },
           {
             "label": "Choose Doom",
-            "description": "Like Earth 3 or the Dark Multiverse, in your universe, evil will always triumph over good in the end. There can be short-term victories for good and different factions of evil can conflict, so success is never guaranteed. \n\n[Cost is reversed with Mirror universe.]",
+            "description": "Like Earth 3 or the Dark Multiverse, in your universe, evil will always triumph over good in the end. There can be short-term victories for good and different factions of evil can conflict, so success is never guaranteed. \n\n[Cost is reversed with Mirror universe.]\n\n[-15 [color=#E75480]Ultraviolet[/color], [color=Black]Black[/color]]\n[+15 [color=Green]Green[/color] , [color=Blue]Blue[/color], [color=indigo]Indigo[/color], [color=#CD7F32]Gold[/color], [color=#808080]White[/color]]\n[0 Any]",
             "cost": {},
             "id": "universeOptionalChooseDoom",
             "modifiedCosts": [
@@ -703,7 +709,7 @@
             "label": "Overpowered Species",
             "description": "In your universe, super-powered species are overpowered; it seems like they can only be stopped with their special weaknesses and they have more powers than they need. Lanterns can easily be overpowered when fighting them.\n\n[[weight=500]Superpowered Species[/weight] cost 3 points more.]",
             "cost": {
-              "Points": 7
+              "Points": -7
             },
             "id": "universeOptionalOverpoweredSpecies",
             "conflictsWith": [
@@ -712,7 +718,7 @@
           },
           {
             "label": "Light into the Darkness",
-            "description": "Your Lantern Corps is now defunct; it has been exterminated and you were chosen as a futile replacement. You have no support from other Lanterns and it is unlikely all the Corps enemies were destroyed at the same time.\n\n[Must take [weight=500]Light into the Darkness Duties[/weight].]",
+            "description": "Your Lantern Corps is now defunct; it has been exterminated and you were chosen as a futile replacement. You have no support from other Lanterns and it is unlikely all the Corps enemies were destroyed at the same time.",
             "cost": {
               "Points": -3
             },
@@ -743,7 +749,18 @@
             "label": "Powerless Species",
             "description": "Your species has no powers and must rely on your Power Ring. This include species like: [weight=500]Humans, Korugaran, Ungarans, Rannians, Qwardians, Kreel, Xudarians, Talokites, Dominators, Kroloteans, The Reach, Gordanians, Exxorians[/weight]",
             "cost": {},
-            "id": "speciesSpeciesPowerlessSpecies"
+            "id": "speciesSpeciesPowerlessSpecies",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "universeOptionalOverpoweredSpecies"
+                ],
+                "cost": {
+                  "Points": 0
+                },
+                "priority": 1
+              }
+            ]
           },
           {
             "label": "Almeracian",
@@ -880,7 +897,9 @@
           {
             "label": "New God",
             "description": "The New Gods are natives of the planets of New Genesis and Apokolips, twinned planets outside the universe of contrasting morality. Genesisians are peaceful and have equalized strength, while the Apololiptians are cruel and have a hierarchy of power. The average New God is superior to mortals in every metric, though they are fatally poisoned by Radion.",
-            "cost": {},
+            "cost": {
+              "Points": 15
+            },
             "id": "speciesSpeciesNewGod"
           },
           {
@@ -918,7 +937,9 @@
           {
             "label": "Yautja",
             "description": "Yautja are a species known for their ritualistic trophy hunting of other lifeforms. They have hunted many of the members of the Justice League. Yautja are strong enough that they hunt warriors from other species for sport.",
-            "cost": {},
+            "cost": {
+              "Points": 2
+            },
             "id": "speciesSpeciesYautja",
             "prerequisites": "universeDivergencesCrossover"
           }
@@ -1017,7 +1038,7 @@
         "options": [
           {
             "label": "Emotional Empowerment",
-            "description": "Lanterns can recharge their rings with people feeling their matching color. White Lanterns can recharge using any of the seven basic emotions of the Spectrum.\n\n[+3 [color=#808080]White[/color], +1 Any]",
+            "description": "Lanterns can recharge their rings with people feeling their matching color. White Lanterns can recharge using any of the seven basic emotions of the Spectrum.\n\n[+3 [color=#808080]White[/color] or [color=#696969]Colorless Ring[/color], +1 Any]",
             "cost": {
               "Points": -1
             },
@@ -1038,6 +1059,15 @@
                   "Points": -3
                 },
                 "priority": 1
+              },
+              {
+                "ids": [
+                  "emotionalSpectrumEmotionalSpectrumColor696969ColorlessRingsColor"
+                ],
+                "cost": {
+                  "Points": -3
+                },
+                "priority": 2
               }
             ]
           },
@@ -1105,7 +1135,7 @@
           },
           {
             "label": "Emotional Reading",
-            "description": "As the [weight=500]Death Empowerment[/death] of Black Lanterns is more effective on people feeling strong emotions, Black Lanterns can sense strong emotions.\n\n[+1 [color=Black]Black[/color], -1 Any]",
+            "description": "As the [weight=500]Death Empowerment[/weight] of Black Lanterns is more effective on people feeling strong emotions, Black Lanterns can sense strong emotions.\n\n[+1 [color=Black]Black[/color], -1 Any]",
             "cost": {
               "Points": 1
             },
@@ -1446,7 +1476,8 @@
                 },
                 "priority": 1
               }
-            ]
+            ],
+            "prerequisites": "!ringPowersStandardPowersConstruct"
           },
           {
             "label": "Stunning Shards",
@@ -1690,6 +1721,20 @@
                 "priority": 1
               }
             ]
+          }
+        ],
+        "modifiedCosts": [
+          {
+            "ids": [
+              "emotionalSpectrumEmotionalSpectrumColor696969ColorlessRingsColor"
+            ],
+            "costDelta": {
+              "Points": -2
+            },
+            "minCost": {
+              "Points": 0
+            },
+            "priority": 1
           }
         ],
         "subcategories": []
@@ -2077,7 +2122,7 @@
         "options": [
           {
             "label": "Emotional Consistency",
-            "description": "You were chosen because of a strong emotional state, but if it starts to wane, the ring will leave you and find another. A moment of weakness probably won't matter, but the longer you are not feeling your chosen emotion, the more likely the Power Ring will leave you.\n\n[-2 [color=Blue]Blue[/color], +5 Any]",
+            "description": "You were chosen because of a strong emotional state, but if it starts to wane, the ring will leave you and find another. A moment of weakness probably won't matter, but the longer you are not feeling your chosen emotion, the more likely the Power Ring will leave you.\n\nCan't have [color=#D5B60A]Yellow[/color] without [weight=500]Yellow Belied[/weight] or [color=indigo]Indigo[/color] without [weight=500]Compassionate Heart[/weight]\n\n[-2 [color=Blue]Blue[/color], +5 Any]",
             "cost": {
               "Points": -5
             },
@@ -2125,6 +2170,15 @@
                   "Points": 4
                 },
                 "priority": 2
+              },
+              {
+                "ids": [
+                  "emotionalSpectrumEmotionalSpectrumColor696969ColorlessRingsColor"
+                ],
+                "cost": {
+                  "Points": 0
+                },
+                "priority": 3
               }
             ]
           },
@@ -2340,7 +2394,8 @@
             "label": "Planetary Conenction",
             "description": "Some Green Lanterns who are [weight=500]Avatars of the Green[/weight] are powered by plants, so they grow weaker as they [weight=500]Fly[/weight] away from life-bearing planets. Theoretically, a Lantern could lose powers when far away from life-bearing planets, since the Emotional Spectrum is created by life.\n\n[+3 points without [weight=500]Flight[/weight]]",
             "cost": {
-              "Points": -10
+              "Points": -10,
+              "Complications": 2
             },
             "id": "weaknessesWeaknessesPlanetaryConenction",
             "modifiedCosts": [
@@ -2463,7 +2518,9 @@
           {
             "label": "Non-Physical Ring",
             "description": "Ultraviolet Lanterns do not have a physical Power Ring, but instead a tattoo, making it unremovable by physical force. Removing the offending hand might just make the tattoo move 9if the Lantern survives the dismemberment].\n\n[+1 [color=#E75480]Ultraviolet[/color], -3 Any] ",
-            "cost": {},
+            "cost": {
+              "Points": 3
+            },
             "id": "powerRingTraitNonPhysicalRing",
             "modifiedCosts": [
               {
@@ -2614,6 +2671,14 @@
             ]
           },
           {
+            "label": "Mandatory Oath",
+            "description": "You *must* say your Oath when recharging your Power Ring. If you change the words or cannot speak, you cannot charge your ring. ",
+            "cost": {
+              "Points": -1
+            },
+            "id": "powerRingBatteryModifiersMandatoryOath"
+          },
+          {
             "label": "Unaging Lantern",
             "description": "A simplified [weight=500]Age Modification[/weight], you power Battery keeps you young when you're close to it. If your Power battery is stole or [weight=500]Hiding[/weight] in another [weight=500]Dimension[/weight], you return to your expected age.",
             "cost": {
@@ -2636,6 +2701,14 @@
               "Points": 1
             },
             "id": "powerRingBatteryModifiersColorTheft"
+          },
+          {
+            "label": "False Battery",
+            "description": "You have managed to cobble together a Power Battery to recharge your ring, either in addition to or instead of a true Power Battery. Not being a godlike being, your Power Battery is inferior and liable to break, but it is better than nothing. ",
+            "cost": {
+              "Points": 3
+            },
+            "id": "powerRingBatteryModifiersFalseBattery"
           }
         ],
         "subcategories": []
@@ -2803,7 +2876,11 @@
             "description": "You would be considered a quitessential Lantern for your Lantern Corps. YOu are assigned a [weight=500]Sector[/weight], where you patrol to achieve the [weight=500]Goals[/weight] of your [weight=500]Corps[/weight]. Your supervisors may give you special assignments or send you help, but generally they trust you to do you job. ",
             "cost": {},
             "id": "actionsDutiesAverageLantern",
-            "prerequisites": "emotionalSpectrumEmotionalSpectrumColorD5b60aYellowColor || emotionalSpectrumEmotionalSpectrumColorGreenGreenColor || emotionalSpectrumEmotionalSpectrumColorBlueBlueColor || emotionalSpectrumEmotionalSpectrumColorVioletVioletColor || emotionalSpectrumEmotionalSpectrumColor696969BlackSunOrbColor"
+            "prerequisites": "emotionalSpectrumEmotionalSpectrumColorD5b60aYellowColor || emotionalSpectrumEmotionalSpectrumColorGreenGreenColor || emotionalSpectrumEmotionalSpectrumColorBlueBlueColor || emotionalSpectrumEmotionalSpectrumColorVioletVioletColor || emotionalSpectrumEmotionalSpectrumColor696969BlackSunOrbColor",
+            "conflictsWith": [
+              "actionsSectorNoSectorMobile",
+              "actionsSectorNoSectorDeadbeat"
+            ]
           },
           {
             "label": "Paragon",
@@ -2821,39 +2898,68 @@
               "Points": -2
             },
             "id": "actionsDutiesIrritation",
-            "prerequisites": "emotionalSpectrumEmotionalSpectrumColorD5b60aYellowColor || emotionalSpectrumEmotionalSpectrumColorGreenGreenColor || emotionalSpectrumEmotionalSpectrumColorBlueBlueColor || emotionalSpectrumEmotionalSpectrumColorVioletVioletColor || emotionalSpectrumEmotionalSpectrumColor696969BlackSunOrbColor"
+            "prerequisites": "emotionalSpectrumEmotionalSpectrumColorD5b60aYellowColor || emotionalSpectrumEmotionalSpectrumColorGreenGreenColor || emotionalSpectrumEmotionalSpectrumColorBlueBlueColor || emotionalSpectrumEmotionalSpectrumColorVioletVioletColor || emotionalSpectrumEmotionalSpectrumColor696969BlackSunOrbColor",
+            "conflictsWith": [
+              "actionsSectorNoSectorDeadbeat",
+              "actionsSectorNoSectorMobile",
+              "issuesComplicationsAlliedLantern"
+            ]
           },
           {
-            "label": "Planetart Assignment",
+            "label": "Planetary Assignment",
             "description": "In some unusual circumstances, Lanterns are assigned a single planet or star system instead of an entire Sector. You won;t be provided an assistance; if you have all of your powers and still cannot handle one planet, you are not fit to be a Lantern.",
             "cost": {
-              "Points": -2
+              "Points": -2,
+              "Complications": 2
             },
-            "id": "actionsDutiesPlanetartAssignment",
-            "prerequisites": "emotionalSpectrumEmotionalSpectrumColorD5b60aYellowColor || emotionalSpectrumEmotionalSpectrumColorGreenGreenColor || emotionalSpectrumEmotionalSpectrumColorBlueBlueColor || emotionalSpectrumEmotionalSpectrumColorVioletVioletColor || emotionalSpectrumEmotionalSpectrumColor696969BlackSunOrbColor"
+            "id": "actionsDutiesPlanetaryAssignment",
+            "prerequisites": "emotionalSpectrumEmotionalSpectrumColorD5b60aYellowColor || emotionalSpectrumEmotionalSpectrumColorGreenGreenColor || emotionalSpectrumEmotionalSpectrumColorBlueBlueColor || emotionalSpectrumEmotionalSpectrumColorVioletVioletColor || emotionalSpectrumEmotionalSpectrumColor696969BlackSunOrbColor",
+            "conflictsWith": [
+              "actionsSectorNoSectorMobile",
+              "actionsSectorNoSectorDeadbeat",
+              "issuesComplicationsAlliedLantern"
+            ]
           },
           {
             "label": "Management",
-            "description": "The Lantern Corps are big organizations and they need someone to deal with the minutiae of running it. You might be a drill sergeant, administrator, researcher, cook, or other such jobs. You won't be having adventures and you will rarely use your powers, but you can still take pride in your job.",
+            "description": "The Lantern Corps are big organizations and they need someone to deal with the minutiae of running it. You might be a drill sergeant, administrator, researcher, cook, or other such jobs. You won't be having adventures and you will rarely use your powers, but you can still take pride in your job.\n\n[Skips Nemesis]",
             "cost": {},
             "id": "actionsDutiesManagement",
-            "prerequisites": "emotionalSpectrumEmotionalSpectrumColorD5b60aYellowColor || emotionalSpectrumEmotionalSpectrumColorGreenGreenColor || emotionalSpectrumEmotionalSpectrumColorBlueBlueColor || emotionalSpectrumEmotionalSpectrumColorVioletVioletColor || emotionalSpectrumEmotionalSpectrumColor696969BlackSunOrbColor"
+            "prerequisites": "emotionalSpectrumEmotionalSpectrumColorD5b60aYellowColor || emotionalSpectrumEmotionalSpectrumColorGreenGreenColor || emotionalSpectrumEmotionalSpectrumColorBlueBlueColor || emotionalSpectrumEmotionalSpectrumColorVioletVioletColor || emotionalSpectrumEmotionalSpectrumColor696969BlackSunOrbColor",
+            "autoGrants": [
+              {
+                "id": "actionsSectorCorpsHeadquarters",
+                "canDeselect": false
+              }
+            ]
           },
           {
             "label": "Internal Affairs",
-            "description": "Lanterns are extremely powerful and the Lantern Corps need someone to make sure this power is not being misused. Like the Alpha-Lanterns of the Green Lantern Corps or the Black Circle of the Sinestro Corps, you observe other Lanterns to make sure they are obeying the mission of the Corps.",
+            "description": "Lanterns are extremely powerful and the Lantern Corps need someone to make sure this power is not being misused. Like the Alpha-Lanterns of the Green Lantern Corps or the Black Circle of the Sinestro Corps, you observe other Lanterns to make sure they are obeying the mission of the Corps.\n\n[Skips Nemesis]",
             "cost": {
               "Points": -1
             },
             "id": "actionsDutiesInternalAffairs",
-            "prerequisites": "emotionalSpectrumEmotionalSpectrumColorD5b60aYellowColor || emotionalSpectrumEmotionalSpectrumColorGreenGreenColor || emotionalSpectrumEmotionalSpectrumColorBlueBlueColor || emotionalSpectrumEmotionalSpectrumColorVioletVioletColor || emotionalSpectrumEmotionalSpectrumColor696969BlackSunOrbColor"
+            "prerequisites": "emotionalSpectrumEmotionalSpectrumColorD5b60aYellowColor || emotionalSpectrumEmotionalSpectrumColorGreenGreenColor || emotionalSpectrumEmotionalSpectrumColorBlueBlueColor || emotionalSpectrumEmotionalSpectrumColorVioletVioletColor || emotionalSpectrumEmotionalSpectrumColor696969BlackSunOrbColor",
+            "autoGrants": [
+              {
+                "id": "actionsSectorNoSectorMobile",
+                "canDeselect": false
+              }
+            ]
           },
           {
             "label": "Honor Guard",
-            "description": "The Honor Guard are assigned to the headquarters of the Lantern Corps, where they protect the base and leaders. Though they rarely use their powers, when they do, it is a fight for their lives, only the most powerful enemies will be able to reach the headquarters.",
+            "description": "The Honor Guard are assigned to the headquarters of the Lantern Corps, where they protect the base and leaders. Though they rarely use their powers, when they do, it is a fight for their lives, only the most powerful enemies will be able to reach the headquarters.\n\n[Skips Nemesis]",
             "cost": {},
             "id": "actionsDutiesHonorGuard",
-            "prerequisites": "emotionalSpectrumEmotionalSpectrumColorD5b60aYellowColor || emotionalSpectrumEmotionalSpectrumColorGreenGreenColor || emotionalSpectrumEmotionalSpectrumColorBlueBlueColor || emotionalSpectrumEmotionalSpectrumColorVioletVioletColor || emotionalSpectrumEmotionalSpectrumColor696969BlackSunOrbColor"
+            "prerequisites": "emotionalSpectrumEmotionalSpectrumColorD5b60aYellowColor || emotionalSpectrumEmotionalSpectrumColorGreenGreenColor || emotionalSpectrumEmotionalSpectrumColorBlueBlueColor || emotionalSpectrumEmotionalSpectrumColorVioletVioletColor || emotionalSpectrumEmotionalSpectrumColor696969BlackSunOrbColor",
+            "autoGrants": [
+              {
+                "id": "actionsSectorCorpsHeadquarters",
+                "canDeselect": false
+              }
+            ]
           },
           {
             "label": "Black Ops",
@@ -2862,7 +2968,13 @@
               "Points": -1
             },
             "id": "actionsDutiesBlackOps",
-            "prerequisites": "emotionalSpectrumEmotionalSpectrumColorD5b60aYellowColor || emotionalSpectrumEmotionalSpectrumColorGreenGreenColor || emotionalSpectrumEmotionalSpectrumColorBlueBlueColor || emotionalSpectrumEmotionalSpectrumColorVioletVioletColor || emotionalSpectrumEmotionalSpectrumColor696969BlackSunOrbColor"
+            "prerequisites": "emotionalSpectrumEmotionalSpectrumColorD5b60aYellowColor || emotionalSpectrumEmotionalSpectrumColorGreenGreenColor || emotionalSpectrumEmotionalSpectrumColorBlueBlueColor || emotionalSpectrumEmotionalSpectrumColorVioletVioletColor || emotionalSpectrumEmotionalSpectrumColor696969BlackSunOrbColor",
+            "autoGrants": [
+              {
+                "id": "actionsSectorNoSectorMobile",
+                "canDeselect": false
+              }
+            ]
           },
           {
             "label": "Possessed by the Entity",
@@ -2871,7 +2983,10 @@
               "Points": -20
             },
             "id": "actionsDutiesPossessedByTheEntity",
-            "prerequisites": "emotionalSpectrumEmotionalSpectrumColorD5b60aYellowColor || emotionalSpectrumEmotionalSpectrumColorGreenGreenColor || emotionalSpectrumEmotionalSpectrumColorBlueBlueColor"
+            "prerequisites": "emotionalSpectrumEmotionalSpectrumColorD5b60aYellowColor || emotionalSpectrumEmotionalSpectrumColorGreenGreenColor || emotionalSpectrumEmotionalSpectrumColorBlueBlueColor",
+            "conflictsWith": [
+              "actionsSectorNoSectorDeadbeat"
+            ]
           },
           {
             "label": "Possessed by the Predator",
@@ -2880,14 +2995,23 @@
               "Points": -5
             },
             "id": "actionsDutiesPossessedByThePredator",
-            "prerequisites": "emotionalSpectrumEmotionalSpectrumColorVioletVioletColor"
+            "prerequisites": "emotionalSpectrumEmotionalSpectrumColorVioletVioletColor",
+            "conflictsWith": [
+              "issuesComplicationsAlliedLantern"
+            ]
           },
           {
             "label": "Marching in File",
             "description": "Most Indigo Lanterns travel in nomadic bands, searching out people lacking in Compassion and forcing a Power Ring onto them. Indigo Lanterns also reject selfishness and individuality, so they work in the group, helping each other.",
             "cost": {},
             "id": "actionsDutiesMarchingInFile",
-            "prerequisites": "emotionalSpectrumEmotionalSpectrumColorIndigoIndigoColor"
+            "prerequisites": "emotionalSpectrumEmotionalSpectrumColorIndigoIndigoColor",
+            "autoGrants": [
+              {
+                "id": "actionsSectorNoSectorMobile",
+                "canDeselect": false
+              }
+            ]
           },
           {
             "label": "Spreading Out",
@@ -2896,16 +3020,25 @@
               "Points": -2
             },
             "id": "actionsDutiesSpreadingOut",
-            "prerequisites": "emotionalSpectrumEmotionalSpectrumColorIndigoIndigoColor"
+            "prerequisites": "emotionalSpectrumEmotionalSpectrumColorIndigoIndigoColor",
+            "conflictsWith": [
+              "actionsSectorNoSectorDeadbeat"
+            ]
           },
           {
             "label": "Minions of the Horde",
-            "description": "Most Black, Ultraviolet, and Red Lanterns are nearly mindless and simply follow one of the Heralds. Their job tends to be equally simple, attacking whoever the Herald commands.",
+            "description": "Most Black, Ultraviolet, and Red Lanterns are nearly mindless and simply follow one of the Heralds. Their job tends to be equally simple, attacking whoever the Herald commands.\n\n[Skips Nemesis]",
             "cost": {
               "Points": -5
             },
             "id": "actionsDutiesMinionsOfTheHorde",
-            "prerequisites": "emotionalSpectrumEmotionalSpectrumColorRedRedColor || emotionalSpectrumEmotionalSpectrumColorE75480UltravioletColor || emotionalSpectrumEmotionalSpectrumColorBlackBlackColor"
+            "prerequisites": "emotionalSpectrumEmotionalSpectrumColorRedRedColor || emotionalSpectrumEmotionalSpectrumColorE75480UltravioletColor || emotionalSpectrumEmotionalSpectrumColorBlackBlackColor",
+            "autoGrants": [
+              {
+                "id": "actionsSectorNoSectorMobile",
+                "canDeselect": false
+              }
+            ]
           },
           {
             "label": "Herald of the Horde",
@@ -2913,7 +3046,8 @@
             "cost": {},
             "id": "actionsDutiesHeraldOfTheHorde",
             "conflictsWith": [
-              "weaknessesWeaknessesOverwhelmingEmotions"
+              "weaknessesWeaknessesOverwhelmingEmotions",
+              "actionsSectorNoSectorDeadbeat"
             ],
             "prerequisites": "emotionalSpectrumEmotionalSpectrumColorRedRedColor || emotionalSpectrumEmotionalSpectrumColorE75480UltravioletColor || emotionalSpectrumEmotionalSpectrumColorBlackBlackColor"
           },
@@ -2924,21 +3058,30 @@
               "Points": -5
             },
             "id": "actionsDutiesPossessedByTheEntity1",
-            "prerequisites": "emotionalSpectrumEmotionalSpectrumColorRedRedColor || emotionalSpectrumEmotionalSpectrumColorE75480UltravioletColor || emotionalSpectrumEmotionalSpectrumColorBlackBlackColor"
+            "prerequisites": "emotionalSpectrumEmotionalSpectrumColorRedRedColor || emotionalSpectrumEmotionalSpectrumColorE75480UltravioletColor || emotionalSpectrumEmotionalSpectrumColorBlackBlackColor",
+            "conflictsWith": [
+              "actionsSectorNoSectorDeadbeat"
+            ]
           },
           {
             "label": "Mine, Mine, Mine",
             "description": "As Agent Orange, it is absurd to think that someone could order you around. Your only responsibility is to add to your collection. ",
             "cost": {},
             "id": "actionsDutiesMineMineMine",
-            "prerequisites": "emotionalSpectrumEmotionalSpectrumColorOrangeOrangeColor"
+            "prerequisites": "emotionalSpectrumEmotionalSpectrumColorOrangeOrangeColor",
+            "conflictsWith": [
+              "issuesComplicationsAlliedLantern"
+            ]
           },
           {
             "label": "Odd Jobs",
             "description": "You are given tasks by the Life Entity, though they do not always seem to be obviously useful. Sometimes, it will be logical like fighting Black Lanterns, but sometimes it is strange like burning down a forest or throwing a weapon at someone.",
             "cost": {},
             "id": "actionsDutiesOddJobs",
-            "prerequisites": "emotionalSpectrumEmotionalSpectrumColor808080WhiteColor"
+            "prerequisites": "emotionalSpectrumEmotionalSpectrumColor808080WhiteColor",
+            "conflictsWith": [
+              "actionsSectorNoSectorDeadbeat"
+            ]
           },
           {
             "label": "Possessed by the Life Entity",
@@ -2947,7 +3090,10 @@
               "Points": 20
             },
             "id": "actionsDutiesPossessedByTheLifeEntity",
-            "prerequisites": "emotionalSpectrumEmotionalSpectrumColor808080WhiteColor"
+            "prerequisites": "emotionalSpectrumEmotionalSpectrumColor808080WhiteColor",
+            "conflictsWith": [
+              "actionsSectorNoSectorDeadbeat"
+            ]
           },
           {
             "label": "Why shouldn't I keep it?",
@@ -2968,11 +3114,17 @@
             "description": "You have been sent back in time to solve some emergency with the timeline. You have some records of the critical points in history, so you travel around trying to fix the issues.",
             "cost": {},
             "id": "actionsDutiesSetRightWhatWentWrong",
-            "prerequisites": "emotionalSpectrumEmotionalSpectrumColorCd7f32GoldColor || emotionalSpectrumEmotionalSpectrumColor696969BlackSunOrbColor"
+            "prerequisites": "(emotionalSpectrumEmotionalSpectrumColorCd7f32GoldColor || emotionalSpectrumEmotionalSpectrumColor696969BlackSunOrbColor) && ringPowersSpecialPowersTimeTravel",
+            "autoGrants": [
+              {
+                "id": "actionsSectorNoSectorMobile",
+                "canDeselect": false
+              }
+            ]
           },
           {
             "label": "Ontological Paradox",
-            "description": "You found your ring/orb after it went back in time and your only job is to eventually learn how to [weight=500]Time Travel[/weight], so that you cna send it back in time for you to find. Do not forget about it or you will tear a hole in the universe. ",
+            "description": "You found your ring/orb after it went back in time and your only job is to eventually learn how to [weight=500]Time Travel[/weight], so that you can send it back in time for you to find. Do not forget about it or you will tear a hole in the universe. ",
             "cost": {},
             "id": "actionsDutiesOntologicalParadox",
             "prerequisites": "emotionalSpectrumEmotionalSpectrumColorCd7f32GoldColor || emotionalSpectrumEmotionalSpectrumColor696969BlackSunOrbColor"
@@ -2982,14 +3134,20 @@
             "description": "Though you do not have anyone to teach you, you did your best to fulfill the mission of your Lantern Corps. You guessed at what a [weight=500]Sector[/weight] would be, who would need to be punished and what is a suitable response. You are not perfect, but you are doing your best.",
             "cost": {},
             "id": "actionsDutiesSecondChance",
-            "prerequisites": "universeOptionalLightIntoTheDarkness"
+            "prerequisites": "universeOptionalLightIntoTheDarkness",
+            "conflictsWith": [
+              "actionsSectorNoSectorDeadbeat"
+            ]
           },
           {
             "label": "He Choose Poorly",
             "description": "Whoever gave you the last Power Ring made a bad decision. Despite your amazing cosmic powers and the precedence of your Lantern Corps, you do not seem to be using your powers responsibly. ",
             "cost": {},
             "id": "actionsDutiesHeChoosePoorly",
-            "prerequisites": "universeOptionalLightIntoTheDarkness"
+            "prerequisites": "universeOptionalLightIntoTheDarkness",
+            "conflictsWith": [
+              "issuesComplicationsAlliedLantern"
+            ]
           },
           {
             "label": "Independent",
@@ -3003,7 +3161,17 @@
             "description": "[weight=500]Luciphage the Starbreaker[/weight] has claimed that he will create a Power Battery that will allow you to recharge and you believed him. You will be sent across the universe to find the material to craft this Master Battery. Strangely, the other Lanterns seem to respond badly to this. ",
             "cost": {},
             "id": "actionsDutiesStarbreakerSSquad",
-            "prerequisites": "emotionalSpectrumEmotionalSpectrumColor696969FractalLanternsColor"
+            "prerequisites": "emotionalSpectrumEmotionalSpectrumColor696969FractalLanternsColor",
+            "autoGrants": [
+              {
+                "id": "actionsSectorNoSectorMobile",
+                "canDeselect": false
+              },
+              {
+                "id": "issuesNemesisLanternAlliance",
+                "canDeselect": false
+              }
+            ]
           },
           {
             "label": "Exchange Program",
@@ -3012,11 +3180,800 @@
               "Points": 2
             },
             "id": "actionsDutiesExchangeProgram",
-            "prerequisites": "actionsDutiesAverageLantern || actionsDutiesIrritation",
+            "prerequisites": "actionsDutiesAverageLantern || actionsDutiesIrritation || actionsDutiesPlanetaryAssignment || actionsDutiesManagement || actionsDutiesMarchingInFile || actionsDutiesHeraldOfTheHorde || actionsDutiesOddJobs",
             "bypassSubcategoryMaxSelections": true
+          },
+          {
+            "label": "Temporary Recruit",
+            "description": "You are not a good fir for your Lantern Corps, but everyone knows that; you were just recruited to fill out the numbers. You only have to work for a few days before the ring leaves you and finds someone more suitable. Perhaps you can convince your supervisors to extend the deadline, but probably not. ",
+            "cost": {
+              "Points": -10
+            },
+            "id": "actionsDutiesTemporaryRecruit",
+            "conflictsWith": [
+              "actionsSectorNoSectorDeadbeat"
+            ]
+          },
+          {
+            "label": "New Guardians",
+            "description": "You do not have a normal job, as you have been selected to work in a [weight=500]Lantern Alliance[/weight]. This coalition is formed to deal with crises that threaten the entire universe and are optimally made of seven Lanterns of the seven basic colors (but desperate times may lead to desperate measures.)",
+            "cost": {
+              "Points": 3
+            },
+            "id": "actionsDutiesNewGuardians",
+            "autoGrants": [
+              {
+                "id": "actionsSectorNoSectorMobile",
+                "canDeselect": false
+              }
+            ]
+          },
+          {
+            "label": "Stolen Valor",
+            "description": "You stole your Power Ring, so you are not beholden to anyone. You can do whatever you want and claim any background yo uwant. This does mean you will be hunted down by Lanterns who are *actually* members of your Lantern Corps.",
+            "cost": {
+              "Points": -2
+            },
+            "id": "actionsDutiesStolenValor",
+            "conflictsWith": [
+              "emotionalSpectrumEmotionalSpectrumColor696969FractalLanternsColor",
+              "emotionalSpectrumEmotionalSpectrumColor696969ColorlessRingsColor",
+              "emotionalSpectrumEmotionalSpectrumColor696969PowerPrismColor",
+              "universeOptionalLightIntoTheDarkness",
+              "issuesComplicationsAlliedLantern"
+            ],
+            "prerequisites": "powerRingTraitNoPasswordProtection",
+            "autoGrants": [
+              {
+                "id": "issuesNemesisVengefulLantern",
+                "canDeselect": false
+              }
+            ]
+          },
+          {
+            "label": "Fraud",
+            "description": "It is odd that you were chosen to wield a Power Ring, was it not? Well, it is because it is a fake ring, given to you to make your Lantern Corps look bad. These rings will eventually break, so your options are either convince your superiors that you deserve a real ring or enjoy your time left. ",
+            "cost": {
+              "Points": -3
+            },
+            "id": "actionsDutiesFraud"
+          },
+          {
+            "label": "Ignorant and Lost",
+            "description": "Through very unusual circumstances, you have no idea what a Lantern is and therefore cannot obey the mission of your Lantern Corps is, what sectors are or how a Power Battery works.",
+            "cost": {
+              "Points": -3
+            },
+            "id": "actionsDutiesIgnorantAndLost",
+            "prerequisites": "ringPowersStandardPowersOnboardComputer && (actionsSectorNoSectorMobile || actionsSectorNoSectorDeadbeat)",
+            "conflictsWith": [
+              "issuesComplicationsAlliedLantern",
+              "issuesComplicationsRivalLantern"
+            ]
           }
         ],
         "subcategories": []
+      },
+      {
+        "name": "Sector",
+        "type": "storyBlock",
+        "text": "The Guardian of the Universe split their territory (the Oan Protectorate) into 3600 sectors, with every standard sector being a pyramid-shaped wedge with the point centered on the planet Oa (Sector 0) and spreading out from there. The exact size of each Sector depends on the universe, but there is always a vast amount of territory to cover. Outside the Oan Protectorate is uncharted territory known as the Unknown Sectors or Frontier Space. ",
+        "options": [
+          {
+            "label": "Corps Headquarters",
+            "description": "Instead of being assigned a Sector, some Lanterns work at their Lantern Corps Headquarters. Though, they are still busy, they tend not to encounter the threats of the rest of the Sector. ",
+            "cost": {
+              "Complications": 5
+            },
+            "id": "actionsSectorCorpsHeadquarters",
+            "prerequisites": "actionsDutiesManagement || actionsDutiesHonorGuard"
+          },
+          {
+            "label": "Sector -1",
+            "description": "Sector -1 is in the paired antimatter universe, with Qward being the equivalent to Oa. The Weaponeers of Qward are old enemies of the Guardians of the Universe, so most Lanterns avoid Sector -1. However, the Weaponeers originally crafted the Power Rings of the Sinestro Corps, so they are sometimes found there.",
+            "cost": {
+              "Points": -1
+            },
+            "id": "actionsSectorSector1",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "emotionalSpectrumEmotionalSpectrumColorD5b60aYellowColor"
+                ],
+                "cost": {
+                  "Points": 0
+                },
+                "priority": 1
+              },
+              {
+                "ids": [
+                  "emotionalSpectrumEmotionalSpectrumColorGreenGreenColor"
+                ],
+                "cost": {
+                  "Points": -2
+                },
+                "priority": 2
+              }
+            ]
+          },
+          {
+            "label": "Sector 17",
+            "description": "Sector 17 was considered one of the most violent and crime-ridden Sectors, especially the planet Garnet. \n\nThe planet Sputa is alright, though.",
+            "cost": {
+              "Points": -2
+            },
+            "id": "actionsSectorSector17"
+          },
+          {
+            "label": "Sector 119",
+            "description": "Sector 119 was an unremarkable Sector, until the Yellow Lantern Despotellis infected the Sector, leading to the plague that exterminated 85% of the population. This led to anarchy in the Sector; the only reason it did not get worse is because criminals were also killed off.",
+            "cost": {},
+            "id": "actionsSectorSector119"
+          },
+          {
+            "label": "Sector 650",
+            "description": "Sector 650 is a dark Sector infested with vampires. With their burning blood, control over corpses, and strength over death, respecitively, Red, Black, and White Lanterns have an advantage over the vampires\n\n[-1 [color=Red]Red[/color], [color=Black]Black[/color], or [color=#808080]White[/color], +1 Any]",
+            "cost": {
+              "Points": -1
+            },
+            "id": "actionsSectorSector650",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "emotionalSpectrumEmotionalSpectrumColorRedRedColor"
+                ],
+                "cost": {
+                  "Points": 1
+                },
+                "priority": 1
+              },
+              {
+                "ids": [
+                  "emotionalSpectrumEmotionalSpectrumColorBlackBlackColor"
+                ],
+                "cost": {
+                  "Points": 1
+                },
+                "priority": 2
+              },
+              {
+                "ids": [
+                  "emotionalSpectrumEmotionalSpectrumColor808080WhiteColor"
+                ],
+                "cost": {
+                  "Points": 1
+                },
+                "priority": 3
+              }
+            ]
+          },
+          {
+            "label": "Sector 666",
+            "description": "The Manhunters were a prototype for the Green Lantern Corps, which eventually malfunctioned and exterminated all life in Sector 666. This massacre was the origin of the Red Lantern Corps and the reason why Nekron put the Black Lantern Corps Headquarters in Sector 666. Besides the Black Lantern Corps Headquarters in Sector 666, the only people in Sector 666 are scavengers and the lost.",
+            "cost": {},
+            "id": "actionsSectorSector666",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "emotionalSpectrumEmotionalSpectrumColorBlackBlackColor"
+                ],
+                "cost": {
+                  "Points": 1
+                },
+                "priority": 1
+              }
+            ]
+          },
+          {
+            "label": "Sector 1287",
+            "description": "Sector 1287 is protected by the Green Lantern the Puffball Collective, a hive mind of billions of spores. This leaves Sector 1287 as one of the safest Sectors.\n\n[+3 [color=#E75480]Ultraviolet[/color] or [color=Black]Black[/color], -2 Any]",
+            "cost": {
+              "Points": 2
+            },
+            "id": "actionsSectorSector1287",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "emotionalSpectrumEmotionalSpectrumColorBlackBlackColor"
+                ],
+                "cost": {
+                  "Points": -3
+                },
+                "priority": 1
+              },
+              {
+                "ids": [
+                  "emotionalSpectrumEmotionalSpectrumColorE75480UltravioletColor"
+                ],
+                "cost": {
+                  "Points": -3
+                },
+                "priority": 2
+              }
+            ]
+          },
+          {
+            "label": "Sector 1634",
+            "description": "The Green Lantern of Sector 1634 was an extremely hands-on micromanager and so the inhabitants of the sector treated him like a god. Once he was killed by his son, Lord Malvolio, and the next Green Lantern resigned, the sector fell into chaos.",
+            "cost": {
+              "Points": -1
+            },
+            "id": "actionsSectorSector1634"
+          },
+          {
+            "label": "Sector 2814",
+            "description": "As it contains Earth, Sector 2814 is choked with superheroes and supervillains. It also contains the headquarters of Ysmault and Nok, leaving it even more crowded with Lanterns. You really want to add to the congestion? \n\n[0 Points with Copernican Principle or Infinite Crises on Infinite Worlds]",
+            "cost": {
+              "Points": 7
+            },
+            "id": "actionsSectorSector2814",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "universeOptionalCopernicanPrinciple"
+                ],
+                "cost": {
+                  "Points": 0
+                },
+                "priority": 1
+              },
+              {
+                "ids": [
+                  "universeOptionalInfiniteCrisesOnInfiniteEarths"
+                ],
+                "cost": {
+                  "Points": 0
+                },
+                "priority": 2
+              }
+            ]
+          },
+          {
+            "label": "Sector 2828",
+            "description": "Sector 2828 contains the Vega system, which is where the Orange Power Battery was found by Agent Orange. The contract between Agent Orange and the Guardians of the Galaxy meant Green Lanterns were forbidden from entering the Vega system, leaving it a hotspot for crime.",
+            "cost": {},
+            "id": "actionsSectorSector2828",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "emotionalSpectrumEmotionalSpectrumColorGreenGreenColor"
+                ],
+                "cost": {
+                  "Points": -1
+                },
+                "priority": 1
+              }
+            ]
+          },
+          {
+            "label": "Sector 3600",
+            "description": "Though Sector 2600 was once an ordinary Sector, as the God T:D:H:D grew in power, it eventually reached the point that fused with the universe itself and killed all life in the Sector. The Mad God was imprisoned by the Guardians of the Universe, leaving Sector 3600 lifeless. The only people in Sector 3600 are scavengers and the lost. ",
+            "cost": {},
+            "id": "actionsSectorSector3600"
+          },
+          {
+            "label": "Sector 3601",
+            "description": "Sector 3601 is outside the territory of Oan Protectorate.After exterminating all life in Sector 666, the surviving Manhunters retreated to Biot in Sector 3601. The Manhunters are erratic in their programming, but it is likely they will kill anyone who enters their Sector, especially lanterns.",
+            "cost": {
+              "Points": -2
+            },
+            "id": "actionsSectorSector3601"
+          },
+          {
+            "label": "Other Sectors",
+            "description": "There are 3591 more sectors that you may be assigned to; there's no way to list them all.",
+            "cost": {},
+            "id": "actionsSectorOtherSectors"
+          },
+          {
+            "label": "No Sector (Mobile) ",
+            "description": "You have no Sector, as you travel throughout the universe to solve problems wherever they pop up. Everywhere you go will be unknown territory and you will never be able to keep allies.",
+            "cost": {
+              "Points": -1,
+              "Complications": 5
+            },
+            "id": "actionsSectorNoSectorMobile"
+          },
+          {
+            "label": "No Sector (Deadbeat) ",
+            "description": "You have no sector, as you have no supervisors or you ignore them. You go wherever you like ignoring or solving any problem you encounter. ",
+            "cost": {
+              "Points": 3,
+              "Complications": 5
+            },
+            "id": "actionsSectorNoSectorDeadbeat"
+          }
+        ],
+        "subcategories": [],
+        "maxSelections": 1
+      }
+    ]
+  },
+  {
+    "name": "Issues",
+    "subcategories": [
+      {
+        "name": "Complications",
+        "type": "storyBlock",
+        "text": "Though there may be famous planets within a Sector, there are still millions or billions of other planets that do not draw enough atetntion. Sometimes, there are unsuual events or inhabitants that the Lanterns need to deal with.\n\nTake a maximum of 5 (or a maximum of three with Planetary Assignment). Skip with Corps Headquarters or No Sector",
+        "options": [
+          {
+            "label": "Allied Lantern",
+            "description": "You share a Sector with another Lantern from either the same Lantern Corps or from a Lantern Corps with similar goals. You do not always work together, but you know you can get assistance from someone equally as powerful as you.\n\n[The [weight=500]Allied Lantern[/weight] can be created with this CYOA with 50 points or can be assumed to be an average Lantern.]",
+            "cost": {
+              "Points": 4,
+              "Complications": 1
+            },
+            "id": "issuesComplicationsAlliedLantern"
+          },
+          {
+            "label": "Rival Lantern",
+            "description": "You share a Sector with another Lantern from a Lantern Corps with antithetical goals. You will constantly come into conflict, but on matters threatening existence, you can at least get assistance then.\n\n[The [weight=500]Rival Lanterns[/weight] can be created with this CYOA with 50 points or can be assumed to be an average Lantern.]",
+            "cost": {
+              "Points": -4,
+              "Complications": 1
+            },
+            "id": "issuesComplicationsRivalLantern"
+          },
+          {
+            "label": "The Hand of Krona",
+            "description": "The Hand of Krona worships Krona, a Guardian of the Universe who corrupted the structure of the universe by watching its creation. The cult believes that this was a good thing and spends their time upgrading the universe with technology. They do not care about the opinions of the people they are cybernetically enhancing and their actions are slipshod and may cause more problems than they cause. ",
+            "cost": {
+              "Points": -2,
+              "Complications": 1
+            },
+            "id": "issuesComplicationsTheHandOfKrona"
+          },
+          {
+            "label": "Darkstar Jurisdiction",
+            "description": "The Darkstars considers much of your sector as their territory. The Darkstars are a peacekeeping force founded by the Controllers, a branch of the Malthusians, Though their Exosuits provide superpowers, they have no connection to the Emotional Spectrum. Lawful Lantern Corps tend to suffer from jurisdiction friction, while more criminal ones are hunted down.\n\n[+3 [color=Red]Red[/color], [color=orange]Orange[/color], [color=#D5B60A]Yellow[/color], [color=#E75480]Ultraviolet[/color], or [color=Black]Black[/color], +1 Any]",
+            "cost": {
+              "Points": -1,
+              "Complications": 1
+            },
+            "id": "issuesComplicationsDarkstarJurisdiction",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "emotionalSpectrumEmotionalSpectrumColorRedRedColor"
+                ],
+                "cost": {
+                  "Points": -3
+                },
+                "priority": 1
+              },
+              {
+                "ids": [
+                  "emotionalSpectrumEmotionalSpectrumColorOrangeOrangeColor"
+                ],
+                "cost": {
+                  "Points": -3
+                },
+                "priority": 2
+              },
+              {
+                "ids": [
+                  "emotionalSpectrumEmotionalSpectrumColorD5b60aYellowColor"
+                ],
+                "cost": {
+                  "Points": -3
+                },
+                "priority": 3
+              },
+              {
+                "ids": [
+                  "emotionalSpectrumEmotionalSpectrumColorE75480UltravioletColor"
+                ],
+                "cost": {
+                  "Points": -3
+                },
+                "priority": 4
+              },
+              {
+                "ids": [
+                  "emotionalSpectrumEmotionalSpectrumColorBlackBlackColor"
+                ],
+                "cost": {
+                  "Points": -3
+                },
+                "priority": 5
+              }
+            ]
+          },
+          {
+            "label": "Space Canine Patrol Agency Jurisdiction",
+            "description": "The Space Canine Patrol Agency considers much of your Sector their territory. The SCPA is a crime-fighting organization with super-powered members, but all those members are gods. They mainly concern themselves with dog-based crimes, but they my be involved with your actions.\n\n[+1 [color=Red]Red[/color], [color=orange]Orange[/color], [color=#D5B60A]Yellow[/color], [color=#E75480]Ultraviolet[/color], [color=Black]Black[/color], -1 Any]",
+            "cost": {
+              "Points": 1,
+              "Complications": 1
+            },
+            "id": "issuesComplicationsSpaceCaninePatrolAgencyJurisdiction",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "emotionalSpectrumEmotionalSpectrumColorBlackBlackColor"
+                ],
+                "cost": {
+                  "Points": -1
+                },
+                "priority": 1
+              },
+              {
+                "ids": [
+                  "emotionalSpectrumEmotionalSpectrumColorRedRedColor"
+                ],
+                "cost": {
+                  "Points": -1
+                },
+                "priority": 2
+              },
+              {
+                "ids": [
+                  "emotionalSpectrumEmotionalSpectrumColorOrangeOrangeColor"
+                ],
+                "cost": {
+                  "Points": -1
+                },
+                "priority": 3
+              },
+              {
+                "ids": [
+                  "emotionalSpectrumEmotionalSpectrumColorD5b60aYellowColor"
+                ],
+                "cost": {
+                  "Points": -1
+                },
+                "priority": 4
+              },
+              {
+                "ids": [
+                  "emotionalSpectrumEmotionalSpectrumColorE75480UltravioletColor"
+                ],
+                "cost": {
+                  "Points": -1
+                },
+                "priority": 5
+              }
+            ]
+          },
+          {
+            "label": "Space Pirates",
+            "description": "Space Pirates are active in your Sector. All Lanterns appreciate space pirates. None are strong enough to fight a Lantern, but there's always a bounty on them.",
+            "cost": {
+              "Points": 1,
+              "Complications": 1
+            },
+            "id": "issuesComplicationsSpacePirates"
+          },
+          {
+            "label": "Sun-Eater",
+            "description": "There is a Sun-Eater wandering through you Sector. As the name suggests, Sun-Eaters feed on entire stars. Killing a Sun-Eater is unlikely. Hal Jordan, infused with the entire energy of the Green Lantern Corps, died killing one. It might be easier to lure it towards uninhabited star systems.\n\n[-5 [color=Black]Black[/color], +5 Any]",
+            "cost": {
+              "Points": -5,
+              "Complications": 1
+            },
+            "id": "issuesComplicationsSunEater",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "emotionalSpectrumEmotionalSpectrumColorBlackBlackColor"
+                ],
+                "cost": {
+                  "Points": 5
+                },
+                "priority": 2
+              },
+              {
+                "ids": [
+                  "actionsDutiesPlanetaryAssignment"
+                ],
+                "cost": {
+                  "Points": -8
+                },
+                "priority": 1
+              }
+            ]
+          },
+          {
+            "label": "Terravore",
+            "description": "Terravores re planet eaters, but they farm planets to get the right taste. They can mind control the inhabitants to get them to reshape the planet's surface until they slice it up for eating. If a Lantern tries to interfere, they have comparable cosmic powers to fight back.\n\n[+6 with Planetary Assignment]",
+            "cost": {
+              "Points": -4,
+              "Complications": 1
+            },
+            "id": "issuesComplicationsTerravore",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "weaknessesWeaknessesPlanetaryConenction"
+                ],
+                "cost": {
+                  "Points": -6
+                },
+                "priority": 1
+              }
+            ]
+          },
+          {
+            "label": "Doomsday",
+            "description": "Doomsday is causing destruction on one of the planets of your Sector. Doomsday is a nigh-unkillable Krpytonian bioweapon. Though you could potentially kill him, he will just reanimate immune to however you killed him. Potentially, you could find a non-violent way to stop him from killing (or just leave him alone and let him kill only one planet.)\n\n[+5 with Planetary Assignment]\n\n[-3 Black, +3 Any]",
+            "cost": {
+              "Points": -3,
+              "Complications": 1
+            },
+            "id": "issuesComplicationsDoomsday",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "weaknessesWeaknessesPlanetaryConenction"
+                ],
+                "cost": {
+                  "Points": -5
+                },
+                "priority": 1
+              },
+              {
+                "ids": [
+                  "emotionalSpectrumEmotionalSpectrumColorBlackBlackColor"
+                ],
+                "cost": {
+                  "Points": 3
+                },
+                "priority": 2
+              }
+            ]
+          },
+          {
+            "label": "Lobo",
+            "description": "Lobo, the last Czarnian, is drifting through your Sector. He is an intergalactic bounty hunter and impossible to kill, but at the moment he is between jobs. He is not hunting you now, but he is prone to rash decisions and is a mean drunk.",
+            "cost": {
+              "Points": -2,
+              "Complications": 1
+            },
+            "id": "issuesComplicationsLobo"
+          },
+          {
+            "label": "Event Horizon",
+            "description": "The Event Horizon is an endless intergalactic rave run by Kindred Marx. It never stays in one place for long and is currently traveling through your Sector. Normally, a race is beneath the notice of Lanterns, but Event Horizon seems to attract a lot of superhuman visitors and they get very rowdy. Still, it's somewhere to relax between tasks.",
+            "cost": {
+              "Points": -1,
+              "Complications": 1
+            },
+            "id": "issuesComplicationsEventHorizon"
+          },
+          {
+            "label": "Kaiju",
+            "description": "At least one of the planets in your Sector is inhabited by a building-sized creatures. Each individual Kaiju tends to be unique, but most are gigantic and dangerous. They can be massively destructive when angered, but will depend their planet when invaded and are potential Lantern recruits. ",
+            "cost": {
+              "Points": -1,
+              "Complications": 1
+            },
+            "id": "issuesComplicationsKaiju"
+          },
+          {
+            "label": "High-String Populations",
+            "description": "You remember the [weight=500]Fractal Lanterns[/weight] and how they can appear wherever someone is feeling strong emotions? That includes the planets in your Sector. This can happen anywhere and every new Fractal Lantern is unstable and dangerous to others. There could even be the formation of brand new emotion/color combinations.",
+            "cost": {
+              "Points": -2,
+              "Complications": 1
+            },
+            "id": "issuesComplicationsHighStringPopulations",
+            "conflictsWith": [
+              "universeOptionalDuochromeUniverse",
+              "universeOptionalRoyGBiv",
+              "universeOptionalUnemotionalSource"
+            ]
+          },
+          {
+            "label": "Metabeings",
+            "description": "People with superpowers keeping cropping up in your worlds in your Sector, likely caused by a metagene, Gen-Factor or X-gene. Unlike [weight=500]Superpowered Species[/weight], these \"Metabeings\" occur in otherwise mundane species and vary widely in powers and abilities. Thankfully, less than 1% of the population, but on more populated planets, this can lead to millions of metabeings.  ",
+            "cost": {
+              "Points": -2,
+              "Complications": 1
+            },
+            "id": "issuesComplicationsMetabeings"
+          },
+          {
+            "label": "Doomed Homeworld",
+            "description": "There are reports that one of the populated worlds in your Sector is going to explode. This is not a natural act for planets, so it is probably a deliberate attack. You will need to find the cause, the solution, and a way to stop it from happening again. \n\n[+5 Planetary Assignment]\n\n[-3 Black, +3 Any]",
+            "cost": {
+              "Points": -3,
+              "Complications": 1
+            },
+            "id": "issuesComplicationsDoomedHomeworld",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "weaknessesWeaknessesPlanetaryConenction"
+                ],
+                "cost": {
+                  "Points": -5
+                },
+                "priority": 1
+              },
+              {
+                "ids": [
+                  "emotionalSpectrumEmotionalSpectrumColorBlackBlackColor"
+                ],
+                "cost": {
+                  "Points": 3
+                },
+                "priority": 2
+              }
+            ]
+          },
+          {
+            "label": "Bloodline Parasite",
+            "description": "The Bloodline Parasite are inter-dimensional monsters who entered the universe in your Sector. They harvest the spinal fluids of people to reproduce. If the target does not die, they gain random superpowers. They can shapeshift to disguise themselves and each has individual powers. If you do not have enough trouble dealing with the Parasites, the people with sudden superpowers will be a problem.",
+            "cost": {
+              "Points": -2,
+              "Complications": 1
+            },
+            "id": "issuesComplicationsBloodlineParasite"
+          },
+          {
+            "label": "Black Mercy Infestation",
+            "description": "There are Black Mercies growing on planets in your sector (possibly spread by seeds on the boots of travelers) . Black Mercies can entangle people and trap them in dreams to feed on their psyhic emissions. You will need to be careful when traveling or try to find the Green Lantern Mother Mercy, the sapient progenitor.",
+            "cost": {
+              "Points": -1,
+              "Complications": 1
+            },
+            "id": "issuesComplicationsBlackMercyInfestation",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "emotionalSpectrumEmotionalSpectrumColorBlackBlackColor"
+                ],
+                "cost": {
+                  "Points": 1
+                },
+                "priority": 1
+              }
+            ]
+          },
+          {
+            "label": "Krolotean Experiments",
+            "description": "Kroloteans are a diminutive race known for their scientific experimentation on other races. They would pose little threat to you personally: They are weak and their technology is focused on experimentation and stealth. Instead, their creations are the threat. Even discarded, specimens can slaughter cities. Kroloteans are active in your Sector, trying to make the perfect soldier to sell to other buyers.",
+            "cost": {
+              "Points": -2,
+              "Complications": 1
+            },
+            "id": "issuesComplicationsKroloteanExperiments"
+          },
+          {
+            "label": "Spider Guild Expansion",
+            "description": "The Spider Guild is an expansionist coalition. They send fleets of drones to find weak planets; once found, they strip the planet of resources and harvest the inhabitants for food. There are thousands of spider drones searching through your Sector. Each force is fragile, but they are happy to overwhelm you.\n\n[-2 [color=Black]Black[/color], +2 Any]",
+            "cost": {
+              "Points": -2,
+              "Complications": 1
+            },
+            "id": "issuesComplicationsSpiderGuildExpansion",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "emotionalSpectrumEmotionalSpectrumColorBlackBlackColor"
+                ],
+                "cost": {
+                  "Points": 2
+                },
+                "priority": 1
+              }
+            ]
+          },
+          {
+            "label": "Xenomorph Infestation",
+            "description": "Xenomorphs are a parasitoid, eusocial species of unknown origin. Xenomorph eggs hatch Facehuggers, which implant Chestbursters into any creatures, which grow into Drones, which may develop into Queens which lay eggs. Singular Xenomorphs are stalking threats while Xenomorph swarms can overwhelm cities. There are Xenomorphs somewhere in your Sector. They will be hard to find until there are overwhelming numbers. \n\n[-1 [color=Black]Black[/color], +1 Any]",
+            "cost": {
+              "Points": 1,
+              "Complications": 1
+            },
+            "id": "issuesComplicationsXenomorphInfestation",
+            "prerequisites": "universeDivergencesCrossover",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "emotionalSpectrumEmotionalSpectrumColorBlackBlackColor"
+                ],
+                "cost": {
+                  "Points": 1
+                },
+                "priority": 1
+              }
+            ]
+          }
+        ],
+        "subcategories": []
+      },
+      {
+        "name": "Nemesis",
+        "type": "storyBlock",
+        "text": "Power creates resentment and envy, so Lanterns are always coming into conflict with others. With your vast powers, most will be easily defeated, but a few are a class above the others. They can have powers matching or even surpassing a Lantern and might even return after death.",
+        "options": [
+          {
+            "label": "Bolphunga the Unrelenting",
+            "description": "Bolphunga the Unrelenting is a mercenary with a hatred for the Green Lantern Corps. He is also an indiot and has no superpowers, so is only threatening to Lanterns who do not have their Power Ring. ",
+            "cost": {},
+            "id": "issuesNemesisBolphungaTheUnrelenting"
+          },
+          {
+            "label": "Despero",
+            "description": "Despero is the tyrannical ruler of Kalanor. He originally just had a range of psychic powers like hypnosis, illusions, and telekinesis, but he was enhanced by the Flame of Pytar, giving him enough strenght and power to fight a Kryptonian. He is most often seen off-planet hunting down defectors or expanding his territory, but he is heavily motivated by spite. If you defeat him once, he will continually return to seek his revenge. He will also try different schemes each tie, using his mind, strenght, or advanced technology.",
+            "cost": {
+              "Points": -4
+            },
+            "id": "issuesNemesisDespero"
+          },
+          {
+            "label": "Evil Star",
+            "description": "Evil Star is a scientist from the planet Aoran who invented the \"Star-Band\" to gain immortality. The Star-Band harvests the energy of stars to prolong Evil Star's life, allow flight, create force blasts or hard-light constructs and generate Starlings (miniatures copies of Evil Star). Though Evil Star has conflicting morals, he fears death most of all. He will do anything he can to keep his Star-Brands and make sure he can continue harvesting stars.",
+            "cost": {
+              "Points": -3
+            },
+            "id": "issuesNemesisEvilStar"
+          },
+          {
+            "label": "Kanjar Ro",
+            "description": "Kanjar Ro is the dictator of the planet Dhor in Sector 2262. He carries an Energi-Rod that allows him to fly and communicate through hyper-space, as well as Gamma Gong which can paralyze others when struck, He has been fighting the other planets in his system (Alstair, Mosteel and LLarr) for decades and is always looking for an advantage. He believes there is something in your sector that can help him.",
+            "cost": {
+              "Points": -1
+            },
+            "id": "issuesNemesisKanjarRo"
+          },
+          {
+            "label": "Starro",
+            "description": "Starro is an ancient [weight=500]Star Conqueror[/weight], possibly the progenitor of the race. He enslaves planets to mind control people, but his age means he is far more practiced than other [weight=500]Star Conquerors[/weight] and has more powerful psychic abilities. People with superpowers retain them when controlled so he will try to infest you first before invading the planets in your sector. ",
+            "cost": {
+              "Points": -4
+            },
+            "id": "issuesNemesisStarro"
+          },
+          {
+            "label": "Mongul",
+            "description": "The Mongul lineage is generations of warlords who control Warworld, a mobile weaponized satellite with enough power to obliterate a planet. Though each is strong enough to fight an empowered Kryptonian, some are cunning as well. One of the Mongul trying to expand his territory and sees you a teh most obvious roadblock. Some Monguls have learned the strength of Power Rings and have enough emotional depth to wield them.",
+            "cost": {
+              "Points": -5
+            },
+            "id": "issuesNemesisMongul"
+          },
+          {
+            "label": "Luciphage the Starbreaker",
+            "description": "Somehow related to a [weight=500]Star-Eater[/weight], Luciphage feeds on all energy, including the energy of the Emotional Spectrum. When well fed, he has superhuman strength and durability, flight, size alteration, psychic abilities, and energy blasts. He has had many schemes over the yers to obtain more energy, most of them thwarted by the Green Lanterns.",
+            "cost": {
+              "Points": -5
+            },
+            "id": "issuesNemesisLuciphageTheStarbreaker"
+          },
+          {
+            "label": "Superwoman",
+            "description": "Luma Lynai is a superhero from the planet Staryl. She has the powers of a Kryptonian though she will lose those powers when exposed to the light of a yellow sun. She has a strong moral fiber, so she will only come in conflict with you if you are committing criminal acts.",
+            "cost": {
+              "Points": -2
+            },
+            "id": "issuesNemesisSuperwoman"
+          },
+          {
+            "label": "Vengeful Lantern",
+            "description": "You are being hunted by another Lantern, though the reason depends on circumstances. If you are a thief, it is obvious a Lantern trying to get back the stolen property. If you are from [weight=500]Internal Affairs[/weight], it might be a Lantern who is angry at being caught. Otherwise, it could be a Lantern from a rival Lantern Corps who is ruled up by your actions.",
+            "cost": {
+              "Points": -6
+            },
+            "id": "issuesNemesisVengefulLantern"
+          },
+          {
+            "label": "Lantern Alliance",
+            "description": "You are a universe-threatening villain, so an alliance of Lanterns from the different Lantern Corps have been formed to stop you. Most Lantern alliances involve one Lantern from each of the 7 basic colors, but it is possible your particular actions agitate a different set of Lanterns. Though they may bicker and fight, they know you must be stopped at any cost. ",
+            "cost": {
+              "Points": -15
+            },
+            "id": "issuesNemesisLanternAlliance",
+            "conflictsWith": [
+              "actionsDutiesNewGuardians"
+            ]
+          }
+        ],
+        "subcategories": [],
+        "maxSelections": 1,
+        "requiresOption": "!actionsDutiesManagement || !actionsDutiesInternalAffairs || !actionsDutiesHonorGuard || !actionsDutiesMinionsOfTheHorde"
       }
     ]
   }
