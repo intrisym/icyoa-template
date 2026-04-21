@@ -28,11 +28,13 @@ const FEATURE_COVERAGE = [
     "modified cost minCost and maxCost clamps",
     "option modified costs override subcategory modified costs and highest-priority matching rules win",
     "conditional cost display rows show resulting gain/cost without scope prefixes",
+    "automatic grant display rows show granted targets and selected state",
     "legacy discounts fallback for old CYOAs",
     "idsAny/minSelected conditional cost rules",
     "Lantern Colorless Rings grant forced zero-point Emotional Instability and Characteristic Power discounts",
     "automatic option grants, locked grants, and free granted selections",
     "option-granted discount slots across target options",
+    "theme settings include option metadata section colors",
     "custom JSON option fields are preserved and ignored by runtime logic",
     "packed export/import state round trips",
     "safe text formatting markup for color, size, weight, bold, and italic"
@@ -41,6 +43,17 @@ const FEATURE_COVERAGE = [
 function loadCyoa(filename) {
     return JSON.parse(fs.readFileSync(path.join(CYOAS_DIR, filename), "utf8"));
 }
+
+const OPTION_META_THEME_KEYS = [
+    "option-meta-bg",
+    "option-meta-heading-bg",
+    "option-meta-heading-text",
+    "option-meta-points-color",
+    "option-meta-conditional-color",
+    "option-meta-auto-grants-color",
+    "option-meta-prerequisites-color",
+    "option-meta-conflicts-color"
+];
 
 function walkSubcategories(subcategories, visitor, path = []) {
     if (!Array.isArray(subcategories)) return;
@@ -523,6 +536,16 @@ class CyoaEngine {
             }
         });
         return Array.from(rowsByCondition.values()).map(row => row.line);
+    }
+
+    autoGrantDisplayLines(optionOrId) {
+        const option = typeof optionOrId === "string" ? this.option(optionOrId) : optionOrId;
+        return this.normalizeAutoGrantRules(option).map(rule => {
+            const label = this.optionMap.get(rule.id)?.label || rule.id;
+            const status = this.selectedOptions[rule.id] ? "✅" : "❌";
+            const suffix = rule.canDeselect ? " (can be deselected)" : " (locked)";
+            return `${status} ${label}${suffix}`;
+        });
     }
 
     prerequisiteMet(requirement) {
@@ -1192,6 +1215,23 @@ test("conditional cost display hides subcategory rows overridden by option rows"
     assert(!lines.includes("❌ if Overpowered Species, Cost: Points 3"));
 });
 
+test("automatic grant display rows show granted targets and selected state", () => {
+    const engine = CyoaEngine.synthetic();
+    assert.deepStrictEqual(engine.autoGrantDisplayLines("grantSource"), [
+        "❌ Granted Locked (locked)"
+    ]);
+
+    engine.select("grantSource");
+    assert.deepStrictEqual(engine.autoGrantDisplayLines("grantSource"), [
+        "✅ Granted Locked (locked)"
+    ]);
+
+    const lanternEngine = new CyoaEngine("lantern_corps_recruit.json");
+    assert.deepStrictEqual(lanternEngine.autoGrantDisplayLines("emotionalSpectrumEmotionalSpectrumColor696969ColorlessRingsColor"), [
+        "❌ Emotional Instability (locked)"
+    ]);
+});
+
 test("lantern Colorless Rings force Emotional Instability and discount Characteristic Powers", () => {
     const engine = new CyoaEngine("lantern_corps_recruit.json");
     const startingPoints = engine.points.Points;
@@ -1277,6 +1317,27 @@ test("packed export/import preserves selections, points, and granted state", () 
     assert.deepStrictEqual(unpacked.categoryDiscountSelections, engine.categoryDiscountSelections);
     assert.deepStrictEqual(unpacked.optionGrantDiscountSelections, engine.optionGrantDiscountSelections);
     assert.deepStrictEqual(unpacked.autoGrantedSelections, engine.autoGrantedSelections);
+});
+
+test("theme settings include option metadata section colors", () => {
+    const scriptSource = fs.readFileSync(path.join(ROOT, "script.js"), "utf8");
+    const editorSource = fs.readFileSync(path.join(ROOT, "editor.js"), "utf8");
+    const cssSource = fs.readFileSync(path.join(ROOT, "style.css"), "utf8");
+
+    OPTION_META_THEME_KEYS.forEach(key => {
+        assert(scriptSource.includes(`"${key}"`), `script.js defaults should include ${key}`);
+        assert(editorSource.includes(`"${key}"`), `editor.js theme settings should include ${key}`);
+        assert(cssSource.includes(`--${key}`), `style.css should consume --${key}`);
+    });
+
+    fs.readdirSync(CYOAS_DIR)
+        .filter(file => file.endsWith(".json") && file !== "manifest.json")
+        .forEach(file => {
+            const data = loadCyoa(file);
+            const settings = data.find(entry => entry.type === "settings");
+            if (!settings) return;
+            assert(["toggle", "light", "dark", undefined].includes(settings.themeMode), `${file}: invalid themeMode`);
+        });
 });
 
 test("safe text formatting supports nesting and strips markup for plain labels", () => {

@@ -46,7 +46,15 @@ const DARK_THEME_VARS = {
     "points-border": "#fbbf24", /* Bright Yellow */
     "points-text": "#000000",
     "shadow-color": "rgba(0, 0, 0, 0.5)",
-    "selection-glow-color": "#2563eb"
+    "selection-glow-color": "#2563eb",
+    "option-meta-bg": "#111827",
+    "option-meta-heading-bg": "rgba(185, 28, 28, 0.18)",
+    "option-meta-heading-text": "#f3f4f6",
+    "option-meta-points-color": "#fbbf24",
+    "option-meta-conditional-color": "#38bdf8",
+    "option-meta-auto-grants-color": "#22c55e",
+    "option-meta-prerequisites-color": "#f59e0b",
+    "option-meta-conflicts-color": "#f87171"
 };
 
 function makeGlowShadow(color, blurPx, alpha) {
@@ -1372,6 +1380,14 @@ function applyCyoaData(rawData, {
             "selection-glow-color": "#2563eb",
             "selection-glow": "0 0 15px rgba(37, 99, 235, 0.6)",
             "selection-glow-hover": "0 0 20px rgba(37, 99, 235, 0.8)",
+            "option-meta-bg": "#f8fafc",
+            "option-meta-heading-bg": "rgba(139, 0, 0, 0.14)",
+            "option-meta-heading-text": "#2b2b2b",
+            "option-meta-points-color": "#ffd700",
+            "option-meta-conditional-color": "#0ea5e9",
+            "option-meta-auto-grants-color": "#16a34a",
+            "option-meta-prerequisites-color": "#f59e0b",
+            "option-meta-conflicts-color": "#dc2626",
             "font-base": "18px",
             "font-title": "48px",
             "font-description": "22px",
@@ -2220,6 +2236,15 @@ function normalizeAutoGrantRules(option) {
             return null;
         })
         .filter(rule => rule && rule.id);
+}
+
+function getAutoGrantDisplayRows(option) {
+    return normalizeAutoGrantRules(option).map(rule => ({
+        id: rule.id,
+        label: getOptionLabelMarkup(rule.id) || rule.id,
+        selected: !!selectedOptions[rule.id],
+        canDeselect: rule.canDeselect === true
+    }));
 }
 
 function isAutoGrantedLocked(optionId) {
@@ -3233,6 +3258,28 @@ function renderSubcategoryOptions(subcat, subcatContent, subcatKey, cat, catInde
     });
 }
 
+function appendOptionMetaSection(container, titleHtml, lines = [], className = "") {
+    if (!container || !titleHtml || !lines.length) return;
+    const section = document.createElement("div");
+    section.className = `option-meta-section${className ? ` ${className}` : ""}`;
+
+    const heading = document.createElement("div");
+    heading.className = "option-meta-heading";
+    heading.innerHTML = titleHtml;
+    section.appendChild(heading);
+
+    const body = document.createElement("div");
+    body.className = "option-meta-lines";
+    lines.forEach(line => {
+        const item = document.createElement("div");
+        item.className = "option-meta-line";
+        item.innerHTML = line;
+        body.appendChild(item);
+    });
+    section.appendChild(body);
+    container.appendChild(section);
+}
+
 function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDiscountUnlocked, catAutoApplyAll, isDiscountableSubcat) {
     const wrapper = document.createElement("div");
     wrapper.className = "option-wrapper";
@@ -3316,8 +3363,15 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
         }
     });
 
-    if (gain.length) requirements.innerHTML += `Gain: ${gain.join(', ')}<br>`;
-    if (spend.length) requirements.innerHTML += `Cost: ${spend.join(', ')}<br>`;
+    appendOptionMetaSection(
+        requirements,
+        "Points",
+        [
+            ...gain.map(line => `Gain: ${line}`),
+            ...spend.map(line => `Cost: ${line}`)
+        ],
+        "option-meta-points"
+    );
 
     const conditionalCostRows = getModifiedCostDisplayRows(opt, subcat);
     if (conditionalCostRows.length > 0) {
@@ -3325,7 +3379,17 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
             const status = row.active ? "✅" : "❌";
             return `${status} if ${row.condition}, ${row.result}`;
         });
-        requirements.innerHTML += `Conditional Costs:<br>${rows.join("<br>")}<br>`;
+        appendOptionMetaSection(requirements, "Conditional Costs", rows, "option-meta-conditional-costs");
+    }
+
+    const autoGrantRows = getAutoGrantDisplayRows(opt);
+    if (autoGrantRows.length > 0) {
+        const rows = autoGrantRows.map(row => {
+            const status = row.selected ? "✅" : "❌";
+            const suffix = row.canDeselect ? " (can be deselected)" : " (locked)";
+            return `${status} ${row.label}${suffix}`;
+        });
+        appendOptionMetaSection(requirements, "Automatically Grants", rows, "option-meta-auto-grants");
     }
 
     // Indicate modified cost availability/applied for this item.
@@ -3335,12 +3399,23 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
     const currentShowsFree = Object.entries(costToShow || {}).some(([type, val]) => val === 0 && (originalCost[type] ?? 0) > 0);
 
     if (selectedCount > 0 && currentPaidDiffers) {
-        requirements.innerHTML += currentShowsFree ? `Modified Cost Applied (Free)<br>` : `Modified Cost Applied<br>`;
+        appendOptionMetaSection(
+            requirements,
+            "Pricing Status",
+            [currentShowsFree ? "Modified Cost Applied (Free)" : "Modified Cost Applied"],
+            "option-meta-pricing-status"
+        );
     } else if (selectedCount === 0 && displayDiffers) {
-        requirements.innerHTML += displayShowsFree ? `Modified Cost Available (Free)<br>` : `Modified Cost Available<br>`;
+        appendOptionMetaSection(
+            requirements,
+            "Pricing Status",
+            [displayShowsFree ? "Modified Cost Available (Free)" : "Modified Cost Available"],
+            "option-meta-pricing-status"
+        );
     }
 
     // Show prerequisites...
+    let conflictRendered = false;
     if (opt.prerequisites && opt.prerequisites.length > 0) {
         let prereqLines = [];
         if (typeof opt.prerequisites === 'string') {
@@ -3413,7 +3488,7 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
             prereqHelpTitle = `${human}\n\nExpression: ${rawExpr}`;
         }
         const helpHtml = `<span class=\"prereq-help\" title=\"${prereqHelpTitle.replace(/\"/g, '&quot;')}\">?</span>`;
-        requirements.innerHTML += `🔒 Requires: ${helpHtml}<br>${prereqLines.join("<br>")}`;
+        appendOptionMetaSection(requirements, `🔒 Requires ${helpHtml}`, prereqLines, "option-meta-prerequisites");
 
         const conflictIds = getOptionConflictIds(opt);
         if (conflictIds.length > 0) {
@@ -3423,19 +3498,20 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
                 const symbol = selected ? '❌' : '✅';
                 return `${symbol} ${label}`;
             });
-            requirements.innerHTML += `<br>⚠️ Incompatible With:<br>${conflictLines.join("<br>")}`;
+            appendOptionMetaSection(requirements, "⚠️ Incompatible With", conflictLines, "option-meta-conflicts");
+            conflictRendered = true;
         }
     }
 
     const conflictIds = getOptionConflictIds(opt);
-    if ((!requirements.innerHTML || !requirements.innerHTML.includes('Incompatible With')) && conflictIds.length > 0) {
+    if (!conflictRendered && conflictIds.length > 0) {
         const conflictLines = conflictIds.map(id => {
             const label = getOptionLabelMarkup(id) || id;
             const selected = !!selectedOptions[id];
             const symbol = selected ? '❌' : '✅';
             return `${symbol} ${label}`;
         });
-        requirements.innerHTML += `<br>⚠️ Incompatible With:<br>${conflictLines.join("<br>")}`;
+        appendOptionMetaSection(requirements, "⚠️ Incompatible With", conflictLines, "option-meta-conflicts");
     }
 
     const desc = document.createElement("div");
