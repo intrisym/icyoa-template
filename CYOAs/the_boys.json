@@ -1,0 +1,1134 @@
+[
+  {
+    "type": "title",
+    "text": "The Boys"
+  },
+  {
+    "type": "description",
+    "text": "Welcome to a whole new world full of superheroes! Glorious figures stride the skies, blazing their way across the land full of purpose and determination. They race around the world, putting right injustices and helping the helpless, fierce and determined in their drive to help their fellow men and women!\n\nOr at least that’s what you’re expected to think. You see, this is a superhero world, but the people in it are not… well, either. Not all that Super, and certainly not Heroes. Forget Worm, forget Wildstorm. This is the world you go to when you want your illusions about saviors swooping from the skies to be well and truly shattered. All superheroics are, in the end, little more than corporate gimmicks by American Big Business, and one company in particular.\n\nControlling the Seven, the most powerful team in the world, Vought American is the biggest giant around, the greatest manufacturer of superheroes, and the greatest profiter.\n\nIt’s this world you’re going to, Jumper. Only time will tell what you make of it. Take these 1000 CP along, they could be of use."
+  },
+  {
+    "type": "headerImage",
+    "url": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fimages.thedirect.com%2Fmedia%2Farticle_full%2Fthe-boys-season-4-spin-off.jpg&f=1&nofb=1&ipt=1cc6fa6778bbc1bce6c53286a1f18520b473df556060c1e00efe885cd7ad77ef"
+  },
+  {
+    "type": "points",
+    "values": {
+      "CP": 1000
+    },
+    "allowNegative": [],
+    "attributeRanges": {}
+  },
+  {
+    "type": "settings",
+    "themeMode": "dark"
+  },
+  {
+    "type": "backpack",
+    "enabled": true
+  },
+  {
+    "type": "theme",
+    "bg-color": "#f9f9f9",
+    "container-bg": "#ffffff",
+    "text-color": "#333333",
+    "text-muted": "#555555",
+    "accent-color": "#007acc",
+    "accent-text": "#ffffff",
+    "border-color": "#dddddd",
+    "item-bg": "#f4f4f4",
+    "item-header-bg": "#e0e0e0",
+    "points-bg": "#f0f0f0",
+    "points-border": "#cccccc",
+    "points-text": "#000000",
+    "selection-glow-color": "#2563eb",
+    "shadow-color": "rgba(0,0,0,0.1)",
+    "option-meta-bg": "#f8fafc",
+    "option-meta-heading-bg": "rgba(0, 122, 204, 0.14)",
+    "option-meta-heading-text": "#333333",
+    "option-meta-points-color": "#cccccc",
+    "option-meta-conditional-color": "#0ea5e9",
+    "option-meta-auto-grants-color": "#16a34a",
+    "option-meta-prerequisites-color": "#f59e0b",
+    "option-meta-conflicts-color": "#dc2626",
+    "font-base": "20px",
+    "font-title": "44px",
+    "font-description": "22px",
+    "font-tab": "20px",
+    "font-accordion": "22px",
+    "font-subcategory": "24px",
+    "font-option-title": "24px",
+    "font-option-req": "19px",
+    "font-option-desc": "23px",
+    "font-story": "21px",
+    "font-story-input": "20px",
+    "font-points": "20px",
+    "font-points-value": "20px",
+    "font-prereq-help": "17px",
+    "font-label": "19px",
+    "font-heading": "Verdana, sans-serif",
+    "font-body": "'Quicksand', sans-serif"
+  },
+  {
+    "type": "darkTheme",
+    "bg-color": "#090b10",
+    "container-bg": "#12161e",
+    "text-color": "#f4efe6",
+    "text-muted": "#b0a89b",
+    "accent-color": "#d4a017",
+    "accent-text": "#111111",
+    "border-color": "#3b3226",
+    "item-bg": "#171c25",
+    "item-header-bg": "#241b14",
+    "points-bg": "linear-gradient(90deg, #701313 0%, #b91c1c 38%, #d4a017 100%)",
+    "points-border": "#f3d27a",
+    "points-text": "#fff8e7",
+    "selection-glow-color": "#facc15",
+    "shadow-color": "rgba(0, 0, 0, 0.62)",
+    "option-meta-bg": "#0f141b",
+    "option-meta-heading-bg": "rgba(212, 160, 23, 0.16)",
+    "option-meta-heading-text": "#f7e5b3",
+    "option-meta-points-color": "#f3d27a",
+    "option-meta-conditional-color": "#60a5fa",
+    "option-meta-auto-grants-color": "#4ade80",
+    "option-meta-prerequisites-color": "#f59e0b",
+    "option-meta-conflicts-color": "#f87171",
+    "font-base": "19px",
+    "font-title": "52px",
+    "font-description": "21px",
+    "font-tab": "18px",
+    "font-accordion": "24px",
+    "font-subcategory": "22px",
+    "font-option-title": "22px",
+    "font-option-req": "17px",
+    "font-option-desc": "21px",
+    "font-story": "20px",
+    "font-story-input": "19px",
+    "font-points": "19px",
+    "font-points-value": "21px",
+    "font-prereq-help": "16px",
+    "font-label": "18px",
+    "font-heading": "Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif",
+    "font-body": "'Trebuchet MS', 'Segoe UI', sans-serif"
+  },
+  {
+    "name": "Background",
+    "subcategories": [
+      {
+        "name": "Background",
+        "type": "storyBlock",
+        "text": "You can start anywhere in the world. Though America is where most of the plot goes down, so if you want to do some more interesting things, it’s best if you start there.\n\nYou start just before A-Train slams through one Robin Ward.\n\nYou may freely choose your age and gender, and hell, you can choose pretty much everything else like your race, religion and anything like that as long as it doesn’t give you a mechanical advantage. Though I know that some choices might give you societal advantages, that's true everywhere to an extent.\n",
+        "options": [
+          {
+            "label": "Place",
+            "description": "",
+            "cost": {},
+            "id": "backgroundBackgroundPlace",
+            "inputType": "text",
+            "inputLabel": "Enter any place",
+            "placeholder": "e.g. New York, Vought Tower, anywhere",
+            "maxLength": 120
+          },
+          {
+            "label": "Age",
+            "description": "",
+            "cost": {},
+            "id": "backgroundBackgroundAge",
+            "inputType": "text",
+            "inputLabel": "Enter any place",
+            "placeholder": "e.g. 18, 24, 42",
+            "maxLength": 120
+          },
+          {
+            "label": "Gender",
+            "description": "",
+            "cost": {},
+            "id": "backgroundBackgroundGender",
+            "inputType": "text",
+            "inputLabel": "Enter any place",
+            "placeholder": "e.g. Male, Female, etc",
+            "maxLength": 120
+          }
+        ],
+        "subcategories": []
+      }
+    ]
+  },
+  {
+    "name": "Origins",
+    "subcategories": [
+      {
+        "name": "Origins",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Drop-in",
+            "description": "You’re new to this sort of game, you don’t have any pieces on the board, but you’re nobody’s pawn.",
+            "cost": {},
+            "id": "originsOriginsDropIn"
+          },
+          {
+            "label": "'Hero'",
+            "description": "You’re a hero! Flashy, cool, and a whole other bunch of adjectives that marketing has decided to associate you with. You’re a part of Vought and you may or may not have some skeletons in your closet.",
+            "cost": {},
+            "id": "originsOriginsHero"
+          },
+          {
+            "label": "Company",
+            "description": "You’re definitely not a hero, because you have decided to pursue a life of fighting for profit instead of ‘justice’.",
+            "cost": {},
+            "id": "originsOriginsCompany"
+          },
+          {
+            "label": "Boy",
+            "description": "Heroes are bullshit here, and you’re here to prove it. You’ve likely been personally victimized by a hero, since Vought does a good job of making the masses complacent and adoring.",
+            "cost": {},
+            "id": "originsOriginsBoy"
+          }
+        ],
+        "subcategories": [],
+        "maxSelections": 1
+      }
+    ]
+  },
+  {
+    "name": "Perks",
+    "subcategories": [
+      {
+        "name": "Drop-In",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Not a victim",
+            "description": "You’re not a victim, you’re not an idiot and people who try to sell you things, assuming that you are, tend to regret it sooner or later. Whether it’s the fact that the guy offering revenge has some serious issues or if the seemingly incredible job you’re offered is incredibly stressful and dangerous, there’s always something. You don’t magically get information, but you have a voice at the back of your head screaming that something isn’t right.\n\nYou always know when something seems too good to be true. You just know what you’re getting into with groups, people, ideologies and more. This doesn’t give you the exact truth, but it gives you an instinct that lets you avoid these dangers.",
+            "cost": {
+              "CP": 100
+            },
+            "id": "perksDropInNotAVictim",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "originsOriginsDropIn"
+                ],
+                "cost": {
+                  "CP": 0
+                },
+                "priority": 1
+              }
+            ]
+          },
+          {
+            "label": "All that Glitters",
+            "description": "Is not gold. And even the ‘glitter’ is pretty suspect, with you around. Wherever you go, you have a nose for digging into things, for unveiling deep, dark secrets almost by accident, These are hardly ever huge, world-shaking secrets, but they can be pretty impactful. And that’s just a side-effect, something that happens when you’re not trying.\n\nWhen you are, you find that you’re actually terrific at finding all sorts of things out. You can, within a few days or weeks, uncover extremely well-hidden secrets just by following the clues. Cases don’t go cold for you, \n\nYou’re not Sherlock, you’re just extremely fortunate in finding the clues that obviously lead to true conclusions. If people actually try to throw you off, they’ll actually give you more clues, as their false clues are quickly proven otherwise.\n",
+            "cost": {
+              "CP": 200
+            },
+            "id": "perksDropInAllThatGlitters",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "originsOriginsDropIn"
+                ],
+                "cost": {
+                  "CP": 100
+                },
+                "priority": 1
+              }
+            ]
+          },
+          {
+            "label": "What the?",
+            "description": "It happens. Supes fuck shit up, whether intentionally or accidentally. That’s.. Most of what they do, as a matter of fact. Fortunately, you’re unlikely to be a target or a casualty of one of these incidents, and equally unlikely to be the target of the clean up crew of lawyers, assassins and literal janitors who trail behind these disasters, cleaning up and ‘cleaning up’. \n\nYou don’t get mixed up in dangerous accidents (even if they’re ‘accidents’), those you manage to piss off always seem to put you down the list of threats through a mixture of apathy, misinterpretation and luck on your part, and direct action against you is something you always see coming. ",
+            "cost": {
+              "CP": 400
+            },
+            "id": "perksDropInWhatThe",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "originsOriginsDropIn"
+                ],
+                "cost": {
+                  "CP": 200
+                },
+                "priority": 1
+              }
+            ]
+          },
+          {
+            "label": "Books and Covers",
+            "description": "You write revelations, as people find your works to be worthy of worship. Not only does this perk make you an utterly stellar, incomparably good writer, you find that you’re exceedingly good at conveying current ills in society as well as ways to ‘fix’ them which people will take up with fervor. \n\nThis is a slow thing, subtle and far-reaching. You can’t expect to be able to make huge changes in days or weeks with this. The problems this lets you hit at, and the solutions you get, are deep, meaningful things that take time to work. But the more your influence grows, the harder it becomes to stop it. \nPeople find it all but impossible to leave once they’re within an organization you build, and even outside influences find their attacks blunted and parried with excellence.\n\nThis perk, put simply, makes you an expert in psychology, sociology and politics as well as all of the arts, with your expertise growing each time you use it. The groups you create will always follow your lead so if you decide to change the group, you might find some resistance, but you’ll find that most people will just adapt, even if it's a stark change.",
+            "cost": {
+              "CP": 600
+            },
+            "id": "perksDropInBooksAndCovers",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "originsOriginsDropIn"
+                ],
+                "cost": {
+                  "CP": 300
+                },
+                "priority": 1
+              }
+            ]
+          }
+        ],
+        "subcategories": []
+      },
+      {
+        "name": "Hero",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "The American Way",
+            "description": "Is that an actual flag on your back?\n\nYou have a talent for pretense and jingoism, for spin work and just plain bullshit that would be suited more for a Megacorp veteran PR than a ‘hero’ like you, to be honest.\n\nLies and platitudes flow from your lips like water, all toned and worded to be striking and believable. You can modulate your face, your body language… everything to support whatever story you’re telling.\n\nNo matter how bad the disaster, and how heinous your own actions in it, not only does your mind work at a blinding speed to come up with bullshit, outrageous but utterly convincing stories, but your acting talent and ability to charm and/or intimidate others into following you are mind-numbingly good. It’s like a power on its own.",
+            "cost": {
+              "CP": 100
+            },
+            "id": "perksHeroTheAmericanWay",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "originsOriginsHero"
+                ],
+                "cost": {
+                  "CP": 0
+                },
+                "priority": 1
+              }
+            ]
+          },
+          {
+            "label": "Change with the Times",
+            "description": "It’s the only way to survive. Much as how an old Nazi can become a new, acceptable face for the Alt-Right, you have a way of adapting, of seeing the writing on the wall and changing yourself to best ride the wave.\n\nYou can drape on and drop skins like a chameleon, switch your means and methods, and just plain move on so fast that people are left dazzled. You could become a master of social media trolling and meme warfare as someone born in the 30s, let’s just say.  ",
+            "cost": {
+              "CP": 200
+            },
+            "id": "perksHeroChangeWithTheTimes",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "originsOriginsHero"
+                ],
+                "cost": {
+                  "CP": 100
+                },
+                "priority": 1
+              }
+            ]
+          },
+          {
+            "label": "The Exception",
+            "description": "In between all the people who can fly at supersonic speeds and lift supertankers, this might be the rarest superpower in this world. You have the incredible ability of being just a decent, well-rounded human being. You’re not one of the cold-blooded, psychopathic monsters like most people in this world, and you’re not the idealistic paragon that they’re a parody of.\n\nSomeone practical and capable, you nonetheless have an ironclad code of ethics, and can find ways to remain within it while fulfilling pretty much all your duties. This alone would be great, but the greatest thing about you is that you’re contagious. It might take time, it might take beating them into the ground a few times, but you can make other people sane and decent.\n \nOne thing that helps in this is that you’re an exception to most people’s prejudices, whatever they may be. The delusional perfectionist would tolerate your flaws, while the rabid racist would make an exception. When people rage against superheroes, you, unlike any other, simply do not arouse their anger,\n",
+            "cost": {
+              "CP": 400
+            },
+            "id": "perksHeroTheException",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "originsOriginsHero"
+                ],
+                "cost": {
+                  "CP": 200
+                },
+                "priority": 1
+              }
+            ]
+          },
+          {
+            "label": "Power Hungry",
+            "description": "You’re not just power hungry in terms of ambitions, but you’re actually hungry for Powers and the improvement of them. When people feel inadequate, in spite of any superiority they feel they have, they can go to insane lengths to go beyond. Your abilities are in a way greedy, as they take any improvement of them, no matter how temporary and make it permanent.\n\nThis doesn’t let you repeat specific boosts to infinity, mind you. You can’t become a god just by drinking a lot of V. But where others can find their abilities wavering or weakening, not you. And while the benefits you get from specific boosts undergo diminishing returns, they never really go away.\n\nYou might get a big boost from injecting Compound V and retain that sweet power, but the next time you do it, the boost will be smaller, and so on… but it never stops. You might reach the point where you need to take in an olympic pool of V to lift one more Kilo, but it’ll still happen. ",
+            "cost": {
+              "CP": 600
+            },
+            "id": "perksHeroPowerHungry",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "originsOriginsHero"
+                ],
+                "cost": {
+                  "CP": 300
+                },
+                "priority": 1
+              }
+            ]
+          }
+        ],
+        "subcategories": []
+      },
+      {
+        "name": "Company",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Secrets and Lies",
+            "description": "It’s incredible over the years how Vought has kept people from learning the truth about what they do, what their supes do and where powers really come from. You and people like you are probably the reason why, as you run a tight ship through tight lips.\n\nYou know exactly how to cover up scandals and wait for them to blow over, but you also know how to set up secret operations for experimentation on infants where somehow nobody is a risk factor. Evidence seems to fall through or get destroyed, they get called conspiracy theorists, and you can find ways to make them shut up through a combination of blackmail, threats and torture.",
+            "cost": {
+              "CP": 100
+            },
+            "id": "perksCompanySecretsAndLies",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "originsOriginsCompany"
+                ],
+                "cost": {
+                  "CP": 0
+                },
+                "priority": 1
+              }
+            ]
+          },
+          {
+            "label": "Raised in the Lab",
+            "description": "Vought might not have gotten it right with raising Homelander, but you have a chance to change all of that drastically. You’re a legitimate genius at the science of raising children to grow in certain directions. Whether you want them to be good and moral, focused on profit while remaining loyal to the company line, or perhaps you want a ball of pure evil that will do whatever you say.\n\nRegardless of what you want, you’re incredible with this whole raising children thing to be what you want. You can apply this to any sort of being created by you, as they quickly grow up into what you want. Their appearance as they grow up and when they grow up is greatly influenced by you, whether you want them to look exactly like you, become monstrously ugly or become comic-book pretty, they grow up into what you want.",
+            "cost": {
+              "CP": 200
+            },
+            "id": "perksCompanyRaisedInTheLab",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "originsOriginsCompany"
+                ],
+                "cost": {
+                  "CP": 100
+                },
+                "priority": 1
+              }
+            ]
+          },
+          {
+            "label": "Getting Results",
+            "description": "It’s a hard job managing a company and if you make one mistake, it can often blow up your whole career. Luckily when it comes to being at the front seat of an economic powerhouse or a tiny company just starting out, you have the right combination of luck and ability to make it through. Opportunities fall into your lap, incredible personnel can be scooped up easily, and missteps that somehow occur either due to others or yourself are fixed up easily.\n\nIt’s not like you are likely to make a misstep, however, as you are a master of economics and politics with a degree of hypercompetence. You don’t make bad investments, you can see what to do in order to get profits up, and when you want special privileges, you have a talent for obtaining the favor of anybody you please.",
+            "cost": {
+              "CP": 400
+            },
+            "id": "perksCompanyGettingResults",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "originsOriginsCompany"
+                ],
+                "cost": {
+                  "CP": 200
+                },
+                "priority": 1
+              }
+            ]
+          },
+          {
+            "label": "The Science of Wealth",
+            "description": "Vought is not a superhero company. Vought is, in the end, a pharmaceutical company, and its product isn’t superheroes, it’s Compound V. It’s a simple fact that far too many people seem to forget… thankfully not you.\n\nYou are, in simple terms, an absolute and complete genius. Let alone conventional fields of science, even in esoteric, science-fiction fields like ‘superhuman enhancement’, your brilliance needs to be seen to be believed. \n\nYou have all the skills and knowledge needed to create Compound V from scratch, and know how to integrate it to get perfect, or near-perfect results. With some work, you could even work out how to improve, creating stronger and stronger powers, and achieving successful infusions in any and all ages, races and body types with no issues whatsoever. ",
+            "cost": {
+              "CP": 600
+            },
+            "id": "perksCompanyTheScienceOfWealth",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "originsOriginsCompany"
+                ],
+                "cost": {
+                  "CP": 300
+                },
+                "priority": 1
+              }
+            ]
+          }
+        ],
+        "subcategories": []
+      },
+      {
+        "name": "Boy",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Needful Things",
+            "description": "The capacity to kill is in all of us, so let’s skip the preamble of morality and pre-murder jitters. You are no longer beholden to anything as fear does not make your hands shake, disgust does not make you turn your nose and anger does not make you kill unless you want to. You cannot be controlled by anything whether it be the supernatural or people making reasonable arguments.\n\nOf course if you want to be a bit less stubborn, you can toggle this off or at least tone it down.",
+            "cost": {
+              "CP": 100
+            },
+            "id": "perksBoyNeedfulThings",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "originsOriginsBoy"
+                ],
+                "cost": {
+                  "CP": 0
+                },
+                "priority": 1
+              }
+            ]
+          },
+          {
+            "label": "Go to Ground",
+            "description": "It can be difficult to run an operation against powerful people and organizations, which is why you’re fantastic at hiding your activities. It doesn't matter if it's hiding the body of a very important person with a tracking chip implanted in them or sneaking into a max-security hospital’s most secure section as a mundane. Or hell, even something like lying convincingly to someone who can literally hear your heart beat, none of these are even moderately difficult for you.\n\nYou’ve also got plenty of skills to help you keep underground, though only to a basic level. You can do some pretty advanced first aid as well as minor surgery, though you can’t do anything like heart transplants. You’re competent at cooking, cleaning, entertaining yourself and anything you might need to maintain yourself, your sanity and your people when off the grid.\n\nThis also grants you the strangest ability to recruit people to your cause and keep people who hate each other from spoiling the operation by splitting from the team. You know exactly how to hook them into your web and never let go, until finally all of your intense grievances blow up if you don’t resolve them eventually. When they finally do leave, it’ll be at a time you need them the least, they will be somewhat amicable to joining later again if you offer something good enough, and they leave in a way that doesn’t let your enemy take them.",
+            "cost": {
+              "CP": 200
+            },
+            "id": "perksBoyGoToGround",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "originsOriginsBoy"
+                ],
+                "cost": {
+                  "CP": 100
+                },
+                "priority": 1
+              }
+            ]
+          },
+          {
+            "label": "Murder the Gods",
+            "description": "There are always constants in life, death and taxes. While you might not exactly be a taxman, you are certainly a dealer of death to all things. You have a preternatural intuition and supreme deductive capabilities as to the weaknesses, vulnerabilities and strengths of those around you. You can imagine ways to kill them with things that could be found in arm’s reach, or just with your fists.\n\nThis makes you an even better killer as every aspect of destruction is in your grasp. You’re an expert in making all sorts of weapons, ammunitions and explosives with oftentimes strange materials, but you can also deal death easily with every type of weapon ranging from your body to medieval and modern weapons, and if you encounter a new weapon or need to improvise? You can easily learn how to use them in a basic sense by looking at it and holding it, and if you can fire a few shots, swing it a couple of times or lob it, you can use it as if you were trained for it.\n\nFinally, and most importantly, you can find ways to bypass powers, even if they conceptually cannot be. Whether it’s through meta-fuckery, thinking outside of the box with what to hurt them with, or using their own powers against them. This may involve constructing and using a specialized mirror to reflect laser eyes, a combat style that turns super-strength against their opponent, or a specialized bullet that can get through invulnerability. These things do require preparation and research, and while you might have a great grasp of crafting these things, you are no super-scientist nor are you even a professional but if you were, this would get even better.",
+            "cost": {
+              "CP": 400
+            },
+            "id": "perksBoyMurderTheGods",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "originsOriginsBoy"
+                ],
+                "cost": {
+                  "CP": 200
+                },
+                "priority": 1
+              }
+            ]
+          },
+          {
+            "label": "Powerless",
+            "description": "There’s a certain element of futility to anyone striking against the Supes in this world, because human ingenuity is well and good, but your enemies are basically gods in mortal flesh. You can scheme and scheme, but when Homelander peels the roof off your hideout and rips you physically in two, it’s usually Game Over.\n\nExcept, that is, for you. You have one ability, something truly unbelievable. It’s up to you how this manifests, if it’s an incredibly strange sequence of random events or a flat-out superpower, but you’re entirely unaffected by any supernatural powers or abilities your enemy might have.\n\nIt doesn’t matter if they’re Homelander or The Deep. Either through sheer coincidence or a power-denial aura, their powers simply don’t work on you, and it all comes down to skill, luck and talent between you and them.\n\nTread carefully, because this is one hell of a thing to have.",
+            "cost": {
+              "CP": 600
+            },
+            "id": "perksBoyPowerless",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "originsOriginsBoy"
+                ],
+                "cost": {
+                  "CP": 300
+                },
+                "priority": 1
+              }
+            ]
+          }
+        ],
+        "subcategories": []
+      }
+    ]
+  },
+  {
+    "name": "Powers",
+    "subcategories": [
+      {
+        "name": "Powers",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Longevity",
+            "description": "You’re biologically immortal and that’s how you’ll be forever. You can choose when to stop aging, whether in your childhood, your prime or middle-age. Even in those seemingly advanced ages, you’ll suffer none of the aches and pains, with only the cosmetic differences that suit you best. You’ll regenerate from anything that doesn’t kill you, though it might take a while to do so.",
+            "cost": {
+              "CP": 50
+            },
+            "id": "powersPowersLongevity"
+          },
+          {
+            "label": "Flight",
+            "description": "Flight seems like a basic power, and to a lot of Supes, it is. However, the power of being able to leisurely glide past a commercial airliner or fighter jet is not to be understated. You have the ability to fly as fast as you can run, if not faster, and can do it while barely paying attention, like Homelander having flying escapades with various women. This comes with environmental protection so that you don’t freeze your ass off, pop from the atmospheric river pressure or suffocate up there.",
+            "cost": {
+              "CP": 100
+            },
+            "id": "powersPowersFlight"
+          },
+          {
+            "label": "Mesmer",
+            "description": "You can read minds with a touch, and this goes beyond simple surface thoughts. You can read emotions, intentions and, if you probe further, you can even get to memories if they’re relevant. The longer you touch someone, the more information you get and by bringing the proper things up in conversation, you can get to specific information.\n\nYou’re capable of processing this all without issue, and can read multiple minds if you’re touching them or they’re connected. You can’t influence them at all, but anybody can be a social powerhouse by reading people’s emotions and thoughts.\n",
+            "cost": {
+              "CP": 100
+            },
+            "id": "powersPowersMesmer"
+          },
+          {
+            "label": "Gecko",
+            "description": "You’re a regenerator that none can compare to as people can gouge your eyes out, slit your throat, stab you in the brain, put nails in your hands, chop your limbs off and burn you alive, but you’ll just grow back within seconds or even as they’re doing it. You need to push the offending objects out to regenerate the area, but your regeneration is capable of doing it for you, pushing the bullets out.\n\nYou can turn your physical pain off or just make it only send information so that you know there is an injury as well as what type it is. You can have your regeneration under your conscious control or just do it unconsciously. You’re not invulnerable: if your brain is destroyed you only remember things before it was destroyed, and if you’re atomized all at once, you’ll still die. If there is a drop of blood or chunk of flesh left, however, you can come back, albeit slowly.\n",
+            "cost": {
+              "CP": 200
+            },
+            "id": "powersPowersGecko"
+          },
+          {
+            "label": "Stretchy",
+            "description": "You can stretch your arms to welcome people into God’s loving embrace, among other things. You can stretch any part of your body, and are capable of grabbing something or someone from across the room, kicking someone from a safe distance, stretching your torso and head to look around from above, and more.\n",
+            "cost": {
+              "CP": 200
+            },
+            "id": "powersPowersStretchy"
+          },
+          {
+            "label": "Deep",
+            "description": "The ocean is such a marvelous place, and now you’re connected to it. You can understand, talk to and command sealife with ease ranging from goldfish to whales, though you may toggle off hearing them, You’re also a natural swimmer, capable of traversing oceans and lakes with ease and incredible speed. You also have gills, though these may recede into your skin when not in use without being seen.\n",
+            "cost": {
+              "CP": 200
+            },
+            "id": "powersPowersDeep"
+          },
+          {
+            "label": "Doppelganger",
+            "description": "You’re capable of taking the form of anyone you’ve ever seen or someone from your imagination and, unlike the original, you can copy clothes cosmetically. You can do this partially and mix and match, so that you can have the voice of a woman while in the form of a man or look like something from Frankenstein. This can’t copy any powers or abilities, with you retaining the same attributes. You can maintain this however long you want without effort, and may fall asleep in it.",
+            "cost": {
+              "CP": 200
+            },
+            "id": "powersPowersDoppelganger"
+          },
+          {
+            "label": "Lasers",
+            "description": "Lasers are cool, but the really horrifying effects of them aren’t usually shown. This doesn’t happen with you, as you’re fully capable of unleashing lasers from anywhere on your body capable of slicing anything in half, from people to large commercial airliners. \n\nYou can fire constant beams of lasers or use them like bullets to put holes in the ‘bad guys’. You can even adjust their heat, ranging from the heat of a magnifying glass to melting tungsten into slag within seconds.",
+            "cost": {
+              "CP": 200
+            },
+            "id": "powersPowersLasers"
+          },
+          {
+            "label": "Translucent",
+            "description": "You’re invisible, actually, More than that, you also have invulnerable skin just like the superhero this is named for, while lacking his weaknesses like electricity and such. Doesn’t make you immune to getting blown up from the inside out, just to be clear, The outside of your skin is all that’s invulnerable.\n\nYou may also bring your clothes when you go invisible as well as anything you’re grabbing, but only about three times your mass. You can still see, though you may make it so that anyone you make invisible can or can’t see.",
+            "cost": {
+              "CP": 300
+            },
+            "id": "powersPowersTranslucent"
+          },
+          {
+            "label": "Super Senses",
+            "description": "This power is not to be underestimated, as every part of your sensorium is upgraded. You’re capable of hearing every single heartbeat within a mile, and able to tell which ones are fluttering and which ones are racing. You can see things from incredibly far away, see in the dark, see the microscopic organisms on people’s skin, see heat signatures, and can see through anything as if it wasn’t there.\n\nYou can track down anything you’ve smelt, capable of telling what chemical compounds are nearby with ease as well as enemies you’ve smelt before. You can smell fear, love, anger and more, and are capable of telling what people are generally feeling. When you taste things, you’re capable of telling everything about it; for blood this ranges from blood type, how related two people are and any diseases they carry to telling from where mud originates if you’ve tasted similar mud before in that place.\n\nYour sense of touch is off the charts as you can tell exact temperature and wind changes. Even if somebody was unnoticed by your other senses, you can feel heat signatures and movements within arm’s reach of you, with the latter being felt from farther away depending on the velocity of the person and the air they displace.\n\nYou have great multi-tasking, capable of taking advantage of all these senses at once for full advantage. You’re somewhat of a savant at counting how many things there are, only needing a glance to tell how many people you can see as well as an estimation of what you can’t see. You’re not a genius but your senses just let you process it better, so you never get overwhelmed.",
+            "cost": {
+              "CP": 300
+            },
+            "id": "powersPowersSuperSenses"
+          },
+          {
+            "label": "Lamplighter",
+            "description": "If you desired it, you could probably burn a decent chunk of the world before being stopped. You can create massive amounts of fire and can control it with ease, burning anything from people to buildings down. You’re immune to the effects of fire and can extend that to your clothing.",
+            "cost": {
+              "CP": 300
+            },
+            "id": "powersPowersLamplighter"
+          },
+          {
+            "label": "Super-Strength",
+            "description": "Your strength is truly something to behold as you lift and throw jets and tanks one-handed. Of course this is aided by a little comic book physics in order to prevent such objects from collapsing under their own weight, unless you would want that to happen. You can adjust this strength as well, making sure that you don’t accidentally hurt someone you don’t want to.",
+            "cost": {
+              "CP": 300
+            },
+            "id": "powersPowersSuperStrength"
+          },
+          {
+            "label": "Invulnerability",
+            "description": "You are invincible, in no uncertain terms. You are an unmovable object that  will frustrate even nuclear weapons, though they might stagger you quite a bit. You have a limit as to how much you can take but it’s a very large one. If an armored van hit you, you’d be able to stand unphased as it passed around you, leaving a you-sized hole.\n\nUnlike what you get in Translucent, this makes every cell in your body invulnerable to the same extent. No bombs up the ass for you.\n",
+            "cost": {
+              "CP": 300
+            },
+            "id": "powersPowersInvulnerability"
+          },
+          {
+            "label": "Starlight",
+            "description": "You’ve got the power of a star, capable of absorbing energy from the environment, whether electricity or heat, to fuel devastating attacks of light. You can also pull from an inner reserve that regenerates over time to fuel these attacks. You also have a limited degree of construct creation, capable of using light to form whatever object you know the mechanics of.",
+            "cost": {
+              "CP": 400
+            },
+            "id": "powersPowersStarlight"
+          },
+          {
+            "label": "Stormfront",
+            "description": "The power of a storm is in your hands as you can manipulate electricity and shoot glowing purple arcs of plasma from your hands. You’re capable of summoning great thunderstorms that create an abundance of electricity for you to use. You could potentially destroy neighborhoods with the power you hold if you unleash it.",
+            "cost": {
+              "CP": 400
+            },
+            "id": "powersPowersStormfront"
+          },
+          {
+            "label": "Super-Speed",
+            "description": "The ability to go faster than the eye is possibly the single most underrated power out there, and you’re the best in the world at it, bar none. Even a doped-up A-Train would be slow compared to you, let alone the other ‘speedsters’. \n\nWhile running faster and faster does cause fatigue, your body also recovers at a fantastic pace, so even after running for literal ages you could recover your stamina in a miniscule fraction of the time it would take anyone else.\n\nYou have an adjustable speed of reaction and thought in order to prevent you from crashing as you go. You won’t be harmed, even if you do crash into something as this protects you from the harms of your speed, like setting your clothes on fire through friction or going splat against a wall. \nUnlike other speedsters you can even adjust the effect you have on the world, with the high-end making you capable of turning other people into gory messes by running right through them while the low-end simply means that even when you hit a person, it doesn’t even give them a bruise. This doesn’t give you super-strength or invulnerability, it just means that your velocity is capable of being weaponized.",
+            "cost": {
+              "CP": 500
+            },
+            "id": "powersPowersSuperSpeed"
+          }
+        ],
+        "subcategories": []
+      }
+    ]
+  },
+  {
+    "name": "Items",
+    "subcategories": [
+      {
+        "name": "General",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Supe Factory",
+            "description": "Not quite a factory, this is a small hospital, enough to serve about a dozen people at a time. But not for curing any diseases. No, this place has extensive, elaborate facilities designed for one thing and one thing only, which is the creation of super-beings.\n\nFrom automated labs that continuously produce Compound V to infusion chambers where it can be pumped into people, this place has it all. You have enough V to create dozens of minor superheroes with a simple injection each, about five or six supers on the level of Stormfront or Starlight, or you can put it all into one person, any age, and create someone on Homelander’s level.\n\nIf you want you could even use the gene-lab and cloning facility to grow a body from scratch, infused with V on a genetic level, No one quite knows what that would yield, mind you. \n\nThis place retains any upgrades or expansions you may care to make to it. Barring those, however, it produces enough V to let you make the aforementioned Homelander once a month. ",
+            "cost": {
+              "CP": 600
+            },
+            "id": "itemsGeneralSupeFactory"
+          }
+        ],
+        "subcategories": []
+      },
+      {
+        "name": "Drop-In",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Vought Cinematic Universe",
+            "description": "You’ve got the entirety of the Vought Cinematic Universe and any other piece of Vought media, as well as pretty much every other piece of super media. This isn’t sellable, so don’t get any ideas about selling extremely rare comics to people. This updates with each jump and if there’s a super group that lacks any media a little bit? You’ll get whole swathes of it, to satisfy your desire for it.\n\nSome things might be exaggerated or straight up lies, so, reader beware.",
+            "cost": {
+              "CP": 100
+            },
+            "id": "itemsDropInVoughtCinematicUniverse",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "originsOriginsDropIn"
+                ],
+                "cost": {
+                  "CP": 0
+                },
+                "priority": 1
+              }
+            ]
+          },
+          {
+            "label": "The Club",
+            "description": "You’ve got a pretty good nightclub going which gives you a good revenue stream and costs nothing to maintain, that seems to attract a whole range of powerful people. Ranging from executives to superheroes, you’ll find that even goody two-shoes can’t stay away from the fun forever. This club also encourages patrons to go wild and spill their secrets and true thoughts out, and nobody seems to talk about what happens inside it, outside it. The club itself is of the highest standards and upgrades with each jump, though never downgrades. It might change the decor however, just to fit in, though you can change that with a push of the button.\n\nThe main thing that sets this apart from other nightclubs is that you have every single bit of it bugged and monitored by both moles and cameras. This captures anything that happens in the nightclub ranging from heart-to-heart conversations out in the open to certain activities inside the stalls of the bathrooms (they’ll be cleaned quickly). Nobody will be aware of this beyond you, not even the moles, and when you release information, nobody seems to know how you got it unless you leave in identifying features of the nightclub.",
+            "cost": {
+              "CP": 200
+            },
+            "id": "itemsDropInTheClub",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "originsOriginsDropIn"
+                ],
+                "cost": {
+                  "CP": 100
+                },
+                "priority": 1
+              }
+            ]
+          },
+          {
+            "label": "Church of the Collective",
+            "description": "You’ve got a good thing going, given that you’ve got a cult with followers from across the globe. This isn’t the Church of the Collective but it’s damn well close to it and probably exceeds it in some parts. You’ve got millions brainwashed and following whatever ideology and belief system that you want.\n\nThey also hold you in the highest regard and would be willing to go to war for you with their own neighbors. Your church also has a number of talented and famous people in it, ranging from superheroes and actors to soldiers and scientists. In settings where there is religious prejudice, you may optionally make this into a variation on the most popular local belief system that still follows your ideals.\n\nYou’ve got a range of facilities across the world for various uses, ranging from labs to militia bases. You’d be hard pressed to find something that you don’t have, but you could easily borrow from the Church’s deep pockets in order to build it. Even the higher ups don’t question your decisions unless you drive them to the ground too much.\n",
+            "cost": {
+              "CP": 400
+            },
+            "id": "itemsDropInChurchOfTheCollective",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "originsOriginsDropIn"
+                ],
+                "cost": {
+                  "CP": 200
+                },
+                "priority": 1
+              }
+            ]
+          }
+        ],
+        "subcategories": []
+      },
+      {
+        "name": "Hero",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Fandom",
+            "description": "You’re famous! There are articles constantly published about your activities, or at least the ones you want the public to know, everyone on the internet loves you, and you’ve got half your fingers stuck in various pies of movie franchises, TV shows, books, graphic novels and more. There’s hardly a chance in hell that somebody doesn’t know your name and you easily match, and possibly surpass, the Seven in popularity, especially if you work hard enough.",
+            "cost": {
+              "CP": 100
+            },
+            "id": "itemsHeroFandom",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "originsOriginsHero"
+                ],
+                "cost": {
+                  "CP": 0
+                },
+                "priority": 1
+              }
+            ]
+          },
+          {
+            "label": "Boosters",
+            "description": "Compound V is used by a lot of Supes, mostly because even when their power can do a lot, people who take Compound V do better. You’ve got a limitless supply of the stuff and this variant lacks the negative side-effects - atrophy of your powers in their normal state and risk of addiction - that normally comes from Compound V. However, it does not grant powers, only enhancing them.\n\nIn exchange for that limitation, you find that this variant of Compound V can affect any power, ability, skill and attribute that you have. Whether it be the superpowers that are like those from here, magic, psychic powers, cultivation, muscles, intelligence, innate features of your physiology, or something else.",
+            "cost": {
+              "CP": 200
+            },
+            "id": "itemsHeroBoosters",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "originsOriginsHero"
+                ],
+                "cost": {
+                  "CP": 100
+                },
+                "priority": 1
+              }
+            ]
+          },
+          {
+            "label": "Flying Base",
+            "description": "This is something that hasn’t been quite seen before in this world, even with the heroes having huge bases. Some would say it resembles an aircraft carrier, except a lot bigger and airborne. It has a variety of functions, facilities and capabilities, it’s also hard to take down with anything but a nuke, and even then, it can defend itself with its systems.\n\nIt can access a variety of satellites that monitor everything on Earth ranging from satellite surveillance to the monitoring of every signal on Earth. It has many well-trained guards, maintenance workers, medical personnel, chefs and anything else needed aboard what is pretty much a giant air-fortress. It also has rooms for all of your companions with a little space-warping fuckery.",
+            "cost": {
+              "CP": 400
+            },
+            "id": "itemsHeroFlyingBase",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "originsOriginsHero"
+                ],
+                "cost": {
+                  "CP": 200
+                },
+                "priority": 1
+              }
+            ]
+          }
+        ],
+        "subcategories": []
+      },
+      {
+        "name": "Company",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "The Lab",
+            "description": "The place where a lot of supers are born, this laboratory is world-class and will update each jump to ensure that the best commercial equipment and resources are available to it. However, while this laboratory is useful for seeking out the secrets of the universe, it isn’t a super-science lab and has only one special feature.\n\nYou have access to eggs, sperm and artificial wombs that can facilitate the growth of fetuses and are capable of safely containing them and birthing them, regardless of their power. These fetuses are particularly suited to take any modification that you give them and if there is a chance of them surviving the modification, they will.",
+            "cost": {
+              "CP": 100
+            },
+            "id": "itemsCompanyTheLab",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "originsOriginsCompany"
+                ],
+                "cost": {
+                  "CP": 0
+                },
+                "priority": 1
+              }
+            ]
+          },
+          {
+            "label": "The Program",
+            "description": "You have an immense library of literature on the topic of creating superhumans and a large base of genetic material from all sorts of Supes as well as the designs and samples of their empowering agents ranging from chemical compounds to interdimensional crystals, always having at least a generic example. These samples cannot be used to empower people directly, but they can be replicated and even updated with research, though they will retain any fundamental weaknesses until you sort them out.\n\nYou have an infinite amount of the empowering samples that you do manage to replicate, starting with Compound V. These empowering samples do have a couple of limiting factors, the more the subject has aged, the more dangerous it is to them and the more weaker and unstable their powers are. This means that fetuses and infants are the best subjects in terms of powers and avoiding the danger of the empowering agent.",
+            "cost": {
+              "CP": 200
+            },
+            "id": "itemsCompanyTheProgram",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "originsOriginsCompany"
+                ],
+                "cost": {
+                  "CP": 100
+                },
+                "priority": 1
+              }
+            ]
+          },
+          {
+            "label": "A Company",
+            "description": "You’ve got a modern version of an empire that seems to have its claws in every country around the globe, albeit focused on one country of your choice. You’ve got a veritable army of eggheads, lawyers, economic experts, PR professionals, hitmen and whatever else a company might need to come out on top in every field, both on the books and off the books.\n\nYour field? It’s using superheroes to make the public get that warm fuzzy feeling of people protecting them. You’ve got a bunch of Supes under your company’s thumb, and it's rare that one of them leaves the plantation. You make superheroes as well, though without the proper resources from above, they’ll be somewhat sub-par compared to this world.\n\nLuckily, you’ve got a leading team of incredible scientists as well as a world-class research base that finds new ways to empower people and make sure that the supes are raised properly. Research also seems to go faster the more money you pump in, and might do the occasional impossible thing with enough of it.",
+            "cost": {
+              "CP": 400
+            },
+            "id": "itemsCompanyACompany",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "originsOriginsCompany"
+                ],
+                "cost": {
+                  "CP": 200
+                },
+                "priority": 1
+              }
+            ]
+          }
+        ],
+        "subcategories": []
+      },
+      {
+        "name": "Boy",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Stockpile",
+            "description": "What kind of stockpile you ask? Why damn near all of them. You have a supply of mundane food, weapons, ammunition, medicine, chemicals, and materials that replenishes once a week, and all of them individually are capable of lasting a month even under intensive usage from a dozen people. This isn’t limitless, it isn’t even that big, but it definitely will help if you need to avoid all possible points of contact.",
+            "cost": {
+              "CP": 100
+            },
+            "id": "itemsBoyStockpile",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "originsOriginsBoy"
+                ],
+                "cost": {
+                  "CP": 0
+                },
+                "priority": 1
+              }
+            ]
+          },
+          {
+            "label": "Moles and Infiltrators",
+            "description": "You have a book filled with names that owe you a favor, loyal to your cause and in general would be willing to do a thing or two. If you don’t give them incentive, they might only do the occasional thing or two like getting you a file or planting a microphone, but with the proper incentive like money, ideology or revenge, you can get them to risk their careers such as running an exposing hit story, volunteering to testify in court and more.\n\nThe book has a variety of names for a variety of organizations and if you encounter a new organization, you find it easy to infiltrate it as well. These moles and infiltrators won’t help you bring down the organization on their own, but they can certainly help you get the evidence you need to do it yourself and help you facilitate it.\n\nAlso, beyond all logic, you have a bunch of really raunchy photographic and video evidence of certain activities done by attractive members of various organizations. These aren’t really blackmail and if you try to leak them, even with the help of your moles, they won’t do much damage and might aid your enemies if anything.",
+            "cost": {
+              "CP": 200
+            },
+            "id": "itemsBoyMolesAndInfiltrators",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "originsOriginsBoy"
+                ],
+                "cost": {
+                  "CP": 100
+                },
+                "priority": 1
+              }
+            ]
+          },
+          {
+            "label": "A rebellion",
+            "description": "You’re not alone in your hatreds, as cells across the world all hurt who you want them to, though none know the full of it. When one cell is compromised somehow, which is very unlikely, it can’t compromise others, even when they’ve come into contact and have worked with each other. Cells that get compromised often get replaced with others who share your ideals, starting the whole process over and over.\n\nThere’s a variety of benefits from this, as your network has safehouses and contacts for various things.  They’re always secret and uncompromisable, avoiding unlucky falls from grace. Those that do get somehow compromised will be replaced with redundancies. They also offer any criminal service you might need ranging from illegal guns in the basement armory to the weapons of mass destruction you can buy for a lot of money.\n\nYou’ve got a list in your head that you can ‘forget’ in certain conditions in order to prevent others from getting at it and then remembering them later. Every single one of these cells has various reasons to hate what you hate so they will resist to the bitter end. These cells will have experienced members and those who are new will quickly pick up on how to attack what you hate.",
+            "cost": {
+              "CP": 400
+            },
+            "id": "itemsBoyARebellion",
+            "modifiedCosts": [
+              {
+                "ids": [
+                  "originsOriginsBoy"
+                ],
+                "cost": {
+                  "CP": 200
+                },
+                "priority": 1
+              }
+            ]
+          }
+        ],
+        "subcategories": []
+      }
+    ],
+    "description": "For each origin, the 100 CP item is free and the others cost 50%.\n\nWherever relevant, you may import existing items at no additional cost."
+  },
+  {
+    "name": "Companions",
+    "subcategories": [
+      {
+        "name": "Companions",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Canon Recruitment",
+            "description": "You may recruit any canon character, as long as you explain to them what a JumpChain is and they agree.",
+            "cost": {},
+            "id": "companionsCompanionsCanonRecruitment"
+          },
+          {
+            "label": "Import/Create",
+            "description": "You can import or create an original companion, with an appearance, personality and history of your choice. You can make them as loyal as you want them to be though buyers beware.\n\nThey receive 600 CP to spend on whatever you want.",
+            "cost": {
+              "CP": 50
+            },
+            "id": "companionsCompanionsImportCreate"
+          },
+          {
+            "label": "The Seven",
+            "description": "You’ve finally got into the Seven after years of hard work, or more likely a lot of luck and a pretty face. You can replace an existing member of the Seven, taking their spot, or the Seven can expand to fit you. Regardless, you’ll have a lot of fame and you’ll have daily interactions with your team members.\n\nIf you know anything about the Seven that doesn’t come from Vought’s marketing team, you know why this is free, and why it’s dangerous. If you Drop-in, you’ll somehow get finangled in, whether through accident or on purpose.\n\nStill, you’ll probably manage to get a positive relationship with all of them, if you don’t screw up. They might even come along with you on JumpChain, or at least certain members might.",
+            "cost": {},
+            "id": "companionsCompanionsTheSeven",
+            "prerequisites": "powersPowersLongevity || powersPowersFlight || powersPowersMesmer || powersPowersGecko || powersPowersStretchy || powersPowersDeep || powersPowersDoppelganger || powersPowersLasers || powersPowersTranslucent || powersPowersSuperSenses || powersPowersLamplighter || powersPowersSuperStrength || powersPowersInvulnerability || powersPowersStarlight || powersPowersStormfront || powersPowersSuperSpeed"
+          },
+          {
+            "label": "The Boys",
+            "description": "You’ve had a bad experience with Vought or Supes, and want to take revenge. Luckily, you’ve been scooped up by someone who recognized your potential, Billy Butcher. Even if you’re a Supe, they’ll let you join though they’ll still be fairly suspicious. At least Butcher will be, even when he recruited you.\n\nIf you’re a Drop-in, you’ll get involved with The Boys somehow quickly. You’ll probably wind up in enough crimes so that if you narc, you’ll go down as well. So, be careful.\n\nRegardless, you’ll manage to get a positive first impression if you’re not too bad. You might even get them to come with you on your JumpChain, or at least certain members.",
+            "cost": {},
+            "id": "companionsCompanionsTheBoys"
+          }
+        ],
+        "subcategories": []
+      }
+    ]
+  },
+  {
+    "name": "Drawbacks",
+    "subcategories": [
+      {
+        "name": "Drawbacks",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Vought Universe ",
+            "description": "You may choose which version of The Boys you go to, whether the comics, the TV series or a mixture of the two. You may optionally use this to go to any fanfiction or fan universe for The Boys. You may optionally extend your time for whatever reason.\n\nThis cannot be used to cheese Drawbacks.",
+            "cost": {},
+            "id": "drawbacksDrawbacksVoughtUniverse"
+          },
+          {
+            "label": "Degredation",
+            "description": "You’re going to go through some terrible things, nothing that would kill you, but it will make you want to die at some points. For ten years, it’ll be near constant degradation as you’re forced to pretty up for the PR machine, get covered in blood from various things, you might get forced upon, and more. All of it will be unpleasant and pretty unavoidable.\n\nThey’ll be bright spots occasionally, though this might snatch them away in order to make it even more degrading. Have a great night with your girlfriend? She’s cuckolding you or was raped by a Supe. Have a child that you love? There might be a Supe that is using them as a way to project their own need for parental affection.",
+            "cost": {
+              "CP": -100
+            },
+            "id": "drawbacksDrawbacksDegredation"
+          },
+          {
+            "label": "A parent's love",
+            "description": "Is something that you’ve never known, and it makes you very prone to making disturbing choices. You’ll frequently get super-attached to various figures that might act as surrogate parents, and might even uh… have a bit of an Oedipus Complex.",
+            "cost": {
+              "CP": -100
+            },
+            "id": "drawbacksDrawbacksAParentSLove"
+          },
+          {
+            "label": "Addiction",
+            "description": "You’ve got an addiction to something, and it’s pretty bad. Whether you’re addicted to a drug, a certain act or something else, it’ll be debilitating if you don’t get it. You’ll suffer withdrawal, you’ll be moody and you’ll be lashing out at people. At some point, you might even do whatever it takes to get it.\n\nYou may take multiple times for various addictions.",
+            "cost": {
+              "CP": -200
+            },
+            "id": "drawbacksDrawbacksAddiction",
+            "maxSelections": 10
+          },
+          {
+            "label": "Heart Problems",
+            "description": "Well, you’ve got some physiological troubles, as your form, regardless of your abilities, seems to be inhibited. Maybe you have heart problems and running at super-speed or even regular speed can hurt you. You might be blind, deaf or any other physical issue.\n\nYou can take this multiple times for various issues.",
+            "cost": {
+              "CP": -200
+            },
+            "id": "drawbacksDrawbacksHeartProblems"
+          },
+          {
+            "label": "Psychopathic",
+            "description": "You’re utterly psychopathic, as you have no morals or ethics along with anger issues and shaky impulse control. You’re capable of keeping this at bay if it benefits you, so you can still do PR and avoid blatant danger. However, you’re unlikely to stop this from showing with your teammates.\n\nEven if you’re on the side of the ‘good guys’, you’re just one bad day away from doing something batshit crazy.",
+            "cost": {
+              "CP": -300
+            },
+            "id": "drawbacksDrawbacksPsychopathic"
+          },
+          {
+            "label": "No Control",
+            "description": "You have pretty much no control over your abilities, even if you’re completely normal. A Supe might crush someone with their strength accidentally, they might accidentally use their lasers, they might be overwhelmed by their super-senses, etcetera. A normal would have the equivalent of poor impulse control, always saying the wrong thing, going too far and getting distracted very easily.",
+            "cost": {
+              "CP": -300
+            },
+            "id": "drawbacksDrawbacksNoControl"
+          },
+          {
+            "label": "A Secret Taken",
+            "description": "Someone out there knows a secret about you. They might have only stories, or they might have photographic proof, but either way what they have on you is enough to destroy you utterly.\n\nMaybe it’s Butcher, maybe it’s Homelander. It’s hard to say which would be worse, to be honest. Either way, expect to have to do some very unpleasant and dangerous things, or be ruined socially, financially and politically.",
+            "cost": {
+              "CP": -400
+            },
+            "id": "drawbacksDrawbacksASecretTaken"
+          },
+          {
+            "label": "Home is where the Heart is",
+            "description": "Except yours isn’t, but good luck explaining that to him. This is good and bad news. The good news is, Homelander loves you! He adores you and delights in you! The bad news is that he’s uh... Homelander.\n\nHe’s the most powerful man on the planet, an obsessive-compulsive control freak, psychopathic murderer, with deep-seated subscriptions, not issues. And while there’s a lot he’ll do to make you happy, or what he thinks will make you happy… those don’t include things like ‘freedom’, or ‘thinking for yourself’.",
+            "cost": {
+              "CP": -400
+            },
+            "id": "drawbacksDrawbacksHomeIsWhereTheHeartIs"
+          },
+          {
+            "label": "Compound V is the source of all powers",
+            "description": "As in, all. Even all of yours. And any and all of your powers that aren’t based on it find themselves locked away, as does your warehouse.\n\nThis drawback yields no points if this is your first jump. ",
+            "cost": {
+              "CP": -400
+            },
+            "id": "drawbacksDrawbacksCompoundVIsTheSourceOfAllPowers"
+          },
+          {
+            "label": "Evil Clone",
+            "description": "Vought has a clone of you that acts as a counter in order to kill you if you ever became dangerous. They have all your abilities though they don’t have your items, only decent replicas made by Vought. Even if you never go against Vought, the clone is eager to fulfil its psychotic purpose.\n\nIt will frame you for crimes if it can get away with it, it will hurt the ones you love and it will make your life a living hell while it waits for the order to be given. They won’t ever kill you, but they will make sure that you’re suffering. If you retaliate anymore than simple defense, it will take that as permission to kill.",
+            "cost": {
+              "CP": -600
+            },
+            "id": "drawbacksDrawbacksEvilClone"
+          }
+        ],
+        "subcategories": []
+      }
+    ],
+    "description": "There is no Drawback limit.\n"
+  },
+  {
+    "name": "Choices",
+    "subcategories": [
+      {
+        "name": "Choices",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Go Home",
+            "description": "Hope I didn’t spoil your appetite for super.\n",
+            "cost": {},
+            "id": "choicesChoicesGoHome"
+          },
+          {
+            "label": "Stay",
+            "description": "Really? Well if you want to fix the world up or fuck it up even more, you get +1000 CP to spend.",
+            "cost": {
+              "CP": -1000
+            },
+            "id": "choicesChoicesStay"
+          },
+          {
+            "label": "Continue",
+            "description": "Continue on your chain, and don’t be a cunt.\n",
+            "cost": {},
+            "id": "choicesChoicesContinue"
+          }
+        ],
+        "subcategories": [],
+        "maxSelections": 1
+      }
+    ]
+  }
+]
