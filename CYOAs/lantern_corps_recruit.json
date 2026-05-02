@@ -1078,7 +1078,7 @@
               "Points": 1
             },
             "id": "ringPowersCharacteristicPowersEmotionalConstruct",
-            "prerequisites": "ringPowersStandardPowersConstruct",
+            "prerequisites": "!ringPowersStandardPowersConstruct",
             "conflictsWith": [
               "emotionalSpectrumEmotionalSpectrumColorBlackBlackColor",
               "emotionalSpectrumEmotionalSpectrumColorCd7f32GoldColor",
