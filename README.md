@@ -37,7 +37,7 @@ Run the full pre-push verification suite before publishing changes:
 npm test
 ```
 
-The same verification suite is also configured in GitHub Actions under [`.github/workflows/ci.yml`](.github/workflows/ci.yml), so pushes to `main` / `master` and pull requests will run the repository checks automatically.
+The same verification suite is also configured in GitHub Actions under [`.github/workflows/ci.yml`](https://github.com/intrisym/icyoa-template/blob/main/.github/workflows/ci.yml), so pushes to `main` / `master` and pull requests will run the repository checks automatically.
 
 This runs JavaScript syntax checks, validates every existing `CYOAs/*.json` file as a regression fixture, and runs functional scenario tests against real CYOA data. The functional tests simulate selecting and removing options, gaining and spending points, subcategory max-selection replacement, max-selection bypass options, prerequisite unlocks, conditional pricing priority, absolute modified costs, relative modified costs, and min/max cost clamps.
 
