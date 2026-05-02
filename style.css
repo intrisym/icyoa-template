@@ -474,6 +474,75 @@ button:disabled {
     margin-top: 4px;
 }
 
+.formatted-text p {
+    margin: 0 0 0.75em;
+}
+
+.formatted-text p:last-child,
+.formatted-text ul:last-child,
+.formatted-text ol:last-child,
+.formatted-text blockquote:last-child {
+    margin-bottom: 0;
+}
+
+.formatted-text ul,
+.formatted-text ol {
+    margin: 0.4em 0 0.75em 1.4em;
+    padding: 0;
+    text-align: left;
+}
+
+.formatted-text li {
+    margin: 0.2em 0;
+}
+
+.formatted-text blockquote {
+    margin: 0.5em 0 0.75em;
+    padding-left: 0.9em;
+    border-left: 3px solid var(--border-color);
+    color: var(--text-muted);
+}
+
+.formatted-text code {
+    padding: 0.08em 0.25em;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--container-bg);
+    font-size: 0.9em;
+}
+
+.formatted-text h1,
+.formatted-text h2,
+.formatted-text h3,
+.formatted-text h4,
+.formatted-text h5,
+.formatted-text h6 {
+    margin: 0.6em 0 0.35em;
+    font-family: var(--font-heading);
+    line-height: 1.2;
+}
+
+.formatted-text h1:first-child,
+.formatted-text h2:first-child,
+.formatted-text h3:first-child,
+.formatted-text h4:first-child,
+.formatted-text h5:first-child,
+.formatted-text h6:first-child {
+    margin-top: 0;
+}
+
+.option-content > strong.formatted-text p {
+    display: inline;
+    margin: 0;
+}
+
+.option-description strong,
+.category-description strong,
+.story-block strong {
+    font-size: inherit;
+    color: inherit;
+}
+
 .points-tracker {
     position: fixed;
     bottom: 0;
@@ -716,6 +785,13 @@ button:disabled {
 
 .subcategory-content {
     padding-left: 1rem;
+}
+
+.subcategory-content-styled {
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 1rem;
 }
 
 .option-requirements,

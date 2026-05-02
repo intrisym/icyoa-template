@@ -676,10 +676,17 @@ function buildTextSizeStyle(value = "") {
     return `font-size: calc(1em ${operator} ${amount}${unit});`;
 }
 
-// Supports nested formatting tags while escaping all non-markup text.
-function renderFormattedText(text = "") {
+function isSafeMarkdownUrl(value = "") {
+    const url = String(value).trim();
+    if (!url) return false;
+    if (/[\u0000-\u001f\u007f\s]/.test(url)) return false;
+    return /^(https?:|mailto:|#|\/|\.\/|\.\.\/)/i.test(url);
+}
+
+// Supports Markdown-style formatting plus legacy CYOA color/size/weight tags.
+function renderInlineMarkdown(text = "") {
     const source = String(text);
-    const tagPattern = /\*\*|\*|\[\/(color|size|weight)\]|\[(color|size|weight)=([^\]\s]+)\]/gi;
+    const tagPattern = /`([^`]+)`|\[([^\]\n]+)\]\(([^)\s]+)\)|\*\*|__|\*|_|\[\/(color|size|weight)\]|\[(color|size|weight)=([^\]\s]+)\]/gi;
     let html = "";
     let lastIndex = 0;
     const openTags = [];
@@ -688,7 +695,17 @@ function renderFormattedText(text = "") {
     while ((match = tagPattern.exec(source)) !== null) {
         html += escapeHtml(source.slice(lastIndex, match.index));
 
-        if (match[0] === "**") {
+        if (match[1] !== undefined) {
+            html += `<code>${escapeHtml(match[1])}</code>`;
+        } else if (match[2] !== undefined) {
+            const linkText = renderInlineMarkdown(match[2]);
+            const url = match[3].trim();
+            if (isSafeMarkdownUrl(url)) {
+                html += `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${linkText}</a>`;
+            } else {
+                html += escapeHtml(match[0]);
+            }
+        } else if (match[0] === "**" || match[0] === "__") {
             if (openTags[openTags.length - 1] === "bold") {
                 html += "</strong>";
                 openTags.pop();
@@ -696,7 +713,7 @@ function renderFormattedText(text = "") {
                 html += "<strong>";
                 openTags.push("bold");
             }
-        } else if (match[0] === "*") {
+        } else if (match[0] === "*" || match[0] === "_") {
             if (openTags[openTags.length - 1] === "italic") {
                 html += "</em>";
                 openTags.pop();
@@ -704,8 +721,8 @@ function renderFormattedText(text = "") {
                 html += "<em>";
                 openTags.push("italic");
             }
-        } else if (match[1]) {
-            const closingTag = match[1].toLowerCase();
+        } else if (match[4]) {
+            const closingTag = match[4].toLowerCase();
             if (openTags[openTags.length - 1] === closingTag) {
                 html += "</span>";
                 openTags.pop();
@@ -713,8 +730,8 @@ function renderFormattedText(text = "") {
                 html += escapeHtml(match[0]);
             }
         } else {
-            const openingTag = match[2].toLowerCase();
-            const value = match[3].trim();
+            const openingTag = match[5].toLowerCase();
+            const value = match[6].trim();
             if (openingTag === "color" && isSafeTextColor(value)) {
                 html += `<span style="color: ${value};">`;
                 openTags.push(openingTag);
@@ -739,18 +756,114 @@ function renderFormattedText(text = "") {
         html += tag === "bold" ? "</strong>" : tag === "italic" ? "</em>" : "</span>";
     }
 
-    return html.replace(/\n/g, "<br>");
+    return html;
+}
+
+function renderFormattedText(text = "") {
+    const lines = String(text).replace(/\r\n?/g, "\n").split("\n");
+    const html = [];
+    let paragraph = [];
+    let listType = null;
+    let quote = [];
+
+    const flushParagraph = () => {
+        if (!paragraph.length) return;
+        html.push(`<p>${renderInlineMarkdown(paragraph.join("\n")).replace(/\n/g, "<br>")}</p>`);
+        paragraph = [];
+    };
+    const flushList = () => {
+        if (!listType) return;
+        html.push(`</${listType}>`);
+        listType = null;
+    };
+    const flushQuote = () => {
+        if (!quote.length) return;
+        html.push(`<blockquote>${renderInlineMarkdown(quote.join("\n")).replace(/\n/g, "<br>")}</blockquote>`);
+        quote = [];
+    };
+
+    lines.forEach(line => {
+        const heading = line.match(/^(#{1,6})\s+(.+)$/);
+        const unordered = line.match(/^\s*[-*+]\s+(.+)$/);
+        const ordered = line.match(/^\s*\d+\.\s+(.+)$/);
+        const blockquote = line.match(/^\s*>\s?(.*)$/);
+
+        if (!line.trim()) {
+            flushParagraph();
+            flushList();
+            flushQuote();
+            return;
+        }
+
+        if (heading) {
+            flushParagraph();
+            flushList();
+            flushQuote();
+            const level = heading[1].length;
+            html.push(`<h${level}>${renderInlineMarkdown(heading[2])}</h${level}>`);
+            return;
+        }
+
+        if (blockquote) {
+            flushParagraph();
+            flushList();
+            quote.push(blockquote[1]);
+            return;
+        }
+
+        if (unordered || ordered) {
+            flushParagraph();
+            flushQuote();
+            const nextType = unordered ? "ul" : "ol";
+            if (listType !== nextType) {
+                flushList();
+                html.push(`<${nextType}>`);
+                listType = nextType;
+            }
+            html.push(`<li>${renderInlineMarkdown((unordered || ordered)[1])}</li>`);
+            return;
+        }
+
+        flushList();
+        flushQuote();
+        paragraph.push(line);
+    });
+
+    flushParagraph();
+    flushList();
+    flushQuote();
+    return html.join("");
+}
+
+function renderFormattedInlineText(text = "") {
+    return renderInlineMarkdown(String(text).replace(/\r\n?/g, "\n")).replace(/\n/g, "<br>");
 }
 
 function stripFormattingMarkup(text = "") {
     return String(text)
+        .replace(/`([^`]+)`/g, "$1")
+        .replace(/\[([^\]\n]+)\]\(([^)\s]+)\)/g, "$1")
+        .replace(/^\s{0,3}#{1,6}\s+/gm, "")
+        .replace(/^\s*[-*+]\s+/gm, "")
+        .replace(/^\s*\d+\.\s+/gm, "")
+        .replace(/^\s*>\s?/gm, "")
         .replace(/\*/g, "")
+        .replace(/_/g, "")
         .replace(/\[\/?(color|size|weight)(=[^\]\s]+)?\]/gi, "");
 }
 
 function setMultilineText(element, text = "") {
     if (!element) return;
-    element.innerHTML = renderFormattedText(text);
+    element.classList.add("formatted-text");
+    element.innerHTML = element.tagName === "STRONG" ? renderFormattedInlineText(text) : renderFormattedText(text);
+}
+
+function getPointTypeMarkup(type = "") {
+    return renderFormattedInlineText(type);
+}
+
+function getPointAmountMarkup(type, value) {
+    return `${getPointTypeMarkup(type)} ${escapeHtml(String(value))}`;
 }
 
 function buildExportState() {
@@ -2073,7 +2186,7 @@ function addSelection(option, options = {}) {
 function updatePointsDisplay() {
     const display = document.getElementById("pointsDisplay");
     display.innerHTML = Object.entries(points)
-        .map(([type, val]) => `<span><strong>${type}:</strong> ${val}</span>`)
+        .map(([type, val]) => `<span><strong>${getPointTypeMarkup(type)}:</strong> ${escapeHtml(String(val))}</span>`)
         .join("");
     syncPointsTrackerHeight();
 }
@@ -2417,7 +2530,7 @@ function getOptionLabel(id) {
 }
 
 function getOptionLabelMarkup(id) {
-    return renderFormattedText(getOptionLabel(id) || id);
+    return renderFormattedInlineText(getOptionLabel(id) || id);
 }
 
 function getOptionLabelPlainText(id) {
@@ -2639,8 +2752,8 @@ function formatConditionalCostResult(cost = {}) {
         .map(([type, value]) => {
             const numeric = Number(value);
             return numeric < 0
-                ? `Gain: ${type} ${Math.abs(numeric)}`
-                : `Cost: ${type} ${numeric}`;
+                ? `Gain: ${getPointAmountMarkup(type, Math.abs(numeric))}`
+                : `Cost: ${getPointAmountMarkup(type, numeric)}`;
         })
         .join("; ");
 }
@@ -3010,6 +3123,37 @@ function getSubcategoryDisplayMode(entity) {
     return entity?.subcategoryDisplayMode === "all" ? "all" : "tabs";
 }
 
+function applySubcategoryColorStyles(element, subcat, target = "content") {
+    if (!element || !subcat) return;
+    const backgroundColor = subcat.backgroundColor || subcat.style?.backgroundColor;
+    const textColor = subcat.textColor || subcat.style?.textColor;
+    const accentColor = subcat.accentColor || subcat.style?.accentColor;
+
+    if (target === "tab") {
+        if (accentColor && isSafeTextColor(accentColor)) element.style.borderColor = accentColor;
+        if (backgroundColor && isSafeTextColor(backgroundColor) && element.classList.contains("active")) {
+            element.style.background = backgroundColor;
+        }
+        if (textColor && isSafeTextColor(textColor) && element.classList.contains("active")) {
+            element.style.color = textColor;
+        }
+        return;
+    }
+
+    if (target === "title") {
+        if (accentColor && isSafeTextColor(accentColor)) element.style.backgroundColor = accentColor;
+        if (textColor && isSafeTextColor(textColor)) element.style.color = textColor;
+        return;
+    }
+
+    if (backgroundColor && isSafeTextColor(backgroundColor)) {
+        element.style.background = backgroundColor;
+        element.classList.add("subcategory-content-styled");
+    }
+    if (textColor && isSafeTextColor(textColor)) element.style.color = textColor;
+    if (accentColor && isSafeTextColor(accentColor)) element.style.borderColor = accentColor;
+}
+
 function getSubcategoryPathKey(catIndex, catName, path, subcat) {
     return buildSubcategoryKey(catIndex, catName, null, null, path.concat([{ index: path.length ? path[path.length - 1].index : 0, name: subcat?.name || "" }]));
 }
@@ -3051,10 +3195,12 @@ function renderSubcategoryTreeNode(subcat, parentContainer, {
 
     const subcatContent = document.createElement("div");
     subcatContent.className = "subcategory-content tab-active";
+    applySubcategoryColorStyles(subcatContent, subcat, "content");
 
     const subcatTitle = document.createElement("h3");
     subcatTitle.className = "subcategory-content-title";
     subcatTitle.textContent = subcat.name || `Options ${path[path.length - 1]?.index + 1 || 1}`;
+    applySubcategoryColorStyles(subcatTitle, subcat, "title");
     subcatContent.appendChild(subcatTitle);
     subcatItem.appendChild(subcatContent);
     parentContainer.appendChild(subcatItem);
@@ -3207,6 +3353,7 @@ function renderSubcategoryLevel(parentEntity, children, container, {
                 }
                 renderAccordion();
             };
+            applySubcategoryColorStyles(subButton, meta.child, "tab");
             nav.appendChild(subButton);
         });
         container.appendChild(nav);
@@ -3413,14 +3560,14 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
 
     Object.entries(costToShow || {}).forEach(([type, val]) => {
         if (val < 0) {
-            gain.push(`${type} ${Math.abs(val)}`);
+            gain.push(getPointAmountMarkup(type, Math.abs(val)));
         } else {
             const orig = originalCost[type];
             if (orig !== undefined && orig !== val) {
                 // Show modified price and original in parentheses.
-                spend.push(`${type} ${val} (was ${orig})`);
+                spend.push(`${getPointAmountMarkup(type, val)} (was ${escapeHtml(String(orig))})`);
             } else {
-                spend.push(`${type} ${val}`);
+                spend.push(getPointAmountMarkup(type, val));
             }
         }
     });

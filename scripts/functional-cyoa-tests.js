@@ -39,7 +39,7 @@ const FEATURE_COVERAGE = [
     "theme settings include option metadata section colors",
     "custom JSON option fields are preserved and ignored by runtime logic",
     "packed export/import state round trips",
-    "safe text formatting markup for color, size, weight, bold, and italic"
+    "safe Markdown-style formatting with legacy color, size, weight, and point-type labels"
 ];
 
 function loadCyoa(filename) {
@@ -222,6 +222,9 @@ class CyoaEngine {
                         requiresOption: "preA",
                         subcategoryDisplayMode: "all",
                         columnsPerRow: 3,
+                        backgroundColor: "#7f1d1d",
+                        textColor: "#ffffff",
+                        accentColor: "#dc2626",
                         options: [
                             { id: "subcategoryRequiresOption", label: "Subcategory Requires Option", cost: {} }
                         ],
@@ -509,8 +512,8 @@ class CyoaEngine {
             .map(([type, value]) => {
                 const numeric = Number(value);
                 return numeric < 0
-                    ? `Gain: ${type} ${Math.abs(numeric)}`
-                    : `Cost: ${type} ${numeric}`;
+                    ? `Gain: ${getPointAmountMarkup(type, Math.abs(numeric))}`
+                    : `Cost: ${getPointAmountMarkup(type, numeric)}`;
             })
             .join("; ");
     }
@@ -906,9 +909,16 @@ function buildTextSizeStyle(value = "") {
     return `font-size: calc(1em ${operator} ${match[2]}${match[4]});`;
 }
 
-function renderFormattedText(text = "") {
+function isSafeMarkdownUrl(value = "") {
+    const url = String(value).trim();
+    if (!url) return false;
+    if (/[\u0000-\u001f\u007f\s]/.test(url)) return false;
+    return /^(https?:|mailto:|#|\/|\.\/|\.\.\/)/i.test(url);
+}
+
+function renderInlineMarkdown(text = "") {
     const source = String(text);
-    const tagPattern = /\*\*|\*|\[\/(color|size|weight)\]|\[(color|size|weight)=([^\]\s]+)\]/gi;
+    const tagPattern = /`([^`]+)`|\[([^\]\n]+)\]\(([^)\s]+)\)|\*\*|__|\*|_|\[\/(color|size|weight)\]|\[(color|size|weight)=([^\]\s]+)\]/gi;
     let html = "";
     let lastIndex = 0;
     const openTags = [];
@@ -916,14 +926,24 @@ function renderFormattedText(text = "") {
 
     while ((match = tagPattern.exec(source)) !== null) {
         html += escapeHtml(source.slice(lastIndex, match.index));
-        if (match[0] === "**") {
+        if (match[1] !== undefined) {
+            html += `<code>${escapeHtml(match[1])}</code>`;
+        } else if (match[2] !== undefined) {
+            const linkText = renderInlineMarkdown(match[2]);
+            const url = match[3].trim();
+            if (isSafeMarkdownUrl(url)) {
+                html += `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${linkText}</a>`;
+            } else {
+                html += escapeHtml(match[0]);
+            }
+        } else if (match[0] === "**" || match[0] === "__") {
             html += openTags[openTags.length - 1] === "bold" ? "</strong>" : "<strong>";
             openTags[openTags.length - 1] === "bold" ? openTags.pop() : openTags.push("bold");
-        } else if (match[0] === "*") {
+        } else if (match[0] === "*" || match[0] === "_") {
             html += openTags[openTags.length - 1] === "italic" ? "</em>" : "<em>";
             openTags[openTags.length - 1] === "italic" ? openTags.pop() : openTags.push("italic");
-        } else if (match[1]) {
-            const closingTag = match[1].toLowerCase();
+        } else if (match[4]) {
+            const closingTag = match[4].toLowerCase();
             if (openTags[openTags.length - 1] === closingTag) {
                 html += "</span>";
                 openTags.pop();
@@ -931,8 +951,8 @@ function renderFormattedText(text = "") {
                 html += escapeHtml(match[0]);
             }
         } else {
-            const openingTag = match[2].toLowerCase();
-            const value = match[3].trim();
+            const openingTag = match[5].toLowerCase();
+            const value = match[6].trim();
             if (openingTag === "color" && isSafeTextColor(value)) {
                 html += `<span style="color: ${value};">`;
                 openTags.push(openingTag);
@@ -954,12 +974,107 @@ function renderFormattedText(text = "") {
         const tag = openTags.pop();
         html += tag === "bold" ? "</strong>" : tag === "italic" ? "</em>" : "</span>";
     }
-    return html.replace(/\n/g, "<br>");
+    return html;
+}
+
+function renderFormattedText(text = "") {
+    const lines = String(text).replace(/\r\n?/g, "\n").split("\n");
+    const html = [];
+    let paragraph = [];
+    let listType = null;
+    let quote = [];
+
+    const flushParagraph = () => {
+        if (!paragraph.length) return;
+        html.push(`<p>${renderInlineMarkdown(paragraph.join("\n")).replace(/\n/g, "<br>")}</p>`);
+        paragraph = [];
+    };
+    const flushList = () => {
+        if (!listType) return;
+        html.push(`</${listType}>`);
+        listType = null;
+    };
+    const flushQuote = () => {
+        if (!quote.length) return;
+        html.push(`<blockquote>${renderInlineMarkdown(quote.join("\n")).replace(/\n/g, "<br>")}</blockquote>`);
+        quote = [];
+    };
+
+    lines.forEach(line => {
+        const heading = line.match(/^(#{1,6})\s+(.+)$/);
+        const unordered = line.match(/^\s*[-*+]\s+(.+)$/);
+        const ordered = line.match(/^\s*\d+\.\s+(.+)$/);
+        const blockquote = line.match(/^\s*>\s?(.*)$/);
+
+        if (!line.trim()) {
+            flushParagraph();
+            flushList();
+            flushQuote();
+            return;
+        }
+
+        if (heading) {
+            flushParagraph();
+            flushList();
+            flushQuote();
+            const level = heading[1].length;
+            html.push(`<h${level}>${renderInlineMarkdown(heading[2])}</h${level}>`);
+            return;
+        }
+
+        if (blockquote) {
+            flushParagraph();
+            flushList();
+            quote.push(blockquote[1]);
+            return;
+        }
+
+        if (unordered || ordered) {
+            flushParagraph();
+            flushQuote();
+            const nextType = unordered ? "ul" : "ol";
+            if (listType !== nextType) {
+                flushList();
+                html.push(`<${nextType}>`);
+                listType = nextType;
+            }
+            html.push(`<li>${renderInlineMarkdown((unordered || ordered)[1])}</li>`);
+            return;
+        }
+
+        flushList();
+        flushQuote();
+        paragraph.push(line);
+    });
+
+    flushParagraph();
+    flushList();
+    flushQuote();
+    return html.join("");
+}
+
+function renderFormattedInlineText(text = "") {
+    return renderInlineMarkdown(String(text).replace(/\r\n?/g, "\n")).replace(/\n/g, "<br>");
+}
+
+function getPointTypeMarkup(type = "") {
+    return renderFormattedInlineText(type);
+}
+
+function getPointAmountMarkup(type, value) {
+    return `${getPointTypeMarkup(type)} ${escapeHtml(String(value))}`;
 }
 
 function stripFormattingMarkup(text = "") {
     return String(text)
+        .replace(/`([^`]+)`/g, "$1")
+        .replace(/\[([^\]\n]+)\]\(([^)\s]+)\)/g, "$1")
+        .replace(/^\s{0,3}#{1,6}\s+/gm, "")
+        .replace(/^\s*[-*+]\s+/gm, "")
+        .replace(/^\s*\d+\.\s+/gm, "")
+        .replace(/^\s*>\s?/gm, "")
         .replace(/\*/g, "")
+        .replace(/_/g, "")
         .replace(/\[\/?(color|size|weight)(=[^\]\s]+)?\]/gi, "");
 }
 
@@ -1178,6 +1293,9 @@ test("category and nested subcategory display metadata is preserved", () => {
     assert.strictEqual(category.subcategoryDisplayMode, "all");
     assert.strictEqual(subcategory.subcategoryDisplayMode, "all");
     assert.strictEqual(nested.subcategoryDisplayMode, "all");
+    assert.strictEqual(subcategory.backgroundColor, "#7f1d1d");
+    assert.strictEqual(subcategory.textColor, "#ffffff");
+    assert.strictEqual(subcategory.accentColor, "#dc2626");
 });
 
 test("adding and removing options updates selectable data", () => {
@@ -1466,18 +1584,27 @@ test("theme settings include option metadata section colors", () => {
         });
 });
 
-test("safe text formatting supports nesting and strips markup for plain labels", () => {
-    const html = renderFormattedText("**Bold [color=blue]Blue[/color]** and *italic* [size=-2px]small[/size] [weight=700]heavy[/weight] <x>");
+test("safe text formatting supports Markdown, legacy tags, and plain-label stripping", () => {
+    const html = renderFormattedText("# Heading\n\n**Bold [color=blue]Blue[/color]** and *italic* [size=-2px]small[/size] [weight=700]heavy[/weight] `code` <x>\n\n- [Link](https://example.com)");
+    assert(html.includes("<h1>Heading</h1>"));
     assert(html.includes("<strong>Bold "));
     assert(html.includes("<span style=\"color: blue;\">Blue</span>"));
     assert(html.includes("<em>italic</em>"));
     assert(html.includes("font-size: calc(1em - 2px);"));
     assert(html.includes("font-weight: 700;"));
+    assert(html.includes("<code>code</code>"));
+    assert(html.includes("<ul><li><a href=\"https://example.com\" target=\"_blank\" rel=\"noopener noreferrer\">Link</a></li></ul>"));
     assert(html.includes("&lt;x&gt;"));
 
-    const unsafe = renderFormattedText("[color=javascript:alert(1)]bad[/color]");
+    const unsafe = renderFormattedText("[bad](javascript:alert) [color=javascript:alert(1)]bad[/color]");
+    assert(unsafe.includes("[bad](javascript:alert)"));
     assert(unsafe.includes("[color=javascript:alert(1)]bad[/color]"));
-    assert.strictEqual(stripFormattingMarkup("[color=red]Red[/color] **Bold**"), "Red Bold");
+    assert.strictEqual(stripFormattingMarkup("# [color=red]Red[/color] **Bold** and [Link](https://example.com)"), "Red Bold and Link");
+
+    assert.strictEqual(
+        getPointAmountMarkup("[color=gold]Gold[/color] **Points**", 5),
+        "<span style=\"color: gold;\">Gold</span> <strong>Points</strong> 5"
+    );
 });
 
 test("lantern emotional consistency is removed when later color choices make conditional prerequisites false", () => {

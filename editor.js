@@ -1441,7 +1441,7 @@
         const descriptionTextarea = document.createElement("textarea");
         descriptionTextarea.id = "globalDescriptionInput";
         descriptionTextarea.value = descriptionEntry.text || "";
-        descriptionTextarea.placeholder = "World overview shown under the header. Use *italic*, **bold**, [weight=600]semi-bold[/weight], [color=#d32f2f]red[/color], or [size=-2px]smaller[/size].";
+        descriptionTextarea.placeholder = "World overview shown under the header. Supports Markdown like **bold**, *italic*, # headings, lists, links, and legacy [color=#d32f2f]red[/color] tags.";
         descriptionTextarea.addEventListener("input", () => {
             descriptionEntry.text = descriptionTextarea.value;
             schedulePreviewUpdate();
@@ -1562,7 +1562,7 @@
             const nameInput = document.createElement("input");
             nameInput.type = "text";
             nameInput.value = currency;
-            nameInput.placeholder = "Currency";
+            nameInput.placeholder = "Point type, e.g. [color=gold]Gold[/color]";
 
             const valueInput = document.createElement("input");
             valueInput.type = "number";
@@ -2200,6 +2200,23 @@
         return names.length ? names : ["Points"];
     }
 
+    function stripFormattingMarkup(text = "") {
+        return String(text)
+            .replace(/`([^`]+)`/g, "$1")
+            .replace(/\[([^\]\n]+)\]\(([^)\s]+)\)/g, "$1")
+            .replace(/^\s{0,3}#{1,6}\s+/gm, "")
+            .replace(/^\s*[-*+]\s+/gm, "")
+            .replace(/^\s*\d+\.\s+/gm, "")
+            .replace(/^\s*>\s?/gm, "")
+            .replace(/\*/g, "")
+            .replace(/_/g, "")
+            .replace(/\[\/?(color|size|weight)(=[^\]\s]+)?\]/gi, "");
+    }
+
+    function getPointTypeDisplayName(type = "") {
+        return stripFormattingMarkup(type) || type;
+    }
+
     function renderPointTypeAmountControls(parent, {
         labelPrefix,
         getMap,
@@ -2228,7 +2245,7 @@
                 row.className = "field-inline";
 
                 const label = document.createElement("label");
-                label.textContent = `${labelPrefix} (${type})`;
+                label.textContent = `${labelPrefix} (${getPointTypeDisplayName(type)})`;
 
                 const input = document.createElement("input");
                 input.type = "number";
@@ -2256,7 +2273,7 @@
                 removeBtn.type = "button";
                 removeBtn.className = "button-icon danger";
                 removeBtn.textContent = "✕";
-                removeBtn.title = `Remove ${type}`;
+                removeBtn.title = `Remove ${getPointTypeDisplayName(type)}`;
                 removeBtn.addEventListener("click", () => {
                     const nextMap = getMap() || {};
                     delete nextMap[type];
@@ -2290,7 +2307,7 @@
             available.forEach(type => {
                 const opt = document.createElement("option");
                 opt.value = type;
-                opt.textContent = type;
+                opt.textContent = getPointTypeDisplayName(type);
                 select.appendChild(opt);
             });
 
@@ -2470,7 +2487,7 @@
             descriptionLabel.textContent = "Description (Optional)";
             const descriptionInput = document.createElement("textarea");
             descriptionInput.value = category.description || "";
-            descriptionInput.placeholder = "Shown below the category tab title. Use *italic*, **bold**, [weight=600]semi-bold[/weight], [color=#d32f2f]red[/color], or [size=-2px]smaller[/size].";
+            descriptionInput.placeholder = "Shown below the category tab title. Supports Markdown like **bold**, *italic*, lists, links, and legacy [color=#d32f2f]red[/color] tags.";
             descriptionInput.addEventListener("input", () => {
                 if (descriptionInput.value.trim()) {
                     category.description = descriptionInput.value;
@@ -2681,6 +2698,34 @@
                 nestedViewField.appendChild(nestedViewLabel);
                 nestedViewField.appendChild(nestedViewSelect);
                 subAdvancedBody.appendChild(nestedViewField);
+
+                const colorRow = document.createElement("div");
+                colorRow.className = "field-inline";
+                const colorFields = [
+                    ["backgroundColor", "Background color", "e.g. red or #7f1d1d"],
+                    ["textColor", "Text color", "e.g. white"],
+                    ["accentColor", "Header/accent color", "e.g. #dc2626"]
+                ];
+                colorFields.forEach(([key, labelText, placeholder]) => {
+                    const label = document.createElement("label");
+                    label.textContent = labelText;
+                    const input = document.createElement("input");
+                    input.type = "text";
+                    input.value = subcat[key] || "";
+                    input.placeholder = placeholder;
+                    input.addEventListener("input", () => {
+                        const value = input.value.trim();
+                        if (value) {
+                            subcat[key] = value;
+                        } else {
+                            delete subcat[key];
+                        }
+                        schedulePreviewUpdate();
+                    });
+                    colorRow.appendChild(label);
+                    colorRow.appendChild(input);
+                });
+                subAdvancedBody.appendChild(colorRow);
 
                 const maxRow = document.createElement("div");
                 maxRow.className = "field-inline";
@@ -3142,7 +3187,7 @@
             const labelInput = document.createElement("input");
             labelInput.type = "text";
             labelInput.value = option.label || "";
-            labelInput.placeholder = "Displayed choice text. Supports *italic*, **bold**, [weight=600], [color=#d32f2f], and [size=120%].";
+            labelInput.placeholder = "Displayed choice text. Supports Markdown emphasis and legacy [color=#d32f2f], [weight=600], and [size=120%] tags.";
             labelInput.addEventListener("input", () => {
                 option.label = labelInput.value;
                 const newId = generateOptionId(option.label, {
@@ -3171,7 +3216,7 @@
             descLabel.textContent = "Description";
             const descTextarea = document.createElement("textarea");
             descTextarea.value = option.description || "";
-            descTextarea.placeholder = "Explain what this choice does. Use *italic*, **bold**, [weight=600]semi-bold[/weight], [color=#d32f2f]red[/color], or [size=-2px]smaller[/size].";
+            descTextarea.placeholder = "Explain what this choice does. Supports Markdown like **bold**, *italic*, lists, links, and legacy [color=#d32f2f]red[/color] tags.";
             descTextarea.addEventListener("input", () => {
                 option.description = descTextarea.value;
                 schedulePreviewUpdate();
@@ -3762,7 +3807,7 @@
             availablePointTypes.forEach((pointType) => {
                 const opt = document.createElement("option");
                 opt.value = pointType;
-                opt.textContent = pointType;
+                opt.textContent = getPointTypeDisplayName(pointType);
                 nameSelect.appendChild(opt);
             });
             nameSelect.value = currency;

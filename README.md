@@ -12,7 +12,7 @@ An open-source **Interactive Choose Your Own Adventure (ICYOA)** template. Build
 - Light and dark themes, with creator control over whether players can toggle themes or are locked to one mode.
 - Player-facing option detail panels for prerequisites, incompatibilities, conditional costs, and automatic grants.
 - Import/export support for sharing builds.
-- Safe inline text formatting for CYOA descriptions, including italic, bold, weight, color, and size.
+- Safe Markdown-style text formatting for CYOA descriptions, with legacy weight, color, and size tags.
 
 ---
 
@@ -74,7 +74,7 @@ Current functional coverage includes:
 - Theme-setting coverage for option metadata section colors.
 - Custom JSON option fields being preserved without changing runtime selection logic.
 - Packed export/import state round trips.
-- Safe text formatting for color, size, weight, bold, italic, nesting, escaping, and plain-label stripping.
+- Safe Markdown-style text formatting for headings, lists, links, inline code, color, size, weight, escaping, and plain-label stripping.
 
 Useful focused commands:
 
@@ -120,14 +120,30 @@ Want one choice to depend on another?
 * **Conflicts:** Stop players from picking two incompatible things (e.g., `Fire_Magic` and `Ice_Magic`).
 
 ### 4. Formatting Text
-Description fields support a small, safe markup syntax. This lets you format text without enabling arbitrary HTML.
+Description fields support a safe Markdown-style syntax. This lets you format text without enabling arbitrary HTML. Existing CYOA tags for color, size, and weight are still supported for compatibility.
 
-#### Italic And Bold
+#### Markdown
 
 ```text
+# Heading
+
 Normal text, then *italic text*, then normal text again.
 Normal text, then **bold text**, then normal text again.
+Use `inline code` for short literals.
+
+- First bullet
+- Second bullet
+
+1. First numbered item
+2. Second numbered item
+
+[Project link](https://example.com)
+> Quoted text
 ```
+
+Links are limited to safe URL forms such as `https:`, `http:`, `mailto:`, page anchors, and relative paths.
+
+#### Legacy Weight
 
 For more control over boldness, use numeric weight tags:
 
@@ -209,10 +225,11 @@ icyoa-template/
 ## Advanced Customization
 
 * **Colors & Fonts:** You can modify the theme in either the visual editor or in the theme block in the JSON.
+* **Subcategory Colors:** Individual subcategories can define `backgroundColor`, `textColor`, and `accentColor` to style only that opened section. These fields are available in the editor's subcategory advanced fields.
 * **Light & Dark Themes:** CYOAs can define both `theme` and `darkTheme` values. The player preserves the default dark theme when a CYOA does not define its own.
 * **Theme Availability:** Use the visual editor's **Theme Availability** section to allow the light/dark toggle, force light mode only, or force dark mode only. Existing CYOAs default to allowing the toggle.
-* **Point Systems:** You can have multiple types of points (e.g., Health, Mana, Gold) by editing the `points` section in the editor.
-* **Text Formatting:** Use `*italic*`, `**bold**`, `[weight=...]...[/weight]`, `[color=...]...[/color]`, and `[size=...]...[/size]` in description text for local emphasis.
+* **Point Systems:** You can have multiple types of points (e.g., Health, Mana, Gold) by editing the `points` section in the editor. Point type names support the same safe inline formatting as option labels, so a name like `[color=gold]Gold[/color]` keeps its styling in the tracker and option cost displays.
+* **Text Formatting:** Use Markdown syntax such as `# Heading`, `- list item`, `[link](https://example.com)`, `` `code` ``, `*italic*`, and `**bold**`. Legacy `[weight=...]...[/weight]`, `[color=...]...[/color]`, and `[size=...]...[/size]` tags remain supported.
 * **Automatic Grants:** Use the option editor's **Automatically grants options** section to make one option select another option at no extra point cost. Each granted option can be locked, or marked as user-deselectable.
 * **Modified Costs:** Use per-option or subcategory-wide `modifiedCosts` rules to change costs conditionally. Rules can set absolute replacement costs with `cost`, apply relative changes with `costDelta`, and define optional `minCost` / `maxCost` maps to clamp the final modified price. Legacy `discounts` rules are still supported for older CYOAs.
 * **Modified Cost Priority:** Conditional modified cost rules can set a priority. If any option-level rule matches, option-level rules win over subcategory-wide rules; within the winning scope, only the highest-priority matching rule is applied.
