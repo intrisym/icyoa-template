@@ -108,6 +108,56 @@ function normalizeAssetUrl(url) {
     }
 }
 
+function sanitizeStoryInputValue(value, maxLength = 200) {
+    let normalized = "";
+    if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+        normalized = String(value);
+    }
+    const lengthLimit = Number.isFinite(Number(maxLength)) && Number(maxLength) > 0 ? Math.floor(Number(maxLength)) : 200;
+    return normalized.slice(0, lengthLimit);
+}
+
+function getStoryInputConfigById(inputId) {
+    for (const cat of categories) {
+        let found = null;
+
+        walkSubcategoryTree(cat.subcategories || [], subcat => {
+            if (found) return;
+            if (subcat?.input?.id === inputId) {
+                found = {
+                    id: subcat.input.id,
+                    maxLength: subcat.input.maxLength || 20,
+                    type: "subcategory"
+                };
+                return;
+            }
+            for (const opt of subcat?.options || []) {
+                if (opt?.id === inputId && opt.inputType === "text") {
+                    found = {
+                        id: opt.id,
+                        maxLength: opt.maxLength || 200,
+                        type: "option"
+                    };
+                    return;
+                }
+            }
+        });
+
+        if (found) return found;
+
+        for (const opt of cat.options || []) {
+            if (opt?.id === inputId && opt.inputType === "text") {
+                return {
+                    id: opt.id,
+                    maxLength: opt.maxLength || 200,
+                    type: "option"
+                };
+            }
+        }
+    }
+    return null;
+}
+
 function walkSubcategoryTree(subcategories, callback, path = []) {
     if (!Array.isArray(subcategories)) return;
     subcategories.forEach((subcat, index) => {
@@ -954,7 +1004,13 @@ modalConfirmBtn.onclick = async () => {
             discountedSelections[key] = val
         });
         Object.entries(importedData.storyInputs || {}).forEach(([key, val]) => {
-            storyInputs[key] = val
+            const config = getStoryInputConfigById(key);
+            if (!config) return;
+            if (config.type === "option" && !selectedOptions[key]) return;
+            const safeValue = sanitizeStoryInputValue(val, config.maxLength);
+            if (safeValue) {
+                storyInputs[key] = safeValue;
+            }
         });
         Object.entries(importedData.attributeSliderValues || {}).forEach(([key, val]) => {
             attributeSliderValues[key] = val
@@ -1796,6 +1852,9 @@ function removeSelection(option, options = {}) {
         delete selectedOptions[option.id];
         delete discountedSelections[option.id]; // Clear all recorded discounts for this option
         delete autoGrantedSelections[option.id];
+        if (option.inputType === "text") {
+            delete storyInputs[option.id];
+        }
         removeAutoGrantsFromSource(option.id, {
             skipRender: true,
             force: true
@@ -3063,9 +3122,11 @@ function renderSubcategoryTreeNode(subcat, parentContainer, {
         input.id = subcat.input.id;
         input.placeholder = subcat.input.placeholder || "";
         input.maxLength = subcat.input.maxLength || 20;
-        input.value = storyInputs[subcat.input.id] || "";
+        input.value = sanitizeStoryInputValue(storyInputs[subcat.input.id] || "", input.maxLength);
         input.addEventListener("input", (e) => {
-            storyInputs[subcat.input.id] = e.target.value;
+            const safeValue = sanitizeStoryInputValue(e.target.value, input.maxLength);
+            e.target.value = safeValue;
+            storyInputs[subcat.input.id] = safeValue;
         });
         inputWrapper.appendChild(input);
         subcatContent.appendChild(inputWrapper);
@@ -3286,16 +3347,17 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
 
     const selectedCount = selectedOptions[opt.id] || 0;
     const maxSelections = opt.maxSelections || 1;
+    const hasTextInput = opt.inputType === "text";
     const isSingleChoice = maxSelections === 1;
 
-    if (isSingleChoice) {
+    if (isSingleChoice && !hasTextInput) {
         wrapper.classList.add("is-clickable");
     }
     if (selectedCount > 0) {
         wrapper.classList.add("selected");
     }
 
-    if (isSingleChoice) {
+    if (isSingleChoice && !hasTextInput) {
         wrapper.onclick = (e) => {
             // Check if we clicked an interactive element like a discount button
             if (e.target.closest('button') || e.target.closest('select') || e.target.closest('input')) {
@@ -3688,6 +3750,9 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
 
     if (opt.inputType === "slider") {
         renderSliderControl(opt, contentWrapper);
+    } else if (opt.inputType === "text") {
+        renderTextInputControl(opt, contentWrapper);
+        renderSelectionButton(opt, contentWrapper);
     } else {
         const isSingleChoice = (opt.maxSelections || 1) === 1;
         if (!isSingleChoice) {
@@ -3817,6 +3882,41 @@ function renderSliderControl(opt, contentWrapper) {
     sliderWrapper.appendChild(sliderLabel);
     sliderWrapper.appendChild(slider);
     contentWrapper.appendChild(sliderWrapper);
+}
+
+function renderTextInputControl(opt, contentWrapper) {
+    const inputWrapper = document.createElement("div");
+    inputWrapper.className = "option-input-wrapper";
+    const isSelected = !!selectedOptions[opt.id];
+
+    if (opt.inputLabel) {
+        const label = document.createElement("label");
+        label.textContent = opt.inputLabel;
+        label.setAttribute("for", `option-input-${opt.id}`);
+        inputWrapper.appendChild(label);
+    }
+
+    const input = document.createElement("input");
+    input.type = "text";
+    input.id = `option-input-${opt.id}`;
+    input.className = "option-text-input";
+    input.placeholder = isSelected ? (opt.placeholder || "") : "Select this option to enter text";
+    const maxLength = Number(opt.maxLength);
+    input.maxLength = Number.isFinite(maxLength) && maxLength > 0 ? Math.floor(maxLength) : 200;
+    input.value = sanitizeStoryInputValue(storyInputs[opt.id] || "", input.maxLength);
+    input.disabled = !isSelected;
+    input.addEventListener("input", e => {
+        if (!selectedOptions[opt.id]) {
+            e.target.value = "";
+            delete storyInputs[opt.id];
+            return;
+        }
+        const safeValue = sanitizeStoryInputValue(e.target.value, input.maxLength);
+        e.target.value = safeValue;
+        storyInputs[opt.id] = safeValue;
+    });
+    inputWrapper.appendChild(input);
+    contentWrapper.appendChild(inputWrapper);
 }
 
 function renderSelectionButton(opt, contentWrapper) {

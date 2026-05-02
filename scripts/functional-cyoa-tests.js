@@ -23,6 +23,8 @@ const FEATURE_COVERAGE = [
     "subcategory discountFirstN with discountAmount",
     "subcategory defaultCost",
     "subcategory columnsPerRow metadata",
+    "option-level freeform text inputs persist in exported state",
+    "option-level freeform text inputs require selection and sanitize imported values",
     "option-level absolute modified costs",
     "subcategory-wide relative modified costs",
     "modified cost minCost and maxCost clamps",
@@ -54,6 +56,15 @@ const OPTION_META_THEME_KEYS = [
     "option-meta-prerequisites-color",
     "option-meta-conflicts-color"
 ];
+
+function sanitizeStoryInputValue(value, maxLength = 200) {
+    let normalized = "";
+    if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+        normalized = String(value);
+    }
+    const lengthLimit = Number.isFinite(Number(maxLength)) && Number(maxLength) > 0 ? Math.floor(Number(maxLength)) : 200;
+    return normalized.slice(0, lengthLimit);
+}
 
 function walkSubcategories(subcategories, visitor, path = []) {
     if (!Array.isArray(subcategories)) return;
@@ -112,6 +123,7 @@ class CyoaEngine {
                             { id: "freeDefault", label: "Default Cost" },
                             { id: "spendTwo", label: "Spend Two", cost: { Points: 2 } },
                             { id: "gainThree", label: "Gain Three", cost: { Points: -3 } },
+                            { id: "freeText", label: "Free Text", cost: {}, inputType: "text", inputLabel: "Describe it" },
                             { id: "multi", label: "Multi", cost: { Points: 1 }, maxSelections: 3, countsAsOneSelection: true },
                             { id: "limitBypass", label: "Limit Bypass", cost: {}, bypassSubcategoryMaxSelections: true },
                             { id: "discountTrigger", label: "Discount Trigger", cost: {} },
@@ -241,6 +253,31 @@ class CyoaEngine {
         const option = this.optionMap.get(id);
         assert(option, `${this.filename}: missing option ${id}`);
         return option;
+    }
+
+    getStoryInputConfig(inputId) {
+        for (const category of this.categories) {
+            let found = null;
+            walkSubcategories(category.subcategories, subcat => {
+                if (found) return;
+                if (subcat?.input?.id === inputId) {
+                    found = { id: inputId, maxLength: subcat.input.maxLength || 20, type: "subcategory" };
+                    return;
+                }
+                (subcat?.options || []).forEach(option => {
+                    if (!found && option.id === inputId && option.inputType === "text") {
+                        found = { id: inputId, maxLength: option.maxLength || 200, type: "option" };
+                    }
+                });
+            });
+            if (found) return found;
+            for (const option of category.options || []) {
+                if (option.id === inputId && option.inputType === "text") {
+                    return { id: inputId, maxLength: option.maxLength || 200, type: "option" };
+                }
+            }
+        }
+        return null;
     }
 
     findSubcategoryInfo(optionId) {
@@ -696,6 +733,7 @@ class CyoaEngine {
         });
         this.selectedOptions[option.id] -= 1;
         if (this.selectedOptions[option.id] <= 0) delete this.selectedOptions[option.id];
+        if (!this.selectedOptions[option.id] && option.inputType === "text") delete this.storyInputs[option.id];
         const historyIndex = this.selectionHistory.indexOf(option.id);
         if (historyIndex >= 0) this.selectionHistory.splice(historyIndex, 1);
         this.removeAutoGrantsFromSource(option.id);
@@ -748,6 +786,13 @@ class CyoaEngine {
         }
     }
 
+    setTextInput(optionId, value) {
+        const option = this.option(optionId);
+        assert.strictEqual(option.inputType, "text", `${this.filename}: expected ${optionId} to be a text input option`);
+        assert(this.selectedOptions[option.id] > 0, `${this.filename}: expected ${optionId} to be selected before entering text`);
+        this.storyInputs[option.id] = sanitizeStoryInputValue(value, option.maxLength || 200);
+    }
+
     assertFinitePoints() {
         Object.entries(this.points).forEach(([type, value]) => {
             assert(Number.isFinite(Number(value)), `${this.filename}: point type ${type} became non-finite`);
@@ -781,6 +826,27 @@ class CyoaEngine {
         if (hasOwnEntries(full.optionGrantDiscountSelections)) packed.g = full.optionGrantDiscountSelections;
         if (hasOwnEntries(full.autoGrantedSelections)) packed.r = full.autoGrantedSelections;
         return packed;
+    }
+
+    importState(importedData) {
+        const unpacked = unpackImportedState(JSON.parse(JSON.stringify(importedData)));
+        this.selectedOptions = { ...(unpacked.selectedOptions || {}) };
+        this.points = { ...(unpacked.points || {}) };
+        this.discountedSelections = { ...(unpacked.discountedSelections || {}) };
+        this.storyInputs = {};
+        Object.entries(unpacked.storyInputs || {}).forEach(([key, value]) => {
+            const config = this.getStoryInputConfig(key);
+            if (!config) return;
+            if (config.type === "option" && !this.selectedOptions[key]) return;
+            const safeValue = sanitizeStoryInputValue(value, config.maxLength);
+            if (safeValue) this.storyInputs[key] = safeValue;
+        });
+        this.attributeSliderValues = { ...(unpacked.attributeSliderValues || {}) };
+        this.dynamicSelections = { ...(unpacked.dynamicSelections || {}) };
+        this.subcategoryDiscountSelections = { ...(unpacked.subcategoryDiscountSelections || {}) };
+        this.categoryDiscountSelections = { ...(unpacked.categoryDiscountSelections || {}) };
+        this.optionGrantDiscountSelections = { ...(unpacked.optionGrantDiscountSelections || {}) };
+        this.autoGrantedSelections = { ...(unpacked.autoGrantedSelections || {}) };
     }
 }
 
@@ -974,6 +1040,66 @@ test("subcategory default costs and countsAsOneSelection limits work", () => {
     engine.select("multi");
     assert.strictEqual(engine.selectedOptions.multi, 2);
     assert.strictEqual(engine.subcategorySelectionCount(engine.findSubcategoryOfOption("multi")), 1);
+});
+
+test("option-level freeform text inputs persist in exported state", () => {
+    const engine = CyoaEngine.synthetic();
+    engine.select("freeText");
+    engine.setTextInput("freeText", "Anywhere, any time");
+    assert.strictEqual(engine.storyInputs.freeText, "Anywhere, any time");
+    assert.strictEqual(engine.selectedOptions.freeText, 1);
+    assert.strictEqual(engine.points.Points, 9);
+
+    const packed = engine.buildPackedExportState();
+    const unpacked = unpackImportedState(JSON.parse(JSON.stringify(packed)));
+    assert.strictEqual(unpacked.storyInputs.freeText, "Anywhere, any time");
+});
+
+test("option-level freeform text inputs require selection and sanitize imported values", () => {
+    const engine = CyoaEngine.synthetic();
+    assert.throws(() => engine.setTextInput("freeText", "<img src=x onerror=alert(1)>"));
+
+    engine.select("freeText");
+    engine.setTextInput("freeText", "<img src=x onerror=alert(1)>");
+    assert.strictEqual(engine.storyInputs.freeText, "<img src=x onerror=alert(1)>");
+
+    engine.remove("freeText");
+    assert.strictEqual(engine.storyInputs.freeText, undefined);
+
+    const importEngine = CyoaEngine.synthetic();
+    importEngine.importState({
+        v: 1,
+        s: { freeText: 1 },
+        p: { Points: 10, Tokens: 0 },
+        t: {
+            freeText: "<svg onload=alert(1)>",
+            unknownInput: "should be ignored",
+            freeDefault: "not an input",
+            objectPayload: { nope: true }
+        }
+    });
+    assert.strictEqual(importEngine.storyInputs.freeText, "<svg onload=alert(1)>");
+    assert.strictEqual(importEngine.storyInputs.unknownInput, undefined);
+    assert.strictEqual(importEngine.storyInputs.freeDefault, undefined);
+    assert.strictEqual(importEngine.storyInputs.objectPayload, undefined);
+
+    const clampEngine = CyoaEngine.synthetic();
+    clampEngine.importState({
+        v: 1,
+        s: { freeText: 1 },
+        p: { Points: 10, Tokens: 0 },
+        t: { freeText: "x".repeat(500) }
+    });
+    assert.strictEqual(clampEngine.storyInputs.freeText.length, 200);
+
+    const unselectedEngine = CyoaEngine.synthetic();
+    unselectedEngine.importState({
+        v: 1,
+        s: {},
+        p: { Points: 10, Tokens: 0 },
+        t: { freeText: "should be dropped" }
+    });
+    assert.strictEqual(unselectedEngine.storyInputs.freeText, undefined);
 });
 
 test("options can bypass subcategory maxSelections", () => {

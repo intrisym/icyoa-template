@@ -10,6 +10,7 @@ An open-source **Interactive Choose Your Own Adventure (ICYOA)** template. Build
 - Automatic option grants, where selecting one option can select other options for free.
 - Multiple point systems and configurable starting values.
 - Light and dark themes, with creator control over whether players can toggle themes or are locked to one mode.
+- Player-facing option detail panels for prerequisites, incompatibilities, conditional costs, and automatic grants.
 - Import/export support for sharing builds.
 - Safe inline text formatting for CYOA descriptions, including italic, bold, weight, color, and size.
 
@@ -36,7 +37,9 @@ Run the full pre-push verification suite before publishing changes:
 npm test
 ```
 
-This runs JavaScript syntax checks, validates every existing `CYOAs/*.json` file as a regression fixture, and runs functional scenario tests against real CYOA data. The functional tests simulate selecting and removing options, gaining and spending points, subcategory max-selection replacement, max-selection bypass options, prerequisite unlocks, absolute modified costs, relative modified costs, and min-cost clamps.
+The same verification suite is also configured in GitHub Actions under [`.github/workflows/ci.yml`](.github/workflows/ci.yml), so pushes to `main` / `master` and pull requests will run the repository checks automatically.
+
+This runs JavaScript syntax checks, validates every existing `CYOAs/*.json` file as a regression fixture, and runs functional scenario tests against real CYOA data. The functional tests simulate selecting and removing options, gaining and spending points, subcategory max-selection replacement, max-selection bypass options, prerequisite unlocks, conditional pricing priority, absolute modified costs, relative modified costs, and min/max cost clamps.
 
 The CYOA validator checks that files parse, required core entries exist, option IDs are unique, referenced IDs exist, point maps are valid, prerequisite expressions are safe, modified-cost rules are coherent, and theme settings use supported values.
 
@@ -61,10 +64,14 @@ Current functional coverage includes:
 - Subcategory-wide relative modified costs.
 - `minCost` and `maxCost` clamps.
 - Option modified costs overriding subcategory modified costs.
+- Highest-priority matching conditional-cost rule selection within the winning scope.
+- Conditional-cost display rows in option details.
 - Legacy `discounts` compatibility for older CYOAs.
 - `idsAny` / `minSelected` conditional-cost rules.
 - Automatic option grants, locked grants, and free granted selections.
+- Automatic-grant display rows in option details.
 - Option-granted discount slots across target options.
+- Theme-setting coverage for option metadata section colors.
 - Custom JSON option fields being preserved without changing runtime selection logic.
 - Packed export/import state round trips.
 - Safe text formatting for color, size, weight, bold, italic, nesting, escaping, and plain-label stripping.
@@ -208,7 +215,8 @@ icyoa-template/
 * **Text Formatting:** Use `*italic*`, `**bold**`, `[weight=...]...[/weight]`, `[color=...]...[/color]`, and `[size=...]...[/size]` in description text for local emphasis.
 * **Automatic Grants:** Use the option editor's **Automatically grants options** section to make one option select another option at no extra point cost. Each granted option can be locked, or marked as user-deselectable.
 * **Modified Costs:** Use per-option or subcategory-wide `modifiedCosts` rules to change costs conditionally. Rules can set absolute replacement costs with `cost`, apply relative changes with `costDelta`, and define optional `minCost` / `maxCost` maps to clamp the final modified price. Legacy `discounts` rules are still supported for older CYOAs.
-* **Modified Cost Priority:** Conditional modified cost rules can set a priority. Subcategory rules apply first, then option rules apply on top; within the same scope, higher-priority matching rules determine the final modified cost.
+* **Modified Cost Priority:** Conditional modified cost rules can set a priority. If any option-level rule matches, option-level rules win over subcategory-wide rules; within the winning scope, only the highest-priority matching rule is applied.
+* **Player-Facing Rule Display:** The player shows prerequisites, incompatibilities, conditional costs, and automatic grants directly on each option so users can inspect rule interactions before selecting.
 * **Sharing Builds:** Players can export and import their selections through the app's import/export modal.
 
 ---

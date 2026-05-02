@@ -659,6 +659,31 @@ button:disabled {
     border: 1px solid var(--border-color);
 }
 
+.option-input-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 14px;
+    text-align: left;
+}
+
+.option-input-wrapper label {
+    display: block;
+    font-weight: bold;
+    font-size: var(--font-label);
+    color: var(--text-color);
+}
+
+.option-text-input {
+    padding: 0.5em;
+    width: 100%;
+    font-size: var(--font-story-input);
+    background: var(--container-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
 .subcategory-header {
     padding: 12px 16px;
     background: var(--item-header-bg);
