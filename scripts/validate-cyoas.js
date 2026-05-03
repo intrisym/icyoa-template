@@ -191,6 +191,7 @@ function validateModifiedCostRules(file, context, rules, optionIds, pointTypes, 
 
         validatePointMap(file, `${ruleContext}.cost`, rule.cost, pointTypes, errors, warnings);
         validatePointMap(file, `${ruleContext}.costDelta`, rule.costDelta, pointTypes, errors, warnings);
+        validatePointMap(file, `${ruleContext}.costPercent`, rule.costPercent, pointTypes, errors, warnings);
         validatePointMap(file, `${ruleContext}.minCost`, rule.minCost, pointTypes, errors, warnings);
         validatePointMap(file, `${ruleContext}.maxCost`, rule.maxCost, pointTypes, errors, warnings);
 

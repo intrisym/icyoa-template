@@ -2789,6 +2789,15 @@ function applyModifiedCostRule(currentCost = {}, rule = {}) {
             nextCost[type] = (Number.isFinite(currentValue) ? currentValue : 0) + deltaValue;
         });
     }
+    if (rule.costPercent && typeof rule.costPercent === 'object') {
+        Object.entries(rule.costPercent).forEach(([type, percent]) => {
+            const percentValue = Number(percent);
+            const currentValue = Number(nextCost[type]);
+            if (!Number.isFinite(percentValue) || !Number.isFinite(currentValue)) return;
+            if (currentValue <= 0) return;
+            nextCost[type] = Math.max(0, Math.ceil(currentValue * (1 + percentValue / 100)));
+        });
+    }
     return clampCostMap(nextCost, rule.minCost, rule.maxCost);
 }
 
@@ -3276,9 +3285,16 @@ function getSubcategoryDisplayMode(entity) {
 
 function applySubcategoryColorStyles(element, subcat, target = "content") {
     if (!element || !subcat) return;
-    const backgroundColor = subcat.backgroundColor || subcat.style?.backgroundColor;
-    const textColor = subcat.textColor || subcat.style?.textColor;
-    const accentColor = subcat.accentColor || subcat.style?.accentColor;
+    const useDarkColors = getEffectiveDarkMode();
+    const backgroundColor = useDarkColors
+        ? (subcat.darkBackgroundColor || subcat.darkStyle?.backgroundColor || subcat.backgroundColor || subcat.style?.backgroundColor)
+        : (subcat.backgroundColor || subcat.style?.backgroundColor);
+    const textColor = useDarkColors
+        ? (subcat.darkTextColor || subcat.darkStyle?.textColor || subcat.textColor || subcat.style?.textColor)
+        : (subcat.textColor || subcat.style?.textColor);
+    const accentColor = useDarkColors
+        ? (subcat.darkAccentColor || subcat.darkStyle?.accentColor || subcat.accentColor || subcat.style?.accentColor)
+        : (subcat.accentColor || subcat.style?.accentColor);
 
     if (target === "tab") {
         if (accentColor && isSafeTextColor(accentColor)) element.style.borderColor = accentColor;
@@ -4529,7 +4545,8 @@ function openBackpackModal() {
 
             const labelDiv = document.createElement("div");
             labelDiv.className = "backpack-item-label";
-            labelDiv.textContent = opt.label;
+            const selectedCount = selectedOptions[opt.id] || 0;
+            labelDiv.textContent = selectedCount > 1 ? `${opt.label} x${selectedCount}` : opt.label;
             itemDiv.appendChild(labelDiv);
 
             gridDiv.appendChild(itemDiv);

@@ -15,10 +15,10 @@
     "values": {
       "GP": 0,
       "Dollars (millions)": 0,
-      "[color=#D4262C]PP[/color]": 0,
-      "[color=#50B53B]MP[/color]": 0,
-      "[color=#CB3BE0]PSP[/color]": 0,
-      "[color=#4C8BB4]SP[/color]": 0
+      "[color=#E62429]PP[/color]": 0,
+      "[color=#00A651]MP[/color]": 0,
+      "[color=#7C3AED]PSP[/color]": 0,
+      "[color=#2563EB]SP[/color]": 0
     },
     "allowNegative": [],
     "attributeRanges": {}
@@ -29,32 +29,32 @@
   },
   {
     "type": "backpack",
-    "enabled": false
+    "enabled": true
   },
   {
     "type": "theme",
-    "bg-color": "#BE5358",
-    "container-bg": "#121a2b",
-    "text-color": "#f8fafc",
-    "text-muted": "#d7deea",
-    "accent-color": "#f5c542",
-    "accent-text": "#111827",
-    "border-color": "#f5c542",
-    "item-bg": "#1b2740",
-    "item-header-bg": "#8b1e24",
-    "points-bg": "#f8fafc",
+    "bg-color": "#d8d1c6",
+    "container-bg": "#e9e4da",
+    "text-color": "#151923",
+    "text-muted": "#495160",
+    "accent-color": "#14213d",
+    "accent-text": "#ffffff",
+    "border-color": "#9d9488",
+    "item-bg": "#f2ede4",
+    "item-header-bg": "#cec3b4",
+    "points-bg": "#14213d",
     "points-border": "#f5c542",
-    "points-text": "#101828",
+    "points-text": "#f8fafc",
     "selection-glow-color": "#f5c542",
-    "shadow-color": "rgba(8, 13, 24, 0.45)",
-    "option-meta-bg": "#162238",
-    "option-meta-heading-bg": "rgba(245, 197, 66, 0.18)",
-    "option-meta-heading-text": "#f8fafc",
-    "option-meta-points-color": "#f5c542",
-    "option-meta-conditional-color": "#5eead4",
-    "option-meta-auto-grants-color": "#86efac",
-    "option-meta-prerequisites-color": "#fde68a",
-    "option-meta-conflicts-color": "#fca5a5",
+    "shadow-color": "rgba(20, 33, 61, 0.22)",
+    "option-meta-bg": "#e1dbd0",
+    "option-meta-heading-bg": "rgba(20, 33, 61, 0.10)",
+    "option-meta-heading-text": "#151923",
+    "option-meta-points-color": "#8a5a00",
+    "option-meta-conditional-color": "#005f73",
+    "option-meta-auto-grants-color": "#007f3f",
+    "option-meta-prerequisites-color": "#8a5a00",
+    "option-meta-conflicts-color": "#b91c1c",
     "font-base": "17px",
     "font-title": "42px",
     "font-description": "18px",
@@ -75,28 +75,28 @@
   },
   {
     "type": "darkTheme",
-    "bg-color": "#111827",
-    "container-bg": "#0f172a",
+    "bg-color": "#06080f",
+    "container-bg": "#0d1321",
     "text-color": "#f8fafc",
-    "text-muted": "#d5ddeb",
-    "accent-color": "#f5c542",
-    "accent-text": "#111827",
-    "border-color": "#c3393f",
-    "item-bg": "#172136",
-    "item-header-bg": "#7f1d1d",
-    "points-bg": "#f5c542",
-    "points-border": "#ffffff",
-    "points-text": "#111827",
-    "selection-glow-color": "#facc15",
-    "shadow-color": "rgba(0, 0, 0, 0.72)",
-    "option-meta-bg": "#111c30",
-    "option-meta-heading-bg": "rgba(245, 197, 66, 0.16)",
+    "text-muted": "#cbd5e1",
+    "accent-color": "#E62429",
+    "accent-text": "#ffffff",
+    "border-color": "#39465a",
+    "item-bg": "#121a2b",
+    "item-header-bg": "#B91C1C",
+    "points-bg": "#101828",
+    "points-border": "#f5c542",
+    "points-text": "#f8fafc",
+    "selection-glow-color": "#f5c542",
+    "shadow-color": "rgba(0, 0, 0, 0.68)",
+    "option-meta-bg": "#0f172a",
+    "option-meta-heading-bg": "rgba(230, 36, 41, 0.18)",
     "option-meta-heading-text": "#f8fafc",
-    "option-meta-points-color": "#facc15",
+    "option-meta-points-color": "#f5c542",
     "option-meta-conditional-color": "#5eead4",
     "option-meta-auto-grants-color": "#86efac",
-    "option-meta-prerequisites-color": "#facc15",
-    "option-meta-conflicts-color": "#f87171",
+    "option-meta-prerequisites-color": "#f5c542",
+    "option-meta-conflicts-color": "#ff6b6f",
     "font-base": "17px",
     "font-title": "42px",
     "font-description": "18px",
@@ -121,9 +121,12 @@
       {
         "name": "Science",
         "type": "storyBlock",
-        "backgroundColor": "#4D88B4",
+        "backgroundColor": "#3B82F6",
         "textColor": "#ffffff",
-        "accentColor": "#000000",
+        "accentColor": "#1D4ED8",
+        "darkBackgroundColor": "#1E3A8A",
+        "darkTextColor": "#EAF2FF",
+        "darkAccentColor": "#172554",
         "text": "",
         "options": [
           {
@@ -134,7 +137,7 @@
               {
                 "label": "Payment Option 1",
                 "cost": {
-                  "[color=#4C8BB4]SP[/color]": -5,
+                  "[color=#2563EB]SP[/color]": -5,
                   "GP": -1,
                   "Dollars (millions)": -70
                 }
@@ -149,7 +152,7 @@
               {
                 "label": "Payment Option 1",
                 "cost": {
-                  "[color=#4C8BB4]SP[/color]": -7,
+                  "[color=#2563EB]SP[/color]": -7,
                   "GP": -2,
                   "Dollars (millions)": -30
                 }
@@ -164,7 +167,7 @@
               {
                 "label": "Payment Option 1",
                 "cost": {
-                  "[color=#4C8BB4]SP[/color]": -8,
+                  "[color=#2563EB]SP[/color]": -8,
                   "GP": -1,
                   "Dollars (millions)": -30
                 }
@@ -179,8 +182,8 @@
               {
                 "label": "Payment Option 1",
                 "cost": {
-                  "[color=#4C8BB4]SP[/color]": -5,
-                  "[color=#D4262C]PP[/color]": -4,
+                  "[color=#2563EB]SP[/color]": -5,
+                  "[color=#E62429]PP[/color]": -4,
                   "GP": -2
                 }
               }
@@ -202,8 +205,8 @@
               {
                 "label": "Payment Option 1",
                 "cost": {
-                  "[color=#4C8BB4]SP[/color]": -5,
-                  "[color=#50B53B]MP[/color]": -6,
+                  "[color=#2563EB]SP[/color]": -5,
+                  "[color=#00A651]MP[/color]": -6,
                   "Dollars (millions)": -40
                 }
               }
@@ -217,8 +220,8 @@
               {
                 "label": "Payment Option 1",
                 "cost": {
-                  "[color=#50B53B]MP[/color]": -6,
-                  "[color=#CB3BE0]PSP[/color]": -4,
+                  "[color=#00A651]MP[/color]": -6,
+                  "[color=#7C3AED]PSP[/color]": -4,
                   "GP": -2,
                   "Dollars (millions)": -10
                 }
@@ -233,7 +236,7 @@
               {
                 "label": "Payment Option 1",
                 "cost": {
-                  "[color=#50B53B]MP[/color]": -9,
+                  "[color=#00A651]MP[/color]": -9,
                   "GP": -2,
                   "Dollars (millions)": -15
                 }
@@ -248,8 +251,8 @@
               {
                 "label": "Payment Option 1",
                 "cost": {
-                  "[color=#50B53B]MP[/color]": -5,
-                  "[color=#D4262C]PP[/color]": -4,
+                  "[color=#00A651]MP[/color]": -5,
+                  "[color=#E62429]PP[/color]": -4,
                   "GP": -3,
                   "Dollars (millions)": -10
                 }
@@ -258,9 +261,12 @@
           }
         ],
         "subcategories": [],
-        "backgroundColor": "#50B93C",
-        "accentColor": "black",
-        "textColor": "White"
+        "backgroundColor": "#22A06B",
+        "accentColor": "#047857",
+        "textColor": "#ffffff",
+        "darkBackgroundColor": "#065F46",
+        "darkTextColor": "#ECFDF5",
+        "darkAccentColor": "#052E2B"
       },
       {
         "name": "Physical",
@@ -275,7 +281,7 @@
               {
                 "label": "Payment Option 1",
                 "cost": {
-                  "[color=#D4262C]PP[/color]": -9,
+                  "[color=#E62429]PP[/color]": -9,
                   "GP": -2,
                   "Dollars (millions)": -10
                 }
@@ -290,7 +296,7 @@
               {
                 "label": "Payment Option 1",
                 "cost": {
-                  "[color=#D4262C]PP[/color]": -6,
+                  "[color=#E62429]PP[/color]": -6,
                   "GP": -3,
                   "Dollars (millions)": -40
                 }
@@ -305,7 +311,7 @@
               {
                 "label": "Payment Option 1",
                 "cost": {
-                  "[color=#D4262C]PP[/color]": -6,
+                  "[color=#E62429]PP[/color]": -6,
                   "GP": -5,
                   "Dollars (millions)": -20
                 }
@@ -320,7 +326,7 @@
               {
                 "label": "Payment Option 1",
                 "cost": {
-                  "[color=#D4262C]PP[/color]": -12,
+                  "[color=#E62429]PP[/color]": -12,
                   "Dollars (millions)": -20
                 }
               }
@@ -328,9 +334,12 @@
           }
         ],
         "subcategories": [],
-        "backgroundColor": "#D4262C",
-        "accentColor": "black",
-        "textColor": "#ffffff"
+        "backgroundColor": "#C2413D",
+        "accentColor": "#991B1B",
+        "textColor": "#ffffff",
+        "darkBackgroundColor": "#7F1D1D",
+        "darkTextColor": "#FFF1F2",
+        "darkAccentColor": "#450A0A"
       },
       {
         "name": "Psychic ",
@@ -345,7 +354,7 @@
               {
                 "label": "Payment Option 1",
                 "cost": {
-                  "[color=#CB3BE0]PSP[/color]": -12,
+                  "[color=#7C3AED]PSP[/color]": -12,
                   "Dollars (millions)": -10
                 }
               }
@@ -359,8 +368,8 @@
               {
                 "label": "Payment Option 1",
                 "cost": {
-                  "[color=#D4262C]PP[/color]": -4,
-                  "[color=#CB3BE0]PSP[/color]": -5,
+                  "[color=#E62429]PP[/color]": -4,
+                  "[color=#7C3AED]PSP[/color]": -5,
                   "GP": -3,
                   "Dollars (millions)": -10
                 }
@@ -375,8 +384,8 @@
               {
                 "label": "Payment Option 1",
                 "cost": {
-                  "[color=#4C8BB4]SP[/color]": -5,
-                  "[color=#CB3BE0]PSP[/color]": -4,
+                  "[color=#2563EB]SP[/color]": -5,
+                  "[color=#7C3AED]PSP[/color]": -4,
                   "GP": -2,
                   "Dollars (millions)": -20
                 }
@@ -391,7 +400,7 @@
               {
                 "label": "Payment Option 1",
                 "cost": {
-                  "[color=#CB3BE0]PSP[/color]": -9,
+                  "[color=#7C3AED]PSP[/color]": -9,
                   "Dollars (millions)": -40
                 }
               }
@@ -399,9 +408,12 @@
           }
         ],
         "subcategories": [],
-        "backgroundColor": "#CB3BE0",
-        "accentColor": "black",
-        "textColor": "#ffffff"
+        "backgroundColor": "#8B5CF6",
+        "accentColor": "#6D28D9",
+        "textColor": "#ffffff",
+        "darkBackgroundColor": "#581C87",
+        "darkTextColor": "#F5F3FF",
+        "darkAccentColor": "#3B0764"
       }
     ],
     "maxSelections": 1
@@ -429,7 +441,7 @@
               {
                 "label": "Payment Option 2",
                 "cost": {
-                  "[color=#4C8BB4]SP[/color]": 1
+                  "[color=#2563EB]SP[/color]": 1
                 }
               }
             ]
@@ -447,7 +459,7 @@
               {
                 "label": "Payment Option 2",
                 "cost": {
-                  "[color=#4C8BB4]SP[/color]": 1
+                  "[color=#2563EB]SP[/color]": 1
                 }
               }
             ],
@@ -467,7 +479,7 @@
               {
                 "label": "Payment Option 2",
                 "cost": {
-                  "[color=#4C8BB4]SP[/color]": 1
+                  "[color=#2563EB]SP[/color]": 1
                 }
               }
             ],
@@ -487,7 +499,7 @@
               {
                 "label": "Payment Option 2",
                 "cost": {
-                  "[color=#4C8BB4]SP[/color]": 2
+                  "[color=#2563EB]SP[/color]": 2
                 }
               }
             ],
@@ -506,7 +518,7 @@
               {
                 "label": "Payment Option 2",
                 "cost": {
-                  "[color=#4C8BB4]SP[/color]": 3
+                  "[color=#2563EB]SP[/color]": 3
                 }
               }
             ],
@@ -515,9 +527,12 @@
           }
         ],
         "subcategories": [],
-        "backgroundColor": "#4C8BB4",
-        "accentColor": "Black",
-        "textColor": "#ffffff"
+        "backgroundColor": "#3B82F6",
+        "accentColor": "#1D4ED8",
+        "textColor": "#ffffff",
+        "darkBackgroundColor": "#1E3A8A",
+        "darkTextColor": "#EAF2FF",
+        "darkAccentColor": "#172554"
       },
       {
         "name": "Magic",
@@ -537,7 +552,7 @@
               {
                 "label": "Payment Option 2",
                 "cost": {
-                  "[color=#50B53B]MP[/color]": 1
+                  "[color=#00A651]MP[/color]": 1
                 }
               }
             ],
@@ -557,7 +572,7 @@
               {
                 "label": "Payment Option 2",
                 "cost": {
-                  "[color=#50B53B]MP[/color]": 1
+                  "[color=#00A651]MP[/color]": 1
                 }
               }
             ],
@@ -577,7 +592,7 @@
               {
                 "label": "Payment Option 2",
                 "cost": {
-                  "[color=#50B53B]MP[/color]": 1
+                  "[color=#00A651]MP[/color]": 1
                 }
               }
             ],
@@ -596,7 +611,7 @@
               {
                 "label": "Payment Option 2",
                 "cost": {
-                  "[color=#50B53B]MP[/color]": 2
+                  "[color=#00A651]MP[/color]": 2
                 }
               }
             ],
@@ -615,7 +630,7 @@
               {
                 "label": "Payment Option 2",
                 "cost": {
-                  "[color=#50B53B]MP[/color]": 3
+                  "[color=#00A651]MP[/color]": 3
                 }
               }
             ],
@@ -624,9 +639,12 @@
           }
         ],
         "subcategories": [],
-        "backgroundColor": "#50B53B",
-        "accentColor": "black",
-        "textColor": "#ffffff"
+        "backgroundColor": "#22A06B",
+        "accentColor": "#047857",
+        "textColor": "#ffffff",
+        "darkBackgroundColor": "#065F46",
+        "darkTextColor": "#ECFDF5",
+        "darkAccentColor": "#052E2B"
       },
       {
         "name": "Physical",
@@ -646,7 +664,7 @@
               {
                 "label": "Payment Option 2",
                 "cost": {
-                  "[color=#D4262C]PP[/color]": 1
+                  "[color=#E62429]PP[/color]": 1
                 }
               }
             ],
@@ -666,7 +684,7 @@
               {
                 "label": "Payment Option 2",
                 "cost": {
-                  "[color=#D4262C]PP[/color]": 1
+                  "[color=#E62429]PP[/color]": 1
                 }
               }
             ],
@@ -686,7 +704,7 @@
               {
                 "label": "Payment Option 2",
                 "cost": {
-                  "[color=#D4262C]PP[/color]": 1
+                  "[color=#E62429]PP[/color]": 1
                 }
               }
             ],
@@ -706,7 +724,7 @@
               {
                 "label": "Payment Option 2",
                 "cost": {
-                  "[color=#D4262C]PP[/color]": 2
+                  "[color=#E62429]PP[/color]": 2
                 }
               }
             ],
@@ -725,7 +743,7 @@
               {
                 "label": "Payment Option 2",
                 "cost": {
-                  "[color=#D4262C]PP[/color]": 3
+                  "[color=#E62429]PP[/color]": 3
                 }
               }
             ],
@@ -734,9 +752,12 @@
           }
         ],
         "subcategories": [],
-        "backgroundColor": "#D4262C",
-        "accentColor": "Black",
-        "textColor": "#ffffff"
+        "backgroundColor": "#C2413D",
+        "accentColor": "#991B1B",
+        "textColor": "#ffffff",
+        "darkBackgroundColor": "#7F1D1D",
+        "darkTextColor": "#FFF1F2",
+        "darkAccentColor": "#450A0A"
       },
       {
         "name": "Psychic",
@@ -756,7 +777,7 @@
               {
                 "label": "Payment Option 2",
                 "cost": {
-                  "[color=#CB3BE0]PSP[/color]": 1
+                  "[color=#7C3AED]PSP[/color]": 1
                 }
               }
             ],
@@ -776,7 +797,7 @@
               {
                 "label": "Payment Option 2",
                 "cost": {
-                  "[color=#CB3BE0]PSP[/color]": 1
+                  "[color=#7C3AED]PSP[/color]": 1
                 }
               }
             ],
@@ -796,7 +817,7 @@
               {
                 "label": "Payment Option 2",
                 "cost": {
-                  "[color=#CB3BE0]PSP[/color]": 1
+                  "[color=#7C3AED]PSP[/color]": 1
                 }
               }
             ],
@@ -816,7 +837,7 @@
               {
                 "label": "Payment Option 2",
                 "cost": {
-                  "[color=#CB3BE0]PSP[/color]": 2
+                  "[color=#7C3AED]PSP[/color]": 2
                 }
               }
             ],
@@ -835,7 +856,7 @@
               {
                 "label": "Payment Option 2",
                 "cost": {
-                  "[color=#CB3BE0]PSP[/color]": 3
+                  "[color=#7C3AED]PSP[/color]": 3
                 }
               }
             ],
@@ -844,9 +865,12 @@
           }
         ],
         "subcategories": [],
-        "backgroundColor": "#CB3BE0",
-        "accentColor": "Black",
-        "textColor": "#ffffff"
+        "backgroundColor": "#8B5CF6",
+        "accentColor": "#6D28D9",
+        "textColor": "#ffffff",
+        "darkBackgroundColor": "#581C87",
+        "darkTextColor": "#F5F3FF",
+        "darkAccentColor": "#3B0764"
       }
     ],
     "description": "Note: All Powers have a cost equal to their rank unless otherwise noted, and you must buy Rank One before buying Rank Two."
@@ -858,6 +882,26 @@
         "name": "Gear",
         "type": "storyBlock",
         "text": "",
+        "modifiedCosts": [
+          {
+            "ids": [
+              "powersScienceConstruction"
+            ],
+            "costPercent": {
+              "Dollars (millions)": -15
+            },
+            "priority": 1
+          },
+          {
+            "ids": [
+              "powersScienceConstruction__2"
+            ],
+            "costPercent": {
+              "Dollars (millions)": -30
+            },
+            "priority": 2
+          }
+        ],
         "options": [
           {
             "label": "Utility Belt 1",
@@ -1185,9 +1229,12 @@
           }
         ],
         "subcategories": [],
-        "backgroundColor": "#4E89B3",
-        "accentColor": "Black",
-        "textColor": "#ffffff"
+        "backgroundColor": "#334155",
+        "accentColor": "#0F172A",
+        "textColor": "#ffffff",
+        "darkBackgroundColor": "#1E293B",
+        "darkTextColor": "#F8FAFC",
+        "darkAccentColor": "#020617"
       }
     ]
   }

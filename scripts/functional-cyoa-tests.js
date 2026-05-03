@@ -21,7 +21,7 @@ const FEATURE_COVERAGE = [
     "dependent selections are removed when prerequisites become false",
     "one-way outgoing and incoming conflicts",
     "category requiresOption and category maxSelections",
-    "category and nested subcategory display mode metadata",
+    "category and nested subcategory display mode and theme-specific color metadata",
     "adding and removing categories, subcategories, and options",
     "subcategory requiresOption",
     "subcategory discountFirstN with discountAmount",
@@ -31,6 +31,7 @@ const FEATURE_COVERAGE = [
     "option-level freeform text inputs require selection and sanitize imported values",
     "option-level absolute modified costs",
     "subcategory-wide relative modified costs",
+    "option and subcategory percentage modified costs rounded up",
     "modified cost minCost and maxCost clamps",
     "option modified costs override subcategory modified costs and highest-priority matching rules win",
     "conditional cost display rows show resulting gain/cost without scope prefixes",
@@ -44,7 +45,8 @@ const FEATURE_COVERAGE = [
     "custom JSON option fields are preserved and ignored by runtime logic",
     "packed export/import state round trips",
     "safe Markdown-style formatting with legacy color, size, weight, and point-type labels",
-    "multi-open category tabs and Open All category control"
+    "multi-open category tabs and Open All category control",
+    "backpack labels show repeated selection counts"
 ];
 
 function loadCyoa(filename) {
@@ -144,6 +146,7 @@ class CyoaEngine {
                             { id: "surchargeTrigger", label: "Surcharge Trigger", cost: {} },
                             { id: "legacyTrigger", label: "Legacy Trigger", cost: {} },
                             { id: "maxClampBase", label: "Max Clamp Base", cost: { Points: 4 } },
+                            { id: "percentBase", label: "Percent Base", cost: { Points: 7 } },
                             {
                                 id: "optionOverride",
                                 label: "Option Override",
@@ -239,6 +242,9 @@ class CyoaEngine {
                         backgroundColor: "#7f1d1d",
                         textColor: "#ffffff",
                         accentColor: "#dc2626",
+                        darkBackgroundColor: "#450a0a",
+                        darkTextColor: "#fee2e2",
+                        darkAccentColor: "#1f0707",
                         options: [
                             { id: "subcategoryRequiresOption", label: "Subcategory Requires Option", cost: {} }
                         ],
@@ -393,6 +399,14 @@ class CyoaEngine {
                 if (!Number.isFinite(deltaValue)) return;
                 const currentValue = Number(nextCost[type]);
                 nextCost[type] = (Number.isFinite(currentValue) ? currentValue : 0) + deltaValue;
+            });
+        }
+        if (rule.costPercent && typeof rule.costPercent === "object") {
+            Object.entries(rule.costPercent).forEach(([type, percent]) => {
+                const percentValue = Number(percent);
+                const currentValue = Number(nextCost[type]);
+                if (!Number.isFinite(percentValue) || !Number.isFinite(currentValue) || currentValue <= 0) return;
+                nextCost[type] = Math.max(0, Math.ceil(currentValue * (1 + percentValue / 100)));
             });
         }
         return this.clampCost(nextCost, rule.minCost, rule.maxCost);
@@ -1146,6 +1160,7 @@ function renamePointTypeReferences(data, oldName, newName) {
             [...(owner?.modifiedCosts || []), ...(owner?.discounts || [])].forEach(rule => {
                 renamePointMapKey(rule?.cost, oldName, newName);
                 renamePointMapKey(rule?.costDelta, oldName, newName);
+                renamePointMapKey(rule?.costPercent, oldName, newName);
                 renamePointMapKey(rule?.minCost, oldName, newName);
                 renamePointMapKey(rule?.maxCost, oldName, newName);
             });
@@ -1303,19 +1318,28 @@ test("category tabs support multiple open categories and Open All", () => {
     );
 });
 
+test("backpack labels show repeated selection counts", () => {
+    assert(
+        PLAYER_SCRIPT_SOURCE.includes("labelDiv.textContent = selectedCount > 1 ? `${opt.label} x${selectedCount}` : opt.label;"),
+        "backpack should append xN to labels when an option has multiple selections"
+    );
+});
+
 test("point type renames cascade through all cost maps", () => {
     const data = CyoaEngine.synthetic().data;
-    renamePointTypeReferences(data, "Points", "Hero Points");
     const core = findCategory(data, "Core");
     const choices = core.subcategories.find(subcat => subcat.name === "Choices");
     const alternateCost = choices.options.find(option => option.id === "alternateCost");
     const optionOverride = choices.options.find(option => option.id === "optionOverride");
+    optionOverride.modifiedCosts.push({ ids: ["preA"], costPercent: { Points: -25 }, priority: 2 });
+    renamePointTypeReferences(data, "Points", "Hero Points");
     const grantTarget = new CyoaEngine(data, "renamed point type fixture").option("discountGrantTargetA");
     const firstN = findCategory(data, "Subcategory Controls").subcategories.find(subcat => subcat.name === "First N Discounts");
 
     assert.deepStrictEqual(choices.defaultCost, { "Hero Points": 1 });
     assert.deepStrictEqual(alternateCost.costOptions[0].cost, { "Hero Points": 4 });
     assert.deepStrictEqual(optionOverride.modifiedCosts[0].cost, { "Hero Points": 7 });
+    assert.deepStrictEqual(optionOverride.modifiedCosts[1].costPercent, { "Hero Points": -25 });
     assert.deepStrictEqual(grantTarget.cost, { "Hero Points": 6 });
     assert.deepStrictEqual(firstN.discountAmount, { "Hero Points": 2 });
 });
@@ -1454,7 +1478,7 @@ test("subcategory requiresOption works for nested options", () => {
     assert.strictEqual(engine.canSelect("nestedSubcategoryOption"), true);
 });
 
-test("category and nested subcategory display metadata is preserved", () => {
+test("category and nested subcategory display and theme-specific color metadata is preserved", () => {
     const engine = CyoaEngine.synthetic();
     const category = engine.categories.find(entry => entry.name === "Category Controls");
     const subcategory = engine.categories
@@ -1468,6 +1492,26 @@ test("category and nested subcategory display metadata is preserved", () => {
     assert.strictEqual(subcategory.backgroundColor, "#7f1d1d");
     assert.strictEqual(subcategory.textColor, "#ffffff");
     assert.strictEqual(subcategory.accentColor, "#dc2626");
+    assert.strictEqual(subcategory.darkBackgroundColor, "#450a0a");
+    assert.strictEqual(subcategory.darkTextColor, "#fee2e2");
+    assert.strictEqual(subcategory.darkAccentColor, "#1f0707");
+    assert(
+        PLAYER_SCRIPT_SOURCE.includes("subcat.darkBackgroundColor"),
+        "player should support dark-mode subcategory background colors"
+    );
+    assert(
+        PLAYER_SCRIPT_SOURCE.includes("subcat.darkTextColor"),
+        "player should support dark-mode subcategory text colors"
+    );
+    assert(
+        PLAYER_SCRIPT_SOURCE.includes("subcat.darkAccentColor"),
+        "player should support dark-mode subcategory accent colors"
+    );
+
+    const editorSource = fs.readFileSync(path.join(ROOT, "editor.js"), "utf8");
+    ["darkBackgroundColor", "darkTextColor", "darkAccentColor"].forEach(key => {
+        assert(editorSource.includes(`"${key}"`), `visual editor should expose ${key}`);
+    });
 });
 
 test("adding and removing options updates selectable data", () => {
@@ -1580,6 +1624,36 @@ test("lantern subcategory minCost clamps relative reductions", () => {
     const engine = new CyoaEngine("lantern_corps_recruit.json");
     engine.select("universeOptionalGroundedSpecies");
     assertDeepEqual(engine.effectiveCost("speciesSpeciesYautja"), { Points: -1 });
+});
+
+test("percentage modified costs apply on options and subcategories with rounded-up prices", () => {
+    const subcategoryEngine = CyoaEngine.synthetic();
+    const choices = findCategory(subcategoryEngine.data, "Core").subcategories.find(subcat => subcat.name === "Choices");
+    choices.options.find(option => option.id === "discountTrigger").maxSelections = 2;
+    choices.modifiedCosts.push(
+        { ids: ["discountTrigger"], costPercent: { Points: -15 }, priority: 10 },
+        { ids: ["discountTrigger__2"], costPercent: { Points: -30 }, priority: 11 }
+    );
+
+    assertDeepEqual(subcategoryEngine.effectiveCost("percentBase"), { Points: 7 });
+    subcategoryEngine.select("discountTrigger");
+    assertDeepEqual(subcategoryEngine.effectiveCost("percentBase"), { Points: 6 });
+    subcategoryEngine.select("discountTrigger");
+    assertDeepEqual(subcategoryEngine.effectiveCost("percentBase"), { Points: 5 });
+
+    const optionEngine = CyoaEngine.synthetic();
+    const option = optionEngine.option("percentBase");
+    option.modifiedCosts = [{ ids: ["discountTrigger"], costPercent: { Points: -50 }, priority: 1 }];
+    optionEngine.select("discountTrigger");
+    assertDeepEqual(optionEngine.effectiveCost("percentBase"), { Points: 4 });
+
+    const marvel = new CyoaEngine("marvel.json");
+    marvel.points.GP = 2;
+    assertDeepEqual(marvel.effectiveCost("gearGearShieldGenerator2", { costOptionIndex: 0 }), { "Dollars (millions)": 16 });
+    marvel.select("powersScienceConstruction", { costOptionIndex: 0 });
+    assertDeepEqual(marvel.effectiveCost("gearGearShieldGenerator2", { costOptionIndex: 0 }), { "Dollars (millions)": 14 });
+    marvel.select("powersScienceConstruction", { costOptionIndex: 0 });
+    assertDeepEqual(marvel.effectiveCost("gearGearShieldGenerator2", { costOptionIndex: 0 }), { "Dollars (millions)": 12 });
 });
 
 test("modified cost hierarchy, legacy discounts, idsAny, and maxCost work", () => {

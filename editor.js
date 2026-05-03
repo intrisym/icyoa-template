@@ -547,13 +547,15 @@
             } else if (
                 (!rule?.cost || !Object.keys(rule.cost).length)
                 && (!rule?.costDelta || !Object.keys(rule.costDelta).length)
+                && (!rule?.costPercent || !Object.keys(rule.costPercent).length)
                 && (!rule?.minCost || !Object.keys(rule.minCost).length)
                 && (!rule?.maxCost || !Object.keys(rule.maxCost).length)
             ) {
-                warnings.push(`Rule ${ruleNo}: add a modified, relative, minimum, or maximum cost map.`);
+                warnings.push(`Rule ${ruleNo}: add a modified, relative, percentage, minimum, or maximum cost map.`);
             }
             warnUnknownPointTypes(rule?.cost, `Rule ${ruleNo} modified cost`);
             warnUnknownPointTypes(rule?.costDelta, `Rule ${ruleNo} relative cost change`);
+            warnUnknownPointTypes(rule?.costPercent, `Rule ${ruleNo} percentage cost change`);
             warnUnknownPointTypes(rule?.minCost, `Rule ${ruleNo} minimum cost`);
             warnUnknownPointTypes(rule?.maxCost, `Rule ${ruleNo} maximum cost`);
             Object.keys(rule?.minCost || {}).forEach(type => {
@@ -1149,6 +1151,9 @@
                 if (Object.prototype.hasOwnProperty.call(rule || {}, "costDelta")) {
                     return "relative";
                 }
+                if (Object.prototype.hasOwnProperty.call(rule || {}, "costPercent")) {
+                    return "percent";
+                }
                 return "cost";
             };
 
@@ -1183,6 +1188,10 @@
             relativeBehavior.value = "relative";
             relativeBehavior.textContent = "Adjust cost relatively";
             behaviorInput.appendChild(relativeBehavior);
+            const percentBehavior = document.createElement("option");
+            percentBehavior.value = "percent";
+            percentBehavior.textContent = "Adjust cost by percentage";
+            behaviorInput.appendChild(percentBehavior);
             if (includeSlotBehavior) {
                 const slotBehavior = document.createElement("option");
                 slotBehavior.value = "slots";
@@ -1194,6 +1203,7 @@
                 if (behaviorInput.value === "slots") {
                     delete rule.cost;
                     delete rule.costDelta;
+                    delete rule.costPercent;
                     delete rule.minCost;
                     delete rule.maxCost;
                     rule.slots = Math.max(1, Number(rule.slots) || 1);
@@ -1202,11 +1212,19 @@
                     delete rule.slots;
                     delete rule.mode;
                     delete rule.cost;
+                    delete rule.costPercent;
                     rule.costDelta = rule.costDelta && Object.keys(rule.costDelta).length ? rule.costDelta : {};
+                } else if (behaviorInput.value === "percent") {
+                    delete rule.slots;
+                    delete rule.mode;
+                    delete rule.cost;
+                    delete rule.costDelta;
+                    rule.costPercent = rule.costPercent && Object.keys(rule.costPercent).length ? rule.costPercent : {};
                 } else {
                     delete rule.slots;
                     delete rule.mode;
                     delete rule.costDelta;
+                    delete rule.costPercent;
                     rule.cost = rule.cost && Object.keys(rule.cost).length ? rule.cost : {};
                 }
                 renderModifiedCostRulesEditor(container, owner, { emptyText, addButtonText, includeSlotBehavior, onChange });
@@ -1354,17 +1372,26 @@
                 const ruleCostLabel = document.createElement("label");
                 ruleCostLabel.textContent = behaviorInput.value === "relative"
                     ? "Relative cost change when triggered"
-                    : "Modified cost when triggered";
+                    : behaviorInput.value === "percent"
+                        ? "Percentage cost change when triggered"
+                        : "Modified cost when triggered";
                 const ruleCostHint = document.createElement("div");
                 ruleCostHint.className = "field-help";
                 ruleCostHint.textContent = behaviorInput.value === "relative"
                     ? "Adds these values to the current cost. Use positive numbers to increase price and negative numbers to reduce it."
-                    : "Replaces the current cost for the listed point types.";
+                    : behaviorInput.value === "percent"
+                        ? "Changes positive costs by this percentage and rounds the final price up. Example: -15 makes a cost 15% cheaper."
+                        : "Replaces the current cost for the listed point types.";
                 const ruleCostContainer = document.createElement("div");
                 ruleCostContainer.className = "cost-list";
                 if (behaviorInput.value === "relative") {
                     renderPointMapEditor(ruleCostContainer, rule.costDelta || {}, (nextCost) => {
                         rule.costDelta = nextCost || {};
+                        onChange();
+                    });
+                } else if (behaviorInput.value === "percent") {
+                    renderPointMapEditor(ruleCostContainer, rule.costPercent || {}, (nextCost) => {
+                        rule.costPercent = nextCost || {};
                         onChange();
                     });
                 } else {
@@ -2266,6 +2293,7 @@
                 [...(owner?.modifiedCosts || []), ...(owner?.discounts || [])].forEach(rule => {
                     renamePointMapKey(rule?.cost, oldName, newName);
                     renamePointMapKey(rule?.costDelta, oldName, newName);
+                    renamePointMapKey(rule?.costPercent, oldName, newName);
                     renamePointMapKey(rule?.minCost, oldName, newName);
                     renamePointMapKey(rule?.maxCost, oldName, newName);
                 });
@@ -2801,6 +2829,34 @@
                     colorRow.appendChild(input);
                 });
                 subAdvancedBody.appendChild(colorRow);
+
+                const darkColorRow = document.createElement("div");
+                darkColorRow.className = "field-inline";
+                const darkColorFields = [
+                    ["darkBackgroundColor", "Dark background color", "e.g. #450a0a"],
+                    ["darkTextColor", "Dark text color", "e.g. #fee2e2"],
+                    ["darkAccentColor", "Dark header/accent color", "e.g. #1f0707"]
+                ];
+                darkColorFields.forEach(([key, labelText, placeholder]) => {
+                    const label = document.createElement("label");
+                    label.textContent = labelText;
+                    const input = document.createElement("input");
+                    input.type = "text";
+                    input.value = subcat[key] || "";
+                    input.placeholder = placeholder;
+                    input.addEventListener("input", () => {
+                        const value = input.value.trim();
+                        if (value) {
+                            subcat[key] = value;
+                        } else {
+                            delete subcat[key];
+                        }
+                        schedulePreviewUpdate();
+                    });
+                    darkColorRow.appendChild(label);
+                    darkColorRow.appendChild(input);
+                });
+                subAdvancedBody.appendChild(darkColorRow);
 
                 const maxRow = document.createElement("div");
                 maxRow.className = "field-inline";
