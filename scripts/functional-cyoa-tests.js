@@ -5,10 +5,14 @@ const { evaluatePrereqExpr } = require("../logicExpr");
 
 const ROOT = path.join(__dirname, "..");
 const CYOAS_DIR = path.join(ROOT, "CYOAs");
+const PLAYER_SCRIPT_SOURCE = fs.readFileSync(path.join(ROOT, "script.js"), "utf8");
 
 const FEATURE_COVERAGE = [
     "all CYOA JSON fixtures load as functional data",
     "point gains, costs, refunds, and allow-negative point types",
+    "alternate selectable option cost maps",
+    "single-select payment options render explicit selection controls",
+    "point type renames cascade through all cost maps",
     "single-select options and maxSelections replacement",
     "multi-select options and option maxSelections",
     "countsAsOneSelection for subcategory limits",
@@ -39,7 +43,8 @@ const FEATURE_COVERAGE = [
     "theme settings include option metadata section colors",
     "custom JSON option fields are preserved and ignored by runtime logic",
     "packed export/import state round trips",
-    "safe Markdown-style formatting with legacy color, size, weight, and point-type labels"
+    "safe Markdown-style formatting with legacy color, size, weight, and point-type labels",
+    "multi-open category tabs and Open All category control"
 ];
 
 function loadCyoa(filename) {
@@ -124,6 +129,15 @@ class CyoaEngine {
                             { id: "spendTwo", label: "Spend Two", cost: { Points: 2 } },
                             { id: "gainThree", label: "Gain Three", cost: { Points: -3 } },
                             { id: "freeText", label: "Free Text", cost: {}, inputType: "text", inputLabel: "Describe it" },
+                            {
+                                id: "alternateCost",
+                                label: "Alternate Cost",
+                                maxSelections: 2,
+                                costOptions: [
+                                    { label: "Payment Option 1", cost: { Points: 4 } },
+                                    { label: "Payment Option 2", cost: { Tokens: 2 } }
+                                ]
+                            },
                             { id: "multi", label: "Multi", cost: { Points: 1 }, maxSelections: 3, countsAsOneSelection: true },
                             { id: "limitBypass", label: "Limit Bypass", cost: {}, bypassSubcategoryMaxSelections: true },
                             { id: "discountTrigger", label: "Discount Trigger", cost: {} },
@@ -325,6 +339,21 @@ class CyoaEngine {
         return Object.keys(optionCost).length ? { ...optionCost } : { ...subcatDefault };
     }
 
+    normalizeCostOptions(option) {
+        return (Array.isArray(option?.costOptions) ? option.costOptions : [])
+            .map((entry, index) => {
+                const cost = entry?.cost && typeof entry.cost === "object" ? entry.cost : null;
+                return cost ? { index, label: entry.label || `Cost ${index + 1}`, cost: { ...cost } } : null;
+            })
+            .filter(Boolean);
+    }
+
+    getBaseCostChoice(option, costOptionIndex = null) {
+        const choices = this.normalizeCostOptions(option);
+        if (!choices.length || costOptionIndex === null || costOptionIndex === undefined) return this.getBaseCost(option);
+        return choices.find(choice => choice.index === Number(costOptionIndex))?.cost || this.getBaseCost(option);
+    }
+
     getModifiedCostRules(entity) {
         if (!entity || typeof entity !== "object") return [];
         if (Array.isArray(entity.modifiedCosts)) return entity.modifiedCosts;
@@ -443,10 +472,10 @@ class CyoaEngine {
         return result;
     }
 
-    effectiveCost(optionOrId) {
+    effectiveCost(optionOrId, { costOptionIndex = null } = {}) {
         const option = typeof optionOrId === "string" ? this.option(optionOrId) : optionOrId;
         const info = this.findSubcategoryInfo(option.id);
-        let cost = this.getBaseCost(option);
+        let cost = this.getBaseCostChoice(option, costOptionIndex);
         const winningRule = this.winningModifiedCostRule(option, info.subcat);
         if (winningRule) {
             cost = this.applyModifiedCostRule(cost, winningRule.rule);
@@ -479,6 +508,17 @@ class CyoaEngine {
                 : this.applyDiscountCost(bestCost, info.subcat.discountMode || "half");
         }
         return bestCost;
+    }
+
+    effectiveCostChoices(optionOrId) {
+        const option = typeof optionOrId === "string" ? this.option(optionOrId) : optionOrId;
+        const choices = this.normalizeCostOptions(option);
+        if (!choices.length) return [{ index: null, label: "Cost", cost: this.effectiveCost(option) }];
+        return choices.map(choice => ({
+            index: choice.index,
+            label: choice.label,
+            cost: this.effectiveCost(option, { costOptionIndex: choice.index })
+        }));
     }
 
     highestPriorityModifiedCostRule(rules = []) {
@@ -656,7 +696,7 @@ class CyoaEngine {
         return this.selectionHistory.some(id => ids.has(id) && this.selectedOptions[id] > 0);
     }
 
-    canSelect(optionOrId) {
+    canSelect(optionOrId, { costOptionIndex = null } = {}) {
         const option = typeof optionOrId === "string" ? this.option(optionOrId) : optionOrId;
         const subcat = this.findSubcategoryOfOption(option.id);
         const subcatMax = subcat?.maxSelections || Infinity;
@@ -666,7 +706,11 @@ class CyoaEngine {
         const underOptionLimit = (this.selectedOptions[option.id] || 0) < maxPerOption;
         const categoryMax = Number(this.findSubcategoryInfo(option.id).category?.maxSelections);
         const underCategoryLimit = !Number.isFinite(categoryMax) || categoryMax <= 0 || this.categorySelectionCount(this.findSubcategoryInfo(option.id).category) < categoryMax;
-        const hasPoints = Object.entries(this.effectiveCost(option)).every(([type, cost]) => {
+        const choices = this.normalizeCostOptions(option);
+        const cost = choices.length
+            ? this.effectiveCost(option, { costOptionIndex: costOptionIndex ?? choices[0].index })
+            : this.effectiveCost(option);
+        const hasPoints = Object.entries(cost).every(([type, cost]) => {
             if (cost < 0) return true;
             const current = Number(this.points[type]);
             const projected = (Number.isFinite(current) ? current : 0) - cost;
@@ -700,11 +744,11 @@ class CyoaEngine {
         }
     }
 
-    select(optionId) {
+    select(optionId, { costOptionIndex = null } = {}) {
         const option = this.option(optionId);
         this.ensureSubcategoryLimit(option);
-        assert(this.canSelect(option), `${this.filename}: expected ${optionId} to be selectable`);
-        const cost = this.effectiveCost(option);
+        assert(this.canSelect(option, { costOptionIndex }), `${this.filename}: expected ${optionId} to be selectable`);
+        const cost = this.effectiveCost(option, { costOptionIndex });
         const isAutoGrant = !!this.pendingAutoGrantSourceId;
         if (!isAutoGrant) {
             Object.entries(cost).forEach(([type, value]) => {
@@ -1086,6 +1130,46 @@ function findCategory(data, name) {
     return data.find(entry => entry && entry.name === name);
 }
 
+function renamePointMapKey(map, oldName, newName) {
+    if (!map || typeof map !== "object" || Array.isArray(map) || !Object.prototype.hasOwnProperty.call(map, oldName)) return;
+    const existing = map[oldName];
+    delete map[oldName];
+    map[newName] = existing;
+}
+
+function renamePointTypeReferences(data, oldName, newName) {
+    data.forEach(entry => {
+        if (!entry || typeof entry !== "object") return;
+        renamePointMapKey(entry.discountAmount, oldName, newName);
+
+        const visitCostRules = owner => {
+            [...(owner?.modifiedCosts || []), ...(owner?.discounts || [])].forEach(rule => {
+                renamePointMapKey(rule?.cost, oldName, newName);
+                renamePointMapKey(rule?.costDelta, oldName, newName);
+                renamePointMapKey(rule?.minCost, oldName, newName);
+                renamePointMapKey(rule?.maxCost, oldName, newName);
+            });
+        };
+        const visitOption = option => {
+            renamePointMapKey(option?.cost, oldName, newName);
+            (option?.costOptions || []).forEach(costOption => renamePointMapKey(costOption?.cost, oldName, newName));
+            renamePointMapKey(option?.costPerPoint, oldName, newName);
+            visitCostRules(option);
+        };
+        const visitSubcategory = subcat => {
+            renamePointMapKey(subcat?.defaultCost, oldName, newName);
+            renamePointMapKey(subcat?.discountAmount, oldName, newName);
+            visitCostRules(subcat);
+            (subcat?.options || []).forEach(visitOption);
+            (subcat?.subcategories || []).forEach(visitSubcategory);
+        };
+
+        visitCostRules(entry);
+        (entry.options || []).forEach(visitOption);
+        (entry.subcategories || []).forEach(visitSubcategory);
+    });
+}
+
 const tests = [];
 function test(name, fn) {
     tests.push({ name, fn });
@@ -1146,6 +1230,94 @@ test("core point spend, gain, refund, and multi-select behavior works", () => {
     engine.select("multi");
     assert.strictEqual(engine.selectedOptions.multi, 3);
     assert.strictEqual(engine.canSelect("multi"), false);
+});
+
+test("options can offer alternate selectable cost maps", () => {
+    const engine = CyoaEngine.synthetic();
+    engine.points.Tokens = 3;
+    assert.deepStrictEqual(engine.effectiveCostChoices("alternateCost").map(choice => choice.cost), [
+        { Points: 4 },
+        { Tokens: 2 }
+    ]);
+
+    engine.select("alternateCost", { costOptionIndex: 1 });
+    assert.strictEqual(engine.points.Points, 10);
+    assert.strictEqual(engine.points.Tokens, 1);
+    assert.deepStrictEqual(engine.discountedSelections.alternateCost[0], { Tokens: 2 });
+
+    engine.select("alternateCost", { costOptionIndex: 0 });
+    assert.strictEqual(engine.points.Points, 6);
+    assert.strictEqual(engine.points.Tokens, 1);
+    assert.deepStrictEqual(engine.discountedSelections.alternateCost[1], { Points: 4 });
+
+    engine.remove("alternateCost");
+    assert.strictEqual(engine.points.Points, 10);
+    assert.strictEqual(engine.points.Tokens, 1);
+
+    engine.remove("alternateCost");
+    assert.strictEqual(engine.points.Points, 10);
+    assert.strictEqual(engine.points.Tokens, 3);
+});
+
+test("single-select payment options render explicit selection controls", () => {
+    const singleSelectWithPaymentOptions = {
+        id: "singlePayment",
+        maxSelections: 1,
+        costOptions: [
+            { label: "Payment Option 1", cost: { Points: 1 } },
+            { label: "Payment Option 2", cost: { Tokens: 1 } }
+        ]
+    };
+    const singleSelectWithoutPaymentOptions = { id: "singleFree", maxSelections: 1, cost: {} };
+    const multiSelectWithoutPaymentOptions = { id: "multi", maxSelections: 2, cost: {} };
+
+    const shouldRenderSelectionControls = option => option.inputType === "text"
+        || (option.maxSelections || 1) !== 1
+        || (Array.isArray(option.costOptions) ? option.costOptions : []).length > 1;
+
+    assert.strictEqual(shouldRenderSelectionControls(singleSelectWithPaymentOptions), true);
+    assert.strictEqual(shouldRenderSelectionControls(singleSelectWithoutPaymentOptions), false);
+    assert.strictEqual(shouldRenderSelectionControls(multiSelectWithoutPaymentOptions), true);
+    assert(
+        PLAYER_SCRIPT_SOURCE.includes("shouldRenderSelectionControls(opt)"),
+        "player renderer should use shouldRenderSelectionControls so single-select payment options show the dropdown"
+    );
+});
+
+test("category tabs support multiple open categories and Open All", () => {
+    assert(
+        PLAYER_SCRIPT_SOURCE.includes("openAllButton.textContent = \"Open All\""),
+        "player should render an Open All category control"
+    );
+    assert(
+        PLAYER_SCRIPT_SOURCE.includes("visibleCategories.forEach(cat => openCategories.add(cat.name))"),
+        "Open All should add every visible category to openCategories"
+    );
+    assert(
+        PLAYER_SCRIPT_SOURCE.includes("const activeCategories = visibleCategories.filter(cat => openCategories.has(cat.name))"),
+        "player should render every open category instead of a single currentTab category"
+    );
+    assert(
+        PLAYER_SCRIPT_SOURCE.includes("activeCategories.forEach(cat => renderCategoryContent(cat"),
+        "player should render multiple active category contents in one pass"
+    );
+});
+
+test("point type renames cascade through all cost maps", () => {
+    const data = CyoaEngine.synthetic().data;
+    renamePointTypeReferences(data, "Points", "Hero Points");
+    const core = findCategory(data, "Core");
+    const choices = core.subcategories.find(subcat => subcat.name === "Choices");
+    const alternateCost = choices.options.find(option => option.id === "alternateCost");
+    const optionOverride = choices.options.find(option => option.id === "optionOverride");
+    const grantTarget = new CyoaEngine(data, "renamed point type fixture").option("discountGrantTargetA");
+    const firstN = findCategory(data, "Subcategory Controls").subcategories.find(subcat => subcat.name === "First N Discounts");
+
+    assert.deepStrictEqual(choices.defaultCost, { "Hero Points": 1 });
+    assert.deepStrictEqual(alternateCost.costOptions[0].cost, { "Hero Points": 4 });
+    assert.deepStrictEqual(optionOverride.modifiedCosts[0].cost, { "Hero Points": 7 });
+    assert.deepStrictEqual(grantTarget.cost, { "Hero Points": 6 });
+    assert.deepStrictEqual(firstN.discountAmount, { "Hero Points": 2 });
 });
 
 test("subcategory default costs and countsAsOneSelection limits work", () => {

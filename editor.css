@@ -835,6 +835,47 @@ textarea {
     align-items: center;
 }
 
+.cost-option-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    background: var(--surface-soft);
+}
+
+.cost-option-card-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: start;
+}
+
+.cost-option-title {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.cost-option-title strong {
+    font-size: 13px;
+    color: var(--text);
+}
+
+.cost-option-title span {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.cost-option-card .cost-list {
+    padding: 10px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    background: var(--surface);
+}
+
 .option-rule-row {
     display: grid;
     grid-template-columns: 1fr auto;

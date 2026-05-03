@@ -1,0 +1,1194 @@
+[
+  {
+    "type": "title",
+    "text": "Marvel"
+  },
+  {
+    "type": "description",
+    "text": "Yo! A new super! Man, you guys are just popping out of the woodwork these days. Lucky for you, Deadpool's here to introduce you to some peeps who might be willing to help you learn to use these new powers of yours. \n\nSo here's the deal... First you need to figure out whether your powers are more inclined towards inventing things, casting spells, physical violence, or playing mind games. \n\nYou got it? Okay. I am gonna introduce you to some heroes and villains that have expressed a willingness to take on an 'apprentice.' A sidekick, if you will.\n\nThe mentor you choose will determine your potential power growth as well as your access to that sweet sweet cash that let's you buy gear. Your mentor will also determine people's initial impressions of you: A mere millanious mentor will make people tend to view you a bit more warily. It's nothing you cannot overcome, though, with hard work and not caring what people think. "
+  },
+  {
+    "type": "headerImage"
+  },
+  {
+    "type": "points",
+    "values": {
+      "GP": 0,
+      "Dollars (millions)": 0,
+      "[color=#D4262C]PP[/color]": 0,
+      "[color=#50B53B]MP[/color]": 0,
+      "[color=#CB3BE0]PSP[/color]": 0,
+      "[color=#4C8BB4]SP[/color]": 0
+    },
+    "allowNegative": [],
+    "attributeRanges": {}
+  },
+  {
+    "type": "settings",
+    "themeMode": "toggle"
+  },
+  {
+    "type": "backpack",
+    "enabled": false
+  },
+  {
+    "type": "theme",
+    "bg-color": "#BE5358",
+    "container-bg": "#121a2b",
+    "text-color": "#f8fafc",
+    "text-muted": "#d7deea",
+    "accent-color": "#f5c542",
+    "accent-text": "#111827",
+    "border-color": "#f5c542",
+    "item-bg": "#1b2740",
+    "item-header-bg": "#8b1e24",
+    "points-bg": "#f8fafc",
+    "points-border": "#f5c542",
+    "points-text": "#101828",
+    "selection-glow-color": "#f5c542",
+    "shadow-color": "rgba(8, 13, 24, 0.45)",
+    "option-meta-bg": "#162238",
+    "option-meta-heading-bg": "rgba(245, 197, 66, 0.18)",
+    "option-meta-heading-text": "#f8fafc",
+    "option-meta-points-color": "#f5c542",
+    "option-meta-conditional-color": "#5eead4",
+    "option-meta-auto-grants-color": "#86efac",
+    "option-meta-prerequisites-color": "#fde68a",
+    "option-meta-conflicts-color": "#fca5a5",
+    "font-base": "17px",
+    "font-title": "42px",
+    "font-description": "18px",
+    "font-tab": "16px",
+    "font-accordion": "18px",
+    "font-subcategory": "22px",
+    "font-option-title": "20px",
+    "font-option-req": "15px",
+    "font-option-desc": "18px",
+    "font-story": "18px",
+    "font-story-input": "17px",
+    "font-points": "20px",
+    "font-points-value": "20px",
+    "font-prereq-help": "15px",
+    "font-label": "16px",
+    "font-heading": "Verdana, sans-serif",
+    "font-body": "'Quicksand', sans-serif"
+  },
+  {
+    "type": "darkTheme",
+    "bg-color": "#111827",
+    "container-bg": "#0f172a",
+    "text-color": "#f8fafc",
+    "text-muted": "#d5ddeb",
+    "accent-color": "#f5c542",
+    "accent-text": "#111827",
+    "border-color": "#c3393f",
+    "item-bg": "#172136",
+    "item-header-bg": "#7f1d1d",
+    "points-bg": "#f5c542",
+    "points-border": "#ffffff",
+    "points-text": "#111827",
+    "selection-glow-color": "#facc15",
+    "shadow-color": "rgba(0, 0, 0, 0.72)",
+    "option-meta-bg": "#111c30",
+    "option-meta-heading-bg": "rgba(245, 197, 66, 0.16)",
+    "option-meta-heading-text": "#f8fafc",
+    "option-meta-points-color": "#facc15",
+    "option-meta-conditional-color": "#5eead4",
+    "option-meta-auto-grants-color": "#86efac",
+    "option-meta-prerequisites-color": "#facc15",
+    "option-meta-conflicts-color": "#f87171",
+    "font-base": "17px",
+    "font-title": "42px",
+    "font-description": "18px",
+    "font-tab": "16px",
+    "font-accordion": "18px",
+    "font-subcategory": "22px",
+    "font-option-title": "20px",
+    "font-option-req": "15px",
+    "font-option-desc": "18px",
+    "font-story": "18px",
+    "font-story-input": "17px",
+    "font-points": "20px",
+    "font-points-value": "20px",
+    "font-prereq-help": "15px",
+    "font-label": "16px",
+    "font-heading": "Verdana, sans-serif",
+    "font-body": "'Quicksand', sans-serif"
+  },
+  {
+    "name": "Mentors",
+    "subcategories": [
+      {
+        "name": "Science",
+        "type": "storyBlock",
+        "backgroundColor": "#4D88B4",
+        "textColor": "#ffffff",
+        "accentColor": "#000000",
+        "text": "",
+        "options": [
+          {
+            "label": "Tony Stark (Iron Man)",
+            "description": "Ah, Tony. Billionaire, Genius, Playboy, Philanthropist. If you are a hottie with a body, you can expect to learn more than science from our boy here. \n\nI will go ahead and let you know that Tony's got the most money to offer, so if you are a total gold digger, you might as well stop here. \n\n80% Paragon / 20% Renegade",
+            "id": "mentorsScienceTonyStarkIronMan",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "[color=#4C8BB4]SP[/color]": -5,
+                  "GP": -1,
+                  "Dollars (millions)": -70
+                }
+              }
+            ]
+          },
+          {
+            "label": "Otto Octavius (Doc Ock) ",
+            "description": "Doctor Octogonopus BLAAAUUGGH\n\nHeh. Mid-2000s memes.\n\nSeriously though, Otto here is a piece o work. Single-minded, ruthless, and little bit creepy, but there's no denying here's a genius.\n\n10% Paragon / 90% Renegade",
+            "id": "mentorsScienceOttoOctaviusDocOck",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "[color=#4C8BB4]SP[/color]": -7,
+                  "GP": -2,
+                  "Dollars (millions)": -30
+                }
+              }
+            ]
+          },
+          {
+            "label": "Reed Richards",
+            "description": "Now... I don't mean to pry, but do you think he stretches... everywhere?  Like... what's it feel like to be Mrs. Fantastic? \n\nAnyways, Reed's very much the absent minded professor type. He has a family, so you won't get as much one-on-one time as you might with the others. You might learn from his family too, though. \n\n100% Paragon / 0% Renegade",
+            "id": "mentorsScienceReedRichards",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "[color=#4C8BB4]SP[/color]": -8,
+                  "GP": -1,
+                  "Dollars (millions)": -30
+                }
+              }
+            ]
+          },
+          {
+            "label": "Peter Parker",
+            "description": "If you pick my bro Spidey, you are gonna have to share. We hang. \n\nGet it? Hang? \n\nBecause of the webbing\n\n...\n\nAnyway, Spidey's a good kid. Most people underestimate him, but he's every but as smart as the other mentors here. \n\n80% Paragon / 20% Renegade",
+            "id": "mentorsSciencePeterParker",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "[color=#4C8BB4]SP[/color]": -5,
+                  "[color=#D4262C]PP[/color]": -4,
+                  "GP": -2
+                }
+              }
+            ]
+          }
+        ],
+        "subcategories": []
+      },
+      {
+        "name": "Magic",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Victor Von Doom",
+            "description": "Doom's pretty much a badass at everything. Remember that time he became God-Emperor Doom and ruled everything? That was a wild time. \n\nHe's a jack-of-all trades and he's a master of most of them too. He would be sorcerer supreme if he bothered to try, and he claims to be smarter than Reed. \n\n30% Paragon / 70% Renegade",
+            "id": "mentorsMagicVictorVonDoom",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "[color=#4C8BB4]SP[/color]": -5,
+                  "[color=#50B53B]MP[/color]": -6,
+                  "Dollars (millions)": -40
+                }
+              }
+            ]
+          },
+          {
+            "label": "Stephen Strange",
+            "description": "The actual Sorcerer Supreme Doctor Strange is arguably the most powerful magic user on Earth. He's a bit stuffy and uptight for my taste, but I suppose that comes with the territory. \n\nThat time Doom was a God-Emperor, though, Strange was only his right hand man. Chew on that for a bit. \n\n90% Paragon / 10% Renegade",
+            "id": "mentorsMagicStephenStrange",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "[color=#50B53B]MP[/color]": -6,
+                  "[color=#CB3BE0]PSP[/color]": -4,
+                  "GP": -2,
+                  "Dollars (millions)": -10
+                }
+              }
+            ]
+          },
+          {
+            "label": "Wanda Maximoff",
+            "description": "In addition to looking almost as good in red as I do, Wanda is an immensely powerful witch as her name implies. Basically, she can do literally whatever she wants. \n\nYou probably won't get that good. Probably.\n\nYou can come close though.\n\n90% Paragon / 10% Renegade",
+            "id": "mentorsMagicWandaMaximoff",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "[color=#50B53B]MP[/color]": -9,
+                  "GP": -2,
+                  "Dollars (millions)": -15
+                }
+              }
+            ]
+          },
+          {
+            "label": "Johnny Blaze (Ghost Rider)",
+            "description": "Johnny and his demon boddy Xanatos are a package of hellfire and steel on one sweet ride. \n\nThey do not really have a 'home' so you will be wandering around hunting criminals while training with him.\n\nI hope you do not have any thing you feel guilty about. \n\n50% Paragon / 50% Renegade",
+            "id": "mentorsMagicJohnnyBlazeGhostRider",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "[color=#50B53B]MP[/color]": -5,
+                  "[color=#D4262C]PP[/color]": -4,
+                  "GP": -3,
+                  "Dollars (millions)": -10
+                }
+              }
+            ]
+          }
+        ],
+        "subcategories": [],
+        "backgroundColor": "#50B93C",
+        "accentColor": "black",
+        "textColor": "White"
+      },
+      {
+        "name": "Physical",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Steve Rogers (Captain America) ",
+            "description": "America's Golden Boy! The Super Soldier! The Capscicle! \n\nWe are not addressing the new run of him actually being a member of Hydra because that's stupid and the writers are stupid. \n\nCap is one of the best hand-to-hand fighters, not in the least because he can 'see' faster than most people ... Don't ask\n\n95% Paragon / 5% Renegade",
+            "id": "mentorsPhysicalSteveRogersCaptainAmerica",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "[color=#D4262C]PP[/color]": -9,
+                  "GP": -2,
+                  "Dollars (millions)": -10
+                }
+              }
+            ]
+          },
+          {
+            "label": "Batroc the Leader",
+            "description": "Hey, another merc! He's French though. He's a prick. \n\nBatroc doesn't have any poewrs, but he can hang with people like Cap and Hawkeye. He's like a gold and purple pinball when he fights.\n\nHe also doesn't hesitate to use guns or explosives when he needs to. He takes on just about any job, and makes tons of money doing it. \n\n10% Paragon / 90% Renegade",
+            "id": "mentorsPhysicalBatrocTheLeader",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "[color=#D4262C]PP[/color]": -6,
+                  "GP": -3,
+                  "Dollars (millions)": -40
+                }
+              }
+            ]
+          },
+          {
+            "label": "Kevin Masters (Taskmaster)",
+            "description": "Perhaps the most mentor-ly mentor of the 16 available, Taskmaster has the ability to perfectly recall and replicate any combat skill he observes. This made him an excellent teacher with a wide assortment of villains and anti-heroes. \n\nCurrently working for the US Government to clear his record, which is why he is willing to teach newbs like you. \n\n20% Paragon / 80% Renegade",
+            "id": "mentorsPhysicalKevinMastersTaskmaster",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "[color=#D4262C]PP[/color]": -6,
+                  "GP": -5,
+                  "Dollars (millions)": -20
+                }
+              }
+            ]
+          },
+          {
+            "label": "Victor Greed (Sabertooth)",
+            "description": "Not as calm and pleasant as my buddy, his brother. Wolvie, but he is a beast. \n\nLiterally.\n\nVictor will rip your insides out just for looking at him funny. He promises not to do that to his apprentice. I think he's bored.\n\nOr he likes grooming people in his image. \n\n0% Paragon / 100% Renegade",
+            "id": "mentorsPhysicalVictorGreedSabertooth",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "[color=#D4262C]PP[/color]": -12,
+                  "Dollars (millions)": -20
+                }
+              }
+            ]
+          }
+        ],
+        "subcategories": [],
+        "backgroundColor": "#D4262C",
+        "accentColor": "black",
+        "textColor": "#ffffff"
+      },
+      {
+        "name": "Psychic ",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Charles Xavier",
+            "description": "Baldy here's probably the first person you think of when you think of psychic powers. He's one of the strongest telepaths in the world, though that's not saying all that much.\n\nI mean really, dude cannot even get into Magneto's head.\n\n95% Paragon / 5% Renegade",
+            "id": "mentorsPsychicCharlesXavier",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "[color=#CB3BE0]PSP[/color]": -12,
+                  "Dollars (millions)": -10
+                }
+              }
+            ]
+          },
+          {
+            "label": "Mantis",
+            "description": "The Celestial Madonna herself, Mantis is a bit of a weird one, but she can beat up anyone you care to name. In addition to her scary psychic powers.\n\nShe mostly prefers to use them in subtle ways, implanting suggestions and using her precognition in combat. \n\nMostly\n\n80% Paragon / 20% Renegade",
+            "id": "mentorsPsychicMantis",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "[color=#D4262C]PP[/color]": -4,
+                  "[color=#CB3BE0]PSP[/color]": -5,
+                  "GP": -3,
+                  "Dollars (millions)": -10
+                }
+              }
+            ]
+          },
+          {
+            "label": "The Mandarin",
+            "description": "Mandarin? What's he doing here? He's not-\n\nOh yeah, he's got a ring for that. Well, I guess that works. He;'s not innately psychic, but ring #6 \"Demonic\" (Hey, I didn't name them) gives him mental powers up to and including mind control.\n\nDude has rings for everything. It's absurd.\n\n10% Paragon / 90% Renegade",
+            "id": "mentorsPsychicTheMandarin",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "[color=#4C8BB4]SP[/color]": -5,
+                  "[color=#CB3BE0]PSP[/color]": -4,
+                  "GP": -2,
+                  "Dollars (millions)": -20
+                }
+              }
+            ]
+          },
+          {
+            "label": "Emma Frost",
+            "description": "Ooh-la-la\n\nMs. Frost is considered second only to Xavier in mental power, but there are other perks to being her student. \n\nBy which I mean money. She's the leader of the Hellfire Club. \n\nYou're not even on her dance card.\n\n40% Paragon / 60% Renegade",
+            "id": "mentorsPsychicEmmaFrost",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "[color=#CB3BE0]PSP[/color]": -9,
+                  "Dollars (millions)": -40
+                }
+              }
+            ]
+          }
+        ],
+        "subcategories": [],
+        "backgroundColor": "#CB3BE0",
+        "accentColor": "black",
+        "textColor": "#ffffff"
+      }
+    ],
+    "maxSelections": 1
+  },
+  {
+    "name": "Powers",
+    "subcategories": [
+      {
+        "name": "Science",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Genius",
+            "description": "Rank 1: You are the equivalent to Stephen Hawking in your chosen fields, and you can master new fields in a master of weeks. You are not necessarily going to be making breakthroughs on a regular basis, but you are always going to be the smartest person in the room.  (Except for other genius supers of course) \n\nRank 2: Tony Stark was able to build the Iron Man suit in a cave! With a box of scraps! You will be able to accomplish similar feats, and your analytical mind makes you a master of planning and tactics. Even other geniuses will be unable to best you and with prep, you will be able to win most fights.",
+            "id": "powersScienceGenius",
+            "maxSelections": 2,
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "GP": 1
+                }
+              },
+              {
+                "label": "Payment Option 2",
+                "cost": {
+                  "[color=#4C8BB4]SP[/color]": 1
+                }
+              }
+            ]
+          },
+          {
+            "label": "Technopathy",
+            "description": "Rank 1: You can control and manipulate machinery to do your bidding at range, and interface with computers without the need for clumsy devices like keyboards. All but the most heavily encrypted servers are open to you, and automated systems will be repurposed to serve you.\n\nRank 2: Your control over machines extends to both the macro and micro levels. You can disassemble and reassemble machinery, re-configuring it to suit your exact needs, no encryption is too secure for you to crack it, and you can create AI on the fly to control your mechanical creation.",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "GP": 1
+                }
+              },
+              {
+                "label": "Payment Option 2",
+                "cost": {
+                  "[color=#4C8BB4]SP[/color]": 1
+                }
+              }
+            ],
+            "id": "powersScienceTechnopathy",
+            "maxSelections": 2
+          },
+          {
+            "label": "Construction",
+            "description": "Rank 1: Assembling the gear that makes you a super is second-nature to you. By machining and fabricating the parts yourself, you can make more gear than your budget would otherwise suggest, and repairing it is never a problem. You save 15% on item costs, and all gear is slightly more effective.\n\nRank 2: You are among the greatest technicians in the world, and possibly beyond. Parts seems to appear from thin air when you need them, letting you assemble more than seems possible. You save an additional 15% on item costs, and all gear is markedly more effective.",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "GP": 1
+                }
+              },
+              {
+                "label": "Payment Option 2",
+                "cost": {
+                  "[color=#4C8BB4]SP[/color]": 1
+                }
+              }
+            ],
+            "id": "powersScienceConstruction",
+            "maxSelections": 2
+          },
+          {
+            "label": "Alien Tech 1",
+            "description": "Rank 1 (2 points): Through accidental contact, devoted study, or a reference from your mentor, you have managed to get your hands on alien technology, which you have reversed engineered to augment your own gear. The second tier of transformative items is unlocked for you. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "GP": 2
+                }
+              },
+              {
+                "label": "Payment Option 2",
+                "cost": {
+                  "[color=#4C8BB4]SP[/color]": 2
+                }
+              }
+            ],
+            "id": "powersScienceAlienTech1"
+          },
+          {
+            "label": "Alien Tech 2",
+            "description": "Rank 2 (3 points): Your mastery of alien technology is second to none. Any one-second-tier transformative item you possess has its effects boosted by an order of magnitude. The exact nature of this boost is up to your discretion. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "GP": 3
+                }
+              },
+              {
+                "label": "Payment Option 2",
+                "cost": {
+                  "[color=#4C8BB4]SP[/color]": 3
+                }
+              }
+            ],
+            "id": "powersScienceAlienTech2",
+            "prerequisites": "powersScienceAlienTech1"
+          }
+        ],
+        "subcategories": [],
+        "backgroundColor": "#4C8BB4",
+        "accentColor": "Black",
+        "textColor": "#ffffff"
+      },
+      {
+        "name": "Magic",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Elemental",
+            "description": "Rank 1: You possess either moderate control over all elements, or the weather, or significant control over a single element. A generalized elementalist might be able to control an amount of earth or water equivalent to their own mass, while a specialized elementalist might be able to control up to a ton of matter. \n\nRank 2: A generalized elementalist at Rank 2 might have the same control over all elements that a specialized elementalist has at Rank 1. A specialized elementalist at Rank 2 could summon hurricane-force winds, fire as intense as the surface of the sun, or flood an entire city. At Rank 2, weather elementalist has powers on pars with Storms.",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "GP": 1
+                }
+              },
+              {
+                "label": "Payment Option 2",
+                "cost": {
+                  "[color=#50B53B]MP[/color]": 1
+                }
+              }
+            ],
+            "id": "powersMagicElemental",
+            "maxSelections": 20
+          },
+          {
+            "label": "Utility Magic",
+            "description": "Rank 1: Quality of Life Magic. Things like minor telekinesis, storing small items in pocket dimensions, changing your outfit on the fly, or minor illusions. Anything a mage could do casually to make his life easier probably falls into this category. \n\nRank 2: You can use magic to do basically anything technology can do. Travel? Fly or Teleport. Storage? Bag of Holding. Someone shooting at you? Arcane Armor. Note that unlike Elemental Magic, you gain all these abilities from a single purchase of utility magic. To gian specialized control over two elements would require 2 purchases of Rank 1 and 2 of Elemental Magic.",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "GP": 1
+                }
+              },
+              {
+                "label": "Payment Option 2",
+                "cost": {
+                  "[color=#50B53B]MP[/color]": 1
+                }
+              }
+            ],
+            "id": "powersMagicUtilityMagic",
+            "maxSelections": 2
+          },
+          {
+            "label": "Summoning",
+            "description": "Rank 1: You are able to bring creatures from other planes or world to do your bidding. Their exact nature is up to you, and ranks in elemental magic allows you to call elementals of your chosen type. More powerful than the basic summons available with only this magic. \n\nRank 2: You are able to call gods and demons from outer planes. Beings of immense power and wisdom. Be warned: These beings are under no obligation to serve you and will require service in exchange for their boons. Rank 2 Summoning and Rank 2 Elemental Magic would allow an Earth Specialist to animate an entire mountain.",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "GP": 1
+                }
+              },
+              {
+                "label": "Payment Option 2",
+                "cost": {
+                  "[color=#50B53B]MP[/color]": 1
+                }
+              }
+            ],
+            "id": "powersMagicSummoning"
+          },
+          {
+            "label": "Temporal Magic 1",
+            "description": "Rank 1 (2 points): Through intense study or fortuitous innate power, you begin to unlock time magic. One of the most powerful and dangerous magical schools. Though you are not yet able to change the course of time, you can slow it down, speed it up, or even pause it for brief periods. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "GP": 2
+                }
+              },
+              {
+                "label": "Payment Option 2",
+                "cost": {
+                  "[color=#50B53B]MP[/color]": 2
+                }
+              }
+            ],
+            "id": "powersMagicTemporalMagic1"
+          },
+          {
+            "label": "Temporal Magic 2",
+            "description": "Rank 2 (3 points): Time is unlocked completely for you. Travel forwards, backwards, and across timelines at will. Time magic still requires focus, so this won't make you immune to being surprised, but if they fail to kill you, you can always just rewind time and try again.",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "GP": 3
+                }
+              },
+              {
+                "label": "Payment Option 2",
+                "cost": {
+                  "[color=#50B53B]MP[/color]": 3
+                }
+              }
+            ],
+            "id": "powersMagicTemporalMagic2",
+            "prerequisites": "powersMagicTemporalMagic1"
+          }
+        ],
+        "subcategories": [],
+        "backgroundColor": "#50B53B",
+        "accentColor": "black",
+        "textColor": "#ffffff"
+      },
+      {
+        "name": "Physical",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Strength",
+            "description": "Rank 1: You possess all-around strength at approximately twice the level a human could possibly achieve , putting your above \"peak humans\" like Captain America. This gives you a modest boost ins speed and durability, but not any more than a regular human could achieve. \n\nRank 2: You're not quite at hulk's level, but throwing tanks through skyscrapers and leaping tall buildings in a single bound are certainly within your grasp. Be careful with those jumps though. Strength alone won't keep you from splattering when you hit the ground.",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "GP": 1
+                }
+              },
+              {
+                "label": "Payment Option 2",
+                "cost": {
+                  "[color=#D4262C]PP[/color]": 1
+                }
+              }
+            ],
+            "id": "powersPhysicalStrength",
+            "maxSelections": 2
+          },
+          {
+            "label": "Speed",
+            "description": "Rank 1: Your speed, agility, and reaction times are all boosted beyond human maximums. You could easily win gold in Olympic Gymnastics with a little training for the routines, and nothing dropped within arm's reach of you ever hits the floor. Your top speeds approach 60mph.\n\nRank 2: You can either specialize into speed or agility. Pure pseed will enable you to run at approximately .1c. Though at those speeds perceiving your surroundings will be difficult. If you choose agility, you will be able to perceive faster than humans, able to dodge even lasers, reacting impossibly quickly. Your body needs almost no time to process data and react accordingly. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "GP": 1
+                }
+              },
+              {
+                "label": "Payment Option 2",
+                "cost": {
+                  "[color=#D4262C]PP[/color]": 1
+                }
+              }
+            ],
+            "id": "powersPhysicalSpeed",
+            "maxSelections": 2
+          },
+          {
+            "label": "Durability",
+            "description": "Rank 1: Your body becomes durable, like firm rubber. Bludgeoning blows, falls from moderate heights, and small-caliber bullets will have almost no effect on you. You also gain a heightened resilience to pressure, temperature, and illness/toxins. \n\nRank 2: You are virtually invulnerable: Heat, Cold, Pressure, Gunfire, Blades, Poison.. None of it is liable to even scratch you. You can hold your breath for hours on end, enabling you to survive even the vacuum of space for a time. Only exotic weaponry or powers are liable to pose a threat. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "GP": 1
+                }
+              },
+              {
+                "label": "Payment Option 2",
+                "cost": {
+                  "[color=#D4262C]PP[/color]": 1
+                }
+              }
+            ],
+            "id": "powersPhysicalDurability",
+            "maxSelections": 2
+          },
+          {
+            "label": "Healing Factor 1",
+            "description": "Rank 1 (2 points): Wounds that would cause a normal human to bleed out are survivable for you. You heal approximately 7 times faster than a normal human, so an accident that would hospitalize a normal human for a month would only take you 4 days to recover from. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "GP": 2
+                }
+              },
+              {
+                "label": "Payment Option 2",
+                "cost": {
+                  "[color=#D4262C]PP[/color]": 2
+                }
+              }
+            ],
+            "id": "powersPhysicalHealingFactor1"
+          },
+          {
+            "label": "Healing Factor 2",
+            "description": "Rank 2 (3 points): Your healing factor is the equivalent of of Wolvie's or mine! Major injuries heal within a minute and you can regenerate from complete evisceration as long as a chunk of your body remains intact. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "GP": 3
+                }
+              },
+              {
+                "label": "Payment Option 2",
+                "cost": {
+                  "[color=#D4262C]PP[/color]": 3
+                }
+              }
+            ],
+            "id": "powersPhysicalHealingFactor2",
+            "prerequisites": "powersPhysicalHealingFactor1"
+          }
+        ],
+        "subcategories": [],
+        "backgroundColor": "#D4262C",
+        "accentColor": "Black",
+        "textColor": "#ffffff"
+      },
+      {
+        "name": "Psychic",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Telepathy",
+            "description": "Rank 1: You can send and receive messages directly between minds and allow communication between two non-telepathic minds by acting as a link between them. You can extract information from the mind of an unaware or unwilling individual. But those with strong wills or training may be able to resist you. \n\nRank 2: Your ability to break past the mental guards of others improves, allowing you to access the minds of nearly all persons. You can also cross the boundaries of species, reading the minds of most animals, and can blur the lines between reality and imagination, planting false memories and illusions in the minds of others. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "GP": 1
+                }
+              },
+              {
+                "label": "Payment Option 2",
+                "cost": {
+                  "[color=#CB3BE0]PSP[/color]": 1
+                }
+              }
+            ],
+            "id": "powersPsychicTelepathy",
+            "maxSelections": 2
+          },
+          {
+            "label": "Telekinesis",
+            "description": "Rank 1: You can lift mentally only as much as you can lift individually: To start, you can increase this limit through mental exercise to an upper limit of approximately 4 times the human strength, and of course you can do things with telekinesis that cannot be done with raw strength.\n\nRank 2 (3 points): With discipline and training, you can lift many tons without batting an eye. Your telekinetic strength will rival the strongest physical heroes and you will have far more versatility with it. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "GP": 1
+                }
+              },
+              {
+                "label": "Payment Option 2",
+                "cost": {
+                  "[color=#CB3BE0]PSP[/color]": 1
+                }
+              }
+            ],
+            "id": "powersPsychicTelekinesis",
+            "maxSelections": 2
+          },
+          {
+            "label": "Precognition",
+            "description": "Rank 1: Whenever you sleep, meditate, or otherwise allow your mind to relax, you may experience flashes of possible futures. Imminent catastrophes may force a vision on you even when you are alert. \n\nRank 2: You do not always know why, but you usually know the best course of action to take. It is not infallible, but it is much better than nothing. With focus, you can travel the possible futures and discern the actions required to bring them about. Warnings of catastrophes come sooner, and more reliably. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "GP": 1
+                }
+              },
+              {
+                "label": "Payment Option 2",
+                "cost": {
+                  "[color=#CB3BE0]PSP[/color]": 1
+                }
+              }
+            ],
+            "id": "powersPsychicPrecognition",
+            "maxSelections": 2
+          },
+          {
+            "label": "Domination 1",
+            "description": "Rank 1 (2 points): You can completely control the thoughts and actions of a single target, or strongly influence several: Animals are also subject to this effect, but those of strong will can resist and the effect weakens the longer the subject is away from you.",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "GP": 2
+                }
+              },
+              {
+                "label": "Payment Option 2",
+                "cost": {
+                  "[color=#CB3BE0]PSP[/color]": 2
+                }
+              }
+            ],
+            "id": "powersPsychicDomination1"
+          },
+          {
+            "label": "Domination 2",
+            "description": "Rank 2 (3 points): You can completely control up to 5 people. Even those with iron will (for a brief time) and influence large masses of people (For example, inciting a riot in a crowd.) As long as you focus in on your thralls periodically, the effect does not decay with time. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "GP": 3
+                }
+              },
+              {
+                "label": "Payment Option 2",
+                "cost": {
+                  "[color=#CB3BE0]PSP[/color]": 3
+                }
+              }
+            ],
+            "id": "powersPsychicDomination2",
+            "prerequisites": "powersPsychicDomination1"
+          }
+        ],
+        "subcategories": [],
+        "backgroundColor": "#CB3BE0",
+        "accentColor": "Black",
+        "textColor": "#ffffff"
+      }
+    ],
+    "description": "Note: All Powers have a cost equal to their rank unless otherwise noted, and you must buy Rank One before buying Rank Two."
+  },
+  {
+    "name": "Gear",
+    "subcategories": [
+      {
+        "name": "Gear",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Utility Belt 1",
+            "description": "A typical utility belt that will provide typical tools to assist in most situations. Lockpicks, A grappling hook, maybe a re-breather. You can decide exactly what it contains, within research.",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "Dollars (millions)": 1
+                }
+              }
+            ],
+            "id": "gearGearUtilityBelt1"
+          },
+          {
+            "label": "Utility Belt 2",
+            "description": "Your utility belt seems to defy the laws of physics. If there is a device that can fit in your hand that would assist you in a given task, you can probably pull it out of your utility belt ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "Dollars (millions)": 3
+                }
+              }
+            ],
+            "id": "gearGearUtilityBelt2",
+            "prerequisites": "gearGearUtilityBelt1"
+          },
+          {
+            "label": "Guns 1",
+            "description": "You have unlimited access to most guns, up to and including light machine guns, accessories, and special ammunition types are included, but it might take you a few days to get anything too exotic",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "Dollars (millions)": 2
+                }
+              }
+            ],
+            "id": "gearGearGuns1"
+          },
+          {
+            "label": "Guns 2",
+            "description": "You have access to any weapon that fires non-explosive ordinance. Your tiers of explosives also stack with this tier of guns to grant you RPGs, Rocket Launchers, etc. To mount similar weapons on your vehicle, if you have one, you can fire any kind of explosive granted by your tiers in explosives.",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "Dollars (millions)": 6
+                }
+              }
+            ],
+            "id": "gearGearGuns2",
+            "prerequisites": "gearGearGuns1"
+          },
+          {
+            "label": "Shield Generator 1",
+            "description": "You can carry a shield generator that can be triggered at will, capable of deflecting gunfire and resisting most basic elemental attacks. However, it can only be used for a few minutes at a time before it needs to recharge, and can be overwhelmed. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "Dollars (millions)": 4
+                }
+              }
+            ],
+            "id": "gearGearShieldGenerator1"
+          },
+          {
+            "label": "Shield Generator 2",
+            "description": "Your shield is active at all times unless you deactivate it, and can withstand immense damage before being overwhelmed. Further, your shield can also withstand immense damage before being overwhelmed. Further, your shield can also provide a hermetic shield, protecting you from gases and vacuum, and provides some protection from psychic effects. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "Dollars (millions)": 16
+                }
+              }
+            ],
+            "id": "gearGearShieldGenerator2",
+            "prerequisites": "gearGearShieldGenerator1"
+          },
+          {
+            "label": "Exo Suit 1",
+            "description": "A basic exosuit provides you with effective Rank 1 Strength, Speed, and Durability. If you already have Rank 1, this will be a moderate boost for you. If you have Rank 2, this will be negligible. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "Dollars (millions)": 20
+                }
+              }
+            ],
+            "id": "gearGearExoSuit1"
+          },
+          {
+            "label": "Exo Suit 2",
+            "description": "An advanced, high-powered exosuit that grants you effective Rank 2 strength and durability, but still only grants Rank 1 speed. It also grants you flight at a max speed of 300mph and includes built-in Tier 1 Ray Weaponry. Though, you cannot use the rays in anything other than the suit. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "Dollars (millions)": 30
+                }
+              }
+            ],
+            "id": "gearGearExoSuit2",
+            "prerequisites": "gearGearExoSuit1 && powersScienceAlienTech1"
+          },
+          {
+            "label": "Vehicle 1 ",
+            "description": "A tier one vehicle is restricted to being land-bound and can be no larger in size than a small motor home. You can cram as much tech as you can get your hands on into it.",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "Dollars (millions)": 4
+                }
+              }
+            ],
+            "id": "gearGearVehicle1"
+          },
+          {
+            "label": "Vehicle 2",
+            "description": "The X-Men's Blackbird, The Avengers' quinjet. All these and more cna be springboards for the kind of badass vehicle you can buy with Tier 2. At this level, your vehicle can also include high-end things like cloaking. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "Dollars (millions)": 15
+                }
+              }
+            ],
+            "id": "gearGearVehicle2",
+            "prerequisites": "gearGearVehicle1"
+          },
+          {
+            "label": "Explosives 1",
+            "description": "Grenades, Landmines, Tripwires, Breaching charges, and basically any other \"normal\" kind of explosive ordinance that is not fired from a gun.",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "Dollars (millions)": 3
+                }
+              }
+            ],
+            "id": "gearGearExplosives1"
+          },
+          {
+            "label": "Explosives 2",
+            "description": "You can make explosives with effects other than death. Freezing grenades, sticky grenades, gas grenades, and more. Anything you can pack into a grenade is now open to you. You can also make more advanced grenades, such as a drilling grenade, homing grenades, or cute little helicopter grenades.",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "Dollars (millions)": 8
+                }
+              }
+            ],
+            "id": "gearGearExplosives2",
+            "prerequisites": "gearGearExplosives1"
+          },
+          {
+            "label": "Teleporter 1",
+            "description": "You can, once per ten minutes or so, teleport anywhere within 1000 yards of yourself. You must know your destination or be able to see it, otherwise you risk teleporting yourself into a wall and killing yourself. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "Dollars (millions)": 6
+                }
+              }
+            ],
+            "id": "gearGearTeleporter1"
+          },
+          {
+            "label": "Teleporter 2",
+            "description": "The cooldown on your teleport is reduced to a mere ten seconds, and you can teleport up to 1,000 miles. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "Dollars (millions)": 15
+                }
+              }
+            ],
+            "id": "gearGearTeleporter2",
+            "prerequisites": "gearGearTeleporter1"
+          },
+          {
+            "label": "Nanomachines 1",
+            "description": "You gain an injection of of nanomachines, which can respond to your mental commands and grant you powers at need. The nanomachines are the equivalent of three points of physical powers, which can be changed at will. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "Dollars (millions)": 20
+                }
+              }
+            ],
+            "id": "gearGearNanomachines1"
+          },
+          {
+            "label": "Nanomachines 2",
+            "description": "The nanomachines are both more potent and more versatile, functioning as give effective points of physical power and two points of either magic or psychic power.",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "Dollars (millions)": 50
+                }
+              }
+            ],
+            "id": "gearGearNanomachines2",
+            "prerequisites": "gearGearNanomachines1 && powersScienceAlienTech1"
+          },
+          {
+            "label": "Lair 1",
+            "description": "A nice penthouse suite, A house in a surburban neighborhood, or a basement with a secret entrance from a shop above you: Contains all the amenities you need for your superhero and civilian lives. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "Dollars (millions)": 5
+                }
+              }
+            ],
+            "id": "gearGearLair1"
+          },
+          {
+            "label": "Lair 2",
+            "description": "A base on the level of Avengers Tower or The Batcave. You have all that you could need for your life of crime/heroism, including a place to store your vehicle if you have one in addition to sweet living quarters for your civilian life. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "Dollars (millions)": 30
+                }
+              }
+            ],
+            "id": "gearGearLair2",
+            "prerequisites": "gearGearLair1"
+          },
+          {
+            "label": "Ray Weaonry 1 ",
+            "description": "You have access to the most basic rays: Heat and Cold. You can burn things, melt things, and vaporize things with heat or you can freeze and shatter things with cold.",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "Dollars (millions)": 8
+                }
+              }
+            ],
+            "id": "gearGearRayWeaonry1"
+          },
+          {
+            "label": "Ray Weaonry 2",
+            "description": "You can create rays with more bizarre and exotic effects, such as shrink rays, death rays, mind control rays, and more! Your potential is essentially limitless, though you will be in the end still just a guy with a gun.",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "Dollars (millions)": 16
+                }
+              }
+            ],
+            "id": "gearGearRayWeaonry2",
+            "prerequisites": "gearGearRayWeaonry1"
+          },
+          {
+            "label": "Drones 1",
+            "description": "You can design and program drones roughly up to modern technology, Small flying drones and tread crawling drones and similar. These can only perform simple tasks unless you can create AI yourself. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "Dollars (millions)": 10
+                }
+              }
+            ],
+            "id": "gearGearDrones1"
+          },
+          {
+            "label": "Drones 2",
+            "description": "You can create advanced, humanoid drones, capable of high-powered combat or recon and controlled with specialized AI. Combat drones can be equipped with any weaponry you have purchased. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "Dollars (millions)": 30
+                }
+              }
+            ],
+            "id": "gearGearDrones2",
+            "prerequisites": "gearGearDrones1"
+          },
+          {
+            "label": "Radiation 1",
+            "description": "Exposure to radiation has granted you a second form that only triggers under certain conditions. When activated, you gain an additional rank in all physical stats. This form can only be maintained for 10 minutes per day, and leaves you drained afterwards. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "Dollars (millions)": 15
+                }
+              }
+            ],
+            "id": "gearGearRadiation1"
+          },
+          {
+            "label": "Radiation 2",
+            "description": "You can refine the radiation exposure to either provide you with a permanent extra rank of every physical power, or boost your physical powers by two effective ranks while in your alternate form. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "Dollars (millions)": 40
+                }
+              }
+            ],
+            "id": "gearGearRadiation2",
+            "prerequisites": "gearGearRadiation1 && powersScienceAlienTech1"
+          }
+        ],
+        "subcategories": [],
+        "backgroundColor": "#4E89B3",
+        "accentColor": "Black",
+        "textColor": "#ffffff"
+      }
+    ]
+  }
+]

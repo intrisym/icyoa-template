@@ -1,6 +1,6 @@
 (function () {
     const CORE_TYPES_ORDER = ["title", "description", "headerImage", "points", "settings"];
-    const BASE_OPTION_KEYS = new Set(["id", "label", "description", "image", "inputType", "inputLabel", "cost", "maxSelections", "countsAsOneSelection", "bypassSubcategoryMaxSelections", "prerequisites", "conflictsWith", "autoGrants", "modifiedCosts", "discounts", "discountGrants"]);
+    const BASE_OPTION_KEYS = new Set(["id", "label", "description", "image", "inputType", "inputLabel", "cost", "costOptions", "maxSelections", "countsAsOneSelection", "bypassSubcategoryMaxSelections", "prerequisites", "conflictsWith", "autoGrants", "modifiedCosts", "discounts", "discountGrants"]);
 
     const state = {
         data: [],
@@ -505,6 +505,9 @@
         };
 
         warnUnknownPointTypes(option?.cost, "Base cost");
+        (option?.costOptions || []).forEach((costOption, index) => {
+            warnUnknownPointTypes(costOption?.cost, `Alternative cost ${index + 1}`);
+        });
 
         const prereqIds = Array.from(extractReferencedIds(option?.prerequisites));
         prereqIds.forEach(id => {
@@ -1072,7 +1075,12 @@
         const option = {
             label: "New Option",
             description: "",
-            cost: {}
+            costOptions: [
+                {
+                    label: "Payment Option 1",
+                    cost: {}
+                }
+            ]
         };
         const path = [];
         if (Array.isArray(categoryName)) {
@@ -1089,6 +1097,29 @@
         option.id = generateOptionId(option.label, { path });
         optionIdAutoMap.set(option, true);
         return option;
+    }
+
+    function ensurePaymentOptionsForEditor(option) {
+        if (!option || typeof option !== "object") return;
+        if (Array.isArray(option.costOptions) && option.costOptions.length > 0) {
+            option.costOptions = option.costOptions.map((entry, index) => ({
+                label: entry?.label || `Payment Option ${index + 1}`,
+                cost: entry?.cost && typeof entry.cost === "object" ? entry.cost : {}
+            }));
+            delete option.cost;
+            return;
+        }
+
+        const migratedCost = option.cost && typeof option.cost === "object" && !Array.isArray(option.cost)
+            ? { ...option.cost }
+            : {};
+        option.costOptions = [
+            {
+                label: "Payment Option 1",
+                cost: migratedCost
+            }
+        ];
+        delete option.cost;
     }
 
     function renderModifiedCostRulesEditor(container, owner, {
@@ -1593,6 +1624,7 @@
                 const existingValue = pointsEntry.values[currency];
                 delete pointsEntry.values[currency];
                 pointsEntry.values[newName] = existingValue;
+                renamePointTypeReferences(currency, newName);
 
                 const allowIdx = pointsEntry.allowNegative.indexOf(currency);
                 if (allowIdx !== -1) {
@@ -2215,6 +2247,49 @@
 
     function getPointTypeDisplayName(type = "") {
         return stripFormattingMarkup(type) || type;
+    }
+
+    function renamePointMapKey(map, oldName, newName) {
+        if (!map || typeof map !== "object" || Array.isArray(map) || !Object.prototype.hasOwnProperty.call(map, oldName)) return;
+        const existing = map[oldName];
+        delete map[oldName];
+        map[newName] = existing;
+    }
+
+    function renamePointTypeReferences(oldName, newName) {
+        state.data.forEach(entry => {
+            if (!entry || typeof entry !== "object") return;
+
+            renamePointMapKey(entry.discountAmount, oldName, newName);
+
+            const visitCostRules = (owner) => {
+                [...(owner?.modifiedCosts || []), ...(owner?.discounts || [])].forEach(rule => {
+                    renamePointMapKey(rule?.cost, oldName, newName);
+                    renamePointMapKey(rule?.costDelta, oldName, newName);
+                    renamePointMapKey(rule?.minCost, oldName, newName);
+                    renamePointMapKey(rule?.maxCost, oldName, newName);
+                });
+            };
+
+            const visitOption = (option) => {
+                renamePointMapKey(option?.cost, oldName, newName);
+                (option?.costOptions || []).forEach(costOption => renamePointMapKey(costOption?.cost, oldName, newName));
+                renamePointMapKey(option?.costPerPoint, oldName, newName);
+                visitCostRules(option);
+            };
+
+            const visitSubcategory = (subcat) => {
+                renamePointMapKey(subcat?.defaultCost, oldName, newName);
+                renamePointMapKey(subcat?.discountAmount, oldName, newName);
+                visitCostRules(subcat);
+                (subcat?.options || []).forEach(visitOption);
+                (subcat?.subcategories || []).forEach(visitSubcategory);
+            };
+
+            visitCostRules(entry);
+            (entry.options || []).forEach(visitOption);
+            (entry.subcategories || []).forEach(visitSubcategory);
+        });
     }
 
     function renderPointTypeAmountControls(parent, {
@@ -3099,6 +3174,7 @@
 
             const body = document.createElement("div");
             body.className = "option-body";
+            ensurePaymentOptionsForEditor(option);
 
             const {
                 container: optionAdvancedSection,
@@ -3349,16 +3425,18 @@
             bypassSubcatLimitField.appendChild(bypassSubcatLimitToggle);
             inputSelectionBody.appendChild(bypassSubcatLimitField);
 
-            const costSection = document.createElement("div");
-            costSection.className = "field";
-            const costLabel = document.createElement("label");
-            costLabel.textContent = "Cost";
-            const costContainer = document.createElement("div");
-            costContainer.className = "cost-list";
-            renderCostEditor(costContainer, option);
-            costSection.appendChild(costLabel);
-            costSection.appendChild(costContainer);
-            body.appendChild(costSection);
+            const costOptionsSection = document.createElement("div");
+            costOptionsSection.className = "field";
+            const costOptionsLabel = document.createElement("label");
+            costOptionsLabel.textContent = "Payment options";
+            const costOptionsHint = document.createElement("div");
+            costOptionsHint.className = "field-help";
+            costOptionsHint.textContent = "Every option uses at least one payment option. Add more when players should choose how to pay.";
+            const costOptionsContainer = document.createElement("div");
+            costOptionsContainer.className = "list-stack";
+            renderCostOptionsEditor(costOptionsContainer, option);
+            costOptionsSection.append(costOptionsLabel, costOptionsHint, costOptionsContainer);
+            body.appendChild(costOptionsSection);
 
             const prereqSection = document.createElement("div");
             prereqSection.className = "field";
@@ -3875,6 +3953,102 @@
         container.appendChild(addBtn);
     }
 
+    function renderCostOptionsEditor(container, option) {
+        container.innerHTML = "";
+        ensurePaymentOptionsForEditor(option);
+        const costOptions = option.costOptions;
+
+        costOptions.forEach((costOption, index) => {
+            if (!costOption || typeof costOption !== "object" || Array.isArray(costOption)) {
+                if (!Array.isArray(option.costOptions)) option.costOptions = costOptions;
+                option.costOptions[index] = { label: `Cost ${index + 1}`, cost: {} };
+                costOption = option.costOptions[index];
+            }
+            if (!costOption.cost || typeof costOption.cost !== "object") costOption.cost = {};
+
+            const card = document.createElement("div");
+            card.className = "cost-option-card";
+
+            const header = document.createElement("div");
+            header.className = "cost-option-card-header";
+
+            const title = document.createElement("div");
+            title.className = "cost-option-title";
+            const titleText = document.createElement("strong");
+            titleText.textContent = `Payment option ${index + 1}`;
+            const titleHint = document.createElement("span");
+            titleHint.textContent = costOptions.length > 1
+                ? "Chosen per selection."
+                : "Default cost.";
+            title.append(titleText, titleHint);
+
+            const labelInput = document.createElement("input");
+            labelInput.type = "text";
+            labelInput.value = costOption.label || "";
+            labelInput.placeholder = "Payment Option 1";
+            labelInput.addEventListener("input", () => {
+                const value = labelInput.value.trim();
+                if (value) costOption.label = value;
+                else delete costOption.label;
+                schedulePreviewUpdate();
+            });
+
+            const costMapContainer = document.createElement("div");
+            costMapContainer.className = "cost-list";
+            renderPointMapEditor(costMapContainer, costOption.cost, (nextCost) => {
+                costOption.cost = nextCost || {};
+                schedulePreviewUpdate();
+            });
+
+            const removeBtn = document.createElement("button");
+            removeBtn.type = "button";
+            removeBtn.className = "button-icon danger";
+            removeBtn.textContent = "✕";
+            removeBtn.title = "Remove alternative cost";
+            removeBtn.disabled = costOptions.length <= 1;
+            removeBtn.addEventListener("click", () => {
+                if (!Array.isArray(option.costOptions)) option.costOptions = costOptions;
+                if (option.costOptions.length <= 1) return;
+                option.costOptions.splice(index, 1);
+                renderCostOptionsEditor(container, option);
+                schedulePreviewUpdate();
+            });
+
+            header.append(title, removeBtn);
+
+            const labelField = document.createElement("div");
+            labelField.className = "field";
+            const label = document.createElement("label");
+            label.textContent = "Player-facing label";
+            labelField.append(label, labelInput);
+
+            const costField = document.createElement("div");
+            costField.className = "field";
+            const costLabel = document.createElement("label");
+            costLabel.textContent = "Cost map";
+            costField.append(costLabel, costMapContainer);
+
+            card.append(header, labelField, costField);
+            container.appendChild(card);
+        });
+
+        const addBtn = document.createElement("button");
+        addBtn.type = "button";
+        addBtn.className = "button-subtle";
+        addBtn.textContent = "Add payment option";
+        addBtn.addEventListener("click", () => {
+            if (!Array.isArray(option.costOptions)) option.costOptions = [];
+            const candidateType = getPointTypeNames()[0] || "Points";
+            option.costOptions.push({
+                label: `Payment Option ${option.costOptions.length + 1}`,
+                cost: { [candidateType]: 0 }
+            });
+            renderCostOptionsEditor(container, option);
+            schedulePreviewUpdate();
+        });
+        container.appendChild(addBtn);
+    }
+
     function renderPointMapEditor(container, map, onChange) {
         container.innerHTML = "";
         const valueMap = map && typeof map === "object" ? { ...map } : {};
@@ -3883,10 +4057,18 @@
             const row = document.createElement("div");
             row.className = "cost-row";
 
-            const nameInput = document.createElement("input");
-            nameInput.type = "text";
-            nameInput.value = pointType;
-            nameInput.placeholder = "Point type";
+            const nameSelect = document.createElement("select");
+            const configuredPointTypes = getPointTypeNames();
+            const availablePointTypes = configuredPointTypes.includes(pointType)
+                ? configuredPointTypes
+                : [pointType, ...configuredPointTypes];
+            availablePointTypes.forEach(type => {
+                const option = document.createElement("option");
+                option.value = type;
+                option.textContent = getPointTypeDisplayName(type);
+                nameSelect.appendChild(option);
+            });
+            nameSelect.value = pointType;
 
             const valueInput = document.createElement("input");
             valueInput.type = "number";
@@ -3903,15 +4085,15 @@
                 onChange(Object.keys(valueMap).length ? { ...valueMap } : null);
             });
 
-            nameInput.addEventListener("blur", () => {
-                const newName = nameInput.value.trim();
+            nameSelect.addEventListener("change", () => {
+                const newName = nameSelect.value;
                 if (!newName || newName === pointType) {
-                    nameInput.value = pointType;
+                    nameSelect.value = pointType;
                     return;
                 }
                 if (Object.prototype.hasOwnProperty.call(valueMap, newName)) {
                     showEditorMessage(`Duplicate key "${newName}"`, "warning", 4000);
-                    nameInput.value = pointType;
+                    nameSelect.value = pointType;
                     return;
                 }
                 const existingValue = valueMap[pointType];
@@ -3927,7 +4109,7 @@
                 renderPointMapEditor(container, valueMap, onChange);
             });
 
-            row.appendChild(nameInput);
+            row.appendChild(nameSelect);
             row.appendChild(valueInput);
             row.appendChild(removeBtn);
             container.appendChild(row);

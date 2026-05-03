@@ -2,6 +2,7 @@ let categories = [];
 let points = {};
 const selectedOptions = {};
 const discountedSelections = {};
+const selectedCostOptionIndexes = {};
 const openCategories = new Set();
 const storyInputs = {};
 let currentTab = null; // Track current active tab
@@ -321,6 +322,7 @@ function registerOptionGrid(grid, maxColumns) {
 function resetGlobalState() {
     clearObject(selectedOptions);
     clearObject(discountedSelections);
+    clearObject(selectedCostOptionIndexes);
     clearObject(storyInputs);
     clearObject(attributeSliderValues);
     clearObject(dynamicSelections);
@@ -366,10 +368,56 @@ function getOptionBaseCost(option) {
     return { ...optionCost };
 }
 
+function normalizeOptionCostOptions(option) {
+    const options = Array.isArray(option?.costOptions) ? option.costOptions : [];
+    return options
+        .map((entry, index) => {
+            const rawCost = entry?.cost && typeof entry.cost === "object"
+                ? entry.cost
+                : entry && typeof entry === "object" && !Array.isArray(entry)
+                    ? entry
+                    : null;
+            if (!rawCost) return null;
+            return {
+                index,
+                label: entry?.label || `Payment Option ${index + 1}`,
+                cost: { ...rawCost }
+            };
+        })
+        .filter(Boolean);
+}
+
+function getOptionBaseCostByChoice(option, costOptionIndex = null) {
+    const options = normalizeOptionCostOptions(option);
+    if (!options.length || costOptionIndex === null || costOptionIndex === undefined) {
+        return getOptionBaseCost(option);
+    }
+    const selected = options.find(entry => entry.index === Number(costOptionIndex));
+    return selected ? { ...selected.cost } : getOptionBaseCost(option);
+}
+
+function getSelectedCostOptionIndex(option) {
+    const options = normalizeOptionCostOptions(option);
+    if (!options.length) return null;
+    const selected = selectedCostOptionIndexes[option.id];
+    return options.some(entry => entry.index === Number(selected)) ? Number(selected) : options[0].index;
+}
+
+function getInitialCostOptionIndex(option) {
+    const options = normalizeOptionCostOptions(option);
+    if (!options.length) return null;
+    const selected = getSelectedCostOptionIndex(option);
+    const selectedCost = getOptionEffectiveCost(option, { costOptionIndex: selected });
+    if (canAffordCost(selectedCost)) return selected;
+    const affordable = options.find(choice => canAffordCost(getOptionEffectiveCost(option, { costOptionIndex: choice.index })));
+    return affordable ? affordable.index : selected;
+}
+
 function getOptionEffectiveCost(option, {
-    includeFirstNPreview = true
+    includeFirstNPreview = true,
+    costOptionIndex = null
 } = {}) {
-    const baseCost = getOptionBaseCost(option);
+    const baseCost = getOptionBaseCostByChoice(option, costOptionIndex);
     const info = findSubcategoryInfo(option.id);
     let bestCost = baseCost;
     let bestTotal = Object.entries(baseCost).reduce((sum, [_, val]) => val > 0 ? sum + val : sum, 0);
@@ -599,6 +647,42 @@ function getOptionEffectiveCost(option, {
     }
 
     return bestCost;
+}
+
+function getOptionEffectiveCostChoices(option, options = {}) {
+    const costOptions = normalizeOptionCostOptions(option);
+    if (!costOptions.length) {
+        return [{
+            index: null,
+            label: "Cost",
+            cost: getOptionEffectiveCost(option, options)
+        }];
+    }
+    return costOptions.map(choice => ({
+        index: choice.index,
+        label: choice.label,
+        cost: getOptionEffectiveCost(option, {
+            ...options,
+            costOptionIndex: choice.index
+        })
+    }));
+}
+
+function shouldRenderSelectionControls(option) {
+    if (!option) return false;
+    return option.inputType === "text"
+        || (option.maxSelections || 1) !== 1
+        || normalizeOptionCostOptions(option).length > 1;
+}
+
+function canAffordCost(cost = {}) {
+    return Object.entries(cost || {}).every(([type, cost]) => {
+        const numeric = Number(cost);
+        if (!Number.isFinite(numeric) || numeric < 0) return true;
+        const current = Number(points[type]);
+        const projected = (Number.isFinite(current) ? current : 0) - numeric;
+        return projected >= 0 || allowNegativeTypes.has(type);
+    });
 }
 
 function getSliderTypes(costPerPoint = {}) {
@@ -2140,7 +2224,10 @@ function addSelection(option, options = {}) {
 
     const actualCost = {};
     if (!isAutoGrant) {
-        const effectiveCost = getOptionEffectiveCost(option, { includeFirstNPreview: false });
+        const effectiveCost = getOptionEffectiveCost(option, {
+            includeFirstNPreview: false,
+            costOptionIndex: options.costOptionIndex ?? getSelectedCostOptionIndex(option)
+        });
         Object.entries(effectiveCost).forEach(([type, cost]) => {
             let finalCost;
             if (cost < 0) { // If cost is negative (a gain), it's never discounted
@@ -2225,12 +2312,12 @@ function canSelect(option) {
     const underCategoryLimit = categorySelectionCount < categoryMaxSelections;
 
     // Check if enough points (only for positive costs)
-    const effectiveCost = getOptionEffectiveCost(option);
-    const hasPoints = Object.entries(effectiveCost || {}).every(([type, cost]) => {
-        if (cost < 0) return true; // Gains don't require points
-        const projected = points[type] - cost;
-        return projected >= 0 || allowNegativeTypes.has(type);
-    });
+    const selectedCostOptionIndex = getInitialCostOptionIndex(option);
+    const costChoices = getOptionEffectiveCostChoices(option, { costOptionIndex: selectedCostOptionIndex });
+    const selectedChoice = costChoices.find(choice => choice.index === selectedCostOptionIndex) || costChoices[0];
+    const hasPoints = normalizeOptionCostOptions(option).length
+        ? canAffordCost(selectedChoice?.cost || {})
+        : canAffordCost(getOptionEffectiveCost(option));
 
     return meetsPrereq && hasPoints && hasNoOutgoingConflicts && hasNoIncomingConflicts && underOptionLimit && underSubcatLimit && underCategoryLimit;
 }
@@ -2758,6 +2845,31 @@ function formatConditionalCostResult(cost = {}) {
         .join("; ");
 }
 
+function formatCostMapDisplay(cost = {}) {
+    return Object.entries(cost || {})
+        .filter(([_, value]) => Number.isFinite(Number(value)))
+        .map(([type, value]) => {
+            const numeric = Number(value);
+            return numeric < 0
+                ? `Gain: ${getPointAmountMarkup(type, Math.abs(numeric))}`
+                : `Cost: ${getPointAmountMarkup(type, numeric)}`;
+        })
+        .join("; ");
+}
+
+function formatCostMapPlainText(cost = {}) {
+    return Object.entries(cost || {})
+        .filter(([_, value]) => Number.isFinite(Number(value)))
+        .map(([type, value]) => {
+            const numeric = Number(value);
+            const pointLabel = stripFormattingMarkup(type);
+            return numeric < 0
+                ? `${pointLabel} ${Math.abs(numeric)}`
+                : `${pointLabel} ${numeric}`;
+        })
+        .join("; ");
+}
+
 function formatModifiedCostRuleCondition(rule = {}) {
     if (Array.isArray(rule.idsAny) && rule.idsAny.length > 0) {
         const minSelected = Number.isInteger(rule.minSelected) ? rule.minSelected : 1;
@@ -3037,24 +3149,61 @@ function renderAccordion() {
     // Get all non-special categories
     const visibleCategories = categories.filter(cat => !["points", "headerImage", "title", "description", "formulas"].includes(cat.type));
 
-    // If selected category no longer exists, clear it.
+    const visibleCategoryNames = new Set(visibleCategories.map(cat => cat.name));
+
+    // If selected/open categories no longer exist, clear them.
     if (currentTab && !visibleCategories.some(cat => cat.name === currentTab)) {
         currentTab = null;
+    }
+    Array.from(openCategories).forEach(name => {
+        if (!visibleCategoryNames.has(name)) {
+            openCategories.delete(name);
+        }
+    });
+
+    const allCategoriesOpen = visibleCategories.length > 0 && visibleCategories.every(cat => openCategories.has(cat.name));
+
+    if (visibleCategories.length > 0) {
+        const openAllButton = document.createElement("button");
+        openAllButton.className = "tab-button category-bulk-button";
+        openAllButton.textContent = "Open All";
+        openAllButton.disabled = allCategoriesOpen;
+        openAllButton.onclick = () => {
+            visibleCategories.forEach(cat => openCategories.add(cat.name));
+            currentTab = visibleCategories[visibleCategories.length - 1]?.name || null;
+            animateMainTab = true;
+            renderAccordion();
+        };
+        tabNav.appendChild(openAllButton);
+
+        const closeAllButton = document.createElement("button");
+        closeAllButton.className = "tab-button category-bulk-button";
+        closeAllButton.textContent = "Close All";
+        closeAllButton.disabled = openCategories.size === 0;
+        closeAllButton.onclick = () => {
+            openCategories.clear();
+            currentTab = null;
+            animateMainTab = false;
+            renderAccordion();
+        };
+        tabNav.appendChild(closeAllButton);
     }
 
     // Create tabs
     visibleCategories.forEach((cat) => {
         const tab = document.createElement("button");
         tab.className = "tab-button";
-        if (currentTab === cat.name) {
+        if (openCategories.has(cat.name)) {
             tab.classList.add("active");
         }
         tab.textContent = cat.name;
         tab.onclick = () => {
-            if (currentTab === cat.name) {
+            if (openCategories.has(cat.name)) {
+                openCategories.delete(cat.name);
                 currentTab = null;
                 animateMainTab = false;
             } else {
+                openCategories.add(cat.name);
                 currentTab = cat.name;
                 animateMainTab = true; // Trigger animation on tab switch
             }
@@ -3063,9 +3212,9 @@ function renderAccordion() {
         tabNav.appendChild(tab);
     });
 
-    // Render content for the active tab
-    const activeCategory = categories.find(cat => cat.name === currentTab);
-    if (activeCategory && !["points", "headerImage", "title", "description", "formulas"].includes(activeCategory.type)) {
+    // Render content for every open tab.
+    const activeCategories = visibleCategories.filter(cat => openCategories.has(cat.name));
+    if (activeCategories.length > 0) {
         if (animateMainTab) {
             tabContentContainer.classList.add("animate-fade-in");
             // Remove the class after animation finishes so it doesn't re-trigger on state changes
@@ -3074,7 +3223,9 @@ function renderAccordion() {
             }, { once: true });
             animateMainTab = false;
         }
-        renderCategoryContent(activeCategory);
+        activeCategories.forEach(cat => renderCategoryContent(cat, {
+            showTitle: activeCategories.length > 1
+        }));
     }
 }
 
@@ -3377,12 +3528,21 @@ function renderSubcategoryLevel(parentEntity, children, container, {
     });
 }
 
-function renderCategoryContent(cat) {
+function renderCategoryContent(cat, {
+    showTitle = false
+} = {}) {
     const tabContentContainer = document.getElementById("tabContent");
     const catIndex = categories.indexOf(cat);
 
     const content = document.createElement("div");
     content.className = "category-content";
+
+    if (showTitle) {
+        const categoryTitle = document.createElement("h2");
+        categoryTitle.className = "category-content-title";
+        categoryTitle.textContent = cat.name || "Category";
+        content.appendChild(categoryTitle);
+    }
 
     if (typeof cat.description === "string" && cat.description.trim() !== "") {
         const catDescription = document.createElement("div");
@@ -3495,16 +3655,17 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
     const selectedCount = selectedOptions[opt.id] || 0;
     const maxSelections = opt.maxSelections || 1;
     const hasTextInput = opt.inputType === "text";
+    const hasMultipleCostOptions = normalizeOptionCostOptions(opt).length > 1;
     const isSingleChoice = maxSelections === 1;
 
-    if (isSingleChoice && !hasTextInput) {
+    if (isSingleChoice && !hasTextInput && !hasMultipleCostOptions) {
         wrapper.classList.add("is-clickable");
     }
     if (selectedCount > 0) {
         wrapper.classList.add("selected");
     }
 
-    if (isSingleChoice && !hasTextInput) {
+    if (isSingleChoice && !hasTextInput && !hasMultipleCostOptions) {
         wrapper.onclick = (e) => {
             // Check if we clicked an interactive element like a discount button
             if (e.target.closest('button') || e.target.closest('select') || e.target.closest('input')) {
@@ -3545,8 +3706,9 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
     requirements.className = "option-requirements";
 
     // Default display cost is what the next selection would cost after modifiers.
-    const displayCost = getOptionEffectiveCost(opt);
-    const originalCost = getOptionBaseCost(opt);
+    const selectedCostOptionIndex = getInitialCostOptionIndex(opt);
+    const displayCost = getOptionEffectiveCost(opt, { costOptionIndex: selectedCostOptionIndex });
+    const originalCost = getOptionBaseCostByChoice(opt, selectedCostOptionIndex);
 
     // If this option is already selected, prefer showing the actual paid cost for the existing instance(s)
     let costToShow = displayCost;
@@ -3581,6 +3743,19 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
         ],
         "option-meta-points"
     );
+
+    const costChoices = getOptionEffectiveCostChoices(opt);
+    if (costChoices.length > 1 && selectedCount === 0) {
+        appendOptionMetaSection(
+            requirements,
+            "Cost Options",
+            costChoices.map(choice => {
+                const status = choice.index === selectedCostOptionIndex ? "●" : "○";
+                return `${status} ${escapeHtml(choice.label)}: ${formatCostMapDisplay(choice.cost) || "Free"}`;
+            }),
+            "option-meta-points"
+        );
+    }
 
     const conditionalCostRows = getModifiedCostDisplayRows(opt, subcat);
     if (conditionalCostRows.length > 0) {
@@ -3901,8 +4076,7 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
         renderTextInputControl(opt, contentWrapper);
         renderSelectionButton(opt, contentWrapper);
     } else {
-        const isSingleChoice = (opt.maxSelections || 1) === 1;
-        if (!isSingleChoice) {
+        if (shouldRenderSelectionControls(opt)) {
             renderSelectionButton(opt, contentWrapper);
         }
         if (selectedOptions[opt.id] && opt.dynamicCost) {
@@ -4072,10 +4246,31 @@ function renderSelectionButton(opt, contentWrapper) {
 
     const count = selectedOptions[opt.id] || 0;
     const max = opt.maxSelections || 1;
+    const costOptions = normalizeOptionCostOptions(opt);
+    const selectedCostOptionIndex = getInitialCostOptionIndex(opt);
     const canAdd = canSelect(opt);
     const grant = autoGrantedSelections[opt.id];
     const lockedAutoGrant = isAutoGrantedLocked(opt.id);
     const grantSourceLabel = grant?.sourceId ? (getOptionLabel(grant.sourceId) || grant.sourceId) : "";
+
+    if (costOptions.length > 1 && count < max && !grant) {
+        const select = document.createElement("select");
+        select.className = "cost-option-select";
+        costOptions.forEach(choice => {
+            const option = document.createElement("option");
+            const effectiveCost = getOptionEffectiveCost(opt, { costOptionIndex: choice.index });
+            option.value = String(choice.index);
+            option.textContent = `${stripFormattingMarkup(choice.label)}: ${formatCostMapPlainText(effectiveCost) || "Free"}`;
+            option.disabled = !canAffordCost(effectiveCost);
+            select.appendChild(option);
+        });
+        select.value = String(selectedCostOptionIndex);
+        select.addEventListener("change", () => {
+            selectedCostOptionIndexes[opt.id] = Number(select.value);
+            renderAccordion();
+        });
+        controls.appendChild(select);
+    }
 
     if (max > 1) {
         const stepper = document.createElement("div");
@@ -4090,7 +4285,7 @@ function renderSelectionButton(opt, contentWrapper) {
             e.stopPropagation();
             ensureSubcategoryLimit(opt);
             if (canSelect(opt)) {
-                addSelection(opt);
+                addSelection(opt, { costOptionIndex: getInitialCostOptionIndex(opt) });
             }
         };
 
@@ -4134,7 +4329,7 @@ function renderSelectionButton(opt, contentWrapper) {
             } else {
                 ensureSubcategoryLimit(opt);
                 if (canSelect(opt)) {
-                    addSelection(opt);
+                    addSelection(opt, { costOptionIndex: getInitialCostOptionIndex(opt) });
                 }
             }
         };

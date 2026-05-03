@@ -302,6 +302,23 @@ function validateCyoa(file) {
         const context = `${optionPath} (${option.id})`;
 
         validatePointMap(file, `${context}.cost`, option.cost || {}, pointTypes, errors, warnings);
+        if (option.costOptions !== undefined) {
+            if (!Array.isArray(option.costOptions)) {
+                pushIssue(errors, file, `${context}.costOptions must be an array.`);
+            } else {
+                option.costOptions.forEach((costOption, index) => {
+                    const optionContext = `${context}.costOptions[${index}]`;
+                    if (!costOption || typeof costOption !== "object" || Array.isArray(costOption)) {
+                        pushIssue(errors, file, `${optionContext} must be an object.`);
+                        return;
+                    }
+                    if (costOption.label !== undefined && typeof costOption.label !== "string") {
+                        pushIssue(errors, file, `${optionContext}.label must be a string.`);
+                    }
+                    validatePointMap(file, `${optionContext}.cost`, costOption.cost || {}, pointTypes, errors, warnings);
+                });
+            }
+        }
         validateRequirementExpression(file, `${context}.prerequisites`, option.prerequisites, errors);
         validateIdRefs(file, `${context}.prerequisites`, extractRequirementIds(option.prerequisites), optionIds, errors);
         validateIdRefs(file, `${context}.conflictsWith`, normalizeIdList(option.conflictsWith), optionIds, errors);

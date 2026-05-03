@@ -9,6 +9,7 @@ An open-source **Interactive Choose Your Own Adventure (ICYOA)** template. Build
 - Categories, nested subcategories, options, costs, prerequisites, conflicts, and modified costs.
 - Automatic option grants, where selecting one option can select other options for free.
 - Multiple point systems and configurable starting values.
+- Optional alternate cost choices, so one option can be paid for with one of several point maps.
 - Light and dark themes, with creator control over whether players can toggle themes or are locked to one mode.
 - Player-facing option detail panels for prerequisites, incompatibilities, conditional costs, and automatic grants.
 - Import/export support for sharing builds.
@@ -229,6 +230,7 @@ icyoa-template/
 * **Light & Dark Themes:** CYOAs can define both `theme` and `darkTheme` values. The player preserves the default dark theme when a CYOA does not define its own.
 * **Theme Availability:** Use the visual editor's **Theme Availability** section to allow the light/dark toggle, force light mode only, or force dark mode only. Existing CYOAs default to allowing the toggle.
 * **Point Systems:** You can have multiple types of points (e.g., Health, Mana, Gold) by editing the `points` section in the editor. Point type names support the same safe inline formatting as option labels, so a name like `[color=gold]Gold[/color]` keeps its styling in the tracker and option cost displays.
+* **Payment Options:** Use an option's **Payment options** editor to define its cost. Each option has `Payment Option 1` by default, and additional payment options let players choose one of several payment maps each time they select that option.
 * **Text Formatting:** Use Markdown syntax such as `# Heading`, `- list item`, `[link](https://example.com)`, `` `code` ``, `*italic*`, and `**bold**`. Legacy `[weight=...]...[/weight]`, `[color=...]...[/color]`, and `[size=...]...[/size]` tags remain supported.
 * **Automatic Grants:** Use the option editor's **Automatically grants options** section to make one option select another option at no extra point cost. Each granted option can be locked, or marked as user-deselectable.
 * **Modified Costs:** Use per-option or subcategory-wide `modifiedCosts` rules to change costs conditionally. Rules can set absolute replacement costs with `cost`, apply relative changes with `costDelta`, and define optional `minCost` / `maxCost` maps to clamp the final modified price. Legacy `discounts` rules are still supported for older CYOAs.
