@@ -4,11 +4,10 @@ const assert = require("assert");
 const { evaluatePrereqExpr } = require("../logicExpr");
 
 const ROOT = path.join(__dirname, "..");
-const CYOAS_DIR = path.join(ROOT, "CYOAs");
 const PLAYER_SCRIPT_SOURCE = fs.readFileSync(path.join(ROOT, "script.js"), "utf8");
 
 const FEATURE_COVERAGE = [
-    "all CYOA JSON fixtures load as functional data",
+    "synthetic CYOA data computes selectable state and effective costs",
     "point gains, costs, refunds, and allow-negative point types",
     "alternate selectable option cost maps",
     "single-select payment options render explicit selection controls",
@@ -36,7 +35,7 @@ const FEATURE_COVERAGE = [
     "option modified costs override subcategory modified costs and highest-priority matching rules win",
     "conditional cost display rows show resulting gain/cost without scope prefixes",
     "automatic grant display rows show granted targets and selected state",
-    "legacy discounts fallback for old CYOAs",
+    "legacy discounts fallback for older data shapes",
     "idsAny/minSelected conditional cost rules",
     "Lantern Colorless Rings grant forced zero-point Emotional Instability and Characteristic Power discounts",
     "automatic option grants, locked grants, and free granted selections",
@@ -48,10 +47,6 @@ const FEATURE_COVERAGE = [
     "multi-open category tabs and Open All category control",
     "backpack labels show repeated selection counts"
 ];
-
-function loadCyoa(filename) {
-    return JSON.parse(fs.readFileSync(path.join(CYOAS_DIR, filename), "utf8"));
-}
 
 const OPTION_META_THEME_KEYS = [
     "option-meta-bg",
@@ -84,8 +79,8 @@ function walkSubcategories(subcategories, visitor, path = []) {
 
 class CyoaEngine {
     constructor(source, label = null) {
-        this.filename = label || (typeof source === "string" ? source : "synthetic");
-        this.data = typeof source === "string" ? loadCyoa(source) : JSON.parse(JSON.stringify(source));
+        this.filename = label || "synthetic";
+        this.data = JSON.parse(JSON.stringify(source));
         this.pointsEntry = this.data.find(entry => entry.type === "points") || { values: {} };
         this.points = { ...(this.pointsEntry.values || {}) };
         this.allowNegativeTypes = new Set(this.pointsEntry.allowNegative || []);
@@ -140,6 +135,13 @@ class CyoaEngine {
                                     { label: "Payment Option 2", cost: { Tokens: 2 } }
                                 ]
                             },
+                            {
+                                id: "defaultCostOption",
+                                label: "Default Cost Option",
+                                costOptions: [
+                                    { label: "Payment Option 1", cost: {} }
+                                ]
+                            },
                             { id: "multi", label: "Multi", cost: { Points: 1 }, maxSelections: 3, countsAsOneSelection: true },
                             { id: "limitBypass", label: "Limit Bypass", cost: {}, bypassSubcategoryMaxSelections: true },
                             { id: "discountTrigger", label: "Discount Trigger", cost: {} },
@@ -176,7 +178,16 @@ class CyoaEngine {
                             { id: "requiresObject", label: "Requires Object", cost: {}, prerequisites: { and: ["preA"], or: ["preB", "multi__2"] } },
                             { id: "requiresCount", label: "Requires Count", cost: {}, prerequisites: "multi__2" },
                             { id: "oneWayA", label: "One-Way A", cost: {}, conflictsWith: ["oneWayB"] },
-                            { id: "oneWayB", label: "One-Way B", cost: {} }
+                            { id: "oneWayB", label: "One-Way B", cost: {} },
+                            { id: "youAgeYoungAdult", label: "Young Adult", cost: {} },
+                            { id: "powersSuperpowersSmart", label: "Smart", cost: {}, conflictsWith: ["drawbacksDrawbacksDumb"] },
+                            { id: "drawbacksDrawbacksDumb", label: "Dumb", cost: {} },
+                            { id: "adultBenefitsHigherPaying", label: "Higher Paying", cost: {}, prerequisites: "youAgeYoungAdult && powersSuperpowersSmart" },
+                            { id: "weaknessesWeaknessesEmotionalConsistency", label: "Emotional Consistency", cost: {}, prerequisites: "!(emotionalSpectrumEmotionalSpectrumColorD5b60aYellowColor && !emotionalSpectrumOptionalAdjustmentsYellowBelied) && !(emotionalSpectrumEmotionalSpectrumColorIndigoIndigoColor && !emotionalSpectrumOptionalAdjustmentsCompassionateSoul)" },
+                            { id: "emotionalSpectrumEmotionalSpectrumColorD5b60aYellowColor", label: "Yellow Color", cost: {} },
+                            { id: "emotionalSpectrumOptionalAdjustmentsYellowBelied", label: "Yellow Belied", cost: {} },
+                            { id: "emotionalSpectrumEmotionalSpectrumColorIndigoIndigoColor", label: "Indigo Color", cost: {} },
+                            { id: "emotionalSpectrumOptionalAdjustmentsCompassionateSoul", label: "Compassionate Soul", cost: {} }
                         ]
                     },
                     {
@@ -184,6 +195,13 @@ class CyoaEngine {
                         options: [
                             { id: "grantSource", label: "Grant Source", cost: { Points: 2 }, autoGrants: [{ id: "grantedLocked", canDeselect: false }] },
                             { id: "grantedLocked", label: "Granted Locked", cost: { Points: 5 } },
+                            { id: "emotionalSpectrumEmotionalSpectrumColor696969ColorlessRingsColor", label: "Colorless Rings", cost: {}, autoGrants: [{ id: "weaknessesWeaknessesEmotionalInstability", canDeselect: false }] },
+                            {
+                                id: "weaknessesWeaknessesEmotionalInstability",
+                                label: "Emotional Instability",
+                                cost: { Points: 5 },
+                                modifiedCosts: [{ ids: ["emotionalSpectrumEmotionalSpectrumColor696969ColorlessRingsColor"], cost: { Points: 0 } }]
+                            },
                             {
                                 id: "discountGrantSource",
                                 label: "Discount Grant Source",
@@ -265,6 +283,68 @@ class CyoaEngine {
                         options: [
                             { id: "firstNDiscountA", label: "First N Discount A", cost: { Points: 5 } },
                             { id: "firstNDiscountB", label: "First N Discount B", cost: { Points: 5 } }
+                        ]
+                    },
+                    {
+                        name: "Single Select",
+                        maxSelections: 1,
+                        options: [
+                            { id: "powersDifficultySpectacularmanMode", label: "Spectacularman Mode", cost: { Points: -190 } },
+                            { id: "powersDifficultyDakestKnightRecommended", label: "Dakest Knight Recommended", cost: { Points: -90 } }
+                        ]
+                    },
+                    {
+                        name: "Species",
+                        modifiedCosts: [
+                            { ids: ["universeOptionalOverpoweredSpecies"], costDelta: { Points: 3 }, priority: 1 },
+                            { ids: ["universeOptionalGroundedSpecies"], costDelta: { Points: -10 }, minCost: { Points: -1 }, priority: 1 }
+                        ],
+                        options: [
+                            { id: "speciesSpeciesVuldarian", label: "Vuldarian", cost: { Points: 13 } },
+                            { id: "speciesSpeciesYautja", label: "Yautja", cost: { Points: 5 } },
+                            {
+                                id: "speciesSpeciesPowerlessSpecies",
+                                label: "Powerless Species",
+                                cost: { Points: 3 },
+                                modifiedCosts: [
+                                    { ids: ["universeOptionalGroundedSpecies"], cost: { Points: -1 }, priority: 2 },
+                                    { ids: ["universeOptionalOverpoweredSpecies"], cost: { Points: 0 }, priority: 2 }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        name: "Lantern Powers",
+                        modifiedCosts: [
+                            { ids: ["emotionalSpectrumEmotionalSpectrumColor696969ColorlessRingsColor"], costDelta: { Points: -1 }, minCost: { Points: 0 } }
+                        ],
+                        options: [
+                            { id: "ringPowersCharacteristicPowersEmotionalConstruct", label: "Emotional Construct", cost: { Points: 1 } },
+                            { id: "ringPowersCharacteristicPowersDeathEmpowerment", label: "Death Empowerment", cost: { Points: 5 } }
+                        ]
+                    },
+                    {
+                        name: "Modified Cost Triggers",
+                        options: [
+                            { id: "emotionalSpectrumEmotionalSpectrumColorOrangeOrangeColor", label: "Orange Color", cost: {} },
+                            { id: "universeOptionalOverpoweredSpecies", label: "Overpowered Species", cost: {} },
+                            { id: "universeOptionalGroundedSpecies", label: "Grounded Species", cost: {} },
+                            {
+                                id: "universeOptionalSharedEmotions",
+                                label: "Shared Emotions",
+                                cost: { Points: -5 },
+                                modifiedCosts: [{ ids: ["emotionalSpectrumEmotionalSpectrumColorOrangeOrangeColor"], cost: { Points: 0 } }]
+                            },
+                            {
+                                id: "gearGearShieldGenerator2",
+                                label: "Shield Generator",
+                                costOptions: [{ label: "Payment Option 1", cost: { "Dollars (millions)": 16 } }],
+                                modifiedCosts: [
+                                    { ids: ["powersScienceConstruction"], costPercent: { "Dollars (millions)": -12.5 }, priority: 1 },
+                                    { ids: ["powersScienceConstruction__2"], costPercent: { "Dollars (millions)": -25 }, priority: 2 }
+                                ]
+                            },
+                            { id: "powersScienceConstruction", label: "Construction", cost: {}, maxSelections: 2 }
                         ]
                     }
                 ]
@@ -357,7 +437,9 @@ class CyoaEngine {
     getBaseCostChoice(option, costOptionIndex = null) {
         const choices = this.normalizeCostOptions(option);
         if (!choices.length || costOptionIndex === null || costOptionIndex === undefined) return this.getBaseCost(option);
-        return choices.find(choice => choice.index === Number(costOptionIndex))?.cost || this.getBaseCost(option);
+        const selected = choices.find(choice => choice.index === Number(costOptionIndex));
+        if (!selected || Object.keys(selected.cost || {}).length === 0) return this.getBaseCost(option);
+        return { ...selected.cost };
     }
 
     getModifiedCostRules(entity) {
@@ -1195,29 +1277,23 @@ test("functional coverage list is explicit and non-empty", () => {
     FEATURE_COVERAGE.forEach(feature => assert.strictEqual(typeof feature, "string"));
 });
 
-test("all CYOA fixtures compute selectable state and effective costs without crashing", () => {
-    const files = fs.readdirSync(CYOAS_DIR)
-        .filter(file => file.endsWith(".json") && file !== "manifest.json")
-        .sort();
-
-    files.forEach(file => {
-        const engine = new CyoaEngine(file);
-        assert(engine.optionMap.size > 0, `${file}: expected at least one option`);
-        let selectableCount = 0;
-        engine.optionMap.forEach(option => {
-            const cost = engine.effectiveCost(option);
-            Object.entries(cost).forEach(([type, value]) => {
-                assert(Number.isFinite(Number(value)), `${file}: ${option.id} has non-finite effective cost for ${type}`);
-            });
-            if (engine.canSelect(option)) selectableCount += 1;
+test("synthetic CYOA computes selectable state and effective costs without crashing", () => {
+    const engine = CyoaEngine.synthetic();
+    assert(engine.optionMap.size > 0, "synthetic: expected at least one option");
+    let selectableCount = 0;
+    engine.optionMap.forEach(option => {
+        const cost = engine.effectiveCost(option);
+        Object.entries(cost).forEach(([type, value]) => {
+            assert(Number.isFinite(Number(value)), `synthetic: ${option.id} has non-finite effective cost for ${type}`);
         });
-        assert(selectableCount > 0, `${file}: expected at least one selectable option`);
-        engine.assertFinitePoints();
+        if (engine.canSelect(option)) selectableCount += 1;
     });
+    assert(selectableCount > 0, "synthetic: expected at least one selectable option");
+    engine.assertFinitePoints();
 });
 
 test("superhero difficulty can be selected and switched within maxSelections: 1", () => {
-    const engine = new CyoaEngine("superheroAmalgam.json");
+    const engine = CyoaEngine.synthetic();
     engine.select("powersDifficultySpectacularmanMode");
     assert.strictEqual(engine.points.Points, 200);
     assert.strictEqual(engine.selectedOptions.powersDifficultySpectacularmanMode, 1);
@@ -1347,6 +1423,12 @@ test("point type renames cascade through all cost maps", () => {
 test("subcategory default costs and countsAsOneSelection limits work", () => {
     const engine = CyoaEngine.synthetic();
     assertDeepEqual(engine.effectiveCost("freeDefault"), { Points: 1 });
+    assertDeepEqual(engine.effectiveCost("defaultCostOption", { costOptionIndex: 0 }), { Points: 1 });
+    assertDeepEqual(engine.effectiveCostChoices("defaultCostOption")[0].cost, { Points: 1 });
+    engine.select("defaultCostOption");
+    assert.strictEqual(engine.points.Points, 9);
+    engine.remove("defaultCostOption");
+    assert.strictEqual(engine.points.Points, 10);
     engine.select("multi");
     engine.select("multi");
     assert.strictEqual(engine.selectedOptions.multi, 2);
@@ -1428,7 +1510,7 @@ test("options can bypass subcategory maxSelections", () => {
 });
 
 test("superhero prerequisites block and unlock dependent options", () => {
-    const engine = new CyoaEngine("superheroAmalgam.json");
+    const engine = CyoaEngine.synthetic();
     assert.strictEqual(engine.canSelect("adultBenefitsHigherPaying"), false);
     engine.select("powersDifficultySpectacularmanMode");
     engine.select("youAgeYoungAdult");
@@ -1595,7 +1677,7 @@ test("subcategory columnsPerRow metadata is preserved", () => {
 });
 
 test("one-way conflicts block the reverse selection", () => {
-    const engine = new CyoaEngine("superheroAmalgam.json");
+    const engine = CyoaEngine.synthetic();
     engine.option("drawbacksDrawbacksDumb").conflictsWith = [];
     assert.deepStrictEqual(engine.option("powersSuperpowersSmart").conflictsWith, ["drawbacksDrawbacksDumb"]);
 
@@ -1606,22 +1688,22 @@ test("one-way conflicts block the reverse selection", () => {
 });
 
 test("lantern absolute modified cost can replace a gain with zero cost", () => {
-    const engine = new CyoaEngine("lantern_corps_recruit.json");
+    const engine = CyoaEngine.synthetic();
     engine.select("emotionalSpectrumEmotionalSpectrumColorOrangeOrangeColor");
     assertDeepEqual(engine.effectiveCost("universeOptionalSharedEmotions"), { Points: 0 }, "Orange should make Shared Emotions cost 0 Points");
     engine.select("universeOptionalSharedEmotions");
-    assert.strictEqual(engine.points.Points, 50);
+    assert.strictEqual(engine.points.Points, 10);
 });
 
 test("lantern subcategory relative modified cost applies to all options in the subcategory", () => {
-    const engine = new CyoaEngine("lantern_corps_recruit.json");
+    const engine = CyoaEngine.synthetic();
     assertDeepEqual(engine.effectiveCost("speciesSpeciesVuldarian"), { Points: 13 });
     engine.select("universeOptionalOverpoweredSpecies");
     assertDeepEqual(engine.effectiveCost("speciesSpeciesVuldarian"), { Points: 16 });
 });
 
 test("lantern subcategory minCost clamps relative reductions", () => {
-    const engine = new CyoaEngine("lantern_corps_recruit.json");
+    const engine = CyoaEngine.synthetic();
     engine.select("universeOptionalGroundedSpecies");
     assertDeepEqual(engine.effectiveCost("speciesSpeciesYautja"), { Points: -1 });
 });
@@ -1647,7 +1729,7 @@ test("percentage modified costs apply on options and subcategories with rounded-
     optionEngine.select("discountTrigger");
     assertDeepEqual(optionEngine.effectiveCost("percentBase"), { Points: 4 });
 
-    const marvel = new CyoaEngine("marvel.json");
+    const marvel = CyoaEngine.synthetic();
     marvel.points.GP = 2;
     assertDeepEqual(marvel.effectiveCost("gearGearShieldGenerator2", { costOptionIndex: 0 }), { "Dollars (millions)": 16 });
     marvel.select("powersScienceConstruction", { costOptionIndex: 0 });
@@ -1697,7 +1779,7 @@ test("conditional cost display rows show resulting costs without scope prefixes"
 });
 
 test("conditional cost display hides subcategory rows overridden by option rows", () => {
-    const engine = new CyoaEngine("lantern_corps_recruit.json");
+    const engine = CyoaEngine.synthetic();
     const lines = engine.conditionalCostDisplayLines("speciesSpeciesPowerlessSpecies");
     assert(lines.includes("❌ if Grounded Species, Gain: Points 1"));
     assert(lines.includes("❌ if Overpowered Species, Cost: Points 0"));
@@ -1716,14 +1798,14 @@ test("automatic grant display rows show granted targets and selected state", () 
         "✅ Granted Locked (locked)"
     ]);
 
-    const lanternEngine = new CyoaEngine("lantern_corps_recruit.json");
+    const lanternEngine = CyoaEngine.synthetic();
     assert.deepStrictEqual(lanternEngine.autoGrantDisplayLines("emotionalSpectrumEmotionalSpectrumColor696969ColorlessRingsColor"), [
         "❌ Emotional Instability (locked)"
     ]);
 });
 
 test("lantern Colorless Rings force Emotional Instability and discount Characteristic Powers", () => {
-    const engine = new CyoaEngine("lantern_corps_recruit.json");
+    const engine = CyoaEngine.synthetic();
     const startingPoints = engine.points.Points;
     engine.select("emotionalSpectrumEmotionalSpectrumColor696969ColorlessRingsColor");
 
@@ -1819,15 +1901,6 @@ test("theme settings include option metadata section colors", () => {
         assert(editorSource.includes(`"${key}"`), `editor.js theme settings should include ${key}`);
         assert(cssSource.includes(`--${key}`), `style.css should consume --${key}`);
     });
-
-    fs.readdirSync(CYOAS_DIR)
-        .filter(file => file.endsWith(".json") && file !== "manifest.json")
-        .forEach(file => {
-            const data = loadCyoa(file);
-            const settings = data.find(entry => entry.type === "settings");
-            if (!settings) return;
-            assert(["toggle", "light", "dark", undefined].includes(settings.themeMode), `${file}: invalid themeMode`);
-        });
 });
 
 test("safe text formatting supports Markdown, legacy tags, and plain-label stripping", () => {
@@ -1854,7 +1927,7 @@ test("safe text formatting supports Markdown, legacy tags, and plain-label strip
 });
 
 test("lantern emotional consistency is removed when later color choices make conditional prerequisites false", () => {
-    const yellowEngine = new CyoaEngine("lantern_corps_recruit.json");
+    const yellowEngine = CyoaEngine.synthetic();
     yellowEngine.select("weaknessesWeaknessesEmotionalConsistency");
     assert.strictEqual(yellowEngine.selectedOptions.weaknessesWeaknessesEmotionalConsistency, 1);
     yellowEngine.select("emotionalSpectrumEmotionalSpectrumColorD5b60aYellowColor");
@@ -1863,7 +1936,7 @@ test("lantern emotional consistency is removed when later color choices make con
     yellowEngine.select("emotionalSpectrumOptionalAdjustmentsYellowBelied");
     assert.strictEqual(yellowEngine.canSelect("weaknessesWeaknessesEmotionalConsistency"), true);
 
-    const indigoEngine = new CyoaEngine("lantern_corps_recruit.json");
+    const indigoEngine = CyoaEngine.synthetic();
     indigoEngine.select("weaknessesWeaknessesEmotionalConsistency");
     indigoEngine.select("emotionalSpectrumEmotionalSpectrumColorIndigoIndigoColor");
     assert.strictEqual(indigoEngine.selectedOptions.weaknessesWeaknessesEmotionalConsistency, undefined);

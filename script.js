@@ -393,7 +393,10 @@ function getOptionBaseCostByChoice(option, costOptionIndex = null) {
         return getOptionBaseCost(option);
     }
     const selected = options.find(entry => entry.index === Number(costOptionIndex));
-    return selected ? { ...selected.cost } : getOptionBaseCost(option);
+    if (!selected || Object.keys(selected.cost || {}).length === 0) {
+        return getOptionBaseCost(option);
+    }
+    return { ...selected.cost };
 }
 
 function getSelectedCostOptionIndex(option) {
