@@ -24,8 +24,11 @@ const FEATURE_COVERAGE = [
     "adding and removing categories, subcategories, and options",
     "subcategory requiresOption",
     "subcategory discountFirstN with discountAmount",
+    "subcategory manual discount slots, eligibility ceilings, and option opt-outs",
+    "category manual discount slots, eligibility ceilings, and option opt-outs",
     "subcategory defaultCost",
     "subcategory columnsPerRow metadata",
+    "subcategory-level freeform text inputs persist in imported state",
     "option-level freeform text inputs persist in exported state",
     "option-level freeform text inputs require selection and sanitize imported values",
     "option-level absolute modified costs",
@@ -35,6 +38,7 @@ const FEATURE_COVERAGE = [
     "option modified costs override subcategory modified costs and highest-priority matching rules win",
     "conditional cost display rows show resulting gain/cost without scope prefixes",
     "automatic grant display rows show granted targets and selected state",
+    "can-deselect automatic grant display rows",
     "legacy discounts fallback for older data shapes",
     "idsAny/minSelected conditional cost rules",
     "Lantern Colorless Rings grant forced zero-point Emotional Instability and Characteristic Power discounts",
@@ -195,6 +199,8 @@ class CyoaEngine {
                         options: [
                             { id: "grantSource", label: "Grant Source", cost: { Points: 2 }, autoGrants: [{ id: "grantedLocked", canDeselect: false }] },
                             { id: "grantedLocked", label: "Granted Locked", cost: { Points: 5 } },
+                            { id: "grantSourceCanDeselect", label: "Grant Source Can Deselect", cost: {}, autoGrants: [{ id: "grantedCanDeselect", canDeselect: true }] },
+                            { id: "grantedCanDeselect", label: "Granted Can Deselect", cost: { Points: 4 } },
                             { id: "emotionalSpectrumEmotionalSpectrumColor696969ColorlessRingsColor", label: "Colorless Rings", cost: {}, autoGrants: [{ id: "weaknessesWeaknessesEmotionalInstability", canDeselect: false }] },
                             {
                                 id: "weaknessesWeaknessesEmotionalInstability",
@@ -235,6 +241,33 @@ class CyoaEngine {
                 ]
             },
             {
+                name: "Discount Slots",
+                discountSelectionLimit: 1,
+                discountEligibleUnder: 5,
+                discountMode: "free",
+                subcategories: [
+                    {
+                        name: "Category Slot Choices",
+                        options: [
+                            { id: "categorySlotEligible", label: "Category Slot Eligible", cost: { Points: 4 } },
+                            { id: "categorySlotIneligible", label: "Category Slot Ineligible", cost: { Points: 6 } },
+                            { id: "categorySlotOptOut", label: "Category Slot Opt Out", cost: { Points: 4 }, disableCategoryDiscount: true }
+                        ]
+                    },
+                    {
+                        name: "Subcategory Slot Choices",
+                        discountSelectionLimit: 1,
+                        discountEligibleUnder: 5,
+                        discountMode: "free",
+                        options: [
+                            { id: "subcategorySlotEligible", label: "Subcategory Slot Eligible", cost: { Points: 4 } },
+                            { id: "subcategorySlotIneligible", label: "Subcategory Slot Ineligible", cost: { Points: 6 } },
+                            { id: "subcategorySlotOptOut", label: "Subcategory Slot Opt Out", cost: { Points: 4 }, disableSubcategoryDiscount: true }
+                        ]
+                    }
+                ]
+            },
+            {
                 name: "Category Controls",
                 requiresOption: "preA",
                 maxSelections: 1,
@@ -255,6 +288,7 @@ class CyoaEngine {
                     {
                         name: "Subcategory Gate",
                         requiresOption: "preA",
+                        input: { id: "subcatNote", label: "Subcategory Note", maxLength: 5 },
                         subcategoryDisplayMode: "all",
                         columnsPerRow: 3,
                         backgroundColor: "#7f1d1d",
@@ -384,23 +418,36 @@ class CyoaEngine {
     }
 
     findSubcategoryInfo(optionId) {
-        for (const category of this.categories) {
+        for (const [categoryIndex, category] of this.categories.entries()) {
+            const catKey = this.buildCategoryKey(categoryIndex, category);
             if ((category.options || []).some(option => option.id === optionId)) {
-                return { category, subcat: null, subcatPath: [] };
+                return { category, subcat: null, subcatPath: [], catKey, key: null };
             }
             let found = null;
             walkSubcategories(category.subcategories, (subcat, path) => {
                 if (!found && (subcat.options || []).some(option => option.id === optionId)) {
+                    const subcatPath = this.getSubcategoryPath(category, path);
                     found = {
                         category,
                         subcat,
-                        subcatPath: this.getSubcategoryPath(category, path)
+                        subcatPath,
+                        catKey,
+                        key: this.buildSubcategoryKey(categoryIndex, category, subcatPath)
                     };
                 }
             });
             if (found) return found;
         }
-        return { category: null, subcat: null, subcatPath: [] };
+        return { category: null, subcat: null, subcatPath: [], catKey: null, key: null };
+    }
+
+    buildCategoryKey(categoryIndex, category) {
+        return `cat:${categoryIndex}:${category?.name || ""}`;
+    }
+
+    buildSubcategoryKey(categoryIndex, category, subcatPath = []) {
+        const path = subcatPath.map(subcat => subcat?.name || "").join(">");
+        return `sub:${categoryIndex}:${category?.name || ""}:${path}`;
     }
 
     getSubcategoryPath(category, path = []) {
@@ -515,6 +562,29 @@ class CyoaEngine {
         return updated;
     }
 
+    canUseDiscount(entity) {
+        return !!(entity && entity.discountSelectionLimit && entity.discountEligibleUnder);
+    }
+
+    discountEligibleCost(cost = {}, entity = {}) {
+        const types = Array.isArray(entity.discountTypes) && entity.discountTypes.length
+            ? entity.discountTypes
+            : entity.discountAmount && typeof entity.discountAmount === "object"
+                ? Object.keys(entity.discountAmount)
+                : [];
+        const entries = types.length
+            ? types.map(type => [type, cost[type]])
+            : Object.entries(cost);
+        const entry = entries.find(([, value]) => typeof value === "number" && value > 0);
+        return entry ? entry[1] : null;
+    }
+
+    applyAssignedDiscount(cost, entity) {
+        return entity.discountAmount
+            ? this.applyDiscountAmount(cost, entity.discountAmount)
+            : this.applyDiscountCost(cost, entity.discountMode === "free" ? "free" : "half");
+    }
+
     discountTotalCount(map = {}) {
         return Object.values(map || {}).reduce((sum, value) => sum + (Number(value) || 0), 0);
     }
@@ -594,6 +664,33 @@ class CyoaEngine {
                 bestTotal = candidateTotal;
             }
         });
+
+        let discountApplied = false;
+        if (info.subcat && info.key && this.canUseDiscount(info.subcat)) {
+            const map = this.subcategoryDiscountSelections[info.key] || {};
+            const eligibleCost = this.discountEligibleCost(this.getBaseCost(option), info.subcat);
+            const assigned = map[option.id] || 0;
+            const alreadySelected = this.selectedOptions[option.id] || 0;
+            if (option.disableSubcategoryDiscount === true) {
+                delete map[option.id];
+            } else if (eligibleCost !== null && eligibleCost <= info.subcat.discountEligibleUnder && assigned > alreadySelected) {
+                bestCost = this.applyAssignedDiscount(bestCost, info.subcat);
+                discountApplied = true;
+            }
+        }
+
+        if (!discountApplied && info.category && info.catKey && this.canUseDiscount(info.category)) {
+            const map = this.categoryDiscountSelections[info.catKey] || {};
+            const eligibleCost = this.discountEligibleCost(this.getBaseCost(option), info.category);
+            const assigned = map[option.id] || 0;
+            const alreadySelected = this.selectedOptions[option.id] || 0;
+            if (option.disableCategoryDiscount === true) {
+                delete map[option.id];
+            } else if (eligibleCost !== null && eligibleCost <= info.category.discountEligibleUnder && assigned > alreadySelected) {
+                bestCost = this.applyAssignedDiscount(bestCost, info.category);
+                discountApplied = true;
+            }
+        }
 
         const subcatSelectionCount = (info.subcat?.options || []).reduce((sum, optionInSubcat) => {
             return sum + (this.selectedOptions[optionInSubcat.id] || 0);
@@ -1272,12 +1369,12 @@ function test(name, fn) {
     tests.push({ name, fn });
 }
 
-test("functional coverage list is explicit and non-empty", () => {
+test("functional coverage should document every supported behavior area", () => {
     assert(FEATURE_COVERAGE.length >= 18);
     FEATURE_COVERAGE.forEach(feature => assert.strictEqual(typeof feature, "string"));
 });
 
-test("synthetic CYOA computes selectable state and effective costs without crashing", () => {
+test("synthetic fixture should keep every option cost finite and expose selectable options", () => {
     const engine = CyoaEngine.synthetic();
     assert(engine.optionMap.size > 0, "synthetic: expected at least one option");
     let selectableCount = 0;
@@ -1292,7 +1389,7 @@ test("synthetic CYOA computes selectable state and effective costs without crash
     engine.assertFinitePoints();
 });
 
-test("superhero difficulty can be selected and switched within maxSelections: 1", () => {
+test("single-select subcategories should replace the previous selection", () => {
     const engine = CyoaEngine.synthetic();
     engine.select("powersDifficultySpectacularmanMode");
     assert.strictEqual(engine.points.Points, 200);
@@ -1304,7 +1401,7 @@ test("superhero difficulty can be selected and switched within maxSelections: 1"
     assert.strictEqual(engine.selectedOptions.powersDifficultyDakestKnightRecommended, 1);
 });
 
-test("core point spend, gain, refund, and multi-select behavior works", () => {
+test("selection costs should debit, gains should credit, and refunds should restore points", () => {
     const engine = CyoaEngine.synthetic();
     engine.select("spendTwo");
     assert.strictEqual(engine.points.Points, 8);
@@ -1323,7 +1420,7 @@ test("core point spend, gain, refund, and multi-select behavior works", () => {
     assert.strictEqual(engine.canSelect("multi"), false);
 });
 
-test("options can offer alternate selectable cost maps", () => {
+test("alternate cost maps should charge the chosen payment option", () => {
     const engine = CyoaEngine.synthetic();
     engine.points.Tokens = 3;
     assert.deepStrictEqual(engine.effectiveCostChoices("alternateCost").map(choice => choice.cost), [
@@ -1350,7 +1447,7 @@ test("options can offer alternate selectable cost maps", () => {
     assert.strictEqual(engine.points.Tokens, 3);
 });
 
-test("single-select payment options render explicit selection controls", () => {
+test("single-select payment options should still expose an explicit selector", () => {
     const singleSelectWithPaymentOptions = {
         id: "singlePayment",
         maxSelections: 1,
@@ -1375,7 +1472,7 @@ test("single-select payment options render explicit selection controls", () => {
     );
 });
 
-test("category tabs support multiple open categories and Open All", () => {
+test("category tabs should support multiple open panels and bulk expansion", () => {
     assert(
         PLAYER_SCRIPT_SOURCE.includes("openAllButton.textContent = \"Open All\""),
         "player should render an Open All category control"
@@ -1394,14 +1491,14 @@ test("category tabs support multiple open categories and Open All", () => {
     );
 });
 
-test("backpack labels show repeated selection counts", () => {
+test("backpack labels should include repeated selection counts", () => {
     assert(
         PLAYER_SCRIPT_SOURCE.includes("labelDiv.textContent = selectedCount > 1 ? `${opt.label} x${selectedCount}` : opt.label;"),
         "backpack should append xN to labels when an option has multiple selections"
     );
 });
 
-test("point type renames cascade through all cost maps", () => {
+test("point type renames should update every referenced cost map", () => {
     const data = CyoaEngine.synthetic().data;
     const core = findCategory(data, "Core");
     const choices = core.subcategories.find(subcat => subcat.name === "Choices");
@@ -1420,7 +1517,7 @@ test("point type renames cascade through all cost maps", () => {
     assert.deepStrictEqual(firstN.discountAmount, { "Hero Points": 2 });
 });
 
-test("subcategory default costs and countsAsOneSelection limits work", () => {
+test("subcategory defaults should price empty-cost options and repeated picks can count once", () => {
     const engine = CyoaEngine.synthetic();
     assertDeepEqual(engine.effectiveCost("freeDefault"), { Points: 1 });
     assertDeepEqual(engine.effectiveCost("defaultCostOption", { costOptionIndex: 0 }), { Points: 1 });
@@ -1435,7 +1532,7 @@ test("subcategory default costs and countsAsOneSelection limits work", () => {
     assert.strictEqual(engine.subcategorySelectionCount(engine.findSubcategoryOfOption("multi")), 1);
 });
 
-test("option-level freeform text inputs persist in exported state", () => {
+test("selected option text inputs should survive export and import", () => {
     const engine = CyoaEngine.synthetic();
     engine.select("freeText");
     engine.setTextInput("freeText", "Anywhere, any time");
@@ -1448,7 +1545,22 @@ test("option-level freeform text inputs persist in exported state", () => {
     assert.strictEqual(unpacked.storyInputs.freeText, "Anywhere, any time");
 });
 
-test("option-level freeform text inputs require selection and sanitize imported values", () => {
+test("subcategory text inputs should import sanitized values without requiring option selection", () => {
+    const importEngine = CyoaEngine.synthetic();
+    importEngine.importState({
+        selectedOptions: {},
+        points: { Points: 10 },
+        storyInputs: {
+            subcatNote: "abcdef",
+            unknownSubcatNote: "ignored"
+        }
+    });
+
+    assert.strictEqual(importEngine.storyInputs.subcatNote, "abcde");
+    assert.strictEqual(importEngine.storyInputs.unknownSubcatNote, undefined);
+});
+
+test("option text inputs should require selection and ignore invalid imports", () => {
     const engine = CyoaEngine.synthetic();
     assert.throws(() => engine.setTextInput("freeText", "<img src=x onerror=alert(1)>"));
 
@@ -1495,7 +1607,7 @@ test("option-level freeform text inputs require selection and sanitize imported 
     assert.strictEqual(unselectedEngine.storyInputs.freeText, undefined);
 });
 
-test("options can bypass subcategory maxSelections", () => {
+test("bypass options should not consume subcategory selection slots", () => {
     const engine = CyoaEngine.synthetic();
     engine.select("spendTwo");
     engine.select("freeDefault");
@@ -1509,7 +1621,7 @@ test("options can bypass subcategory maxSelections", () => {
     assert.strictEqual(engine.canSelect("discountTrigger"), true);
 });
 
-test("superhero prerequisites block and unlock dependent options", () => {
+test("dependent options should stay locked until prerequisites are selected", () => {
     const engine = CyoaEngine.synthetic();
     assert.strictEqual(engine.canSelect("adultBenefitsHigherPaying"), false);
     engine.select("powersDifficultySpectacularmanMode");
@@ -1518,7 +1630,7 @@ test("superhero prerequisites block and unlock dependent options", () => {
     assert.strictEqual(engine.canSelect("adultBenefitsHigherPaying"), true);
 });
 
-test("string, array, object, negated, OR, AND, and count prerequisites work", () => {
+test("all prerequisite syntaxes should resolve selection eligibility correctly", () => {
     const engine = CyoaEngine.synthetic();
     assert.strictEqual(engine.canSelect("requiresString"), false);
     assert.strictEqual(engine.canSelect("requiresArray"), false);
@@ -1539,7 +1651,7 @@ test("string, array, object, negated, OR, AND, and count prerequisites work", ()
     assert.strictEqual(engine.canSelect("requiresString"), false);
 });
 
-test("category requiresOption and maxSelections work", () => {
+test("category requirements should gate options and category limits should cap selections", () => {
     const engine = CyoaEngine.synthetic();
     assert.strictEqual(engine.canSelect("categoryLimitA"), false);
 
@@ -1550,7 +1662,7 @@ test("category requiresOption and maxSelections work", () => {
     assert.strictEqual(engine.canSelect("categoryLimitB"), false);
 });
 
-test("subcategory requiresOption works for nested options", () => {
+test("subcategory requirements should gate direct and nested options", () => {
     const engine = CyoaEngine.synthetic();
     assert.strictEqual(engine.canSelect("subcategoryRequiresOption"), false);
     assert.strictEqual(engine.canSelect("nestedSubcategoryOption"), false);
@@ -1560,7 +1672,7 @@ test("subcategory requiresOption works for nested options", () => {
     assert.strictEqual(engine.canSelect("nestedSubcategoryOption"), true);
 });
 
-test("category and nested subcategory display and theme-specific color metadata is preserved", () => {
+test("display mode and theme color metadata should remain available to player and editor", () => {
     const engine = CyoaEngine.synthetic();
     const category = engine.categories.find(entry => entry.name === "Category Controls");
     const subcategory = engine.categories
@@ -1596,7 +1708,7 @@ test("category and nested subcategory display and theme-specific color metadata 
     });
 });
 
-test("adding and removing options updates selectable data", () => {
+test("newly added options should become selectable and removed options should disappear", () => {
     const data = CyoaEngine.synthetic().data;
     const subcategory = findCategory(data, "Core").subcategories.find(entry => entry.name === "Choices");
     subcategory.options.push({ id: "addedOption", label: "Added Option", cost: { Points: 2 } });
@@ -1611,7 +1723,7 @@ test("adding and removing options updates selectable data", () => {
     assert.strictEqual(engine.optionMap.has("addedOption"), false);
 });
 
-test("adding and removing subcategories updates selectable data", () => {
+test("newly added subcategories should become selectable and removed subcategories should disappear", () => {
     const data = CyoaEngine.synthetic().data;
     const category = findCategory(data, "Core");
     category.subcategories.push({
@@ -1631,7 +1743,7 @@ test("adding and removing subcategories updates selectable data", () => {
     assert.strictEqual(engine.optionMap.has("addedSubcategoryOption"), false);
 });
 
-test("adding and removing categories updates selectable data", () => {
+test("newly added categories should become selectable and removed categories should disappear", () => {
     const data = CyoaEngine.synthetic().data;
     data.push({
         name: "Added Category",
@@ -1655,7 +1767,7 @@ test("adding and removing categories updates selectable data", () => {
     assert.strictEqual(engine.optionMap.has("addedCategoryOption"), false);
 });
 
-test("subcategory discountFirstN and discountAmount work", () => {
+test("first-N subcategory discounts should discount only eligible early selections", () => {
     const engine = CyoaEngine.synthetic();
     assertDeepEqual(engine.effectiveCost("firstNDiscountA"), { Points: 3 });
     engine.select("firstNDiscountA");
@@ -1668,7 +1780,47 @@ test("subcategory discountFirstN and discountAmount work", () => {
     assertDeepEqual(engine.discountedSelections.firstNDiscountB[0], { Points: 5 });
 });
 
-test("subcategory columnsPerRow metadata is preserved", () => {
+test("subcategory discount slots should honor assignments, eligibility ceilings, and opt-outs", () => {
+    const engine = CyoaEngine.synthetic();
+    const eligibleInfo = engine.findSubcategoryInfo("subcategorySlotEligible");
+    engine.subcategoryDiscountSelections[eligibleInfo.key] = {
+        subcategorySlotEligible: 1,
+        subcategorySlotIneligible: 1,
+        subcategorySlotOptOut: 1
+    };
+
+    assertDeepEqual(engine.effectiveCost("subcategorySlotEligible"), { Points: 0 });
+    assertDeepEqual(engine.effectiveCost("subcategorySlotIneligible"), { Points: 6 });
+    assertDeepEqual(engine.effectiveCost("subcategorySlotOptOut"), { Points: 4 });
+    assert.strictEqual(engine.subcategoryDiscountSelections[eligibleInfo.key].subcategorySlotOptOut, undefined);
+
+    engine.select("subcategorySlotEligible");
+    assert.strictEqual(engine.points.Points, 10);
+    assertDeepEqual(engine.discountedSelections.subcategorySlotEligible[0], { Points: 0 });
+    assertDeepEqual(engine.effectiveCost("subcategorySlotEligible"), { Points: 4 });
+});
+
+test("category discount slots should honor assignments, eligibility ceilings, and opt-outs", () => {
+    const engine = CyoaEngine.synthetic();
+    const eligibleInfo = engine.findSubcategoryInfo("categorySlotEligible");
+    engine.categoryDiscountSelections[eligibleInfo.catKey] = {
+        categorySlotEligible: 1,
+        categorySlotIneligible: 1,
+        categorySlotOptOut: 1
+    };
+
+    assertDeepEqual(engine.effectiveCost("categorySlotEligible"), { Points: 0 });
+    assertDeepEqual(engine.effectiveCost("categorySlotIneligible"), { Points: 6 });
+    assertDeepEqual(engine.effectiveCost("categorySlotOptOut"), { Points: 4 });
+    assert.strictEqual(engine.categoryDiscountSelections[eligibleInfo.catKey].categorySlotOptOut, undefined);
+
+    engine.select("categorySlotEligible");
+    assert.strictEqual(engine.points.Points, 10);
+    assertDeepEqual(engine.discountedSelections.categorySlotEligible[0], { Points: 0 });
+    assertDeepEqual(engine.effectiveCost("categorySlotEligible"), { Points: 4 });
+});
+
+test("subcategory column metadata should remain available", () => {
     const engine = CyoaEngine.synthetic();
     const subcategory = engine.categories
         .find(entry => entry.name === "Subcategory Controls")
@@ -1676,7 +1828,7 @@ test("subcategory columnsPerRow metadata is preserved", () => {
     assert.strictEqual(subcategory.columnsPerRow, 3);
 });
 
-test("one-way conflicts block the reverse selection", () => {
+test("one-way conflicts should prevent selecting the conflicting target", () => {
     const engine = CyoaEngine.synthetic();
     engine.option("drawbacksDrawbacksDumb").conflictsWith = [];
     assert.deepStrictEqual(engine.option("powersSuperpowersSmart").conflictsWith, ["drawbacksDrawbacksDumb"]);
@@ -1687,7 +1839,7 @@ test("one-way conflicts block the reverse selection", () => {
     assert.strictEqual(engine.canSelect("drawbacksDrawbacksDumb"), false);
 });
 
-test("lantern absolute modified cost can replace a gain with zero cost", () => {
+test("absolute modified costs should be able to replace gains with zero cost", () => {
     const engine = CyoaEngine.synthetic();
     engine.select("emotionalSpectrumEmotionalSpectrumColorOrangeOrangeColor");
     assertDeepEqual(engine.effectiveCost("universeOptionalSharedEmotions"), { Points: 0 }, "Orange should make Shared Emotions cost 0 Points");
@@ -1695,20 +1847,20 @@ test("lantern absolute modified cost can replace a gain with zero cost", () => {
     assert.strictEqual(engine.points.Points, 10);
 });
 
-test("lantern subcategory relative modified cost applies to all options in the subcategory", () => {
+test("subcategory relative cost modifiers should apply to every option in that subcategory", () => {
     const engine = CyoaEngine.synthetic();
     assertDeepEqual(engine.effectiveCost("speciesSpeciesVuldarian"), { Points: 13 });
     engine.select("universeOptionalOverpoweredSpecies");
     assertDeepEqual(engine.effectiveCost("speciesSpeciesVuldarian"), { Points: 16 });
 });
 
-test("lantern subcategory minCost clamps relative reductions", () => {
+test("subcategory minCost should clamp relative cost reductions", () => {
     const engine = CyoaEngine.synthetic();
     engine.select("universeOptionalGroundedSpecies");
     assertDeepEqual(engine.effectiveCost("speciesSpeciesYautja"), { Points: -1 });
 });
 
-test("percentage modified costs apply on options and subcategories with rounded-up prices", () => {
+test("percentage modifiers should round up for option and subcategory costs", () => {
     const subcategoryEngine = CyoaEngine.synthetic();
     const choices = findCategory(subcategoryEngine.data, "Core").subcategories.find(subcat => subcat.name === "Choices");
     choices.options.find(option => option.id === "discountTrigger").maxSelections = 2;
@@ -1738,7 +1890,7 @@ test("percentage modified costs apply on options and subcategories with rounded-
     assertDeepEqual(marvel.effectiveCost("gearGearShieldGenerator2", { costOptionIndex: 0 }), { "Dollars (millions)": 12 });
 });
 
-test("modified cost hierarchy, legacy discounts, idsAny, and maxCost work", () => {
+test("modified cost priority should respect hierarchy, legacy rules, idsAny, and maxCost", () => {
     const engine = CyoaEngine.synthetic();
     engine.select("discountTrigger");
     assertDeepEqual(engine.effectiveCost("freeDefault"), { Points: 0 });
@@ -1764,7 +1916,7 @@ test("modified cost hierarchy, legacy discounts, idsAny, and maxCost work", () =
     assertDeepEqual(maxEngine.effectiveCost("maxClampBase"), { Points: 5 });
 });
 
-test("conditional cost display rows show resulting costs without scope prefixes", () => {
+test("conditional cost rows should show resolved costs without internal scope prefixes", () => {
     const inactiveEngine = CyoaEngine.synthetic();
     assert.deepStrictEqual(inactiveEngine.conditionalCostDisplayLines("legacyDiscounted"), [
         "❌ if Legacy Trigger, Cost: Points 1"
@@ -1778,7 +1930,7 @@ test("conditional cost display rows show resulting costs without scope prefixes"
     assert(lines.every(line => !line.includes("(was")));
 });
 
-test("conditional cost display hides subcategory rows overridden by option rows", () => {
+test("conditional cost rows should hide subcategory rules overridden by option rules", () => {
     const engine = CyoaEngine.synthetic();
     const lines = engine.conditionalCostDisplayLines("speciesSpeciesPowerlessSpecies");
     assert(lines.includes("❌ if Grounded Species, Gain: Points 1"));
@@ -1787,7 +1939,7 @@ test("conditional cost display hides subcategory rows overridden by option rows"
     assert(!lines.includes("❌ if Overpowered Species, Cost: Points 3"));
 });
 
-test("automatic grant display rows show granted targets and selected state", () => {
+test("automatic grant rows should show target labels and selected state", () => {
     const engine = CyoaEngine.synthetic();
     assert.deepStrictEqual(engine.autoGrantDisplayLines("grantSource"), [
         "❌ Granted Locked (locked)"
@@ -1802,9 +1954,13 @@ test("automatic grant display rows show granted targets and selected state", () 
     assert.deepStrictEqual(lanternEngine.autoGrantDisplayLines("emotionalSpectrumEmotionalSpectrumColor696969ColorlessRingsColor"), [
         "❌ Emotional Instability (locked)"
     ]);
+
+    assert.deepStrictEqual(engine.autoGrantDisplayLines("grantSourceCanDeselect"), [
+        "❌ Granted Can Deselect (can be deselected)"
+    ]);
 });
 
-test("lantern Colorless Rings force Emotional Instability and discount Characteristic Powers", () => {
+test("locked automatic grants should be free and trigger related discounts", () => {
     const engine = CyoaEngine.synthetic();
     const startingPoints = engine.points.Points;
     engine.select("emotionalSpectrumEmotionalSpectrumColor696969ColorlessRingsColor");
@@ -1820,7 +1976,7 @@ test("lantern Colorless Rings force Emotional Instability and discount Character
     assertDeepEqual(engine.effectiveCost("ringPowersCharacteristicPowersDeathEmpowerment"), { Points: 4 });
 });
 
-test("automatic grants select targets for free and remove locked grants with their source", () => {
+test("automatic grants should add free locked targets and remove them with their source", () => {
     const engine = CyoaEngine.synthetic();
     engine.select("grantSource");
     assert.strictEqual(engine.points.Points, 8);
@@ -1835,9 +1991,18 @@ test("automatic grants select targets for free and remove locked grants with the
     assert.strictEqual(engine.selectedOptions.grantSource, undefined);
     assert.strictEqual(engine.selectedOptions.grantedLocked, undefined);
     assert.strictEqual(engine.autoGrantedSelections.grantedLocked, undefined);
+
+    const canDeselectEngine = CyoaEngine.synthetic();
+    canDeselectEngine.select("grantSourceCanDeselect");
+    assert.strictEqual(canDeselectEngine.selectedOptions.grantSourceCanDeselect, 1);
+    assert.strictEqual(canDeselectEngine.selectedOptions.grantedCanDeselect, 1);
+    assert.deepStrictEqual(canDeselectEngine.autoGrantedSelections.grantedCanDeselect, {
+        sourceId: "grantSourceCanDeselect",
+        canDeselect: true
+    });
 });
 
-test("option-granted discount slots apply to selected target options", () => {
+test("option-granted discount slots should apply only to assigned target selections", () => {
     const engine = CyoaEngine.synthetic();
     engine.select("discountGrantSource");
     assertDeepEqual(engine.effectiveCost("discountGrantTargetA"), { Points: 6 });
@@ -1857,7 +2022,7 @@ test("option-granted discount slots apply to selected target options", () => {
     assertDeepEqual(engine.effectiveCost("discountGrantTargetB"), { Points: 5 }, "A one-slot grant should not discount a second target");
 });
 
-test("custom JSON option fields are preserved and ignored by runtime logic", () => {
+test("unknown option fields should be preserved without affecting runtime logic", () => {
     const engine = CyoaEngine.synthetic();
     const option = engine.option("customFields");
     assert.strictEqual(option.creatorNotes, "runtime should preserve this");
@@ -1868,7 +2033,7 @@ test("custom JSON option fields are preserved and ignored by runtime logic", () 
     assert.strictEqual(engine.points.Points, 10);
 });
 
-test("packed export/import preserves selections, points, and granted state", () => {
+test("packed export state should round-trip selections, points, inputs, and grants", () => {
     const engine = CyoaEngine.synthetic();
     engine.storyInputs.name = "Test User";
     engine.attributeSliderValues.Power = 4;
@@ -1891,7 +2056,7 @@ test("packed export/import preserves selections, points, and granted state", () 
     assert.deepStrictEqual(unpacked.autoGrantedSelections, engine.autoGrantedSelections);
 });
 
-test("theme settings include option metadata section colors", () => {
+test("theme settings should define colors for every option metadata section", () => {
     const scriptSource = fs.readFileSync(path.join(ROOT, "script.js"), "utf8");
     const editorSource = fs.readFileSync(path.join(ROOT, "editor.js"), "utf8");
     const cssSource = fs.readFileSync(path.join(ROOT, "style.css"), "utf8");
@@ -1903,7 +2068,7 @@ test("theme settings include option metadata section colors", () => {
     });
 });
 
-test("safe text formatting supports Markdown, legacy tags, and plain-label stripping", () => {
+test("text formatting should support safe Markdown, legacy tags, and plain-label stripping", () => {
     const html = renderFormattedText("# Heading\n\n**Bold [color=blue]Blue[/color]** and *italic* [size=-2px]small[/size] [weight=700]heavy[/weight] `code` <x>\n\n- [Link](https://example.com)");
     assert(html.includes("<h1>Heading</h1>"));
     assert(html.includes("<strong>Bold "));
@@ -1926,7 +2091,7 @@ test("safe text formatting supports Markdown, legacy tags, and plain-label strip
     );
 });
 
-test("lantern emotional consistency is removed when later color choices make conditional prerequisites false", () => {
+test("selected options should be removed when later choices invalidate conditional prerequisites", () => {
     const yellowEngine = CyoaEngine.synthetic();
     yellowEngine.select("weaknessesWeaknessesEmotionalConsistency");
     assert.strictEqual(yellowEngine.selectedOptions.weaknessesWeaknessesEmotionalConsistency, 1);

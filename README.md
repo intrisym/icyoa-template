@@ -40,13 +40,13 @@ npm test
 
 The same verification suite is also configured in GitHub Actions under [`.github/workflows/ci.yml`](https://github.com/intrisym/icyoa-template/blob/main/.github/workflows/ci.yml), so pushes to `main` / `master` and pull requests will run the repository checks automatically.
 
-This runs JavaScript syntax checks, validates every existing `CYOAs/*.json` file as a regression fixture, and runs functional scenario tests against real CYOA data. The functional tests simulate selecting and removing options, gaining and spending points, subcategory max-selection replacement, max-selection bypass options, prerequisite unlocks, conditional pricing priority, absolute modified costs, relative modified costs, and min/max cost clamps.
+This runs JavaScript syntax checks, validates every existing `CYOAs/*.json` file as a regression fixture, and runs functional scenario tests against a self-contained synthetic CYOA fixture. The functional tests simulate selecting and removing options, gaining and spending points, subcategory max-selection replacement, max-selection bypass options, prerequisite unlocks, conditional pricing priority, absolute modified costs, relative modified costs, discount slots, and min/max cost clamps.
 
 The CYOA validator checks that files parse, required core entries exist, option IDs are unique, referenced IDs exist, point maps are valid, prerequisite expressions are safe, modified-cost rules are coherent, and theme settings use supported values.
 
 Current functional coverage includes:
 
-- Loading every CYOA fixture and computing selectable state/effective costs without crashes.
+- Computing selectable state/effective costs against the synthetic integration fixture without crashes.
 - Point spending, point gains, refunds, and allow-negative point types.
 - Single-select options, multi-select options, option `maxSelections`, and subcategory `maxSelections`.
 - `countsAsOneSelection` behavior for subcategory limits.
@@ -59,8 +59,10 @@ Current functional coverage includes:
 - Adding and removing categories, subcategories, and options.
 - Subcategory `requiresOption` gates, including inherited gates for nested options.
 - Subcategory `discountFirstN` with `discountAmount`.
+- Subcategory and category manual discount slots with eligibility ceilings and option-level opt-outs.
 - Subcategory `defaultCost`.
 - Subcategory `columnsPerRow` metadata.
+- Option-level and subcategory-level freeform text input persistence and import sanitization.
 - Absolute option-level modified costs.
 - Subcategory-wide relative modified costs.
 - `minCost` and `maxCost` clamps.
@@ -70,7 +72,7 @@ Current functional coverage includes:
 - Legacy `discounts` compatibility for older CYOAs.
 - `idsAny` / `minSelected` conditional-cost rules.
 - Automatic option grants, locked grants, and free granted selections.
-- Automatic-grant display rows in option details.
+- Automatic-grant display rows in option details, including can-deselect grants.
 - Option-granted discount slots across target options.
 - Theme-setting coverage for option metadata section colors.
 - Custom JSON option fields being preserved without changing runtime selection logic.
