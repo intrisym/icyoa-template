@@ -190,7 +190,8 @@
             ]
           }
         ],
-        "subcategories": []
+        "subcategories": [],
+        "columnsPerRow": 4
       },
       {
         "name": "Magic",
@@ -266,7 +267,8 @@
         "textColor": "#ffffff",
         "darkBackgroundColor": "#065F46",
         "darkTextColor": "#ECFDF5",
-        "darkAccentColor": "#052E2B"
+        "darkAccentColor": "#052E2B",
+        "columnsPerRow": 4
       },
       {
         "name": "Physical",
@@ -339,7 +341,8 @@
         "textColor": "#ffffff",
         "darkBackgroundColor": "#7F1D1D",
         "darkTextColor": "#FFF1F2",
-        "darkAccentColor": "#450A0A"
+        "darkAccentColor": "#450A0A",
+        "columnsPerRow": 4
       },
       {
         "name": "Psychic ",
@@ -413,7 +416,8 @@
         "textColor": "#ffffff",
         "darkBackgroundColor": "#581C87",
         "darkTextColor": "#F5F3FF",
-        "darkAccentColor": "#3B0764"
+        "darkAccentColor": "#3B0764",
+        "columnsPerRow": 4
       }
     ],
     "maxSelections": 1
@@ -532,7 +536,8 @@
         "textColor": "#ffffff",
         "darkBackgroundColor": "#1E3A8A",
         "darkTextColor": "#EAF2FF",
-        "darkAccentColor": "#172554"
+        "darkAccentColor": "#172554",
+        "columnsPerRow": 4
       },
       {
         "name": "Magic",
@@ -644,7 +649,8 @@
         "textColor": "#ffffff",
         "darkBackgroundColor": "#065F46",
         "darkTextColor": "#ECFDF5",
-        "darkAccentColor": "#052E2B"
+        "darkAccentColor": "#052E2B",
+        "columnsPerRow": 4
       },
       {
         "name": "Physical",
@@ -757,7 +763,8 @@
         "textColor": "#ffffff",
         "darkBackgroundColor": "#7F1D1D",
         "darkTextColor": "#FFF1F2",
-        "darkAccentColor": "#450A0A"
+        "darkAccentColor": "#450A0A",
+        "columnsPerRow": 4
       },
       {
         "name": "Psychic",
@@ -870,7 +877,8 @@
         "textColor": "#ffffff",
         "darkBackgroundColor": "#581C87",
         "darkTextColor": "#F5F3FF",
-        "darkAccentColor": "#3B0764"
+        "darkAccentColor": "#3B0764",
+        "columnsPerRow": 4
       }
     ],
     "description": "Note: All Powers have a cost equal to their rank unless otherwise noted, and you must buy Rank One before buying Rank Two."
@@ -1234,7 +1242,8 @@
         "textColor": "#ffffff",
         "darkBackgroundColor": "#1E293B",
         "darkTextColor": "#F8FAFC",
-        "darkAccentColor": "#020617"
+        "darkAccentColor": "#020617",
+        "columnsPerRow": 4
       }
     ]
   }
