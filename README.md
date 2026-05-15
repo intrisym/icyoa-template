@@ -196,8 +196,8 @@ Tags and emphasis markers should be closed in the reverse order they were opened
 ### 5. Publish Your Creation
 Sharing your CYOA is free and easy with GitHub Pages:
 
-1. **Commit & Push:** Save your changes (`git commit -am "My CYOA"`) and push them to GitHub (`git push`).
-2. **Update Manifest:** Run `node generate-manifest.js` to refresh the list of available adventures. This ensures your new CYOA is correctly indexed and visible on the live site.
+1. **Update Manifest:** Run `node generate-manifest.js` to refresh the list of available adventures. This ensures your new CYOA is correctly indexed and visible on the live site.
+2. **Commit & Push:** Save your CYOA and refreshed manifest (`git commit -am "My CYOA"`) and push them to GitHub (`git push`).
 3. **Enable Pages:**
    - Go to your repo settings on GitHub.
    - Click **Pages** in the left sidebar.
