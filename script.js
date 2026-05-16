@@ -2962,6 +2962,121 @@ function getModifiedCostRuleConditionKey(rule = {}) {
     return "conditionless";
 }
 
+function tokenizePrerequisiteExpression(expression = "") {
+    const tokens = [];
+    const tokenPattern = /\s*(&&|\|\||!|\(|\)|[a-zA-Z_][a-zA-Z0-9_]*(?:__\d+)?)\s*/g;
+    let match;
+    let consumed = 0;
+    while ((match = tokenPattern.exec(expression)) !== null) {
+        if (match.index !== consumed && expression.slice(consumed, match.index).trim()) return [];
+        tokens.push(match[1]);
+        consumed = tokenPattern.lastIndex;
+    }
+    return expression.slice(consumed).trim() ? [] : tokens;
+}
+
+function parsePrerequisiteExpression(expression = "") {
+    const tokens = tokenizePrerequisiteExpression(expression);
+    let index = 0;
+    const peek = () => tokens[index];
+    const consume = expected => {
+        if (expected && tokens[index] !== expected) throw new Error(`Expected ${expected}`);
+        return tokens[index++];
+    };
+    const parsePrimary = () => {
+        const token = peek();
+        if (token === "!") {
+            consume("!");
+            return { type: "not", child: parsePrimary() };
+        }
+        if (token === "(") {
+            consume("(");
+            const node = parseOr();
+            consume(")");
+            return node;
+        }
+        if (/^[a-zA-Z_][a-zA-Z0-9_]*(?:__\d+)?$/.test(token || "")) {
+            consume();
+            return { type: "atom", id: token };
+        }
+        throw new Error("Invalid prerequisite token");
+    };
+    const parseAnd = () => {
+        const children = [parsePrimary()];
+        while (peek() === "&&") {
+            consume("&&");
+            children.push(parsePrimary());
+        }
+        return children.length === 1 ? children[0] : { type: "and", children };
+    };
+    const parseOr = () => {
+        const children = [parseAnd()];
+        while (peek() === "||") {
+            consume("||");
+            children.push(parseAnd());
+        }
+        return children.length === 1 ? children[0] : { type: "or", children };
+    };
+    try {
+        const ast = parseOr();
+        if (index !== tokens.length) return null;
+        return ast;
+    } catch (_) {
+        return null;
+    }
+}
+
+function evaluatePrerequisiteNode(node) {
+    if (!node) return false;
+    if (node.type === "atom") return meetsCountRequirement(node.id);
+    if (node.type === "not") return !evaluatePrerequisiteNode(node.child);
+    if (node.type === "and") return node.children.every(evaluatePrerequisiteNode);
+    if (node.type === "or") return node.children.some(evaluatePrerequisiteNode);
+    return false;
+}
+
+function buildPrerequisiteDisplayLines(expression = "") {
+    const ast = parsePrerequisiteExpression(expression);
+    if (!ast) return null;
+    const displayByKey = new Map();
+    const addAtom = (rawId, negated, satisfied) => {
+        const key = `${negated ? "!" : ""}${rawId}`;
+        const existing = displayByKey.get(key);
+        displayByKey.set(key, {
+            id: rawId,
+            negated,
+            satisfied: !!satisfied || !!existing?.satisfied
+        });
+    };
+    const visit = (node, inheritedSatisfiedOr = false, negated = false) => {
+        if (!node) return;
+        if (node.type === "atom") {
+            const atomSatisfied = negated ? !meetsCountRequirement(node.id) : meetsCountRequirement(node.id);
+            addAtom(node.id, negated, inheritedSatisfiedOr || atomSatisfied);
+            return;
+        }
+        if (node.type === "not") {
+            visit(node.child, inheritedSatisfiedOr, !negated);
+            return;
+        }
+        if (node.type === "or") {
+            const orSatisfied = inheritedSatisfiedOr || evaluatePrerequisiteNode(node);
+            node.children.forEach(child => visit(child, orSatisfied, negated));
+            return;
+        }
+        if (node.type === "and") {
+            node.children.forEach(child => visit(child, inheritedSatisfiedOr, negated));
+        }
+    };
+    visit(ast);
+    return Array.from(displayByKey.values()).map(entry => {
+        const [id, minSuffix] = entry.id.split("__");
+        const requiredCount = minSuffix ? Number(minSuffix) : 1;
+        const label = getOptionLabelMarkup(id) + (requiredCount > 1 ? ` (x${requiredCount})` : "");
+        return `${entry.satisfied ? "✅" : "❌"} ${entry.negated ? "NOT " : ""}${label}`;
+    });
+}
+
 function getModifiedCostDisplayRows(option, subcat) {
     const rowsByCondition = new Map();
     const baseCost = getOptionBaseCost(option);
@@ -3868,35 +3983,39 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
 
     // Show prerequisites...
     let conflictRendered = false;
-    if (opt.prerequisites && opt.prerequisites.length > 0) {
+    if (opt.prerequisites && (typeof opt.prerequisites === "object" || opt.prerequisites.length > 0)) {
         let prereqLines = [];
         if (typeof opt.prerequisites === 'string') {
-            const tokens = opt.prerequisites.match(/!?[a-zA-Z_][a-zA-Z0-9_]*(?:__\d+)?/g) || [];
-            const reserved = new Set(['true', 'false', 'null', 'undefined', 'if', 'else', 'return', 'let', 'var', 'const', 'function', 'while', 'for', 'do', 'switch', 'case', 'break', 'continue', 'default', 'new', 'this', 'typeof', 'instanceof', 'void', 'delete', 'in', 'of', 'with', 'try', 'catch', 'finally', 'throw', 'class', 'extends', 'super', 'import', 'export', 'from', 'as', 'await', 'async', 'yield']);
-            const seen = new Set();
-            let exprTrue = false;
-            try {
-                exprTrue = !!window.evaluatePrereqExpr(opt.prerequisites, id => selectedOptions[id] || 0);
-            } catch (e) {
-                exprTrue = false;
-            }
-            tokens.forEach(token => {
-                const negated = token.startsWith('!');
-                const core = negated ? token.slice(1) : token;
-                const [id, minSuffix] = core.split('__');
-                if (reserved.has(id) || seen.has(core)) return;
-                seen.add(core);
-                const requiredCount = minSuffix ? Number(minSuffix) : 1;
-                let satisfied;
-                if (exprTrue) {
-                    satisfied = true;
-                } else {
-                    const actual = selectedOptions[id] || 0;
-                    satisfied = negated ? actual < requiredCount : actual >= requiredCount;
+            prereqLines = buildPrerequisiteDisplayLines(opt.prerequisites);
+            if (!prereqLines) {
+                prereqLines = [];
+                const tokens = opt.prerequisites.match(/!?[a-zA-Z_][a-zA-Z0-9_]*(?:__\d+)?/g) || [];
+                const reserved = new Set(['true', 'false', 'null', 'undefined', 'if', 'else', 'return', 'let', 'var', 'const', 'function', 'while', 'for', 'do', 'switch', 'case', 'break', 'continue', 'default', 'new', 'this', 'typeof', 'instanceof', 'void', 'delete', 'in', 'of', 'with', 'try', 'catch', 'finally', 'throw', 'class', 'extends', 'super', 'import', 'export', 'from', 'as', 'await', 'async', 'yield']);
+                const seen = new Set();
+                let exprTrue = false;
+                try {
+                    exprTrue = !!window.evaluatePrereqExpr(opt.prerequisites, id => selectedOptions[id] || 0);
+                } catch (e) {
+                    exprTrue = false;
                 }
-                const label = getOptionLabelMarkup(id) + (requiredCount > 1 ? ` (x${requiredCount})` : "");
-                prereqLines.push(`${satisfied ? "✅" : "❌"} ${label}`);
-            });
+                tokens.forEach(token => {
+                    const negated = token.startsWith('!');
+                    const core = negated ? token.slice(1) : token;
+                    const [id, minSuffix] = core.split('__');
+                    if (reserved.has(id) || seen.has(core)) return;
+                    seen.add(core);
+                    const requiredCount = minSuffix ? Number(minSuffix) : 1;
+                    let satisfied;
+                    if (exprTrue) {
+                        satisfied = true;
+                    } else {
+                        const actual = selectedOptions[id] || 0;
+                        satisfied = negated ? actual < requiredCount : actual >= requiredCount;
+                    }
+                    const label = getOptionLabelMarkup(id) + (requiredCount > 1 ? ` (x${requiredCount})` : "");
+                    prereqLines.push(`${satisfied ? "✅" : "❌"} ${label}`);
+                });
+            }
         } else if (Array.isArray(opt.prerequisites)) {
             prereqLines = opt.prerequisites.map(id => {
                 const label = getOptionLabelMarkup(id);

@@ -77,6 +77,105 @@ function sanitizeStoryInputValue(value, maxLength = 200) {
     return normalized.slice(0, lengthLimit);
 }
 
+function tokenizePrerequisiteExpression(expression = "") {
+    const tokens = [];
+    const tokenPattern = /\s*(&&|\|\||!|\(|\)|[a-zA-Z_][a-zA-Z0-9_]*(?:__\d+)?)\s*/g;
+    let match;
+    let consumed = 0;
+    while ((match = tokenPattern.exec(expression)) !== null) {
+        if (match.index !== consumed && expression.slice(consumed, match.index).trim()) return [];
+        tokens.push(match[1]);
+        consumed = tokenPattern.lastIndex;
+    }
+    return expression.slice(consumed).trim() ? [] : tokens;
+}
+
+function parsePrerequisiteExpression(expression = "") {
+    const tokens = tokenizePrerequisiteExpression(expression);
+    let index = 0;
+    const peek = () => tokens[index];
+    const consume = expected => {
+        if (expected && tokens[index] !== expected) throw new Error(`Expected ${expected}`);
+        return tokens[index++];
+    };
+    const parsePrimary = () => {
+        const token = peek();
+        if (token === "!") {
+            consume("!");
+            return { type: "not", child: parsePrimary() };
+        }
+        if (token === "(") {
+            consume("(");
+            const node = parseOr();
+            consume(")");
+            return node;
+        }
+        if (/^[a-zA-Z_][a-zA-Z0-9_]*(?:__\d+)?$/.test(token || "")) {
+            consume();
+            return { type: "atom", id: token };
+        }
+        throw new Error("Invalid prerequisite token");
+    };
+    const parseAnd = () => {
+        const children = [parsePrimary()];
+        while (peek() === "&&") {
+            consume("&&");
+            children.push(parsePrimary());
+        }
+        return children.length === 1 ? children[0] : { type: "and", children };
+    };
+    const parseOr = () => {
+        const children = [parseAnd()];
+        while (peek() === "||") {
+            consume("||");
+            children.push(parseAnd());
+        }
+        return children.length === 1 ? children[0] : { type: "or", children };
+    };
+    const ast = parseOr();
+    if (index !== tokens.length) throw new Error("Unexpected prerequisite token");
+    return ast;
+}
+
+function evaluatePrerequisiteNode(node, meetsRequirement) {
+    if (node.type === "atom") return meetsRequirement(node.id);
+    if (node.type === "not") return !evaluatePrerequisiteNode(node.child, meetsRequirement);
+    if (node.type === "and") return node.children.every(child => evaluatePrerequisiteNode(child, meetsRequirement));
+    if (node.type === "or") return node.children.some(child => evaluatePrerequisiteNode(child, meetsRequirement));
+    return false;
+}
+
+function computePrerequisiteDisplayStatuses(expression, meetsRequirement) {
+    const ast = parsePrerequisiteExpression(expression);
+    const displayByKey = new Map();
+    const addAtom = (rawId, negated, satisfied) => {
+        const key = `${negated ? "!" : ""}${rawId}`;
+        const existing = displayByKey.get(key);
+        displayByKey.set(key, { id: rawId, negated, satisfied: !!satisfied || !!existing?.satisfied });
+    };
+    const visit = (node, inheritedSatisfiedOr = false, negated = false) => {
+        if (node.type === "atom") {
+            const atomSatisfied = negated ? !meetsRequirement(node.id) : meetsRequirement(node.id);
+            addAtom(node.id, negated, inheritedSatisfiedOr || atomSatisfied);
+            return;
+        }
+        if (node.type === "not") {
+            visit(node.child, inheritedSatisfiedOr, !negated);
+            return;
+        }
+        if (node.type === "or") {
+            const orSatisfied = inheritedSatisfiedOr || evaluatePrerequisiteNode(node, meetsRequirement);
+            node.children.forEach(child => visit(child, orSatisfied, negated));
+            return;
+        }
+        if (node.type === "and") {
+            node.children.forEach(child => visit(child, inheritedSatisfiedOr, negated));
+        }
+    };
+    visit(ast);
+    return Array.from(displayByKey.values());
+}
+
 function walkSubcategories(subcategories, visitor, path = []) {
     if (!Array.isArray(subcategories)) return;
     subcategories.forEach((subcat, index) => {
@@ -187,6 +286,11 @@ class CyoaEngine {
                             { id: "requiresArray", label: "Requires Array", cost: {}, prerequisites: ["preA"] },
                             { id: "requiresObject", label: "Requires Object", cost: {}, prerequisites: { and: ["preA"], or: ["preB", "multi__2"] } },
                             { id: "requiresCount", label: "Requires Count", cost: {}, prerequisites: "multi__2" },
+                            { id: "gearGearExoSuit1", label: "Exo Suit 1", cost: {} },
+                            { id: "powersScienceAlienTech1", label: "Alien Tech 1", cost: {} },
+                            { id: "questsQuestsTheyCameFromBeyond", label: "They Came from Beyond!", cost: {} },
+                            { id: "gearGearExoSuit2", label: "Exo Suit 2", cost: {}, prerequisites: "gearGearExoSuit1 && (powersScienceAlienTech1 || questsQuestsTheyCameFromBeyond)" },
+                            { id: "requiresComplexOrGroups", label: "Requires Complex OR Groups", cost: {}, prerequisites: "(preA || preB) && (multi__2 || oneWayA) && !drawbacksDrawbacksDumb" },
                             { id: "oneWayA", label: "One-Way A", cost: {}, conflictsWith: ["oneWayB"] },
                             { id: "oneWayB", label: "One-Way B", cost: {} },
                             { id: "youAgeYoungAdult", label: "Young Adult", cost: {} },
@@ -1052,6 +1156,10 @@ class CyoaEngine {
         }
     }
 
+    prerequisiteDisplayStatuses(expression) {
+        return computePrerequisiteDisplayStatuses(expression, id => this.meetsCountRequirement(id));
+    }
+
     setTextInput(optionId, value) {
         const option = this.option(optionId);
         assert.strictEqual(option.inputType, "text", `${this.filename}: expected ${optionId} to be a text input option`);
@@ -1772,6 +1880,62 @@ test("all prerequisite syntaxes should resolve selection eligibility correctly",
 
     engine.select("preB");
     assert.strictEqual(engine.canSelect("requiresString"), false);
+});
+
+test("complex prerequisite displays should mark fulfilled OR branches as satisfied", () => {
+    const engine = CyoaEngine.synthetic();
+    const exoExpression = engine.option("gearGearExoSuit2").prerequisites;
+
+    assert.deepStrictEqual(engine.prerequisiteDisplayStatuses(exoExpression), [
+        { id: "gearGearExoSuit1", negated: false, satisfied: false },
+        { id: "powersScienceAlienTech1", negated: false, satisfied: false },
+        { id: "questsQuestsTheyCameFromBeyond", negated: false, satisfied: false }
+    ]);
+
+    engine.select("questsQuestsTheyCameFromBeyond");
+    assert.deepStrictEqual(engine.prerequisiteDisplayStatuses(exoExpression), [
+        { id: "gearGearExoSuit1", negated: false, satisfied: false },
+        { id: "powersScienceAlienTech1", negated: false, satisfied: true },
+        { id: "questsQuestsTheyCameFromBeyond", negated: false, satisfied: true }
+    ]);
+    assert.strictEqual(engine.canSelect("gearGearExoSuit2"), false);
+
+    engine.select("gearGearExoSuit1");
+    assert.strictEqual(engine.canSelect("gearGearExoSuit2"), true);
+
+    const complexExpression = engine.option("requiresComplexOrGroups").prerequisites;
+    assert.deepStrictEqual(engine.prerequisiteDisplayStatuses(complexExpression), [
+        { id: "preA", negated: false, satisfied: false },
+        { id: "preB", negated: false, satisfied: false },
+        { id: "multi__2", negated: false, satisfied: false },
+        { id: "oneWayA", negated: false, satisfied: false },
+        { id: "drawbacksDrawbacksDumb", negated: true, satisfied: true }
+    ]);
+
+    engine.select("preB");
+    engine.select("multi");
+    engine.select("multi");
+    assert.deepStrictEqual(engine.prerequisiteDisplayStatuses(complexExpression), [
+        { id: "preA", negated: false, satisfied: true },
+        { id: "preB", negated: false, satisfied: true },
+        { id: "multi__2", negated: false, satisfied: true },
+        { id: "oneWayA", negated: false, satisfied: true },
+        { id: "drawbacksDrawbacksDumb", negated: true, satisfied: true }
+    ]);
+    assert.strictEqual(engine.canSelect("requiresComplexOrGroups"), true);
+
+    engine.option("powersSuperpowersSmart").conflictsWith = [];
+    engine.select("drawbacksDrawbacksDumb");
+    assert.strictEqual(engine.canSelect("requiresComplexOrGroups"), false);
+    assert.deepStrictEqual(engine.prerequisiteDisplayStatuses(complexExpression).at(-1), {
+        id: "drawbacksDrawbacksDumb",
+        negated: true,
+        satisfied: false
+    });
+    assert(
+        PLAYER_SCRIPT_SOURCE.includes("buildPrerequisiteDisplayLines(opt.prerequisites)"),
+        "player prerequisite display should use expression-aware OR group rendering"
+    );
 });
 
 test("category requirements should gate options and category limits should cap selections", () => {
