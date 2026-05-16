@@ -2979,7 +2979,7 @@
                 });
                 columnsRow.appendChild(columnsLabel);
                 columnsRow.appendChild(columnsInput);
-                subAdvancedBody.appendChild(columnsRow);
+                subBody.appendChild(columnsRow);
 
                 const textField = document.createElement("div");
                 textField.className = "field";
