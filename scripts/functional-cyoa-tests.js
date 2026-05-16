@@ -5,6 +5,7 @@ const { evaluatePrereqExpr } = require("../logicExpr");
 
 const ROOT = path.join(__dirname, "..");
 const PLAYER_SCRIPT_SOURCE = fs.readFileSync(path.join(ROOT, "script.js"), "utf8");
+const EDITOR_SCRIPT_SOURCE = fs.readFileSync(path.join(ROOT, "editor.js"), "utf8");
 
 const FEATURE_COVERAGE = [
     "synthetic CYOA data computes selectable state and effective costs",
@@ -29,7 +30,7 @@ const FEATURE_COVERAGE = [
     "subcategory discountFirstN with discountAmount",
     "subcategory manual discount slots, eligibility ceilings, and option opt-outs",
     "category manual discount slots, eligibility ceilings, and option opt-outs",
-    "subcategory defaultCost",
+    "subcategory defaultCost and inherited costOptions",
     "subcategory columnsPerRow metadata",
     "subcategory-level freeform text inputs persist in imported state",
     "option-level freeform text inputs persist in exported state",
@@ -325,6 +326,21 @@ class CyoaEngine {
                         ]
                     },
                     {
+                        name: "Inherited Payment Options",
+                        costOptions: [
+                            { label: "Default Points", cost: { Points: 3 } },
+                            { label: "Default Tokens", cost: { Tokens: 2 } }
+                        ],
+                        options: [
+                            { id: "inheritedCostOptions", label: "Inherited Cost Options" },
+                            {
+                                id: "overrideCostOptions",
+                                label: "Override Cost Options",
+                                costOptions: [{ label: "Override Points", cost: { Points: 5 } }]
+                            }
+                        ]
+                    },
+                    {
                         name: "Single Select",
                         maxSelections: 1,
                         options: [
@@ -478,10 +494,16 @@ class CyoaEngine {
     }
 
     normalizeCostOptions(option) {
-        return (Array.isArray(option?.costOptions) ? option.costOptions : [])
+        const info = option?.id ? this.findSubcategoryInfo(option.id) : {};
+        const ownOptions = Array.isArray(option?.costOptions) ? option.costOptions : [];
+        const subcategoryOptions = Array.isArray(info.subcat?.costOptions) ? info.subcat.costOptions : [];
+        const hasOwnCostOptions = ownOptions.some(entry =>
+            entry?.cost && typeof entry.cost === "object" && Object.keys(entry.cost).length
+        );
+        return (hasOwnCostOptions || !subcategoryOptions.length ? ownOptions : subcategoryOptions)
             .map((entry, index) => {
-                const cost = entry?.cost && typeof entry.cost === "object" ? entry.cost : null;
-                return cost ? { index, label: entry.label || `Cost ${index + 1}`, cost: { ...cost } } : null;
+            const cost = entry?.cost && typeof entry.cost === "object" ? entry.cost : null;
+                return cost ? { index, cost: { ...cost } } : null;
             })
             .filter(Boolean);
     }
@@ -714,7 +736,6 @@ class CyoaEngine {
         if (!choices.length) return [{ index: null, label: "Cost", cost: this.effectiveCost(option) }];
         return choices.map(choice => ({
             index: choice.index,
-            label: choice.label,
             cost: this.effectiveCost(option, { costOptionIndex: choice.index })
         }));
     }
@@ -1409,6 +1430,7 @@ function renamePointTypeReferences(data, oldName, newName) {
         };
         const visitSubcategory = subcat => {
             renamePointMapKey(subcat?.defaultCost, oldName, newName);
+            (subcat?.costOptions || []).forEach(costOption => renamePointMapKey(costOption?.cost, oldName, newName));
             renamePointMapKey(subcat?.discountAmount, oldName, newName);
             visitCostRules(subcat);
             (subcat?.options || []).forEach(visitOption);
@@ -1504,6 +1526,17 @@ test("alternate cost maps should charge the chosen payment option", () => {
     assert.strictEqual(engine.points.Tokens, 3);
 });
 
+test("payment option labels should not be player-facing because costs describe the choice", () => {
+    assert(
+        !EDITOR_SCRIPT_SOURCE.includes("Player-facing label"),
+        "visual editor should not expose redundant labels for payment choices"
+    );
+    assert(
+        PLAYER_SCRIPT_SOURCE.includes("option.textContent = formatCostMapPlainText(effectiveCost) || \"Free\""),
+        "player dropdown should display generated cost/gain text instead of stored payment labels"
+    );
+});
+
 test("single-select payment options should still expose an explicit selector", () => {
     const singleSelectWithPaymentOptions = {
         id: "singlePayment",
@@ -1565,6 +1598,7 @@ test("point type renames should update every referenced cost map", () => {
     renamePointTypeReferences(data, "Points", "Hero Points");
     const grantTarget = new CyoaEngine(data, "renamed point type fixture").option("discountGrantTargetA");
     const firstN = findCategory(data, "Subcategory Controls").subcategories.find(subcat => subcat.name === "First N Discounts");
+    const inheritedCosts = findCategory(data, "Subcategory Controls").subcategories.find(subcat => subcat.name === "Inherited Payment Options");
 
     assert.deepStrictEqual(choices.defaultCost, { "Hero Points": 1 });
     assert.deepStrictEqual(alternateCost.costOptions[0].cost, { "Hero Points": 4 });
@@ -1572,6 +1606,7 @@ test("point type renames should update every referenced cost map", () => {
     assert.deepStrictEqual(optionOverride.modifiedCosts[1].costPercent, { "Hero Points": -25 });
     assert.deepStrictEqual(grantTarget.cost, { "Hero Points": 6 });
     assert.deepStrictEqual(firstN.discountAmount, { "Hero Points": 2 });
+    assert.deepStrictEqual(inheritedCosts.costOptions[0].cost, { "Hero Points": 3 });
 });
 
 test("point type edits should refresh category cost controls", () => {
@@ -1601,6 +1636,23 @@ test("subcategory defaults should price empty-cost options and repeated picks ca
     engine.select("multi");
     assert.strictEqual(engine.selectedOptions.multi, 2);
     assert.strictEqual(engine.subcategorySelectionCount(engine.findSubcategoryOfOption("multi")), 1);
+});
+
+test("subcategory cost options should be inherited unless an option defines its own choices", () => {
+    const engine = CyoaEngine.synthetic();
+    engine.option("inheritedCostOptions").costOptions = [{ label: "Empty Local Choice", cost: {} }];
+    assert.deepStrictEqual(engine.effectiveCostChoices("inheritedCostOptions"), [
+        { index: 0, cost: { Points: 3 } },
+        { index: 1, cost: { Tokens: 2 } }
+    ]);
+    assertDeepEqual(engine.effectiveCost("inheritedCostOptions", { costOptionIndex: 1 }), { Tokens: 2 });
+    assert.deepStrictEqual(engine.effectiveCostChoices("overrideCostOptions"), [
+        { index: 0, cost: { Points: 5 } }
+    ]);
+
+    engine.points.Tokens = 2;
+    engine.select("inheritedCostOptions", { costOptionIndex: 1 });
+    assert.strictEqual(engine.points.Tokens, 0);
 });
 
 test("selected option text inputs should survive export and import", () => {

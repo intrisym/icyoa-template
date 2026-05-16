@@ -369,7 +369,13 @@ function getOptionBaseCost(option) {
 }
 
 function normalizeOptionCostOptions(option) {
-    const options = Array.isArray(option?.costOptions) ? option.costOptions : [];
+    const info = option?.id ? findSubcategoryInfo(option.id) : {};
+    const ownOptions = Array.isArray(option?.costOptions) ? option.costOptions : [];
+    const subcategoryOptions = Array.isArray(info.subcat?.costOptions) ? info.subcat.costOptions : [];
+    const hasOwnCostOptions = ownOptions.some(entry =>
+        entry?.cost && typeof entry.cost === "object" && Object.keys(entry.cost).length
+    );
+    const options = hasOwnCostOptions || !subcategoryOptions.length ? ownOptions : subcategoryOptions;
     return options
         .map((entry, index) => {
             const rawCost = entry?.cost && typeof entry.cost === "object"
@@ -380,7 +386,6 @@ function normalizeOptionCostOptions(option) {
             if (!rawCost) return null;
             return {
                 index,
-                label: entry?.label || `Payment Option ${index + 1}`,
                 cost: { ...rawCost }
             };
         })
@@ -663,7 +668,6 @@ function getOptionEffectiveCostChoices(option, options = {}) {
     }
     return costOptions.map(choice => ({
         index: choice.index,
-        label: choice.label,
         cost: getOptionEffectiveCost(option, {
             ...options,
             costOptionIndex: choice.index
@@ -2921,8 +2925,8 @@ function formatCostMapPlainText(cost = {}) {
             const numeric = Number(value);
             const pointLabel = stripFormattingMarkup(type);
             return numeric < 0
-                ? `${pointLabel} ${Math.abs(numeric)}`
-                : `${pointLabel} ${numeric}`;
+                ? `Gain: ${pointLabel} ${Math.abs(numeric)}`
+                : `Cost: ${pointLabel} ${numeric}`;
         })
         .join("; ");
 }
@@ -3815,7 +3819,7 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
             "Cost Options",
             costChoices.map(choice => {
                 const status = choice.index === selectedCostOptionIndex ? "●" : "○";
-                return `${status} ${escapeHtml(choice.label)}: ${formatCostMapDisplay(choice.cost) || "Free"}`;
+                return `${status} ${formatCostMapDisplay(choice.cost) || "Free"}`;
             }),
             "option-meta-points"
         );
@@ -4324,7 +4328,7 @@ function renderSelectionButton(opt, contentWrapper) {
             const option = document.createElement("option");
             const effectiveCost = getOptionEffectiveCost(opt, { costOptionIndex: choice.index });
             option.value = String(choice.index);
-            option.textContent = `${stripFormattingMarkup(choice.label)}: ${formatCostMapPlainText(effectiveCost) || "Free"}`;
+            option.textContent = formatCostMapPlainText(effectiveCost) || "Free";
             option.disabled = !canAffordCost(effectiveCost);
             select.appendChild(option);
         });

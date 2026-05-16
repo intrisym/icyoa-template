@@ -237,6 +237,25 @@ function validateAutoGrants(file, context, grants, optionIds, errors) {
     });
 }
 
+function validateCostOptions(file, context, costOptions, pointTypes, errors, warnings) {
+    if (costOptions === undefined) return;
+    if (!Array.isArray(costOptions)) {
+        pushIssue(errors, file, `${context}.costOptions must be an array.`);
+        return;
+    }
+    costOptions.forEach((costOption, index) => {
+        const optionContext = `${context}.costOptions[${index}]`;
+        if (!costOption || typeof costOption !== "object" || Array.isArray(costOption)) {
+            pushIssue(errors, file, `${optionContext} must be an object.`);
+            return;
+        }
+        if (costOption.label !== undefined && typeof costOption.label !== "string") {
+            pushIssue(errors, file, `${optionContext}.label must be a string.`);
+        }
+        validatePointMap(file, `${optionContext}.cost`, costOption.cost || {}, pointTypes, errors, warnings);
+    });
+}
+
 function validateThemeSettings(file, settings, errors) {
     if (!settings) return;
     const mode = settings.themeMode;
@@ -303,23 +322,7 @@ function validateCyoa(file) {
         const context = `${optionPath} (${option.id})`;
 
         validatePointMap(file, `${context}.cost`, option.cost || {}, pointTypes, errors, warnings);
-        if (option.costOptions !== undefined) {
-            if (!Array.isArray(option.costOptions)) {
-                pushIssue(errors, file, `${context}.costOptions must be an array.`);
-            } else {
-                option.costOptions.forEach((costOption, index) => {
-                    const optionContext = `${context}.costOptions[${index}]`;
-                    if (!costOption || typeof costOption !== "object" || Array.isArray(costOption)) {
-                        pushIssue(errors, file, `${optionContext} must be an object.`);
-                        return;
-                    }
-                    if (costOption.label !== undefined && typeof costOption.label !== "string") {
-                        pushIssue(errors, file, `${optionContext}.label must be a string.`);
-                    }
-                    validatePointMap(file, `${optionContext}.cost`, costOption.cost || {}, pointTypes, errors, warnings);
-                });
-            }
-        }
+        validateCostOptions(file, context, option.costOptions, pointTypes, errors, warnings);
         validateRequirementExpression(file, `${context}.prerequisites`, option.prerequisites, errors);
         validateIdRefs(file, `${context}.prerequisites`, extractRequirementIds(option.prerequisites), optionIds, errors);
         validateIdRefs(file, `${context}.conflictsWith`, normalizeIdList(option.conflictsWith), optionIds, errors);
@@ -338,6 +341,7 @@ function validateCyoa(file) {
 
     collectSubcategories(data).forEach(({ subcat, path: subcatPath }) => {
         validatePointMap(file, `${subcatPath}.defaultCost`, subcat.defaultCost, pointTypes, errors, warnings);
+        validateCostOptions(file, subcatPath, subcat.costOptions, pointTypes, errors, warnings);
         validatePointMap(file, `${subcatPath}.discountAmount`, subcat.discountAmount, pointTypes, errors, warnings);
         validateRequirementExpression(file, `${subcatPath}.requiresOption`, subcat.requiresOption, errors);
         validateIdRefs(file, `${subcatPath}.requiresOption`, extractRequirementIds(subcat.requiresOption), optionIds, errors);

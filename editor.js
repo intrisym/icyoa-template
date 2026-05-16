@@ -1098,7 +1098,6 @@
             description: "",
             costOptions: [
                 {
-                    label: "Payment Option 1",
                     cost: {}
                 }
             ]
@@ -1123,8 +1122,7 @@
     function ensurePaymentOptionsForEditor(option) {
         if (!option || typeof option !== "object") return;
         if (Array.isArray(option.costOptions) && option.costOptions.length > 0) {
-            option.costOptions = option.costOptions.map((entry, index) => ({
-                label: entry?.label || `Payment Option ${index + 1}`,
+            option.costOptions = option.costOptions.map(entry => ({
                 cost: entry?.cost && typeof entry.cost === "object" ? entry.cost : {}
             }));
             delete option.cost;
@@ -1136,7 +1134,6 @@
             : {};
         option.costOptions = [
             {
-                label: "Payment Option 1",
                 cost: migratedCost
             }
         ];
@@ -2330,6 +2327,7 @@
 
             const visitSubcategory = (subcat) => {
                 renamePointMapKey(subcat?.defaultCost, oldName, newName);
+                (subcat?.costOptions || []).forEach(costOption => renamePointMapKey(costOption?.cost, oldName, newName));
                 renamePointMapKey(subcat?.discountAmount, oldName, newName);
                 visitCostRules(subcat);
                 (subcat?.options || []).forEach(visitOption);
@@ -2958,6 +2956,22 @@
                     }
                 });
 
+                const subCostOptionsSection = document.createElement("div");
+                subCostOptionsSection.className = "field";
+                const subCostOptionsLabel = document.createElement("label");
+                subCostOptionsLabel.textContent = "Default payment options";
+                const subCostOptionsHint = document.createElement("div");
+                subCostOptionsHint.className = "field-help";
+                subCostOptionsHint.textContent = "Options in this subcategory inherit these payment choices unless they define their own payment options.";
+                const subCostOptionsContainer = document.createElement("div");
+                subCostOptionsContainer.className = "list-stack";
+                renderCostOptionsEditor(subCostOptionsContainer, subcat, {
+                    allowEmpty: true,
+                    emptyText: "No default payment options. Options use their own payment options or the default cost."
+                });
+                subCostOptionsSection.append(subCostOptionsLabel, subCostOptionsHint, subCostOptionsContainer);
+                subBody.appendChild(subCostOptionsSection);
+
                 const subModifiedCostSection = document.createElement("div");
                 subModifiedCostSection.className = "field";
                 const subModifiedCostLabel = document.createElement("label");
@@ -3509,10 +3523,13 @@
             costOptionsLabel.textContent = "Payment options";
             const costOptionsHint = document.createElement("div");
             costOptionsHint.className = "field-help";
-            costOptionsHint.textContent = "Every option uses at least one payment option. Add more when players should choose how to pay.";
+            costOptionsHint.textContent = "Leave empty to inherit this subcategory's default payment options or default cost.";
             const costOptionsContainer = document.createElement("div");
             costOptionsContainer.className = "list-stack";
-            renderCostOptionsEditor(costOptionsContainer, option);
+            renderCostOptionsEditor(costOptionsContainer, option, {
+                allowEmpty: true,
+                emptyText: "No option-specific payment options. This option inherits subcategory defaults."
+            });
             costOptionsSection.append(costOptionsLabel, costOptionsHint, costOptionsContainer);
             body.appendChild(costOptionsSection);
 
@@ -4031,15 +4048,46 @@
         container.appendChild(addBtn);
     }
 
-    function renderCostOptionsEditor(container, option) {
+    function normalizeCostOptionsForEditor(owner, { allowEmpty = false } = {}) {
+        if (!owner || typeof owner !== "object") return [];
+        if (Array.isArray(owner.costOptions) && owner.costOptions.length > 0) {
+            owner.costOptions = owner.costOptions.map(entry => ({
+                cost: entry?.cost && typeof entry.cost === "object" ? entry.cost : {}
+            }));
+            if (!allowEmpty) delete owner.cost;
+            return owner.costOptions;
+        }
+        if (allowEmpty) {
+            if (owner.cost && typeof owner.cost === "object" && Object.keys(owner.cost).length) {
+                owner.costOptions = [{ cost: owner.cost }];
+                delete owner.cost;
+                return owner.costOptions;
+            }
+            if (Array.isArray(owner.costOptions)) owner.costOptions = [];
+            return owner.costOptions || [];
+        }
+        ensurePaymentOptionsForEditor(owner);
+        return owner.costOptions;
+    }
+
+    function renderCostOptionsEditor(container, option, {
+        allowEmpty = false,
+        emptyText = "No payment options configured."
+    } = {}) {
         container.innerHTML = "";
-        ensurePaymentOptionsForEditor(option);
-        const costOptions = option.costOptions;
+        const costOptions = normalizeCostOptionsForEditor(option, { allowEmpty });
+
+        if (allowEmpty && costOptions.length === 0) {
+            const empty = document.createElement("div");
+            empty.className = "field-note";
+            empty.textContent = emptyText;
+            container.appendChild(empty);
+        }
 
         costOptions.forEach((costOption, index) => {
             if (!costOption || typeof costOption !== "object" || Array.isArray(costOption)) {
                 if (!Array.isArray(option.costOptions)) option.costOptions = costOptions;
-                option.costOptions[index] = { label: `Cost ${index + 1}`, cost: {} };
+                option.costOptions[index] = { cost: {} };
                 costOption = option.costOptions[index];
             }
             if (!costOption.cost || typeof costOption.cost !== "object") costOption.cost = {};
@@ -4060,17 +4108,6 @@
                 : "Default cost.";
             title.append(titleText, titleHint);
 
-            const labelInput = document.createElement("input");
-            labelInput.type = "text";
-            labelInput.value = costOption.label || "";
-            labelInput.placeholder = "Payment Option 1";
-            labelInput.addEventListener("input", () => {
-                const value = labelInput.value.trim();
-                if (value) costOption.label = value;
-                else delete costOption.label;
-                schedulePreviewUpdate();
-            });
-
             const costMapContainer = document.createElement("div");
             costMapContainer.className = "cost-list";
             renderPointMapEditor(costMapContainer, costOption.cost, (nextCost) => {
@@ -4083,22 +4120,17 @@
             removeBtn.className = "button-icon danger";
             removeBtn.textContent = "✕";
             removeBtn.title = "Remove alternative cost";
-            removeBtn.disabled = costOptions.length <= 1;
+            removeBtn.disabled = !allowEmpty && costOptions.length <= 1;
             removeBtn.addEventListener("click", () => {
                 if (!Array.isArray(option.costOptions)) option.costOptions = costOptions;
-                if (option.costOptions.length <= 1) return;
+                if (!allowEmpty && option.costOptions.length <= 1) return;
                 option.costOptions.splice(index, 1);
-                renderCostOptionsEditor(container, option);
+                if (allowEmpty && option.costOptions.length === 0) delete option.costOptions;
+                renderCostOptionsEditor(container, option, { allowEmpty, emptyText });
                 schedulePreviewUpdate();
             });
 
             header.append(title, removeBtn);
-
-            const labelField = document.createElement("div");
-            labelField.className = "field";
-            const label = document.createElement("label");
-            label.textContent = "Player-facing label";
-            labelField.append(label, labelInput);
 
             const costField = document.createElement("div");
             costField.className = "field";
@@ -4106,7 +4138,7 @@
             costLabel.textContent = "Cost map";
             costField.append(costLabel, costMapContainer);
 
-            card.append(header, labelField, costField);
+            card.append(header, costField);
             container.appendChild(card);
         });
 
@@ -4118,10 +4150,9 @@
             if (!Array.isArray(option.costOptions)) option.costOptions = [];
             const candidateType = getPointTypeNames()[0] || "Points";
             option.costOptions.push({
-                label: `Payment Option ${option.costOptions.length + 1}`,
                 cost: { [candidateType]: 0 }
             });
-            renderCostOptionsEditor(container, option);
+            renderCostOptionsEditor(container, option, { allowEmpty, emptyText });
             schedulePreviewUpdate();
         });
         container.appendChild(addBtn);
