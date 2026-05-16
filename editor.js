@@ -1658,6 +1658,7 @@
                     pointsEntry.allowNegative[allowIdx] = newName;
                 }
                 renderGlobalSettings();
+                renderCategories();
                 schedulePreviewUpdate();
             });
 
@@ -1665,6 +1666,7 @@
                 delete pointsEntry.values[currency];
                 pointsEntry.allowNegative = pointsEntry.allowNegative.filter(t => t !== currency);
                 renderGlobalSettings();
+                renderCategories();
                 schedulePreviewUpdate();
             });
 
@@ -1688,6 +1690,7 @@
             }
             pointsEntry.values[candidate] = 0;
             renderGlobalSettings();
+            renderCategories();
             schedulePreviewUpdate();
         });
 

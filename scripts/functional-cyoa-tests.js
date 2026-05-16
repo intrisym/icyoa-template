@@ -12,6 +12,7 @@ const FEATURE_COVERAGE = [
     "alternate selectable option cost maps",
     "single-select payment options render explicit selection controls",
     "point type renames cascade through all cost maps",
+    "point type edits refresh category-level cost controls",
     "single-select options and maxSelections replacement",
     "multi-select options and option maxSelections",
     "countsAsOneSelection for subcategory limits",
@@ -1571,9 +1572,23 @@ test("point type renames should update every referenced cost map", () => {
     assert.deepStrictEqual(firstN.discountAmount, { "Hero Points": 2 });
 });
 
+test("point type edits should refresh category cost controls", () => {
+    const editorSource = fs.readFileSync(path.join(ROOT, "editor.js"), "utf8");
+    [
+        "renderGlobalSettings();\n                renderCategories();\n                schedulePreviewUpdate();",
+        "renderGlobalSettings();\n            renderCategories();\n            schedulePreviewUpdate();"
+    ].forEach(snippet => {
+        assert(
+            editorSource.includes(snippet),
+            "editor should re-render category controls after point types are added, renamed, or removed"
+        );
+    });
+});
+
 test("subcategory defaults should price empty-cost options and repeated picks can count once", () => {
     const engine = CyoaEngine.synthetic();
     assertDeepEqual(engine.effectiveCost("freeDefault"), { Points: 1 });
+    assertDeepEqual(engine.effectiveCost("spendTwo"), { Points: 2 });
     assertDeepEqual(engine.effectiveCost("defaultCostOption", { costOptionIndex: 0 }), { Points: 1 });
     assertDeepEqual(engine.effectiveCostChoices("defaultCostOption")[0].cost, { Points: 1 });
     engine.select("defaultCostOption");
