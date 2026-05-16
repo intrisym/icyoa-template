@@ -22,6 +22,8 @@ const FEATURE_COVERAGE = [
     "one-way outgoing and incoming conflicts",
     "category requiresOption and category maxSelections",
     "category and nested subcategory display mode and theme-specific color metadata",
+    "visual editor opens loaded CYOAs with category details collapsed",
+    "visual editor collapse all includes option details",
     "adding and removing categories, subcategories, and options",
     "subcategory requiresOption",
     "subcategory discountFirstN with discountAmount",
@@ -1775,6 +1777,50 @@ test("display mode and theme color metadata should remain available to player an
     ["darkBackgroundColor", "darkTextColor", "darkAccentColor"].forEach(key => {
         assert(editorSource.includes(`"${key}"`), `visual editor should expose ${key}`);
     });
+});
+
+test("visual editor should open loaded CYOAs with all category details collapsed", () => {
+    const editorSource = fs.readFileSync(path.join(ROOT, "editor.js"), "utf8");
+    assert(
+        editorSource.includes("categoryOpenState.has(category) ? categoryOpenState.get(category) : false"),
+        "editor category cards should default closed when no stored user state exists"
+    );
+    assert(
+        editorSource.includes("subcategoryOpenState.has(subcat) ? subcategoryOpenState.get(subcat) : false"),
+        "editor subcategory cards should default closed when no stored user state exists"
+    );
+    assert(
+        editorSource.includes("optionOpenState.has(option) ? optionOpenState.get(option) : false"),
+        "editor option cards should default closed when no stored user state exists"
+    );
+});
+
+test("visual editor collapse all should include global sections and option details", () => {
+    const editorSource = fs.readFileSync(path.join(ROOT, "editor.js"), "utf8");
+    assert(
+        editorSource.includes("details.dataset.storageKey = storageKey"),
+        "editor section details should expose their storage keys to collapse all"
+    );
+    assert(
+        editorSource.includes('globalSettingsEl?.querySelectorAll("details").forEach'),
+        "collapse all should include global settings sections such as Title and Description"
+    );
+    assert(
+        editorSource.includes("sectionOpenState.set(node.dataset.storageKey, open)"),
+        "collapse all should persist global section open state"
+    );
+    assert(
+        editorSource.includes("categoryOpenState.set(category, open)"),
+        "collapse all should update category open state"
+    );
+    assert(
+        editorSource.includes("subcategoryOpenState.set(subcat, open)"),
+        "collapse all should update subcategory open state"
+    );
+    assert(
+        editorSource.includes("optionOpenState.set(option, open)"),
+        "collapse all should update option open state"
+    );
 });
 
 test("newly added options should become selectable and removed options should disappear", () => {

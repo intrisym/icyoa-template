@@ -817,6 +817,7 @@
     } = {}) {
         const details = document.createElement("details");
         details.className = "section-block";
+        details.dataset.storageKey = storageKey;
         const stored = sectionOpenState.has(storageKey) ? sectionOpenState.get(storageKey) : defaultOpen;
         if (stored) {
             details.open = true;
@@ -953,7 +954,25 @@
     }
 
     function setAllEditorDetailsOpen(open) {
+        getCategorySnapshots().forEach(({ entry: category }) => {
+            categoryOpenState.set(category, open);
+            walkEditorSubcategories(category.subcategories || [], (subcat) => {
+                subcategoryOpenState.set(subcat, open);
+                (subcat.options || []).forEach(option => {
+                    optionOpenState.set(option, open);
+                });
+            });
+        });
+        globalSettingsEl?.querySelectorAll("details").forEach((node) => {
+            if (node.dataset.storageKey) {
+                sectionOpenState.set(node.dataset.storageKey, open);
+            }
+            node.open = open;
+        });
         categoryListEl?.querySelectorAll("details").forEach((node) => {
+            if (node.dataset.storageKey) {
+                sectionOpenState.set(node.dataset.storageKey, open);
+            }
             node.open = open;
         });
     }
@@ -2467,7 +2486,7 @@
             const details = document.createElement("details");
             details.className = "category-card";
             details.id = buildEditorNodeId("category", [position + 1]);
-            const storedOpen = categoryOpenState.has(category) ? categoryOpenState.get(category) : true;
+            const storedOpen = categoryOpenState.has(category) ? categoryOpenState.get(category) : false;
             if (storedOpen) {
                 details.open = true;
             }
@@ -2686,7 +2705,7 @@
                 subDetails.className = "subcategory-item";
                 const nextIndexPath = [...indexPath, subIndex + 1];
                 subDetails.id = buildEditorNodeId("subcategory", [position + 1, ...nextIndexPath]);
-                const storedSubOpen = subcategoryOpenState.has(subcat) ? subcategoryOpenState.get(subcat) : subIndex === 0;
+                const storedSubOpen = subcategoryOpenState.has(subcat) ? subcategoryOpenState.get(subcat) : false;
                 if (storedSubOpen) subDetails.open = true;
 
                 const subSummary = document.createElement("summary");
@@ -3142,7 +3161,7 @@
             details.className = "option-item";
             details.id = buildEditorNodeId("option", [...indexPath, optionIndex + 1]);
 
-            const storedOpen = optionOpenState.has(option) ? optionOpenState.get(option) : optionIndex < 2;
+            const storedOpen = optionOpenState.has(option) ? optionOpenState.get(option) : false;
             if (storedOpen) {
                 details.open = true;
             }
