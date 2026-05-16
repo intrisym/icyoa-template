@@ -968,6 +968,42 @@ function buildExportState() {
     };
 }
 
+function clonePlayerState() {
+    return {
+        ...JSON.parse(JSON.stringify(buildExportState())),
+        selectedCostOptionIndexes: JSON.parse(JSON.stringify(selectedCostOptionIndexes)),
+        selectionHistory: [...selectionHistory]
+    };
+}
+
+function restorePlayerState(state) {
+    if (!state || typeof state !== "object") return;
+    clearObject(selectedOptions);
+    clearObject(discountedSelections);
+    clearObject(selectedCostOptionIndexes);
+    clearObject(storyInputs);
+    clearObject(attributeSliderValues);
+    clearObject(dynamicSelections);
+    clearObject(subcategoryDiscountSelections);
+    clearObject(categoryDiscountSelections);
+    clearObject(optionGrantDiscountSelections);
+    clearObject(autoGrantedSelections);
+
+    points = { ...(state.points || {}) };
+    Object.assign(selectedOptions, state.selectedOptions || {});
+    Object.assign(discountedSelections, state.discountedSelections || {});
+    Object.assign(selectedCostOptionIndexes, state.selectedCostOptionIndexes || {});
+    Object.assign(storyInputs, state.storyInputs || {});
+    Object.assign(attributeSliderValues, state.attributeSliderValues || {});
+    Object.assign(dynamicSelections, state.dynamicSelections || {});
+    Object.assign(subcategoryDiscountSelections, state.subcategoryDiscountSelections || {});
+    Object.assign(categoryDiscountSelections, state.categoryDiscountSelections || {});
+    Object.assign(optionGrantDiscountSelections, state.optionGrantDiscountSelections || {});
+    Object.assign(autoGrantedSelections, state.autoGrantedSelections || {});
+    selectionHistory.length = 0;
+    (state.selectionHistory || []).forEach(id => selectionHistory.push(id));
+}
+
 function hasOwnEntries(obj) {
     return !!obj && typeof obj === "object" && Object.keys(obj).length > 0;
 }
@@ -1574,13 +1610,15 @@ function validateInputJson(data, pointsEntry) {
 
 function applyCyoaData(rawData, {
     silent = false,
-    notifyParent = false
+    notifyParent = false,
+    preservePlayerState = false
 } = {}) {
     try {
         if (!Array.isArray(rawData)) {
             throw new Error("CYOA data must be an array.");
         }
 
+        const preservedPlayerState = preservePlayerState ? clonePlayerState() : null;
         const data = JSON.parse(JSON.stringify(rawData));
         window._lastCyoaData = rawData; // Cache for theme toggle
         const pointsEntry = data.find(entry => entry.type === "points");
@@ -1749,6 +1787,10 @@ function applyCyoaData(rawData, {
 
         categories = data.filter(entry => !entry.type || entry.name);
 
+        if (preservedPlayerState) {
+            restorePlayerState(preservedPlayerState);
+        }
+
         // Handle backpack feature
         const backpackEntry = data.find(entry => entry.type === "backpack");
         backpackEnabled = backpackEntry?.enabled || false;
@@ -1759,6 +1801,9 @@ function applyCyoaData(rawData, {
 
         renderAccordion();
         applyDynamicCosts();
+        if (preservedPlayerState) {
+            points = { ...(preservedPlayerState.points || {}) };
+        }
         updatePointsDisplay();
 
         if (notifyParent && window.parent && window.parent !== window) {
@@ -4483,10 +4528,8 @@ function toggleDarkMode() {
     if (themeMode !== "toggle") return;
     isDarkMode = !isDarkMode;
     localStorage.setItem('cyoa-dark-mode', isDarkMode);
-    // Re-apply the theme with the new dark mode state
-    // We can just call applyCyoaData with the current categories to force a theme refresh
     if (window._lastCyoaData) {
-        applyCyoaData(window._lastCyoaData);
+        applyCyoaData(window._lastCyoaData, { preservePlayerState: true });
     }
 }
 

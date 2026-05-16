@@ -47,6 +47,7 @@ const FEATURE_COVERAGE = [
     "theme settings include option metadata section colors",
     "custom JSON option fields are preserved and ignored by runtime logic",
     "packed export/import state round trips",
+    "theme toggles preserve selected options and paid costs",
     "safe Markdown-style formatting with legacy color, size, weight, and point-type labels",
     "multi-open category tabs and Open All category control",
     "backpack labels show repeated selection counts"
@@ -92,6 +93,7 @@ class CyoaEngine {
         this.selectedOptions = {};
         this.selectionHistory = [];
         this.discountedSelections = {};
+        this.selectedCostOptionIndexes = {};
         this.storyInputs = {};
         this.attributeSliderValues = {};
         this.dynamicSelections = {};
@@ -1088,6 +1090,58 @@ class CyoaEngine {
         this.optionGrantDiscountSelections = { ...(unpacked.optionGrantDiscountSelections || {}) };
         this.autoGrantedSelections = { ...(unpacked.autoGrantedSelections || {}) };
     }
+
+    clonePlayerState() {
+        return {
+            ...JSON.parse(JSON.stringify(this.buildExportState())),
+            selectedCostOptionIndexes: JSON.parse(JSON.stringify(this.selectedCostOptionIndexes)),
+            selectionHistory: [...this.selectionHistory]
+        };
+    }
+
+    restorePlayerState(state) {
+        this.selectedOptions = { ...(state.selectedOptions || {}) };
+        this.points = { ...(state.points || {}) };
+        this.discountedSelections = { ...(state.discountedSelections || {}) };
+        this.selectedCostOptionIndexes = { ...(state.selectedCostOptionIndexes || {}) };
+        this.storyInputs = { ...(state.storyInputs || {}) };
+        this.attributeSliderValues = { ...(state.attributeSliderValues || {}) };
+        this.dynamicSelections = { ...(state.dynamicSelections || {}) };
+        this.subcategoryDiscountSelections = { ...(state.subcategoryDiscountSelections || {}) };
+        this.categoryDiscountSelections = { ...(state.categoryDiscountSelections || {}) };
+        this.optionGrantDiscountSelections = { ...(state.optionGrantDiscountSelections || {}) };
+        this.autoGrantedSelections = { ...(state.autoGrantedSelections || {}) };
+        this.selectionHistory = [...(state.selectionHistory || [])];
+    }
+
+    reloadData({ preservePlayerState = false } = {}) {
+        const state = preservePlayerState ? this.clonePlayerState() : null;
+        const data = JSON.parse(JSON.stringify(this.data));
+        this.data = data;
+        this.pointsEntry = data.find(entry => entry.type === "points") || { values: {} };
+        this.points = { ...(this.pointsEntry.values || {}) };
+        this.allowNegativeTypes = new Set(this.pointsEntry.allowNegative || []);
+        this.categories = data.filter(entry => !entry.type || entry.name);
+        this.selectedOptions = {};
+        this.selectionHistory = [];
+        this.discountedSelections = {};
+        this.selectedCostOptionIndexes = {};
+        this.storyInputs = {};
+        this.attributeSliderValues = {};
+        this.dynamicSelections = {};
+        this.subcategoryDiscountSelections = {};
+        this.categoryDiscountSelections = {};
+        this.optionGrantDiscountSelections = {};
+        this.autoGrantedSelections = {};
+        this.optionMap = new Map();
+        this.categories.forEach(category => {
+            (category.options || []).forEach(option => this.optionMap.set(option.id, option));
+            walkSubcategories(category.subcategories, subcat => {
+                (subcat.options || []).forEach(option => this.optionMap.set(option.id, option));
+            });
+        });
+        if (state) this.restorePlayerState(state);
+    }
 }
 
 function hasOwnEntries(obj) {
@@ -2066,6 +2120,29 @@ test("theme settings should define colors for every option metadata section", ()
         assert(editorSource.includes(`"${key}"`), `editor.js theme settings should include ${key}`);
         assert(cssSource.includes(`--${key}`), `style.css should consume --${key}`);
     });
+});
+
+test("theme toggles should preserve selections, points, and paid costs", () => {
+    const engine = CyoaEngine.synthetic();
+    engine.select("spendTwo");
+    engine.select("freeText");
+    engine.setTextInput("freeText", "Theme-safe");
+    engine.select("preA");
+    engine.selectedCostOptionIndexes = { alternateCost: 1 };
+    const before = engine.clonePlayerState();
+
+    engine.reloadData({ preservePlayerState: true });
+
+    assert.deepStrictEqual(engine.selectedOptions, before.selectedOptions);
+    assert.deepStrictEqual(engine.points, before.points);
+    assert.deepStrictEqual(engine.discountedSelections, before.discountedSelections);
+    assert.deepStrictEqual(engine.selectedCostOptionIndexes, before.selectedCostOptionIndexes);
+    assert.deepStrictEqual(engine.storyInputs, before.storyInputs);
+    assert.deepStrictEqual(engine.selectionHistory, before.selectionHistory);
+    assert(
+        PLAYER_SCRIPT_SOURCE.includes("applyCyoaData(window._lastCyoaData, { preservePlayerState: true })"),
+        "dark-mode toggle should refresh theme without resetting player state"
+    );
 });
 
 test("text formatting should support safe Markdown, legacy tags, and plain-label stripping", () => {
