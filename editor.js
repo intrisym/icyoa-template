@@ -507,6 +507,9 @@
         warnUnknownPointTypes(option?.cost, "Base cost");
         (option?.costOptions || []).forEach((costOption, index) => {
             warnUnknownPointTypes(costOption?.cost, `Alternative cost ${index + 1}`);
+            (costOption?.costBySelection || []).forEach((tierCost, tierIndex) => {
+                warnUnknownPointTypes(tierCost, `Alternative cost ${index + 1} selection ${tierIndex + 1}`);
+            });
         });
 
         const prereqIds = Array.from(extractReferencedIds(option?.prerequisites));
@@ -1122,9 +1125,17 @@
     function ensurePaymentOptionsForEditor(option) {
         if (!option || typeof option !== "object") return;
         if (Array.isArray(option.costOptions) && option.costOptions.length > 0) {
-            option.costOptions = option.costOptions.map(entry => ({
-                cost: entry?.cost && typeof entry.cost === "object" ? entry.cost : {}
-            }));
+            option.costOptions = option.costOptions.map(entry => {
+                const normalized = {
+                    cost: entry?.cost && typeof entry.cost === "object" ? entry.cost : {}
+                };
+                if (Array.isArray(entry?.costBySelection)) {
+                    normalized.costBySelection = entry.costBySelection.map(cost =>
+                        cost && typeof cost === "object" && !Array.isArray(cost) ? cost : {}
+                    );
+                }
+                return normalized;
+            });
             delete option.cost;
             return;
         }
@@ -2321,6 +2332,7 @@
             const visitOption = (option) => {
                 renamePointMapKey(option?.cost, oldName, newName);
                 (option?.costOptions || []).forEach(costOption => renamePointMapKey(costOption?.cost, oldName, newName));
+                (option?.costOptions || []).forEach(costOption => (costOption?.costBySelection || []).forEach(cost => renamePointMapKey(cost, oldName, newName)));
                 renamePointMapKey(option?.costPerPoint, oldName, newName);
                 visitCostRules(option);
             };
@@ -2328,6 +2340,7 @@
             const visitSubcategory = (subcat) => {
                 renamePointMapKey(subcat?.defaultCost, oldName, newName);
                 (subcat?.costOptions || []).forEach(costOption => renamePointMapKey(costOption?.cost, oldName, newName));
+                (subcat?.costOptions || []).forEach(costOption => (costOption?.costBySelection || []).forEach(cost => renamePointMapKey(cost, oldName, newName)));
                 renamePointMapKey(subcat?.discountAmount, oldName, newName);
                 visitCostRules(subcat);
                 (subcat?.options || []).forEach(visitOption);
@@ -4051,9 +4064,17 @@
     function normalizeCostOptionsForEditor(owner, { allowEmpty = false } = {}) {
         if (!owner || typeof owner !== "object") return [];
         if (Array.isArray(owner.costOptions) && owner.costOptions.length > 0) {
-            owner.costOptions = owner.costOptions.map(entry => ({
-                cost: entry?.cost && typeof entry.cost === "object" ? entry.cost : {}
-            }));
+            owner.costOptions = owner.costOptions.map(entry => {
+                const normalized = {
+                    cost: entry?.cost && typeof entry.cost === "object" ? entry.cost : {}
+                };
+                if (Array.isArray(entry?.costBySelection)) {
+                    normalized.costBySelection = entry.costBySelection.map(cost =>
+                        cost && typeof cost === "object" && !Array.isArray(cost) ? cost : {}
+                    );
+                }
+                return normalized;
+            });
             if (!allowEmpty) delete owner.cost;
             return owner.costOptions;
         }
@@ -4138,7 +4159,68 @@
             costLabel.textContent = "Cost map";
             costField.append(costLabel, costMapContainer);
 
-            card.append(header, costField);
+            const tierFields = [];
+            const maxSelections = Math.max(1, Math.floor(Number(option.maxSelections) || 1));
+            const hasSelectionCosts = Array.isArray(costOption.costBySelection) && costOption.costBySelection.length > 0;
+            if (maxSelections > 1 || hasSelectionCosts) {
+                const selectionCosts = Array.isArray(costOption.costBySelection) ? costOption.costBySelection : [];
+                const tierSection = document.createElement("div");
+                tierSection.className = "field";
+                const tierLabel = document.createElement("label");
+                tierLabel.textContent = "Selection-specific costs";
+                const tierHint = document.createElement("div");
+                tierHint.className = "field-help";
+                tierHint.textContent = "Optional. Selection 1, selection 2, etc. override the base cost for repeatable options.";
+                const tierList = document.createElement("div");
+                tierList.className = "list-stack";
+                selectionCosts.forEach((tierCost, tierIndex) => {
+                    if (!Array.isArray(costOption.costBySelection)) costOption.costBySelection = selectionCosts;
+                    if (!tierCost || typeof tierCost !== "object" || Array.isArray(tierCost)) {
+                        costOption.costBySelection[tierIndex] = {};
+                        tierCost = costOption.costBySelection[tierIndex];
+                    }
+                    const tierCard = document.createElement("div");
+                    tierCard.className = "cost-option-card";
+                    const tierHeader = document.createElement("div");
+                    tierHeader.className = "cost-option-card-header";
+                    const tierTitle = document.createElement("strong");
+                    tierTitle.textContent = `Selection ${tierIndex + 1}`;
+                    const removeTierBtn = document.createElement("button");
+                    removeTierBtn.type = "button";
+                    removeTierBtn.className = "button-icon danger";
+                    removeTierBtn.textContent = "✕";
+                    removeTierBtn.title = "Remove selection-specific cost";
+                    removeTierBtn.addEventListener("click", () => {
+                        costOption.costBySelection.splice(tierIndex, 1);
+                        if (costOption.costBySelection.length === 0) delete costOption.costBySelection;
+                        renderCostOptionsEditor(container, option, { allowEmpty, emptyText });
+                        schedulePreviewUpdate();
+                    });
+                    tierHeader.append(tierTitle, removeTierBtn);
+                    const tierCostContainer = document.createElement("div");
+                    tierCostContainer.className = "cost-list";
+                    renderPointMapEditor(tierCostContainer, tierCost, (nextCost) => {
+                        costOption.costBySelection[tierIndex] = nextCost || {};
+                        schedulePreviewUpdate();
+                    });
+                    tierCard.append(tierHeader, tierCostContainer);
+                    tierList.appendChild(tierCard);
+                });
+                const addTierBtn = document.createElement("button");
+                addTierBtn.type = "button";
+                addTierBtn.className = "button-subtle";
+                addTierBtn.textContent = "Add selection-specific cost";
+                addTierBtn.addEventListener("click", () => {
+                    if (!Array.isArray(costOption.costBySelection)) costOption.costBySelection = [];
+                    costOption.costBySelection.push({ ...costOption.cost });
+                    renderCostOptionsEditor(container, option, { allowEmpty, emptyText });
+                    schedulePreviewUpdate();
+                });
+                tierSection.append(tierLabel, tierHint, tierList, addTierBtn);
+                tierFields.push(tierSection);
+            }
+
+            card.append(header, costField, ...tierFields);
             container.appendChild(card);
         });
 

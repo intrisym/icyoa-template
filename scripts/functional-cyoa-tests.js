@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const assert = require("assert");
 const { evaluatePrereqExpr } = require("../logicExpr");
+const { validateCyoaData } = require("./validate-cyoas");
 
 const ROOT = path.join(__dirname, "..");
 const PLAYER_SCRIPT_SOURCE = fs.readFileSync(path.join(ROOT, "script.js"), "utf8");
@@ -16,6 +17,7 @@ const FEATURE_COVERAGE = [
     "point type edits refresh category-level cost controls",
     "single-select options and maxSelections replacement",
     "multi-select options and option maxSelections",
+    "selection-specific costs for repeatable options",
     "countsAsOneSelection for subcategory limits",
     "bypassSubcategoryMaxSelections options do not consume subcategory limit slots",
     "string, array, object, negated, OR, AND, and count-suffix prerequisites",
@@ -245,6 +247,15 @@ class CyoaEngine {
                                 ]
                             },
                             {
+                                id: "tieredRepeatCost",
+                                label: "Tiered Repeat Cost",
+                                maxSelections: 2,
+                                costOptions: [
+                                    { cost: { Points: 1 }, costBySelection: [{ Points: 1 }, { Points: 2 }] },
+                                    { cost: { Tokens: 1 }, costBySelection: [{ Tokens: 1 }, { Tokens: 2 }] }
+                                ]
+                            },
+                            {
                                 id: "defaultCostOption",
                                 label: "Default Cost Option",
                                 costOptions: [
@@ -287,9 +298,9 @@ class CyoaEngine {
                             { id: "requiresObject", label: "Requires Object", cost: {}, prerequisites: { and: ["preA"], or: ["preB", "multi__2"] } },
                             { id: "requiresCount", label: "Requires Count", cost: {}, prerequisites: "multi__2" },
                             { id: "gearGearExoSuit1", label: "Exo Suit 1", cost: {} },
-                            { id: "powersScienceAlienTech1", label: "Alien Tech 1", cost: {} },
+                            { id: "powersScienceAlienTech", label: "Alien Tech", cost: {} },
                             { id: "questsQuestsTheyCameFromBeyond", label: "They Came from Beyond!", cost: {} },
-                            { id: "gearGearExoSuit2", label: "Exo Suit 2", cost: {}, prerequisites: "gearGearExoSuit1 && (powersScienceAlienTech1 || questsQuestsTheyCameFromBeyond)" },
+                            { id: "gearGearExoSuit2", label: "Exo Suit 2", cost: {}, prerequisites: "gearGearExoSuit1 && (powersScienceAlienTech || questsQuestsTheyCameFromBeyond)" },
                             { id: "requiresComplexOrGroups", label: "Requires Complex OR Groups", cost: {}, prerequisites: "(preA || preB) && (multi__2 || oneWayA) && !drawbacksDrawbacksDumb" },
                             { id: "oneWayA", label: "One-Way A", cost: {}, conflictsWith: ["oneWayB"] },
                             { id: "oneWayB", label: "One-Way B", cost: {} },
@@ -597,23 +608,37 @@ class CyoaEngine {
         return Object.keys(optionCost).length ? { ...optionCost } : { ...subcatDefault };
     }
 
-    normalizeCostOptions(option) {
+    getNextSelectionNumber(option) {
+        return (this.selectedOptions[option.id] || 0) + 1;
+    }
+
+    getCostOptionCostForSelection(entry, selectionNumber = 1) {
+        const tiers = Array.isArray(entry?.costBySelection) ? entry.costBySelection : [];
+        const tierIndex = Math.max(0, Number(selectionNumber || 1) - 1);
+        const tierCost = tiers[tierIndex] || tiers[tiers.length - 1];
+        if (tierCost && typeof tierCost === "object" && !Array.isArray(tierCost)) return tierCost;
+        return entry?.cost && typeof entry.cost === "object" ? entry.cost : null;
+    }
+
+    normalizeCostOptions(option, { selectionNumber = null } = {}) {
         const info = option?.id ? this.findSubcategoryInfo(option.id) : {};
         const ownOptions = Array.isArray(option?.costOptions) ? option.costOptions : [];
         const subcategoryOptions = Array.isArray(info.subcat?.costOptions) ? info.subcat.costOptions : [];
         const hasOwnCostOptions = ownOptions.some(entry =>
             entry?.cost && typeof entry.cost === "object" && Object.keys(entry.cost).length
+            || Array.isArray(entry?.costBySelection) && entry.costBySelection.some(cost => cost && typeof cost === "object" && Object.keys(cost).length)
         );
+        const effectiveSelectionNumber = selectionNumber || this.getNextSelectionNumber(option);
         return (hasOwnCostOptions || !subcategoryOptions.length ? ownOptions : subcategoryOptions)
             .map((entry, index) => {
-            const cost = entry?.cost && typeof entry.cost === "object" ? entry.cost : null;
+                const cost = this.getCostOptionCostForSelection(entry, effectiveSelectionNumber);
                 return cost ? { index, cost: { ...cost } } : null;
             })
             .filter(Boolean);
     }
 
-    getBaseCostChoice(option, costOptionIndex = null) {
-        const choices = this.normalizeCostOptions(option);
+    getBaseCostChoice(option, costOptionIndex = null, { selectionNumber = null } = {}) {
+        const choices = this.normalizeCostOptions(option, { selectionNumber });
         if (!choices.length || costOptionIndex === null || costOptionIndex === undefined) return this.getBaseCost(option);
         const selected = choices.find(choice => choice.index === Number(costOptionIndex));
         if (!selected || Object.keys(selected.cost || {}).length === 0) return this.getBaseCost(option);
@@ -769,10 +794,10 @@ class CyoaEngine {
         return result;
     }
 
-    effectiveCost(optionOrId, { costOptionIndex = null } = {}) {
+    effectiveCost(optionOrId, { costOptionIndex = null, selectionNumber = null } = {}) {
         const option = typeof optionOrId === "string" ? this.option(optionOrId) : optionOrId;
         const info = this.findSubcategoryInfo(option.id);
-        let cost = this.getBaseCostChoice(option, costOptionIndex);
+        let cost = this.getBaseCostChoice(option, costOptionIndex, { selectionNumber });
         const winningRule = this.winningModifiedCostRule(option, info.subcat);
         if (winningRule) {
             cost = this.applyModifiedCostRule(cost, winningRule.rule);
@@ -1533,12 +1558,14 @@ function renamePointTypeReferences(data, oldName, newName) {
         const visitOption = option => {
             renamePointMapKey(option?.cost, oldName, newName);
             (option?.costOptions || []).forEach(costOption => renamePointMapKey(costOption?.cost, oldName, newName));
+            (option?.costOptions || []).forEach(costOption => (costOption?.costBySelection || []).forEach(cost => renamePointMapKey(cost, oldName, newName)));
             renamePointMapKey(option?.costPerPoint, oldName, newName);
             visitCostRules(option);
         };
         const visitSubcategory = subcat => {
             renamePointMapKey(subcat?.defaultCost, oldName, newName);
             (subcat?.costOptions || []).forEach(costOption => renamePointMapKey(costOption?.cost, oldName, newName));
+            (subcat?.costOptions || []).forEach(costOption => (costOption?.costBySelection || []).forEach(cost => renamePointMapKey(cost, oldName, newName)));
             renamePointMapKey(subcat?.discountAmount, oldName, newName);
             visitCostRules(subcat);
             (subcat?.options || []).forEach(visitOption);
@@ -1634,6 +1661,35 @@ test("alternate cost maps should charge the chosen payment option", () => {
     assert.strictEqual(engine.points.Tokens, 3);
 });
 
+test("repeatable options should use selection-specific costs for later selections", () => {
+    const engine = CyoaEngine.synthetic();
+    engine.points.Tokens = 3;
+
+    assert.deepStrictEqual(engine.effectiveCostChoices("tieredRepeatCost").map(choice => choice.cost), [
+        { Points: 1 },
+        { Tokens: 1 }
+    ]);
+    engine.select("tieredRepeatCost", { costOptionIndex: 0 });
+    assert.strictEqual(engine.points.Points, 9);
+    assert.deepStrictEqual(engine.effectiveCostChoices("tieredRepeatCost").map(choice => choice.cost), [
+        { Points: 2 },
+        { Tokens: 2 }
+    ]);
+    engine.select("tieredRepeatCost", { costOptionIndex: 1 });
+    assert.strictEqual(engine.points.Points, 9);
+    assert.strictEqual(engine.points.Tokens, 1);
+    assert.deepStrictEqual(engine.discountedSelections.tieredRepeatCost, [{ Points: 1 }, { Tokens: 2 }]);
+
+    engine.remove("tieredRepeatCost");
+    assert.strictEqual(engine.points.Tokens, 3);
+    engine.remove("tieredRepeatCost");
+    assert.strictEqual(engine.points.Points, 10);
+    assert(
+        EDITOR_SCRIPT_SOURCE.includes("Selection-specific costs"),
+        "visual editor should expose selection-specific costs for repeatable options"
+    );
+});
+
 test("payment option labels should not be player-facing because costs describe the choice", () => {
     assert(
         !EDITOR_SCRIPT_SOURCE.includes("Player-facing label"),
@@ -1707,9 +1763,11 @@ test("point type renames should update every referenced cost map", () => {
     const grantTarget = new CyoaEngine(data, "renamed point type fixture").option("discountGrantTargetA");
     const firstN = findCategory(data, "Subcategory Controls").subcategories.find(subcat => subcat.name === "First N Discounts");
     const inheritedCosts = findCategory(data, "Subcategory Controls").subcategories.find(subcat => subcat.name === "Inherited Payment Options");
+    const tieredRepeatCost = choices.options.find(option => option.id === "tieredRepeatCost");
 
     assert.deepStrictEqual(choices.defaultCost, { "Hero Points": 1 });
     assert.deepStrictEqual(alternateCost.costOptions[0].cost, { "Hero Points": 4 });
+    assert.deepStrictEqual(tieredRepeatCost.costOptions[0].costBySelection[1], { "Hero Points": 2 });
     assert.deepStrictEqual(optionOverride.modifiedCosts[0].cost, { "Hero Points": 7 });
     assert.deepStrictEqual(optionOverride.modifiedCosts[1].costPercent, { "Hero Points": -25 });
     assert.deepStrictEqual(grantTarget.cost, { "Hero Points": 6 });
@@ -1888,14 +1946,14 @@ test("complex prerequisite displays should mark fulfilled OR branches as satisfi
 
     assert.deepStrictEqual(engine.prerequisiteDisplayStatuses(exoExpression), [
         { id: "gearGearExoSuit1", negated: false, satisfied: false },
-        { id: "powersScienceAlienTech1", negated: false, satisfied: false },
+        { id: "powersScienceAlienTech", negated: false, satisfied: false },
         { id: "questsQuestsTheyCameFromBeyond", negated: false, satisfied: false }
     ]);
 
     engine.select("questsQuestsTheyCameFromBeyond");
     assert.deepStrictEqual(engine.prerequisiteDisplayStatuses(exoExpression), [
         { id: "gearGearExoSuit1", negated: false, satisfied: false },
-        { id: "powersScienceAlienTech1", negated: false, satisfied: true },
+        { id: "powersScienceAlienTech", negated: false, satisfied: true },
         { id: "questsQuestsTheyCameFromBeyond", negated: false, satisfied: true }
     ]);
     assert.strictEqual(engine.canSelect("gearGearExoSuit2"), false);
@@ -1935,6 +1993,45 @@ test("complex prerequisite displays should mark fulfilled OR branches as satisfi
     assert(
         PLAYER_SCRIPT_SOURCE.includes("buildPrerequisiteDisplayLines(opt.prerequisites)"),
         "player prerequisite display should use expression-aware OR group rendering"
+    );
+});
+
+test("CYOA validation should accept synthetic count-suffix prerequisites after option merges", () => {
+    const data = [
+        { type: "title", text: "Synthetic Validation CYOA" },
+        { type: "points", values: { Points: 5 } },
+        {
+            name: "Synthetic",
+            subcategories: [
+                {
+                    name: "Options",
+                    options: [
+                        {
+                            id: "rankedPower",
+                            label: "Ranked Power",
+                            maxSelections: 2,
+                            costOptions: [{ cost: { Points: 1 }, costBySelection: [{ Points: 1 }, { Points: 2 }] }]
+                        },
+                        { id: "questAlternative", label: "Quest Alternative", cost: {} },
+                        {
+                            id: "dependentGear",
+                            label: "Dependent Gear",
+                            cost: {},
+                            prerequisites: "rankedPower && (rankedPower__2 || questAlternative)"
+                        }
+                    ]
+                }
+            ]
+        }
+    ];
+
+    assert.deepStrictEqual(validateCyoaData("synthetic-validation.json", data).errors, []);
+    data[2].subcategories[0].options[2].prerequisites = "oldRankedPower1 && (rankedPower__2 || questAlternative)";
+    assert(
+        validateCyoaData("synthetic-validation.json", data).errors.some(error =>
+            error.includes('references unknown option ID "oldRankedPower1"')
+        ),
+        "synthetic validation should catch stale prerequisite IDs without depending on existing CYOAs"
     );
 });
 

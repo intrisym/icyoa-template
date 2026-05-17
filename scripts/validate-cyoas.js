@@ -253,6 +253,15 @@ function validateCostOptions(file, context, costOptions, pointTypes, errors, war
             pushIssue(errors, file, `${optionContext}.label must be a string.`);
         }
         validatePointMap(file, `${optionContext}.cost`, costOption.cost || {}, pointTypes, errors, warnings);
+        if (costOption.costBySelection !== undefined) {
+            if (!Array.isArray(costOption.costBySelection)) {
+                pushIssue(errors, file, `${optionContext}.costBySelection must be an array.`);
+            } else {
+                costOption.costBySelection.forEach((tierCost, tierIndex) => {
+                    validatePointMap(file, `${optionContext}.costBySelection[${tierIndex}]`, tierCost || {}, pointTypes, errors, warnings);
+                });
+            }
+        }
     });
 }
 
@@ -264,18 +273,9 @@ function validateThemeSettings(file, settings, errors) {
     }
 }
 
-function validateCyoa(file) {
+function validateCyoaData(file, data) {
     const errors = [];
     const warnings = [];
-    const filePath = path.join(CYOAS_DIR, file);
-    let data;
-
-    try {
-        data = JSON.parse(fs.readFileSync(filePath, "utf8"));
-    } catch (err) {
-        pushIssue(errors, file, `invalid JSON: ${err.message}`);
-        return { errors, warnings };
-    }
 
     if (!Array.isArray(data)) {
         pushIssue(errors, file, "root must be a JSON array.");
@@ -366,6 +366,19 @@ function validateCyoa(file) {
     return { errors, warnings };
 }
 
+function validateCyoa(file) {
+    const filePath = path.join(CYOAS_DIR, file);
+    let data;
+
+    try {
+        data = JSON.parse(fs.readFileSync(filePath, "utf8"));
+    } catch (err) {
+        return { errors: [`${file}: invalid JSON: ${err.message}`], warnings: [] };
+    }
+
+    return validateCyoaData(file, data);
+}
+
 function main() {
     const files = readJsonFiles(CYOAS_DIR);
     const results = files.map(validateCyoa);
@@ -386,4 +399,12 @@ function main() {
     console.log(`Validated ${files.length} CYOA fixture(s): ${files.join(", ")}.`);
 }
 
-main();
+if (require.main === module) {
+    main();
+}
+
+module.exports = {
+    validateCyoaData,
+    validateCyoa,
+    extractRequirementIds
+};

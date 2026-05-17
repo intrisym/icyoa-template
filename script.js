@@ -368,21 +368,37 @@ function getOptionBaseCost(option) {
     return { ...optionCost };
 }
 
-function normalizeOptionCostOptions(option) {
+function getNextSelectionNumber(option) {
+    if (!option?.id) return 1;
+    return (selectedOptions[option.id] || 0) + 1;
+}
+
+function getCostOptionCostForSelection(entry, selectionNumber = 1) {
+    const tiers = Array.isArray(entry?.costBySelection) ? entry.costBySelection : [];
+    const tierIndex = Math.max(0, Number(selectionNumber || 1) - 1);
+    const tierCost = tiers[tierIndex] || tiers[tiers.length - 1];
+    if (tierCost && typeof tierCost === "object" && !Array.isArray(tierCost)) return tierCost;
+    return entry?.cost && typeof entry.cost === "object" ? entry.cost : null;
+}
+
+function normalizeOptionCostOptions(option, { selectionNumber = null } = {}) {
     const info = option?.id ? findSubcategoryInfo(option.id) : {};
     const ownOptions = Array.isArray(option?.costOptions) ? option.costOptions : [];
     const subcategoryOptions = Array.isArray(info.subcat?.costOptions) ? info.subcat.costOptions : [];
     const hasOwnCostOptions = ownOptions.some(entry =>
         entry?.cost && typeof entry.cost === "object" && Object.keys(entry.cost).length
+        || Array.isArray(entry?.costBySelection) && entry.costBySelection.some(cost => cost && typeof cost === "object" && Object.keys(cost).length)
     );
     const options = hasOwnCostOptions || !subcategoryOptions.length ? ownOptions : subcategoryOptions;
+    const effectiveSelectionNumber = selectionNumber || getNextSelectionNumber(option);
     return options
         .map((entry, index) => {
-            const rawCost = entry?.cost && typeof entry.cost === "object"
-                ? entry.cost
+            const rawCost = getCostOptionCostForSelection(entry, effectiveSelectionNumber)
+                || (entry?.cost && typeof entry.cost === "object"
+                    ? entry.cost
                 : entry && typeof entry === "object" && !Array.isArray(entry)
                     ? entry
-                    : null;
+                        : null);
             if (!rawCost) return null;
             return {
                 index,
@@ -392,8 +408,8 @@ function normalizeOptionCostOptions(option) {
         .filter(Boolean);
 }
 
-function getOptionBaseCostByChoice(option, costOptionIndex = null) {
-    const options = normalizeOptionCostOptions(option);
+function getOptionBaseCostByChoice(option, costOptionIndex = null, { selectionNumber = null } = {}) {
+    const options = normalizeOptionCostOptions(option, { selectionNumber });
     if (!options.length || costOptionIndex === null || costOptionIndex === undefined) {
         return getOptionBaseCost(option);
     }
@@ -423,9 +439,10 @@ function getInitialCostOptionIndex(option) {
 
 function getOptionEffectiveCost(option, {
     includeFirstNPreview = true,
-    costOptionIndex = null
+    costOptionIndex = null,
+    selectionNumber = null
 } = {}) {
-    const baseCost = getOptionBaseCostByChoice(option, costOptionIndex);
+    const baseCost = getOptionBaseCostByChoice(option, costOptionIndex, { selectionNumber });
     const info = findSubcategoryInfo(option.id);
     let bestCost = baseCost;
     let bestTotal = Object.entries(baseCost).reduce((sum, [_, val]) => val > 0 ? sum + val : sum, 0);
