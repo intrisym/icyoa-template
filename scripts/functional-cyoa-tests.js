@@ -40,6 +40,7 @@ const FEATURE_COVERAGE = [
     "option-level absolute modified costs",
     "subcategory-wide relative modified costs",
     "option and subcategory percentage modified costs rounded up",
+    "cost-modifier changes unselect stale priced options instead of repricing them",
     "modified cost minCost and maxCost clamps",
     "option modified costs override subcategory modified costs and highest-priority matching rules win",
     "conditional cost display rows show resulting gain/cost without scope prefixes",
@@ -52,11 +53,11 @@ const FEATURE_COVERAGE = [
     "option-granted discount slots across target options",
     "theme settings include option metadata section colors",
     "custom JSON option fields are preserved and ignored by runtime logic",
-    "packed export/import state round trips",
+    "packed export/import state round trips through player script helpers",
     "theme toggles preserve selected options and paid costs",
     "safe Markdown-style formatting with legacy color, size, weight, and point-type labels",
     "multi-open category tabs and Open All category control",
-    "backpack labels show repeated selection counts"
+    "backpack rendering groups selected options and shows repeated counts through player script helpers"
 ];
 
 const OPTION_META_THEME_KEYS = [
@@ -77,6 +78,115 @@ function sanitizeStoryInputValue(value, maxLength = 200) {
     }
     const lengthLimit = Number.isFinite(Number(maxLength)) && Number(maxLength) > 0 ? Math.floor(Number(maxLength)) : 200;
     return normalized.slice(0, lengthLimit);
+}
+
+function extractFunctionSource(source, functionName) {
+    const marker = `function ${functionName}`;
+    const start = source.indexOf(marker);
+    assert(start >= 0, `script.js should define ${functionName}`);
+    const bodyStart = source.indexOf("{", start);
+    assert(bodyStart >= 0, `script.js should define a body for ${functionName}`);
+    let depth = 0;
+    for (let index = bodyStart; index < source.length; index += 1) {
+        const char = source[index];
+        if (char === "{") depth += 1;
+        if (char === "}") depth -= 1;
+        if (depth === 0) return source.slice(start, index + 1);
+    }
+    throw new Error(`Unable to extract ${functionName} from script.js`);
+}
+
+function makeDomElement(tagName = "div") {
+    return {
+        tagName: tagName.toUpperCase(),
+        className: "",
+        children: [],
+        style: {},
+        _textContent: "",
+        _innerHTML: "",
+        appendChild(child) {
+            this.children.push(child);
+            return child;
+        },
+        set textContent(value) {
+            this._textContent = String(value);
+        },
+        get textContent() {
+            return this._textContent;
+        },
+        set innerHTML(value) {
+            this._innerHTML = String(value);
+            this.children = [];
+        },
+        get innerHTML() {
+            return this._innerHTML;
+        }
+    };
+}
+
+function collectElementText(element, output = []) {
+    if (element.textContent) output.push(element.textContent);
+    (element.children || []).forEach(child => collectElementText(child, output));
+    return output;
+}
+
+function renderBackpackWithPlayerScript(data, selectedOptionsState) {
+    const elements = {
+        backpackModal: makeDomElement("div"),
+        backpackContent: makeDomElement("div")
+    };
+    const documentStub = {
+        getElementById(id) {
+            if (!elements[id]) elements[id] = makeDomElement("div");
+            return elements[id];
+        },
+        createElement(tagName) {
+            return makeDomElement(tagName);
+        }
+    };
+    const source = [
+        extractFunctionSource(PLAYER_SCRIPT_SOURCE, "walkSubcategoryTree"),
+        extractFunctionSource(PLAYER_SCRIPT_SOURCE, "forEachCategoryOption"),
+        extractFunctionSource(PLAYER_SCRIPT_SOURCE, "openBackpackModal")
+    ].join("\n");
+    const categoriesState = data.filter(entry => !entry.type || entry.name);
+    const execute = new Function("document", "categories", "selectedOptions", `${source}; openBackpackModal();`);
+    execute(documentStub, categoriesState, selectedOptionsState);
+    return collectElementText(elements.backpackContent);
+}
+
+function runPlayerScriptExportImportHelpers(state) {
+    const source = [
+        extractFunctionSource(PLAYER_SCRIPT_SOURCE, "hasOwnEntries"),
+        extractFunctionSource(PLAYER_SCRIPT_SOURCE, "buildExportState"),
+        extractFunctionSource(PLAYER_SCRIPT_SOURCE, "buildPackedExportState"),
+        extractFunctionSource(PLAYER_SCRIPT_SOURCE, "unpackImportedState")
+    ].join("\n");
+    const execute = new Function(
+        "selectedOptions",
+        "points",
+        "discountedSelections",
+        "storyInputs",
+        "attributeSliderValues",
+        "dynamicSelections",
+        "subcategoryDiscountSelections",
+        "categoryDiscountSelections",
+        "optionGrantDiscountSelections",
+        "autoGrantedSelections",
+        `${source}; const packed = buildPackedExportState(); return { packed, unpacked: unpackImportedState(JSON.parse(JSON.stringify(packed))) };`
+    );
+    return execute(
+        state.selectedOptions || {},
+        state.points || {},
+        state.discountedSelections || {},
+        state.storyInputs || {},
+        state.attributeSliderValues || {},
+        state.dynamicSelections || {},
+        state.subcategoryDiscountSelections || {},
+        state.categoryDiscountSelections || {},
+        state.optionGrantDiscountSelections || {},
+        state.autoGrantedSelections || {}
+    );
 }
 
 function tokenizePrerequisiteExpression(expression = "") {
@@ -206,6 +316,8 @@ class CyoaEngine {
         this.categoryDiscountSelections = {};
         this.optionGrantDiscountSelections = {};
         this.autoGrantedSelections = {};
+        this.removedByCostModifier = [];
+        this.costModifierChangeConfirmed = true;
         this.optionMap = new Map();
 
         this.categories.forEach(category => {
@@ -495,6 +607,10 @@ class CyoaEngine {
                     },
                     {
                         name: "Modified Cost Triggers",
+                        modifiedCosts: [
+                            { ids: ["powersScienceConstruction"], costPercent: { "Dollars (millions)": -12.5 }, priority: 1 },
+                            { ids: ["powersScienceConstruction__2"], costPercent: { "Dollars (millions)": -25 }, priority: 2 }
+                        ],
                         options: [
                             { id: "emotionalSpectrumEmotionalSpectrumColorOrangeOrangeColor", label: "Orange Color", cost: {} },
                             { id: "universeOptionalOverpoweredSpecies", label: "Overpowered Species", cost: {} },
@@ -508,11 +624,7 @@ class CyoaEngine {
                             {
                                 id: "gearGearShieldGenerator2",
                                 label: "Shield Generator",
-                                costOptions: [{ label: "Payment Option 1", cost: { "Dollars (millions)": 16 } }],
-                                modifiedCosts: [
-                                    { ids: ["powersScienceConstruction"], costPercent: { "Dollars (millions)": -12.5 }, priority: 1 },
-                                    { ids: ["powersScienceConstruction__2"], costPercent: { "Dollars (millions)": -25 }, priority: 2 }
-                                ]
+                                costOptions: [{ label: "Payment Option 1", cost: { "Dollars (millions)": 16 } }]
                             },
                             { id: "powersScienceConstruction", label: "Construction", cost: {}, maxSelections: 2 }
                         ]
@@ -669,6 +781,36 @@ class CyoaEngine {
             return selectedCount >= rule.minSelected;
         }
         return false;
+    }
+
+    ruleTriggerIds(rule) {
+        if (!rule) return [];
+        if (Array.isArray(rule.idsAny)) return rule.idsAny.filter(Boolean);
+        if (Array.isArray(rule.ids)) return rule.ids.filter(Boolean);
+        if (rule.id) return [rule.id];
+        return [];
+    }
+
+    isCostModifierTriggerOption(optionId) {
+        const baseOptionId = String(optionId || "").split("__")[0];
+        let isTrigger = false;
+        const inspectRules = rules => {
+            (rules || []).forEach(rule => {
+                this.ruleTriggerIds(rule).forEach(triggerId => {
+                    if (String(triggerId).split("__")[0] === baseOptionId) isTrigger = true;
+                });
+            });
+        };
+
+        this.categories.forEach(category => {
+            inspectRules(this.getModifiedCostRules(category));
+            walkSubcategories(category.subcategories, subcat => inspectRules(this.getModifiedCostRules(subcat)));
+            (category.options || []).forEach(option => inspectRules(this.getModifiedCostRules(option)));
+            walkSubcategories(category.subcategories, subcat => {
+                (subcat.options || []).forEach(option => inspectRules(this.getModifiedCostRules(option)));
+            });
+        });
+        return isTrigger;
     }
 
     rulePriority(rule, index) {
@@ -857,6 +999,79 @@ class CyoaEngine {
                 : this.applyDiscountCost(bestCost, info.subcat.discountMode || "half");
         }
         return bestCost;
+    }
+
+    withSelectedOptionsSnapshot(snapshot, callback) {
+        const current = { ...this.selectedOptions };
+        this.selectedOptions = { ...(snapshot || {}) };
+        try {
+            return callback();
+        } finally {
+            this.selectedOptions = current;
+        }
+    }
+
+    selectedCostOptionIndex(option) {
+        const choices = this.normalizeCostOptions(option);
+        if (!choices.length) return null;
+        const selected = this.selectedCostOptionIndexes[option.id];
+        return choices.some(choice => choice.index === Number(selected)) ? Number(selected) : choices[0].index;
+    }
+
+    costMapsEqual(a = {}, b = {}) {
+        const keys = new Set([...Object.keys(a || {}), ...Object.keys(b || {})]);
+        for (const key of keys) {
+            if ((Number(a?.[key]) || 0) !== (Number(b?.[key]) || 0)) return false;
+        }
+        return true;
+    }
+
+    optionsAffectedBySelectionCountChange(changingOption, nextCount) {
+        const beforeSnapshot = { ...this.selectedOptions };
+        const afterSnapshot = { ...this.selectedOptions };
+        if (nextCount > 0) {
+            afterSnapshot[changingOption.id] = nextCount;
+        } else {
+            delete afterSnapshot[changingOption.id];
+        }
+
+        const affected = [];
+        Object.entries(beforeSnapshot).forEach(([optionId, count]) => {
+            if (optionId === changingOption.id) return;
+            if (this.isCostModifierTriggerOption(optionId)) return;
+            const option = this.optionMap.get(optionId);
+            const selectedCount = Number(count) || 0;
+            if (!option || selectedCount <= 0) return;
+
+            for (let index = 0; index < selectedCount; index += 1) {
+                const selectionNumber = index + 1;
+                const costOptionIndex = this.selectedCostOptionIndex(option);
+                const beforeCost = this.withSelectedOptionsSnapshot(beforeSnapshot, () =>
+                    this.effectiveCost(option, { costOptionIndex, selectionNumber })
+                );
+                const afterCost = this.withSelectedOptionsSnapshot(afterSnapshot, () =>
+                    this.effectiveCost(option, { costOptionIndex, selectionNumber })
+                );
+                if (!this.costMapsEqual(beforeCost, afterCost)) {
+                    affected.push(option);
+                    break;
+                }
+            }
+        });
+        return affected;
+    }
+
+    removeSelectionsAffectedByCostModifierChange(changingOption, nextCount, { skipCostModifierAffectedRemoval = false } = {}) {
+        if (skipCostModifierAffectedRemoval) return true;
+        const affected = this.optionsAffectedBySelectionCountChange(changingOption, nextCount);
+        if (affected.length && !this.costModifierChangeConfirmed) return false;
+        affected.forEach(option => {
+            while (this.selectedOptions[option.id] > 0) {
+                this.remove(option.id, { skipCostModifierAffectedRemoval: true });
+            }
+            this.removedByCostModifier.push(option.id);
+        });
+        return true;
     }
 
     effectiveCostChoices(optionOrId) {
@@ -1092,11 +1307,20 @@ class CyoaEngine {
         }
     }
 
-    select(optionId, { costOptionIndex = null } = {}) {
+    select(optionId, { costOptionIndex = null, skipCostModifierAffectedRemoval = false } = {}) {
         const option = this.option(optionId);
+        if (!this.pendingAutoGrantSourceId) {
+            const confirmed = this.removeSelectionsAffectedByCostModifierChange(option, (this.selectedOptions[option.id] || 0) + 1, {
+                skipCostModifierAffectedRemoval
+            });
+            if (!confirmed) return false;
+        }
         this.ensureSubcategoryLimit(option);
         assert(this.canSelect(option, { costOptionIndex }), `${this.filename}: expected ${optionId} to be selectable`);
         const cost = this.effectiveCost(option, { costOptionIndex });
+        if (costOptionIndex !== null && costOptionIndex !== undefined) {
+            this.selectedCostOptionIndexes[option.id] = Number(costOptionIndex);
+        }
         const isAutoGrant = !!this.pendingAutoGrantSourceId;
         if (!isAutoGrant) {
             Object.entries(cost).forEach(([type, value]) => {
@@ -1116,11 +1340,16 @@ class CyoaEngine {
         }
         this.applyAutoGrants(option);
         this.removeOptionsWithUnmetPrerequisites();
+        return true;
     }
 
-    remove(optionId) {
+    remove(optionId, { skipCostModifierAffectedRemoval = false } = {}) {
         const option = this.option(optionId);
         assert(this.selectedOptions[option.id] > 0, `${this.filename}: expected ${optionId} to be selected`);
+        const confirmed = this.removeSelectionsAffectedByCostModifierChange(option, (this.selectedOptions[option.id] || 0) - 1, {
+            skipCostModifierAffectedRemoval
+        });
+        if (!confirmed) return false;
         const cost = this.discountedSelections[option.id]?.pop() ?? this.effectiveCost(option);
         Object.entries(cost).forEach(([type, value]) => {
             if (!Object.prototype.hasOwnProperty.call(this.points, type)) this.points[type] = 0;
@@ -1132,6 +1361,7 @@ class CyoaEngine {
         const historyIndex = this.selectionHistory.indexOf(option.id);
         if (historyIndex >= 0) this.selectionHistory.splice(historyIndex, 1);
         this.removeAutoGrantsFromSource(option.id);
+        return true;
     }
 
     normalizeAutoGrantRules(option) {
@@ -1750,6 +1980,19 @@ test("backpack labels should include repeated selection counts", () => {
         PLAYER_SCRIPT_SOURCE.includes("labelDiv.textContent = selectedCount > 1 ? `${opt.label} x${selectedCount}` : opt.label;"),
         "backpack should append xN to labels when an option has multiple selections"
     );
+
+    const engine = CyoaEngine.synthetic();
+    engine.select("multi");
+    engine.select("multi");
+    const labels = renderBackpackWithPlayerScript(engine.data, engine.selectedOptions);
+    assert(labels.includes("Core"), "backpack should group selected synthetic options by category");
+    assert(labels.includes("Multi x2"), "backpack should show repeated selection counts using script.js rendering logic");
+
+    const emptyLabels = renderBackpackWithPlayerScript(engine.data, {});
+    assert(
+        emptyLabels.includes("No selections yet. Make some choices to see them here!"),
+        "backpack should show the script.js empty-state message when nothing is selected"
+    );
 });
 
 test("point type renames should update every referenced cost map", () => {
@@ -2318,6 +2561,81 @@ test("percentage modifiers should round up for option and subcategory costs", ()
     assertDeepEqual(marvel.effectiveCost("gearGearShieldGenerator2", { costOptionIndex: 0 }), { "Dollars (millions)": 12 });
 });
 
+test("cost modifier changes should unselect stale priced options instead of repricing them", () => {
+    const engine = CyoaEngine.synthetic();
+    engine.points["Dollars (millions)"] = 50;
+
+    engine.select("gearGearShieldGenerator2", { costOptionIndex: 0 });
+    assert.strictEqual(engine.points["Dollars (millions)"], 34);
+
+    engine.select("powersScienceConstruction");
+    assert.strictEqual(engine.selectedOptions.gearGearShieldGenerator2, undefined);
+    assert.strictEqual(engine.selectedOptions.powersScienceConstruction, 1);
+    assert.strictEqual(engine.points["Dollars (millions)"], 50);
+    assert.deepStrictEqual(engine.removedByCostModifier, ["gearGearShieldGenerator2"]);
+
+    engine.select("gearGearShieldGenerator2", { costOptionIndex: 0 });
+    assert.strictEqual(engine.points["Dollars (millions)"], 36);
+
+    engine.select("powersScienceConstruction");
+    assert.strictEqual(engine.selectedOptions.gearGearShieldGenerator2, undefined);
+    assert.strictEqual(engine.selectedOptions.powersScienceConstruction, 2);
+    assert.strictEqual(engine.points["Dollars (millions)"], 50);
+
+    engine.select("gearGearShieldGenerator2", { costOptionIndex: 0 });
+    assert.strictEqual(engine.points["Dollars (millions)"], 38);
+
+    engine.remove("powersScienceConstruction");
+    assert.strictEqual(engine.selectedOptions.gearGearShieldGenerator2, undefined);
+    assert.strictEqual(engine.selectedOptions.powersScienceConstruction, 1);
+    assert.strictEqual(engine.points["Dollars (millions)"], 50);
+});
+
+test("percentage cost modifier changes should keep current selections when rejected", () => {
+    const engine = CyoaEngine.synthetic();
+    engine.points["Dollars (millions)"] = 50;
+    engine.costModifierChangeConfirmed = false;
+
+    engine.select("gearGearShieldGenerator2", { costOptionIndex: 0 });
+    assert.strictEqual(engine.points["Dollars (millions)"], 34);
+
+    const accepted = engine.select("powersScienceConstruction");
+    assert.strictEqual(accepted, false);
+    assert.strictEqual(engine.selectedOptions.gearGearShieldGenerator2, 1);
+    assert.strictEqual(engine.selectedOptions.powersScienceConstruction, undefined);
+    assert.strictEqual(engine.points["Dollars (millions)"], 34);
+    assert.deepStrictEqual(engine.removedByCostModifier, []);
+});
+
+test("point cost modifier changes should unselect stale priced options when accepted", () => {
+    const engine = CyoaEngine.synthetic();
+
+    engine.select("ringPowersCharacteristicPowersDeathEmpowerment");
+    assert.strictEqual(engine.points.Points, 5);
+
+    const accepted = engine.select("emotionalSpectrumEmotionalSpectrumColor696969ColorlessRingsColor");
+    assert.strictEqual(accepted, true);
+    assert.strictEqual(engine.selectedOptions.ringPowersCharacteristicPowersDeathEmpowerment, undefined);
+    assert.strictEqual(engine.selectedOptions.emotionalSpectrumEmotionalSpectrumColor696969ColorlessRingsColor, 1);
+    assert.strictEqual(engine.points.Points, 10);
+    assert.deepStrictEqual(engine.removedByCostModifier, ["ringPowersCharacteristicPowersDeathEmpowerment"]);
+});
+
+test("point cost modifier changes should keep current selections when rejected", () => {
+    const engine = CyoaEngine.synthetic();
+    engine.costModifierChangeConfirmed = false;
+
+    engine.select("ringPowersCharacteristicPowersDeathEmpowerment");
+    assert.strictEqual(engine.points.Points, 5);
+
+    const accepted = engine.select("emotionalSpectrumEmotionalSpectrumColor696969ColorlessRingsColor");
+    assert.strictEqual(accepted, false);
+    assert.strictEqual(engine.selectedOptions.ringPowersCharacteristicPowersDeathEmpowerment, 1);
+    assert.strictEqual(engine.selectedOptions.emotionalSpectrumEmotionalSpectrumColor696969ColorlessRingsColor, undefined);
+    assert.strictEqual(engine.points.Points, 5);
+    assert.deepStrictEqual(engine.removedByCostModifier, []);
+});
+
 test("modified cost priority should respect hierarchy, legacy rules, idsAny, and maxCost", () => {
     const engine = CyoaEngine.synthetic();
     engine.select("discountTrigger");
@@ -2463,7 +2781,9 @@ test("unknown option fields should be preserved without affecting runtime logic"
 
 test("packed export state should round-trip selections, points, inputs, and grants", () => {
     const engine = CyoaEngine.synthetic();
-    engine.storyInputs.name = "Test User";
+    engine.select("freeText");
+    engine.storyInputs.freeText = "Test User";
+    engine.storyInputs.subcatNote = "Synth";
     engine.attributeSliderValues.Power = 4;
     engine.dynamicSelections.option = ["Power"];
     engine.subcategoryDiscountSelections.sub = { option: 1 };
@@ -2482,6 +2802,31 @@ test("packed export state should round-trip selections, points, inputs, and gran
     assert.deepStrictEqual(unpacked.categoryDiscountSelections, engine.categoryDiscountSelections);
     assert.deepStrictEqual(unpacked.optionGrantDiscountSelections, engine.optionGrantDiscountSelections);
     assert.deepStrictEqual(unpacked.autoGrantedSelections, engine.autoGrantedSelections);
+
+    const scriptRoundTrip = runPlayerScriptExportImportHelpers(engine.buildExportState());
+    assert.deepStrictEqual(scriptRoundTrip.unpacked.selectedOptions, engine.selectedOptions);
+    assert.deepStrictEqual(scriptRoundTrip.unpacked.points, engine.points);
+    assert.deepStrictEqual(scriptRoundTrip.unpacked.discountedSelections, engine.discountedSelections);
+    assert.deepStrictEqual(scriptRoundTrip.unpacked.storyInputs, engine.storyInputs);
+    assert.deepStrictEqual(scriptRoundTrip.unpacked.attributeSliderValues, engine.attributeSliderValues);
+    assert.deepStrictEqual(scriptRoundTrip.unpacked.dynamicSelections, engine.dynamicSelections);
+    assert.deepStrictEqual(scriptRoundTrip.unpacked.subcategoryDiscountSelections, engine.subcategoryDiscountSelections);
+    assert.deepStrictEqual(scriptRoundTrip.unpacked.categoryDiscountSelections, engine.categoryDiscountSelections);
+    assert.deepStrictEqual(scriptRoundTrip.unpacked.optionGrantDiscountSelections, engine.optionGrantDiscountSelections);
+    assert.deepStrictEqual(scriptRoundTrip.unpacked.autoGrantedSelections, engine.autoGrantedSelections);
+
+    const importedEngine = CyoaEngine.synthetic();
+    importedEngine.importState(scriptRoundTrip.packed);
+    assert.deepStrictEqual(importedEngine.selectedOptions, engine.selectedOptions);
+    assert.deepStrictEqual(importedEngine.points, engine.points);
+    assert.deepStrictEqual(importedEngine.discountedSelections, engine.discountedSelections);
+    assert.deepStrictEqual(importedEngine.storyInputs, engine.storyInputs);
+    assert.deepStrictEqual(importedEngine.attributeSliderValues, engine.attributeSliderValues);
+    assert.deepStrictEqual(importedEngine.dynamicSelections, engine.dynamicSelections);
+    assert.deepStrictEqual(importedEngine.subcategoryDiscountSelections, engine.subcategoryDiscountSelections);
+    assert.deepStrictEqual(importedEngine.categoryDiscountSelections, engine.categoryDiscountSelections);
+    assert.deepStrictEqual(importedEngine.optionGrantDiscountSelections, engine.optionGrantDiscountSelections);
+    assert.deepStrictEqual(importedEngine.autoGrantedSelections, engine.autoGrantedSelections);
 });
 
 test("theme settings should define colors for every option metadata section", () => {

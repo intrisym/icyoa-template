@@ -674,6 +674,124 @@ function getOptionEffectiveCost(option, {
     return bestCost;
 }
 
+function withSelectedOptionsSnapshot(snapshot, callback) {
+    const current = { ...selectedOptions };
+    clearObject(selectedOptions);
+    Object.assign(selectedOptions, snapshot || {});
+    try {
+        return callback();
+    } finally {
+        clearObject(selectedOptions);
+        Object.assign(selectedOptions, current);
+    }
+}
+
+function costMapsEqual(a = {}, b = {}) {
+    const keys = new Set([...Object.keys(a || {}), ...Object.keys(b || {})]);
+    for (const key of keys) {
+        if ((Number(a?.[key]) || 0) !== (Number(b?.[key]) || 0)) return false;
+    }
+    return true;
+}
+
+function getSelectedOptionCostForSnapshot(option, snapshot, selectionNumber) {
+    return withSelectedOptionsSnapshot(snapshot, () => getOptionEffectiveCost(option, {
+        includeFirstNPreview: false,
+        costOptionIndex: getSelectedCostOptionIndex(option),
+        selectionNumber
+    }));
+}
+
+function getOptionsAffectedBySelectionCountChange(changingOption, nextCount) {
+    if (!changingOption?.id) return [];
+
+    const beforeSnapshot = { ...selectedOptions };
+    const afterSnapshot = { ...selectedOptions };
+    if (nextCount > 0) {
+        afterSnapshot[changingOption.id] = nextCount;
+    } else {
+        delete afterSnapshot[changingOption.id];
+    }
+
+    const affected = [];
+    Object.entries(beforeSnapshot).forEach(([optionId, count]) => {
+        if (optionId === changingOption.id) return;
+        if (isCostModifierTriggerOption(optionId)) return;
+        const option = findOptionById(optionId);
+        const selectedCount = Number(count) || 0;
+        if (!option || selectedCount <= 0) return;
+
+        for (let index = 0; index < selectedCount; index += 1) {
+            const selectionNumber = index + 1;
+            const beforeCost = getSelectedOptionCostForSnapshot(option, beforeSnapshot, selectionNumber);
+            const afterCost = getSelectedOptionCostForSnapshot(option, afterSnapshot, selectionNumber);
+            if (!costMapsEqual(beforeCost, afterCost)) {
+                affected.push(option);
+                break;
+            }
+        }
+    });
+    return affected;
+}
+
+function isCostModifierTriggerOption(optionId) {
+    const baseOptionId = String(optionId || "").split("__")[0];
+    let isTrigger = false;
+    const inspectRules = rules => {
+        (rules || []).forEach(rule => {
+            getDiscountRuleTriggerIds(rule).forEach(triggerId => {
+                if (String(triggerId).split("__")[0] === baseOptionId) {
+                    isTrigger = true;
+                }
+            });
+        });
+    };
+
+    categories.forEach(cat => {
+        inspectRules(getModifiedCostRules(cat));
+        walkSubcategoryTree(cat.subcategories || [], subcat => inspectRules(getModifiedCostRules(subcat)));
+        forEachCategoryOption(cat, option => inspectRules(getModifiedCostRules(option)));
+    });
+    return isTrigger;
+}
+
+function confirmCostModifierRemoval(triggerOption, removedOptions) {
+    if (!removedOptions.length) return true;
+    const triggerLabel = triggerOption?.label || triggerOption?.id || "this option";
+    const labels = [...new Set(removedOptions.map(option => option.label || option.id).filter(Boolean))];
+    const visibleLabels = labels.slice(0, 6).join(", ");
+    const remainingCount = Math.max(0, labels.length - 6);
+    const suffix = remainingCount ? `, and ${remainingCount} more` : "";
+    const message = `Changing "${triggerLabel}" will remove selected options whose costs would change: ${visibleLabels}${suffix}.\n\nPress OK to continue and remove them, or Cancel to keep your current selections.`;
+    if (typeof confirm === "function") return confirm(message);
+    if (typeof alert === "function") alert(message);
+    return true;
+}
+
+function removeSelectionsAffectedByCostModifierChange(changingOption, nextCount, options = {}) {
+    if (options.skipCostModifierAffectedRemoval) return true;
+    const affectedOptions = getOptionsAffectedBySelectionCountChange(changingOption, nextCount);
+    if (!affectedOptions.length) return true;
+
+    if (!options.suppressCostModifierWarning) {
+        const confirmed = confirmCostModifierRemoval(changingOption, affectedOptions);
+        if (!confirmed) return false;
+    }
+
+    affectedOptions.forEach(option => {
+        while (selectedOptions[option.id] > 0) {
+            removeSelection(option, {
+                force: true,
+                skipRender: true,
+                skipCostModifierAffectedRemoval: true,
+                suppressCostModifierWarning: true
+            });
+        }
+    });
+
+    return true;
+}
+
 function getOptionEffectiveCostChoices(option, options = {}) {
     const costOptions = normalizeOptionCostOptions(option);
     if (!costOptions.length) {
@@ -2057,6 +2175,8 @@ function removeSelection(option, options = {}) {
     if (!selectedOptions[option.id]) return; // Option not selected
     if (!options.force && isAutoGrantedLocked(option.id)) return;
 
+    if (!removeSelectionsAffectedByCostModifierChange(option, count - 1, options)) return false;
+
     // Update selection history
     const historyIndex = selectionHistory.indexOf(option.id);
     if (historyIndex !== -1) {
@@ -2135,6 +2255,7 @@ function removeSelection(option, options = {}) {
         renderAccordion(); // Re-render to update UI elements (sliders, etc.)
         window.scrollTo(0, scrollY); // Restore scroll position
     }
+    return true;
 }
 
 /**
@@ -2275,6 +2396,10 @@ function addSelection(option, options = {}) {
     const current = selectedOptions[option.id] || 0;
     const isAutoGrant = !!options.autoGrantSourceId;
 
+    if (!isAutoGrant) {
+        if (!removeSelectionsAffectedByCostModifierChange(option, current + 1, options)) return false;
+    }
+
     const subcat = findSubcategoryOfOption(option.id);
     const subcatOptions = subcat?.options || [];
     const subcatCount = subcatOptions.reduce((sum, o) => sum + (selectedOptions[o.id] || 0), 0);
@@ -2334,6 +2459,7 @@ function addSelection(option, options = {}) {
         renderAccordion();
         window.scrollTo(0, scrollY); // Restore scroll position
     }
+    return true;
 }
 
 /**
