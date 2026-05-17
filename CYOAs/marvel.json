@@ -18,7 +18,8 @@
       "[color=#E62429]PP[/color]": 0,
       "[color=#00A651]MP[/color]": 0,
       "[color=#7C3AED]PSP[/color]": 0,
-      "[color=#2563EB]SP[/color]": 0
+      "[color=#2563EB]SP[/color]": 0,
+      "RP": 4
     },
     "allowNegative": [],
     "attributeRanges": {}
@@ -793,7 +794,7 @@
           },
           {
             "label": "Telekinesis",
-            "description": "Rank 1: You can lift mentally only as much as you can lift individually: To start, you can increase this limit through mental exercise to an upper limit of approximately 4 times the human strength, and of course you can do things with telekinesis that cannot be done with raw strength.\n\nRank 2 (3 points): With discipline and training, you can lift many tons without batting an eye. Your telekinetic strength will rival the strongest physical heroes and you will have far more versatility with it. ",
+            "description": "Rank 1: You can lift mentally only as much as you can lift individually: To start, you can increase this limit through mental exercise to an upper limit of approximately 4 times the human strength, and of course you can do things with telekinesis that cannot be done with raw strength.\n\nRank 2: With discipline and training, you can lift many tons without batting an eye. Your telekinetic strength will rival the strongest physical heroes and you will have far more versatility with it. ",
             "costOptions": [
               {
                 "label": "Payment Option 1",
@@ -1017,7 +1018,7 @@
               }
             ],
             "id": "gearGearExoSuit2",
-            "prerequisites": "gearGearExoSuit1 && powersScienceAlienTech1"
+            "prerequisites": "gearGearExoSuit1 && (powersScienceAlienTech1 || questsQuestsTheyCameFromBeyond)"
           },
           {
             "label": "Vehicle 1 ",
@@ -1125,7 +1126,7 @@
               }
             ],
             "id": "gearGearNanomachines2",
-            "prerequisites": "gearGearNanomachines1 && powersScienceAlienTech1"
+            "prerequisites": "gearGearNanomachines1 && (powersScienceAlienTech1 || questsQuestsTheyCameFromBeyond)"
           },
           {
             "label": "Lair 1",
@@ -1233,7 +1234,7 @@
               }
             ],
             "id": "gearGearRadiation2",
-            "prerequisites": "gearGearRadiation1 && powersScienceAlienTech1"
+            "prerequisites": "gearGearRadiation1 && (powersScienceAlienTech1 || questsQuestsTheyCameFromBeyond)"
           }
         ],
         "subcategories": [],
@@ -1244,6 +1245,580 @@
         "darkTextColor": "#F8FAFC",
         "darkAccentColor": "#020617",
         "columnsPerRow": 4
+      }
+    ]
+  },
+  {
+    "name": "Relationships",
+    "subcategories": [
+      {
+        "name": "X-Men",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Kitty Pryde (Shadowcat)",
+            "description": "Ohh. The X-Men's resident kitty cat! Miss Pryde here can be a bit catty at times, and I don't just mean in the usual ways. She can be as fond of you as the day is long, but disappear when you most expect her.\n\nNot to say she's unreliable. Though, she's a good friend to have, and a nifty person to have your back in a fight.What with her ability to phase through things. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {}
+              }
+            ],
+            "id": "relationshipsXMenKittyPrydeShadowcat"
+          },
+          {
+            "label": "Anna Marie (Rogue)",
+            "description": "Low-Key, one of the strongest X-Men, shes got far more than just the power theft she's known for. Depending on when you get to know her, she's also got flight and super strength! \n\nOn a personal level, she's somewhat withdrawn on account of not bieng able to touch people. But she's also sassy and no-nonsense, and more than willing to lay the beat-down on anyone who needs it. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {}
+              }
+            ],
+            "id": "relationshipsXMenAnnaMarieRogue"
+          },
+          {
+            "label": "Piotr \"Peter\" Rasputin (Colossus)",
+            "description": "Now this guy's hard! Heh\n\nColossus is stronger and more durable than steel. And I am not just talking about his power. He can be a bit socially awkward, but he has a big heart and even bigger shoulders. \n\nHe's always there for his comrades, and always there for his enemies, too.",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {}
+              }
+            ],
+            "id": "relationshipsXMenPiotrPeterRasputinColossus"
+          },
+          {
+            "label": "Remy Lebeau (Gambit)",
+            "description": "The cajun sensation that's sweeping the nation. This French-speaking mutant has a tendency to make things explode, and I am not just talking about his power either. \n\nHe is a fiery one, and he's got a fondness for playing cards, both as weapons and for gambling. Depending on when you're coming into the scene, may be in a relationship with Rogue. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {}
+              }
+            ],
+            "id": "relationshipsXMenRemyLebeauGambit"
+          },
+          {
+            "label": "Pietro Maximoff (Quicksilver)",
+            "description": "Twin brother to potential mentor Wanda Maximoff, Quicksilver here has super speed and significant issues related to them. He doesn't usually let on about it, but he can get really tired of petty delays, really quickly. \n\nOther than that though, he's as brave and loyal a friend as you could have asked for, even if he has a tendency to rush in.",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {}
+              }
+            ],
+            "id": "relationshipsXMenPietroMaximoffQuicksilver"
+          },
+          {
+            "label": "Laura Kinney (X-23)",
+            "description": "Technically, a female clone of ol' Wolvie, she considers herself his daughter, since he raised her for a while. \n\nA bit younger than the other people on this list, but she's out doing her own thing. \n\nBasically a smaller Wolverine, if we're being honest. She inherited a lot from her adoptive brother. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {}
+              }
+            ],
+            "id": "relationshipsXMenLauraKinneyX23"
+          },
+          {
+            "label": "Scott Summers (Cyclops)",
+            "description": "On-again off-again leader of the X-Men.Most of the time Scotty here is a valiant but wark of truth, justice, and the American way, but he has his dark episodes, too.\n\nThe guy's got a strong power, and he's good in a fight, but he just cannot take a joke, y'know? He could definitely afford to lighten up, a lot. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {}
+              }
+            ],
+            "id": "relationshipsXMenScottSummersCyclops"
+          },
+          {
+            "label": "Kurt Wagner (Nightcrawler)",
+            "description": "One of the most effective mutants to have in a fight. Between the skill with swords and other combat styles, and his ability to teleport, Kurt is also just a great guy to be around. \n\nI mean he's got issues, like anybody else, but he has generally healthy coping mechanisms and tries to be friendly to people who aren't trying to kill him.",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {}
+              }
+            ],
+            "id": "relationshipsXMenKurtWagnerNightcrawler"
+          }
+        ],
+        "subcategories": [],
+        "defaultCost": {
+          "RP": 1
+        },
+        "columnsPerRow": 4
+      },
+      {
+        "name": "Reality-Warpers",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Franklin Richards",
+            "description": "Can't talk about reality warpers without Franklin Richards. The son of Reed Richards and Susan Storm, this kid is stupidly powerful. He's got telepathy, telekinesis, molecular control over matter, the list goes on. He's basically a tiny god. \n\nFortunately, if you get him young enough, he's mostly just telekinetic and can be guided into not being a twat when he grows up.",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {}
+              }
+            ],
+            "id": "relationshipsRealityWarpersFranklinRichards"
+          },
+          {
+            "label": "Slapstick",
+            "description": "Wow, digging deep for this one, huh?\n\nSlapstick doesn't really warp reality outside of himself, but what he does is pretty rad nonetheless. He's a cartoon character in the real world. Hammer-space, rubber body, running off the edge of a cliff without realizing it, etc.\n\nThat applies to his behavior as well.",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {}
+              }
+            ],
+            "id": "relationshipsRealityWarpersSlapstick"
+          },
+          {
+            "label": "Doreen Allene Green (Squirrel GIrl) ",
+            "description": "Okay. so her powers don't explicitly include breaking the fourth wall or actually warping reality, but come on, this girl? Beating Doom? I don't think so. She's like the opposite of a jobber.\n\nPersonality-wise, I hear she's rather squirrel-like. Chipper and upbeat and almost obnoxiously full of energy. Not my cup of tea. But maybe you're into that? ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {}
+              }
+            ],
+            "id": "relationshipsRealityWarpersDoreenAlleneGreenSquirrelGirl"
+          },
+          {
+            "label": "Wade Wilson",
+            "description": "Wha- Is this me? Am I on the list that I drafted? What am I doing here? \n\nOkay. Yes. I'm here. Sue me. I'm bored. We're already friends, right? This is just formalizing it. I kid a lot, but I'm actually useful to have in a fight. \n\nEspecially when I have the reality stone. That's when things get really wild. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {}
+              }
+            ],
+            "id": "relationshipsRealityWarpersWadeWilson"
+          }
+        ],
+        "subcategories": [],
+        "defaultCost": {
+          "RP": 1
+        },
+        "columnsPerRow": 4
+      },
+      {
+        "name": "Villains",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Felivia Harding (Black Cat) ",
+            "description": "Yo, have you played the new Spider-Man game? Specifically the heist DLC? Black Cat is smokin' hot in that.\n\nBut do not let that distract you as much as it distracts my boy Spidey. She's a professional thief, and one of the best in the world. And she's good at outfoxing everyone, including the people who hired her. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {}
+              }
+            ],
+            "id": "relationshipsVillainsFeliviaHardingBlackCat"
+          },
+          {
+            "label": "Cain Marko (Juggernaut)",
+            "description": "He's the juggernaut, bitch!\n\nCain Marko is possibly the most villainous of the villains listed here, being kind of an asshole in addition to being a bad guy. \n\nThat being said, he's also incredibly powerful, so don't say that to his face. Brutally strong, nigh-indestructible, and resistant to almost everything. He lives up to his name ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {}
+              }
+            ],
+            "id": "relationshipsVillainsCainMarkoJuggernaut"
+          },
+          {
+            "label": "Quentin Beck",
+            "description": "Another Spidey villain, Beck is a but of a loopy one, without significant powers of his own, he uses old-school illusions and suggestions. Even hypnotism to make things seem like they're going his way.\n\nI would not recommend taking Mysterio with anyone even tangentially related to Spider-Man. He might use you as a way to get to him. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {}
+              }
+            ],
+            "id": "relationshipsVillainsQuentinBeck"
+          },
+          {
+            "label": " Erik Lehnsherr (Magneto)",
+            "description": "Arguably the most powerful person in this entire CYOA, Magneto probably isn't going to be your friend. Building a relationship with him is more likely to just be joining the Brotherhood of Mutants or whatever he's running on any given day. Since the people he's actually close to can be counted on one hand. \n\nDoesn't stop him from being the favorite of a lot of people though.",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {}
+              }
+            ],
+            "id": "relationshipsVillainsErikLehnsherrMagneto"
+          }
+        ],
+        "subcategories": [],
+        "defaultCost": {
+          "RP": 1
+        },
+        "columnsPerRow": 4
+      },
+      {
+        "name": "Miscellaneous",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Gwen Stacy",
+            "description": "One of Spidey's some-time girlfriends. This version of Gwen got bitten. (That's the multiverse at work), and became Spider-Gwen, sometimes known as Ghost-Spider, instead of Peter Parker. \n\nShe's got all his powers, but I am not gonna lie, her quip game isn't quite as strong as his. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {}
+              }
+            ],
+            "id": "relationshipsMiscellaneousGwenStacy"
+          },
+          {
+            "label": "Neena Thurman (Domino)",
+            "description": "I almost put Domino in the reality warpers category. That's how lucky she is. It's a bona-fide super power. No matter how strange it seems. \n\nBeyond that, she's a heck of a merc. Shilled with all sorts of weaponry, and just full of quips, she's kind of like a female version of myself, without the healing factor. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {}
+              }
+            ],
+            "id": "relationshipsMiscellaneousNeenaThurmanDomino"
+          },
+          {
+            "label": "Beta-Ray Bill",
+            "description": "If you ever need someone to beat down Thor, just call BRB here. He wiped the floor with Thor and stole Mjolnir. Such an impressive feat that Odin made him a new weapon of his own so he could give Thor's weapon back.\n\nHe's worthy of Asguardian semi-sentient weapons, so you can infer a fair bit about him based on that alone. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {}
+              }
+            ],
+            "id": "relationshipsMiscellaneousBetaRayBill"
+          },
+          {
+            "label": "Henry \"Hank\" Pym",
+            "description": "Hank's been more heroes than anybody else I know. And that's saying something. More impressively, he doesn't even have any powers. He invented all of those heroes' tech himself. Like Iron Man, only more versatile. \n\nHe's renounced most hero work these days though, so he's mostly just a researcher and scientist. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {}
+              }
+            ],
+            "id": "relationshipsMiscellaneousHenryHankPym"
+          },
+          {
+            "label": "Greer Nelson (Tigra)",
+            "description": "Tigra's one of the more obscure members of the Avengers, but that doesn't make her any less popular, and can you blame people? Just look at her!\n\nShe's got feline reflexes, strength, claws, and tendencies, including bathing herself with her tongue and hating water. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {}
+              }
+            ],
+            "id": "relationshipsMiscellaneousGreerNelsonTigra"
+          },
+          {
+            "label": "T'Challa (Black Panther)",
+            "description": "King of Wakanda and serious badass, T'Challa is a wicked hand-to-hand marital artist, able to keep up with Captain America, even with his shield.\n\nHe's very serious and regal most of the time, but more than that, he's extremely dedicated to his people, which includes you if you're among those he calls friend. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {}
+              }
+            ],
+            "id": "relationshipsMiscellaneousTChallaBlackPanther"
+          },
+          {
+            "label": "Frank Castle (Punisher)",
+            "description": "Frank Castle's had a hard life, man. He's got PTSD on top of PTSD, but he soldiers on through it.\n\nHe also doesn't have any powers, but he has an absolutely absorb amount of weaponry, and a determination and a sense of justice that are strong enough to withstand ghost rider's penance stare. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {}
+              }
+            ],
+            "id": "relationshipsMiscellaneousFrankCastlePunisher"
+          },
+          {
+            "label": "Andrea Benton (Mania)",
+            "description": "A female non-murderous venom Symbiote. Andrea is a temperamental teen with a kickass set of abilities, making her a real problem for her enemies. \n\nShe is/was a partner of Agent Venom over there, so she's no only reliant on the symbiote for combat, but has some second-hand military combat training",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {}
+              }
+            ],
+            "id": "relationshipsMiscellaneousAndreaBentonMania"
+          },
+          {
+            "label": "Marc Spector (Moon-Knight)",
+            "description": "Heavy-weight boxer turned US Marine turned avatar of an ancient Egyptian God, Marc (who rarely let's people know who he really is) is a wickedly talented fighter and crime-fighter. \n\nHe's a tad melodramatic for my tastes, and takes himself rather seriously as the 'fist of konshu' but he's definitely one of the good guys. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {}
+              }
+            ],
+            "id": "relationshipsMiscellaneousMarcSpectorMoonKnight"
+          },
+          {
+            "label": "Flash Thompson",
+            "description": "A Spec-Ops soldier who lost his legs while being a total badass in wartime, the military used the venom symbiote to not only restore his lost potential, but make him an even more lethal weapon than before. \n\nHe's disciplined and good-natured, having been a gym-teacher for Andrea Benton's school in the past. though he now is focused entirely on being a hero. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {}
+              }
+            ],
+            "id": "relationshipsMiscellaneousFlashThompson"
+          },
+          {
+            "label": "Jennifer Waters",
+            "description": "Bruce Banner's cousin or some such, she's got a blood transfusion from him that got her permanently stuck in a hulk form. She's not usually quite as strong as him, but she does still get stronger when she gets angrier, so watch out. \n\nShe's also a lawyer in her day job, and a damn good one too, so watch out. Doubly so. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {}
+              }
+            ],
+            "id": "relationshipsMiscellaneousJenniferWaters"
+          },
+          {
+            "label": "Miles Morales",
+            "description": "Man, Spider-People are just popping up left and right. Miles is a replacement for Peter Parker. But, he's a good kid despite that, and thanks to time shenanigans, we can have him and Peter at the same time. \n\nJust like Gwen, he's just an alternate skin for the Spidey character, powers wise. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {}
+              }
+            ],
+            "id": "relationshipsMiscellaneousMilesMorales"
+          }
+        ],
+        "subcategories": [],
+        "defaultCost": {
+          "RP": 1
+        },
+        "columnsPerRow": 4
+      }
+    ],
+    "description": "So, you figured out your powers, who you wanted to train under (heh), and what sort of gear you had. Now that you are more of an established super... Wait, did you end up being a hero or a villain? You know what? It doesn't mater. I've got stuff for everyone here. \n\nI've got people here looking for all manner of partners. Crime-fighting partners, romantic partners, world domination partners, even just friendly partners. You do not have all the free time in the world, nor, let's face it, are you the most charismatic person the world has ever seen. So [color=red]you will only be able to manage up to four stable relationships[/color] of any kind, plus some bonus ones. I'll explain later on in this section. Anyways, here are the dossiers I've assembled!"
+  },
+  {
+    "name": "Drawbacks",
+    "subcategories": [
+      {
+        "name": "Drawbacks",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Unmasked",
+            "description": "You do not get a secret identity. You never have. As soon as you got your powers, it seems like everyone and their dog found out about them, and you were the highlight of every paper. \n\nThis extends to any aliases you try to establish as well. Disguises don't seem to work as well for you and false identities get exposed or fall apart almost immediately. ",
+            "id": "drawbacksDrawbacksUnmasked",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {}
+              }
+            ]
+          },
+          {
+            "label": "Orphaned",
+            "description": "'Orphan' isn't a strong enough word. Orphans can have aunts, uncles, cousins, extended family, etc. You can't. Not only are your parents and the rest of your family dead, but bad things tend to happen to new family members you try to gain.\n\nYou can have friends and partners (though 'loner' can take care of that). But if you start to consider someone like an adoptive parent to you? Keep a close eye on them.",
+            "id": "drawbacksDrawbacksOrphaned",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {}
+              }
+            ]
+          },
+          {
+            "label": "Obligations",
+            "description": "You have a family, friend group, or some other obligation that depends on you for their continued survival. This cuts into your financial freedom, your time, and provides a weakness that villains can exploit. \n\nYou cannot take this drawback then disregard your obligations. You must be committed to the well-being of the family that relies on you.",
+            "id": "drawbacksDrawbacksObligations",
+            "conflictsWith": [
+              "drawbacksDrawbacksOrphaned"
+            ],
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {}
+              }
+            ]
+          },
+          {
+            "label": "Loner",
+            "description": "You lose all your base companion points that you normally set, and you cannot use this drawback to gain two additional companions. You don't work well with others and can't join teams except in cases of dire emergencies, and I mean dire. Like, world-ending crises.\n\nThis only applies to other heroes. You can still take obligations and have civilian friends. ",
+            "id": "drawbacksDrawbacksLoner",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {
+                  "GP": -3
+                }
+              },
+              {
+                "label": "Payment Option 2",
+                "cost": {
+                  "Dollars (millions)": -30
+                }
+              }
+            ]
+          },
+          {
+            "label": "Vulnerability",
+            "description": "Much like the symbiotes' vulnerability to fire and sound, you have a weakness that bypasses any durability you have. Even durability granted by transformative items, and which weakens any other powers you have while you are exposed to it. \n\nYou can choose the exact nature of your weakness, but it must be something that can reasonably be brought to bear against you by other supers.",
+            "id": "drawbacksDrawbacksVulnerability",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {}
+              }
+            ]
+          },
+          {
+            "label": "Deep Trauma",
+            "description": "Something in your past, or many somethings have left you mentally (and possibly physically) scarred. This traums is not enough for a real drawback. However, this drawback includes unhealthy coping mechanisms such as alcoholism or addiction to hard drugs. \n\nYou wake up in a cold sweat at least once a week and your public image will be significantly harder to maintain.",
+            "id": "drawbacksDrawbacksDeepTrauma",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {}
+              }
+            ]
+          },
+          {
+            "label": "Persecution",
+            "description": "The public, or at least a large portion of it, hates you and your kind. It makes little to no distinction between different super origins. Hating Dr. Strange, Spider-Man, and Wolverine equally.\n\nBeing super-powered, you're unlikely to be attacked personally, but life will be harder. People will be ungrateful, even when you save them, and your civilian life and obligations will be harassed at all times. ",
+            "id": "drawbacksDrawbacksPersecution",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {}
+              }
+            ]
+          },
+          {
+            "label": "Sacred Vow",
+            "description": "Like Samson (from the Bible), your powers are derived from a divine source, and your continued use of those powers is dependent on a vow or deal you have made with that divinity. \n\nYou can choose the exact nature of this vow, but it must be restrictive, along the lines of a vow of chastity, vow of permanent poverty, or a vowa of abstinence from drugs or alcohol. ",
+            "id": "drawbacksDrawbacksSacredVow",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {}
+              }
+            ]
+          }
+        ],
+        "subcategories": [],
+        "columnsPerRow": 4,
+        "costOptions": [
+          {
+            "cost": {
+              "GP": -3
+            }
+          },
+          {
+            "cost": {
+              "Dollars (millions)": -30
+            }
+          },
+          {
+            "cost": {
+              "RP": -2
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Quests",
+    "subcategories": [
+      {
+        "name": "Quests",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "A Nation of One's Own",
+            "description": "So, you want the Doctor Doom School of Power. You are not happy with just technological, physical, or magical power. You need political power as well. This is a long, hard road process to go through, even for the most powerful and charismatic of supers. Most of the civilized world is more or less content with their leadership, and they won't take kindly to someone swooping in to take over. \n\nExpect to spend years in legal controversies, committee discussions, and long discussions with bureaucrats. But, at the end of that long, dark tunnel, you will be the king of your own little (or, heck not-so-little) kingdom.",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {}
+              }
+            ],
+            "id": "questsQuestsANationOfOneSOwn"
+          },
+          {
+            "label": "To Court Death",
+            "description": "Aww, Man. Come on! After all I do for you, you're gonna try and woo my girl! \n\nI mean, I can't blame you. My bone-mama is the hottest there is! The Mad Titan Thanos though so too. Even though she kept dissing his purple ass when he kept killing people for her. \n\nAnyway, I do not really have any advice for you about this one. With her and me, it sort of just happened, and as Thanos proved, killing half of the universe (or half of several universes even). Isn't necessarily enough to win her favor. Good Luck. You're gonna need it. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {}
+              }
+            ],
+            "id": "questsQuestsToCourtDeath"
+          },
+          {
+            "label": "An Army of One",
+            "description": "The multiverse is a big place kid, and you aren't the only you in it. Some of these versions of you are gonna be incompatible with your goals and ideals, but a lot of them are gonna be just \"you\" with a different paint job. If you want, you can collect more or less infinite numbers of yourself, forming, as the quest title indicates, an army of one. \n\nYou will probably spend most of your time bouncing around the multiverse. Once your figure out how to bounce around the multiverse, and you will need to provide assistance to your other dimensional selves. just like they will be providing assistance to you.",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {}
+              }
+            ],
+            "id": "questsQuestsAnArmyOfOne"
+          },
+          {
+            "label": "They Came from Beyond! ",
+            "description": "The world(s) seem to suffer invasions from aliens on a regular basis. If you dedicate yourself to fighting the Skrull, Kree, Celestials, and other alien races that seem hell-bent on messing with us guys who are just trying to live our lives, you can unlock the secrets of technology that normally only guys like Reed and Doom can understand. \n\nThis quest actually provides a mechanical benefit other than \"you get to be with death\" or \"You get a kingdom.\" With this quest, you can unlock the second tier of transformative items. The stuff that normally requires you to have alien tech as a power. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {}
+              }
+            ],
+            "id": "questsQuestsTheyCameFromBeyond"
+          },
+          {
+            "label": "The Strongest There Is",
+            "description": "Some people like to focus on their powers to the exclusion of all else. You train and train and train. And you do almost nothing else but train and fight and train, and maybe study depending how you get your powers. \n\nThis does not have any mechanical benefits, like more points or anything, but the powers you already have will get substantially more potent if you have the second tier purchased. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {}
+              }
+            ],
+            "id": "questsQuestsTheStrongestThereIs",
+            "conflictsWith": [
+              "drawbacksDrawbacksObligations"
+            ]
+          },
+          {
+            "label": "Peace on Earth",
+            "description": "\"An on Earth, Peace, and goodwill towards men\" \n\nTruly the most noble of quests, but probably also the hardest. Especially if you have also taken the persecution drawback. This quest represents an ongoing struggle to end oppression and war. To unify all peoples in harmony. \n\nHonestly, probably a futile objective for even the most dedicated super to accomplish on their own. I would advise you find as many like-minded heroes as possible to join forces with you. Many hands make light work, as my nana always said. ",
+            "costOptions": [
+              {
+                "label": "Payment Option 1",
+                "cost": {}
+              }
+            ],
+            "id": "questsQuestsPeaceOnEarth"
+          }
+        ],
+        "subcategories": []
       }
     ]
   }
