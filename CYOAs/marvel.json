@@ -424,12 +424,28 @@
               {
                 "cost": {
                   "GP": 1
-                }
+                },
+                "costBySelection": [
+                  {
+                    "GP": 1
+                  },
+                  {
+                    "GP": 2
+                  }
+                ]
               },
               {
                 "cost": {
                   "[color=#2563EB]SP[/color]": 1
-                }
+                },
+                "costBySelection": [
+                  {
+                    "[color=#2563EB]SP[/color]": 1
+                  },
+                  {
+                    "[color=#2563EB]SP[/color]": 2
+                  }
+                ]
               }
             ]
           },
@@ -440,12 +456,28 @@
               {
                 "cost": {
                   "GP": 1
-                }
+                },
+                "costBySelection": [
+                  {
+                    "GP": 1
+                  },
+                  {
+                    "GP": 2
+                  }
+                ]
               },
               {
                 "cost": {
                   "[color=#2563EB]SP[/color]": 1
-                }
+                },
+                "costBySelection": [
+                  {
+                    "[color=#2563EB]SP[/color]": 1
+                  },
+                  {
+                    "[color=#2563EB]SP[/color]": 2
+                  }
+                ]
               }
             ],
             "id": "powersScienceTechnopathy",
@@ -458,51 +490,66 @@
               {
                 "cost": {
                   "GP": 1
-                }
+                },
+                "costBySelection": [
+                  {
+                    "GP": 1
+                  },
+                  {
+                    "GP": 2
+                  }
+                ]
               },
               {
                 "cost": {
                   "[color=#2563EB]SP[/color]": 1
-                }
+                },
+                "costBySelection": [
+                  {
+                    "[color=#2563EB]SP[/color]": 1
+                  },
+                  {
+                    "[color=#2563EB]SP[/color]": 2
+                  }
+                ]
               }
             ],
             "id": "powersScienceConstruction",
             "maxSelections": 2
           },
           {
-            "label": "Alien Tech 1",
-            "description": "Rank 1 (2 points): Through accidental contact, devoted study, or a reference from your mentor, you have managed to get your hands on alien technology, which you have reversed engineered to augment your own gear. The second tier of transformative items is unlocked for you. ",
+            "label": "Alien Tech",
+            "description": "Rank 1 (2 points): Through accidental contact, devoted study, or a reference from your mentor, you have managed to get your hands on alien technology, which you have reversed engineered to augment your own gear. The second tier of transformative items is unlocked for you. \n\nRank 2 (3 points): Your mastery of alien technology is second to none. Any one-second-tier transformative item you possess has its effects boosted by an order of magnitude. The exact nature of this boost is up to your discretion. ",
             "costOptions": [
               {
                 "cost": {
                   "GP": 2
-                }
+                },
+                "costBySelection": [
+                  {
+                    "GP": 2
+                  },
+                  {
+                    "GP": 3
+                  }
+                ]
               },
               {
                 "cost": {
                   "[color=#2563EB]SP[/color]": 2
-                }
+                },
+                "costBySelection": [
+                  {
+                    "[color=#2563EB]SP[/color]": 2
+                  },
+                  {
+                    "[color=#2563EB]SP[/color]": 3
+                  }
+                ]
               }
             ],
-            "id": "powersScienceAlienTech1"
-          },
-          {
-            "label": "Alien Tech 2",
-            "description": "Rank 2 (3 points): Your mastery of alien technology is second to none. Any one-second-tier transformative item you possess has its effects boosted by an order of magnitude. The exact nature of this boost is up to your discretion. ",
-            "costOptions": [
-              {
-                "cost": {
-                  "GP": 3
-                }
-              },
-              {
-                "cost": {
-                  "[color=#2563EB]SP[/color]": 3
-                }
-              }
-            ],
-            "id": "powersScienceAlienTech2",
-            "prerequisites": "powersScienceAlienTech1"
+            "id": "powersScienceAlienTech",
+            "maxSelections": 2
           }
         ],
         "subcategories": [],
@@ -526,16 +573,32 @@
               {
                 "cost": {
                   "GP": 1
-                }
+                },
+                "costBySelection": [
+                  {
+                    "GP": 1
+                  },
+                  {
+                    "GP": 2
+                  }
+                ]
               },
               {
                 "cost": {
                   "[color=#00A651]MP[/color]": 1
-                }
+                },
+                "costBySelection": [
+                  {
+                    "[color=#00A651]MP[/color]": 1
+                  },
+                  {
+                    "[color=#00A651]MP[/color]": 2
+                  }
+                ]
               }
             ],
             "id": "powersMagicElemental",
-            "maxSelections": 20
+            "maxSelections": 2
           },
           {
             "label": "Utility Magic",
@@ -544,12 +607,28 @@
               {
                 "cost": {
                   "GP": 1
-                }
+                },
+                "costBySelection": [
+                  {
+                    "GP": 1
+                  },
+                  {
+                    "GP": 2
+                  }
+                ]
               },
               {
                 "cost": {
                   "[color=#00A651]MP[/color]": 1
-                }
+                },
+                "costBySelection": [
+                  {
+                    "[color=#00A651]MP[/color]": 1
+                  },
+                  {
+                    "[color=#00A651]MP[/color]": 2
+                  }
+                ]
               }
             ],
             "id": "powersMagicUtilityMagic",
@@ -562,50 +641,66 @@
               {
                 "cost": {
                   "GP": 1
-                }
+                },
+                "costBySelection": [
+                  {
+                    "GP": 1
+                  },
+                  {
+                    "GP": 2
+                  }
+                ]
               },
               {
                 "cost": {
                   "[color=#00A651]MP[/color]": 1
-                }
+                },
+                "costBySelection": [
+                  {
+                    "[color=#00A651]MP[/color]": 1
+                  },
+                  {
+                    "[color=#00A651]MP[/color]": 2
+                  }
+                ]
               }
             ],
-            "id": "powersMagicSummoning"
+            "id": "powersMagicSummoning",
+            "maxSelections": 2
           },
           {
-            "label": "Temporal Magic 1",
-            "description": "Rank 1 (2 points): Through intense study or fortuitous innate power, you begin to unlock time magic. One of the most powerful and dangerous magical schools. Though you are not yet able to change the course of time, you can slow it down, speed it up, or even pause it for brief periods. ",
+            "label": "Temporal Magic",
+            "description": "Rank 1 (2 points): Through intense study or fortuitous innate power, you begin to unlock time magic. One of the most powerful and dangerous magical schools. Though you are not yet able to change the course of time, you can slow it down, speed it up, or even pause it for brief periods. \n\nRank 2 (3 points): Time is unlocked completely for you. Travel forwards, backwards, and across timelines at will. Time magic still requires focus, so this won't make you immune to being surprised, but if they fail to kill you, you can always just rewind time and try again.",
             "costOptions": [
               {
                 "cost": {
                   "GP": 2
-                }
+                },
+                "costBySelection": [
+                  {
+                    "GP": 2
+                  },
+                  {
+                    "GP": 3
+                  }
+                ]
               },
               {
                 "cost": {
                   "[color=#00A651]MP[/color]": 2
-                }
+                },
+                "costBySelection": [
+                  {
+                    "[color=#00A651]MP[/color]": 2
+                  },
+                  {
+                    "[color=#00A651]MP[/color]": 3
+                  }
+                ]
               }
             ],
-            "id": "powersMagicTemporalMagic1"
-          },
-          {
-            "label": "Temporal Magic 2",
-            "description": "Rank 2 (3 points): Time is unlocked completely for you. Travel forwards, backwards, and across timelines at will. Time magic still requires focus, so this won't make you immune to being surprised, but if they fail to kill you, you can always just rewind time and try again.",
-            "costOptions": [
-              {
-                "cost": {
-                  "GP": 3
-                }
-              },
-              {
-                "cost": {
-                  "[color=#00A651]MP[/color]": 3
-                }
-              }
-            ],
-            "id": "powersMagicTemporalMagic2",
-            "prerequisites": "powersMagicTemporalMagic1"
+            "id": "powersMagicTemporalMagic",
+            "maxSelections": 2
           }
         ],
         "subcategories": [],
@@ -629,12 +724,28 @@
               {
                 "cost": {
                   "GP": 1
-                }
+                },
+                "costBySelection": [
+                  {
+                    "GP": 1
+                  },
+                  {
+                    "GP": 2
+                  }
+                ]
               },
               {
                 "cost": {
                   "[color=#E62429]PP[/color]": 1
-                }
+                },
+                "costBySelection": [
+                  {
+                    "[color=#E62429]PP[/color]": 1
+                  },
+                  {
+                    "[color=#E62429]PP[/color]": 2
+                  }
+                ]
               }
             ],
             "id": "powersPhysicalStrength",
@@ -647,12 +758,28 @@
               {
                 "cost": {
                   "GP": 1
-                }
+                },
+                "costBySelection": [
+                  {
+                    "GP": 1
+                  },
+                  {
+                    "GP": 2
+                  }
+                ]
               },
               {
                 "cost": {
                   "[color=#E62429]PP[/color]": 1
-                }
+                },
+                "costBySelection": [
+                  {
+                    "[color=#E62429]PP[/color]": 1
+                  },
+                  {
+                    "[color=#E62429]PP[/color]": 2
+                  }
+                ]
               }
             ],
             "id": "powersPhysicalSpeed",
@@ -665,51 +792,66 @@
               {
                 "cost": {
                   "GP": 1
-                }
+                },
+                "costBySelection": [
+                  {
+                    "GP": 1
+                  },
+                  {
+                    "GP": 2
+                  }
+                ]
               },
               {
                 "cost": {
                   "[color=#E62429]PP[/color]": 1
-                }
+                },
+                "costBySelection": [
+                  {
+                    "[color=#E62429]PP[/color]": 1
+                  },
+                  {
+                    "[color=#E62429]PP[/color]": 2
+                  }
+                ]
               }
             ],
             "id": "powersPhysicalDurability",
             "maxSelections": 2
           },
           {
-            "label": "Healing Factor 1",
-            "description": "Rank 1 (2 points): Wounds that would cause a normal human to bleed out are survivable for you. You heal approximately 7 times faster than a normal human, so an accident that would hospitalize a normal human for a month would only take you 4 days to recover from. ",
+            "label": "Healing Factor",
+            "description": "Rank 1 (2 points): Wounds that would cause a normal human to bleed out are survivable for you. You heal approximately 7 times faster than a normal human, so an accident that would hospitalize a normal human for a month would only take you 4 days to recover from. \n\nRank 2 (3 points): Your healing factor is the equivalent of of Wolvie's or mine! Major injuries heal within a minute and you can regenerate from complete evisceration as long as a chunk of your body remains intact. ",
             "costOptions": [
               {
                 "cost": {
                   "GP": 2
-                }
+                },
+                "costBySelection": [
+                  {
+                    "GP": 2
+                  },
+                  {
+                    "GP": 3
+                  }
+                ]
               },
               {
                 "cost": {
                   "[color=#E62429]PP[/color]": 2
-                }
+                },
+                "costBySelection": [
+                  {
+                    "[color=#E62429]PP[/color]": 2
+                  },
+                  {
+                    "[color=#E62429]PP[/color]": 3
+                  }
+                ]
               }
             ],
-            "id": "powersPhysicalHealingFactor1"
-          },
-          {
-            "label": "Healing Factor 2",
-            "description": "Rank 2 (3 points): Your healing factor is the equivalent of of Wolvie's or mine! Major injuries heal within a minute and you can regenerate from complete evisceration as long as a chunk of your body remains intact. ",
-            "costOptions": [
-              {
-                "cost": {
-                  "GP": 3
-                }
-              },
-              {
-                "cost": {
-                  "[color=#E62429]PP[/color]": 3
-                }
-              }
-            ],
-            "id": "powersPhysicalHealingFactor2",
-            "prerequisites": "powersPhysicalHealingFactor1"
+            "id": "powersPhysicalHealingFactor",
+            "maxSelections": 2
           }
         ],
         "subcategories": [],
@@ -733,12 +875,28 @@
               {
                 "cost": {
                   "GP": 1
-                }
+                },
+                "costBySelection": [
+                  {
+                    "GP": 1
+                  },
+                  {
+                    "GP": 2
+                  }
+                ]
               },
               {
                 "cost": {
                   "[color=#7C3AED]PSP[/color]": 1
-                }
+                },
+                "costBySelection": [
+                  {
+                    "[color=#7C3AED]PSP[/color]": 1
+                  },
+                  {
+                    "[color=#7C3AED]PSP[/color]": 2
+                  }
+                ]
               }
             ],
             "id": "powersPsychicTelepathy",
@@ -751,12 +909,28 @@
               {
                 "cost": {
                   "GP": 1
-                }
+                },
+                "costBySelection": [
+                  {
+                    "GP": 1
+                  },
+                  {
+                    "GP": 2
+                  }
+                ]
               },
               {
                 "cost": {
                   "[color=#7C3AED]PSP[/color]": 1
-                }
+                },
+                "costBySelection": [
+                  {
+                    "[color=#7C3AED]PSP[/color]": 1
+                  },
+                  {
+                    "[color=#7C3AED]PSP[/color]": 2
+                  }
+                ]
               }
             ],
             "id": "powersPsychicTelekinesis",
@@ -769,51 +943,66 @@
               {
                 "cost": {
                   "GP": 1
-                }
+                },
+                "costBySelection": [
+                  {
+                    "GP": 1
+                  },
+                  {
+                    "GP": 2
+                  }
+                ]
               },
               {
                 "cost": {
                   "[color=#7C3AED]PSP[/color]": 1
-                }
+                },
+                "costBySelection": [
+                  {
+                    "[color=#7C3AED]PSP[/color]": 1
+                  },
+                  {
+                    "[color=#7C3AED]PSP[/color]": 2
+                  }
+                ]
               }
             ],
             "id": "powersPsychicPrecognition",
             "maxSelections": 2
           },
           {
-            "label": "Domination 1",
-            "description": "Rank 1 (2 points): You can completely control the thoughts and actions of a single target, or strongly influence several: Animals are also subject to this effect, but those of strong will can resist and the effect weakens the longer the subject is away from you.",
+            "label": "Domination",
+            "description": "Rank 1 (2 points): You can completely control the thoughts and actions of a single target, or strongly influence several: Animals are also subject to this effect, but those of strong will can resist and the effect weakens the longer the subject is away from you.\n\nRank 2 (3 points): You can completely control up to 5 people. Even those with iron will (for a brief time) and influence large masses of people (For example, inciting a riot in a crowd.) As long as you focus in on your thralls periodically, the effect does not decay with time. ",
             "costOptions": [
               {
                 "cost": {
                   "GP": 2
-                }
+                },
+                "costBySelection": [
+                  {
+                    "GP": 2
+                  },
+                  {
+                    "GP": 3
+                  }
+                ]
               },
               {
                 "cost": {
                   "[color=#7C3AED]PSP[/color]": 2
-                }
+                },
+                "costBySelection": [
+                  {
+                    "[color=#7C3AED]PSP[/color]": 2
+                  },
+                  {
+                    "[color=#7C3AED]PSP[/color]": 3
+                  }
+                ]
               }
             ],
-            "id": "powersPsychicDomination1"
-          },
-          {
-            "label": "Domination 2",
-            "description": "Rank 2 (3 points): You can completely control up to 5 people. Even those with iron will (for a brief time) and influence large masses of people (For example, inciting a riot in a crowd.) As long as you focus in on your thralls periodically, the effect does not decay with time. ",
-            "costOptions": [
-              {
-                "cost": {
-                  "GP": 3
-                }
-              },
-              {
-                "cost": {
-                  "[color=#7C3AED]PSP[/color]": 3
-                }
-              }
-            ],
-            "id": "powersPsychicDomination2",
-            "prerequisites": "powersPsychicDomination1"
+            "id": "powersPsychicDomination",
+            "maxSelections": 2
           }
         ],
         "subcategories": [],
@@ -954,7 +1143,7 @@
               }
             ],
             "id": "gearGearExoSuit2",
-            "prerequisites": "gearGearExoSuit1 && (powersScienceAlienTech1 || questsQuestsTheyCameFromBeyond)"
+            "prerequisites": "gearGearExoSuit1 && (powersScienceAlienTech || questsQuestsTheyCameFromBeyond)"
           },
           {
             "label": "Vehicle 1 ",
@@ -1054,7 +1243,7 @@
               }
             ],
             "id": "gearGearNanomachines2",
-            "prerequisites": "gearGearNanomachines1 && (powersScienceAlienTech1 || questsQuestsTheyCameFromBeyond)"
+            "prerequisites": "gearGearNanomachines1 && (powersScienceAlienTech || questsQuestsTheyCameFromBeyond)"
           },
           {
             "label": "Lair 1",
@@ -1154,7 +1343,7 @@
               }
             ],
             "id": "gearGearRadiation2",
-            "prerequisites": "gearGearRadiation1 && (powersScienceAlienTech1 || questsQuestsTheyCameFromBeyond)"
+            "prerequisites": "gearGearRadiation1 && (powersScienceAlienTech || questsQuestsTheyCameFromBeyond)"
           }
         ],
         "subcategories": [],
