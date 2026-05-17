@@ -12,6 +12,7 @@ const FEATURE_COVERAGE = [
     "synthetic CYOA data computes selectable state and effective costs",
     "point gains, costs, refunds, and allow-negative point types",
     "alternate selectable option cost maps",
+    "standalone points display is hidden when selectable cost options are shown",
     "single-select payment options render explicit selection controls",
     "point type renames cascade through all cost maps",
     "point type edits refresh category-level cost controls",
@@ -1929,6 +1930,21 @@ test("payment option labels should not be player-facing because costs describe t
         PLAYER_SCRIPT_SOURCE.includes("option.textContent = formatCostMapPlainText(effectiveCost) || \"Free\""),
         "player dropdown should display generated cost/gain text instead of stored payment labels"
     );
+});
+
+test("standalone points display should be hidden when cost options are shown", () => {
+    assert(
+        PLAYER_SCRIPT_SOURCE.includes("const shouldShowCostOptions = costChoices.length > 1 && selectedCount === 0;"),
+        "player should determine when selectable cost options will be shown"
+    );
+    assert(
+        PLAYER_SCRIPT_SOURCE.includes("if (!shouldShowCostOptions)") && PLAYER_SCRIPT_SOURCE.includes("if (shouldShowCostOptions)"),
+        "player should hide standalone Points when rendering Cost Options"
+    );
+
+    const engine = CyoaEngine.synthetic();
+    const choices = engine.effectiveCostChoices("alternateCost").map(choice => choice.cost);
+    assert.deepStrictEqual(choices, [{ Points: 4 }, { Tokens: 2 }]);
 });
 
 test("single-select payment options should still expose an explicit selector", () => {
