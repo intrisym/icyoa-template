@@ -4033,6 +4033,8 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
 
     // Default display cost is what the next selection would cost after modifiers.
     const selectedCostOptionIndex = getInitialCostOptionIndex(opt);
+    const costChoices = getOptionEffectiveCostChoices(opt);
+    const shouldShowCostOptions = costChoices.length > 1 && selectedCount === 0;
     const displayCost = getOptionEffectiveCost(opt, { costOptionIndex: selectedCostOptionIndex });
     const originalCost = getOptionBaseCostByChoice(opt, selectedCostOptionIndex);
 
@@ -4060,18 +4062,19 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
         }
     });
 
-    appendOptionMetaSection(
-        requirements,
-        "Points",
-        [
-            ...gain.map(line => `Gain: ${line}`),
-            ...spend.map(line => `Cost: ${line}`)
-        ],
-        "option-meta-points"
-    );
+    if (!shouldShowCostOptions) {
+        appendOptionMetaSection(
+            requirements,
+            "Points",
+            [
+                ...gain.map(line => `Gain: ${line}`),
+                ...spend.map(line => `Cost: ${line}`)
+            ],
+            "option-meta-points"
+        );
+    }
 
-    const costChoices = getOptionEffectiveCostChoices(opt);
-    if (costChoices.length > 1 && selectedCount === 0) {
+    if (shouldShowCostOptions) {
         appendOptionMetaSection(
             requirements,
             "Cost Options",
