@@ -1739,12 +1739,14 @@
             "costOptions": [
               {
                 "cost": {
-                  "GP": -3
+                  "GP": -3,
+                  "RP": 4
                 }
               },
               {
                 "cost": {
-                  "Dollars (millions)": -30
+                  "Dollars (millions)": -30,
+                  "RP": 4
                 }
               }
             ]
