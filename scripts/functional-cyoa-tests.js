@@ -419,6 +419,14 @@ class CyoaEngine {
                                 prerequisitesBySelection: [null, "repeatablePrereqUnlock"]
                             },
                             { id: "repeatablePrereqUnlock", label: "Repeatable Prereq Unlock", cost: {} },
+                            {
+                                id: "repeatableOptionA",
+                                label: "Option A",
+                                maxSelections: 2,
+                                costOptions: [{ cost: { Points: 3 }, costBySelection: [{ Points: 3 }, { Points: 5 }] }],
+                                prerequisitesBySelection: [null, "repeatableOptionB"]
+                            },
+                            { id: "repeatableOptionB", label: "Option B", cost: {} },
                             { id: "gearGearExoSuit1", label: "Exo Suit 1", cost: {} },
                             { id: "powersScienceAlienTech", label: "Alien Tech", cost: {} },
                             { id: "questsQuestsTheyCameFromBeyond", label: "They Came from Beyond!", cost: {} },
@@ -1469,6 +1477,23 @@ class CyoaEngine {
         return requirements;
     }
 
+    displayRequirementLines(optionOrId, selectionNumber = null) {
+        return this.displayRequirements(optionOrId, selectionNumber).flatMap(requirement => {
+            if (typeof requirement === "string") {
+                return this.prerequisiteDisplayStatuses(requirement).map(status => {
+                    const [id, minSuffix] = status.id.split("__");
+                    const label = this.optionMap.get(id)?.label || id;
+                    const countLabel = minSuffix ? ` (x${Number(minSuffix) || 1})` : "";
+                    return `${status.satisfied ? "✅" : "❌"} ${status.negated ? "NOT " : ""}${label}${countLabel}`;
+                });
+            }
+            if (Array.isArray(requirement)) {
+                return requirement.map(id => `${this.meetsCountRequirement(id) ? "✅" : "❌"} ${this.optionMap.get(id)?.label || id}`);
+            }
+            return [];
+        });
+    }
+
     setTextInput(optionId, value) {
         const option = this.option(optionId);
         assert.strictEqual(option.inputType, "text", `${this.filename}: expected ${optionId} to be a text input option`);
@@ -2034,6 +2059,27 @@ test("repeatable options should enforce selection-specific prerequisites", () =>
         PLAYER_SCRIPT_SOURCE.includes("selectionNumber: displaySelectionNumber"),
         "player UI should render selection-specific tier costs instead of the last paid cost"
     );
+});
+
+test("repeatable option second selections should disclose higher cost and prerequisite", () => {
+    const engine = CyoaEngine.synthetic();
+
+    assert.deepStrictEqual(engine.displayedNextSelectionCost("repeatableOptionA", 0), { Points: 3 });
+    assert.deepStrictEqual(engine.displayRequirements("repeatableOptionA", 1), []);
+    engine.select("repeatableOptionA");
+    assert.strictEqual(engine.points.Points, 7);
+    assert.strictEqual(engine.canSelect("repeatableOptionA"), false);
+
+    assert.deepStrictEqual(engine.displayedNextSelectionCost("repeatableOptionA", 0), { Points: 5 });
+    assert.deepStrictEqual(engine.displayRequirements("repeatableOptionA", 2), ["repeatableOptionB"]);
+    assert.deepStrictEqual(engine.displayRequirementLines("repeatableOptionA", 2), ["❌ Option B"]);
+
+    engine.select("repeatableOptionB");
+    assert.strictEqual(engine.canSelect("repeatableOptionA"), true);
+    assert.deepStrictEqual(engine.displayRequirementLines("repeatableOptionA", 2), ["✅ Option B"]);
+    engine.select("repeatableOptionA");
+    assert.strictEqual(engine.points.Points, 2);
+    assert.deepStrictEqual(engine.discountedSelections.repeatableOptionA, [{ Points: 3 }, { Points: 5 }]);
 });
 
 test("payment option labels should not be player-facing because costs describe the choice", () => {
