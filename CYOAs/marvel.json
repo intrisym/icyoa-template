@@ -34,28 +34,28 @@
   },
   {
     "type": "theme",
-    "bg-color": "#d8d1c6",
-    "container-bg": "#e9e4da",
-    "text-color": "#151923",
-    "text-muted": "#495160",
-    "accent-color": "#14213d",
-    "accent-text": "#ffffff",
-    "border-color": "#9d9488",
-    "item-bg": "#f2ede4",
-    "item-header-bg": "#cec3b4",
-    "points-bg": "#14213d",
-    "points-border": "#f5c542",
-    "points-text": "#f8fafc",
-    "selection-glow-color": "#f5c542",
-    "shadow-color": "rgba(20, 33, 61, 0.22)",
-    "option-meta-bg": "#e1dbd0",
-    "option-meta-heading-bg": "rgba(20, 33, 61, 0.10)",
-    "option-meta-heading-text": "#151923",
-    "option-meta-points-color": "#8a5a00",
-    "option-meta-conditional-color": "#005f73",
-    "option-meta-auto-grants-color": "#007f3f",
-    "option-meta-prerequisites-color": "#8a5a00",
-    "option-meta-conflicts-color": "#b91c1c",
+    "bg-color": "#F6F1E7",
+    "container-bg": "#FFFDF7",
+    "text-color": "#172033",
+    "text-muted": "#536079",
+    "accent-color": "#C1121F",
+    "accent-text": "#FFF8E7",
+    "border-color": "#263A73",
+    "item-bg": "#FFF8E7",
+    "item-header-bg": "#F9C74F",
+    "points-bg": "#233B8B",
+    "points-border": "#C1121F",
+    "points-text": "#FFFDF7",
+    "selection-glow-color": "#F9C74F",
+    "shadow-color": "rgba(23, 32, 51, 0.24)",
+    "option-meta-bg": "#F4E9D0",
+    "option-meta-heading-bg": "rgba(35, 59, 139, 0.13)",
+    "option-meta-heading-text": "#172033",
+    "option-meta-points-color": "#9A3412",
+    "option-meta-conditional-color": "#0369A1",
+    "option-meta-auto-grants-color": "#047857",
+    "option-meta-prerequisites-color": "#B45309",
+    "option-meta-conflicts-color": "#BE123C",
     "font-base": "17px",
     "font-title": "42px",
     "font-description": "18px",
@@ -72,32 +72,34 @@
     "font-prereq-help": "15px",
     "font-label": "16px",
     "font-heading": "Verdana, sans-serif",
-    "font-body": "'Quicksand', sans-serif"
+    "font-body": "'Quicksand', sans-serif",
+    "selection-glow": "0 0 14px rgba(249, 199, 79, 0.72)",
+    "selection-glow-hover": "0 0 22px rgba(193, 18, 31, 0.62)"
   },
   {
     "type": "darkTheme",
-    "bg-color": "#06080f",
-    "container-bg": "#0d1321",
-    "text-color": "#f8fafc",
-    "text-muted": "#cbd5e1",
-    "accent-color": "#E62429",
-    "accent-text": "#ffffff",
-    "border-color": "#39465a",
-    "item-bg": "#121a2b",
-    "item-header-bg": "#B91C1C",
-    "points-bg": "#101828",
-    "points-border": "#f5c542",
-    "points-text": "#f8fafc",
-    "selection-glow-color": "#f5c542",
-    "shadow-color": "rgba(0, 0, 0, 0.68)",
-    "option-meta-bg": "#0f172a",
-    "option-meta-heading-bg": "rgba(230, 36, 41, 0.18)",
-    "option-meta-heading-text": "#f8fafc",
-    "option-meta-points-color": "#f5c542",
-    "option-meta-conditional-color": "#5eead4",
-    "option-meta-auto-grants-color": "#86efac",
-    "option-meta-prerequisites-color": "#f5c542",
-    "option-meta-conflicts-color": "#ff6b6f",
+    "bg-color": "#0A0D14",
+    "container-bg": "#111827",
+    "text-color": "#F3F4F6",
+    "text-muted": "#A7B0C0",
+    "accent-color": "#B91C1C",
+    "accent-text": "#F9FAFB",
+    "border-color": "#334155",
+    "item-bg": "#182235",
+    "item-header-bg": "#1F2A44",
+    "points-bg": "#111827",
+    "points-border": "#B45309",
+    "points-text": "#F3F4F6",
+    "selection-glow-color": "#B45309",
+    "shadow-color": "rgba(0, 0, 0, 0.74)",
+    "option-meta-bg": "#111A2A",
+    "option-meta-heading-bg": "rgba(185, 28, 28, 0.16)",
+    "option-meta-heading-text": "#F3F4F6",
+    "option-meta-points-color": "#D97706",
+    "option-meta-conditional-color": "#60A5FA",
+    "option-meta-auto-grants-color": "#22C55E",
+    "option-meta-prerequisites-color": "#D97706",
+    "option-meta-conflicts-color": "#DC2626",
     "font-base": "17px",
     "font-title": "42px",
     "font-description": "18px",
@@ -114,7 +116,9 @@
     "font-prereq-help": "15px",
     "font-label": "16px",
     "font-heading": "Verdana, sans-serif",
-    "font-body": "'Quicksand', sans-serif"
+    "font-body": "'Quicksand', sans-serif",
+    "selection-glow": "0 0 12px rgba(180, 83, 9, 0.48)",
+    "selection-glow-hover": "0 0 18px rgba(185, 28, 28, 0.44)"
   },
   {
     "name": "Mentors",
@@ -122,12 +126,12 @@
       {
         "name": "Science",
         "type": "storyBlock",
-        "backgroundColor": "#3B82F6",
-        "textColor": "#ffffff",
-        "accentColor": "#1D4ED8",
-        "darkBackgroundColor": "#1E3A8A",
-        "darkTextColor": "#EAF2FF",
-        "darkAccentColor": "#172554",
+        "backgroundColor": "#2563EB",
+        "textColor": "#FFFFFF",
+        "accentColor": "#F9C74F",
+        "darkBackgroundColor": "#10233F",
+        "darkTextColor": "#DCEBFF",
+        "darkAccentColor": "#1E40AF",
         "text": "",
         "options": [
           {
@@ -139,7 +143,7 @@
                 "cost": {
                   "[color=#2563EB]SP[/color]": -5,
                   "GP": -1,
-                  "Dollars (millions)": -70
+                  "Dollars (millions)": -60
                 }
               }
             ]
@@ -181,7 +185,8 @@
                 "cost": {
                   "[color=#2563EB]SP[/color]": -5,
                   "[color=#E62429]PP[/color]": -4,
-                  "GP": -2
+                  "GP": -2,
+                  "Dollars (millions)": -20
                 }
               }
             ]
@@ -204,7 +209,7 @@
                 "cost": {
                   "[color=#2563EB]SP[/color]": -5,
                   "[color=#00A651]MP[/color]": -6,
-                  "Dollars (millions)": -40
+                  "Dollars (millions)": -45
                 }
               }
             ]
@@ -255,12 +260,12 @@
           }
         ],
         "subcategories": [],
-        "backgroundColor": "#22A06B",
-        "accentColor": "#047857",
-        "textColor": "#ffffff",
-        "darkBackgroundColor": "#065F46",
-        "darkTextColor": "#ECFDF5",
-        "darkAccentColor": "#052E2B",
+        "backgroundColor": "#15803D",
+        "accentColor": "#F59E0B",
+        "textColor": "#FFFFFF",
+        "darkBackgroundColor": "#123227",
+        "darkTextColor": "#DDF7EA",
+        "darkAccentColor": "#166534",
         "columnsPerRow": 4
       },
       {
@@ -325,12 +330,12 @@
           }
         ],
         "subcategories": [],
-        "backgroundColor": "#C2413D",
-        "accentColor": "#991B1B",
-        "textColor": "#ffffff",
-        "darkBackgroundColor": "#7F1D1D",
-        "darkTextColor": "#FFF1F2",
-        "darkAccentColor": "#450A0A",
+        "backgroundColor": "#C1121F",
+        "accentColor": "#7F1D1D",
+        "textColor": "#FFFFFF",
+        "darkBackgroundColor": "#3B1119",
+        "darkTextColor": "#FCE7E7",
+        "darkAccentColor": "#991B1B",
         "columnsPerRow": 4
       },
       {
@@ -396,12 +401,12 @@
           }
         ],
         "subcategories": [],
-        "backgroundColor": "#8B5CF6",
-        "accentColor": "#6D28D9",
-        "textColor": "#ffffff",
-        "darkBackgroundColor": "#581C87",
-        "darkTextColor": "#F5F3FF",
-        "darkAccentColor": "#3B0764",
+        "backgroundColor": "#7C3AED",
+        "accentColor": "#F0ABFC",
+        "textColor": "#FFFFFF",
+        "darkBackgroundColor": "#281943",
+        "darkTextColor": "#EEE7FF",
+        "darkAccentColor": "#5B21B6",
         "columnsPerRow": 4
       }
     ],
@@ -553,12 +558,12 @@
           }
         ],
         "subcategories": [],
-        "backgroundColor": "#3B82F6",
-        "accentColor": "#1D4ED8",
-        "textColor": "#ffffff",
-        "darkBackgroundColor": "#1E3A8A",
-        "darkTextColor": "#EAF2FF",
-        "darkAccentColor": "#172554",
+        "backgroundColor": "#2563EB",
+        "accentColor": "#F9C74F",
+        "textColor": "#FFFFFF",
+        "darkBackgroundColor": "#10233F",
+        "darkTextColor": "#DCEBFF",
+        "darkAccentColor": "#1E40AF",
         "columnsPerRow": 4
       },
       {
@@ -704,12 +709,12 @@
           }
         ],
         "subcategories": [],
-        "backgroundColor": "#22A06B",
-        "accentColor": "#047857",
-        "textColor": "#ffffff",
-        "darkBackgroundColor": "#065F46",
-        "darkTextColor": "#ECFDF5",
-        "darkAccentColor": "#052E2B",
+        "backgroundColor": "#15803D",
+        "accentColor": "#F59E0B",
+        "textColor": "#FFFFFF",
+        "darkBackgroundColor": "#123227",
+        "darkTextColor": "#DDF7EA",
+        "darkAccentColor": "#166534",
         "columnsPerRow": 4
       },
       {
@@ -855,12 +860,12 @@
           }
         ],
         "subcategories": [],
-        "backgroundColor": "#C2413D",
-        "accentColor": "#991B1B",
-        "textColor": "#ffffff",
-        "darkBackgroundColor": "#7F1D1D",
-        "darkTextColor": "#FFF1F2",
-        "darkAccentColor": "#450A0A",
+        "backgroundColor": "#C1121F",
+        "accentColor": "#7F1D1D",
+        "textColor": "#FFFFFF",
+        "darkBackgroundColor": "#3B1119",
+        "darkTextColor": "#FCE7E7",
+        "darkAccentColor": "#991B1B",
         "columnsPerRow": 4
       },
       {
@@ -1006,12 +1011,12 @@
           }
         ],
         "subcategories": [],
-        "backgroundColor": "#8B5CF6",
-        "accentColor": "#6D28D9",
-        "textColor": "#ffffff",
-        "darkBackgroundColor": "#581C87",
-        "darkTextColor": "#F5F3FF",
-        "darkAccentColor": "#3B0764",
+        "backgroundColor": "#7C3AED",
+        "accentColor": "#F0ABFC",
+        "textColor": "#FFFFFF",
+        "darkBackgroundColor": "#281943",
+        "darkTextColor": "#EEE7FF",
+        "darkAccentColor": "#5B21B6",
         "columnsPerRow": 4
       }
     ],
@@ -1046,313 +1051,277 @@
         ],
         "options": [
           {
-            "label": "Utility Belt 1",
-            "description": "A typical utility belt that will provide typical tools to assist in most situations. Lockpicks, A grappling hook, maybe a re-breather. You can decide exactly what it contains, within research.",
+            "label": "Utility Belt",
+            "description": "Tier 1: A typical utility belt that will provide typical tools to assist in most situations. Lockpicks, A grappling hook, maybe a re-breather. You can decide exactly what it contains, within research.\n\nTier 2: Your utility belt seems to defy the laws of physics. If there is a device that can fit in your hand that would assist you in a given task, you can probably pull it out of your utility belt",
             "costOptions": [
               {
                 "cost": {
                   "Dollars (millions)": 1
-                }
+                },
+                "costBySelection": [
+                  {
+                    "Dollars (millions)": 1
+                  },
+                  {
+                    "Dollars (millions)": 3
+                  }
+                ]
               }
             ],
-            "id": "gearGearUtilityBelt1"
+            "id": "gearGearUtilityBelt",
+            "maxSelections": 2
           },
           {
-            "label": "Utility Belt 2",
-            "description": "Your utility belt seems to defy the laws of physics. If there is a device that can fit in your hand that would assist you in a given task, you can probably pull it out of your utility belt ",
-            "costOptions": [
-              {
-                "cost": {
-                  "Dollars (millions)": 3
-                }
-              }
-            ],
-            "id": "gearGearUtilityBelt2",
-            "prerequisites": "gearGearUtilityBelt1"
-          },
-          {
-            "label": "Guns 1",
-            "description": "You have unlimited access to most guns, up to and including light machine guns, accessories, and special ammunition types are included, but it might take you a few days to get anything too exotic",
+            "label": "Guns",
+            "description": "Tier 1: You have unlimited access to most guns, up to and including light machine guns, accessories, and special ammunition types are included, but it might take you a few days to get anything too exotic\n\nTier 2: You have access to any weapon that fires non-explosive ordinance. Your tiers of explosives also stack with this tier of guns to grant you RPGs, Rocket Launchers, etc. To mount similar weapons on your vehicle, if you have one, you can fire any kind of explosive granted by your tiers in explosives.",
             "costOptions": [
               {
                 "cost": {
                   "Dollars (millions)": 2
-                }
+                },
+                "costBySelection": [
+                  {
+                    "Dollars (millions)": 2
+                  },
+                  {
+                    "Dollars (millions)": 6
+                  }
+                ]
               }
             ],
-            "id": "gearGearGuns1"
+            "id": "gearGearGuns",
+            "maxSelections": 2
           },
           {
-            "label": "Guns 2",
-            "description": "You have access to any weapon that fires non-explosive ordinance. Your tiers of explosives also stack with this tier of guns to grant you RPGs, Rocket Launchers, etc. To mount similar weapons on your vehicle, if you have one, you can fire any kind of explosive granted by your tiers in explosives.",
-            "costOptions": [
-              {
-                "cost": {
-                  "Dollars (millions)": 6
-                }
-              }
-            ],
-            "id": "gearGearGuns2",
-            "prerequisites": "gearGearGuns1"
-          },
-          {
-            "label": "Shield Generator 1",
-            "description": "You can carry a shield generator that can be triggered at will, capable of deflecting gunfire and resisting most basic elemental attacks. However, it can only be used for a few minutes at a time before it needs to recharge, and can be overwhelmed. ",
+            "label": "Shield Generator",
+            "description": "Tier 1: You can carry a shield generator that can be triggered at will, capable of deflecting gunfire and resisting most basic elemental attacks. However, it can only be used for a few minutes at a time before it needs to recharge, and can be overwhelmed.\n\nTier 2: Your shield is active at all times unless you deactivate it, and can withstand immense damage before being overwhelmed. Further, your shield can also withstand immense damage before being overwhelmed. Further, your shield can also provide a hermetic shield, protecting you from gases and vacuum, and provides some protection from psychic effects.",
             "costOptions": [
               {
                 "cost": {
                   "Dollars (millions)": 4
-                }
+                },
+                "costBySelection": [
+                  {
+                    "Dollars (millions)": 4
+                  },
+                  {
+                    "Dollars (millions)": 16
+                  }
+                ]
               }
             ],
-            "id": "gearGearShieldGenerator1"
+            "id": "gearGearShieldGenerator",
+            "maxSelections": 2
           },
           {
-            "label": "Shield Generator 2",
-            "description": "Your shield is active at all times unless you deactivate it, and can withstand immense damage before being overwhelmed. Further, your shield can also withstand immense damage before being overwhelmed. Further, your shield can also provide a hermetic shield, protecting you from gases and vacuum, and provides some protection from psychic effects. ",
-            "costOptions": [
-              {
-                "cost": {
-                  "Dollars (millions)": 16
-                }
-              }
-            ],
-            "id": "gearGearShieldGenerator2",
-            "prerequisites": "gearGearShieldGenerator1"
-          },
-          {
-            "label": "Exo Suit 1",
-            "description": "A basic exosuit provides you with effective Rank 1 Strength, Speed, and Durability. If you already have Rank 1, this will be a moderate boost for you. If you have Rank 2, this will be negligible. ",
+            "label": "Exo Suit",
+            "description": "Tier 1: A basic exosuit provides you with effective Rank 1 Strength, Speed, and Durability. If you already have Rank 1, this will be a moderate boost for you. If you have Rank 2, this will be negligible.\n\nTier 2: An advanced, high-powered exosuit that grants you effective Rank 2 strength and durability, but still only grants Rank 1 speed. It also grants you flight at a max speed of 300mph and includes built-in Tier 1 Ray Weaponry. Though, you cannot use the rays in anything other than the suit.",
             "costOptions": [
               {
                 "cost": {
                   "Dollars (millions)": 20
-                }
+                },
+                "costBySelection": [
+                  {
+                    "Dollars (millions)": 20
+                  },
+                  {
+                    "Dollars (millions)": 30
+                  }
+                ]
               }
             ],
-            "id": "gearGearExoSuit1"
+            "id": "gearGearExoSuit",
+            "maxSelections": 2,
+            "prerequisitesBySelection": [
+              null,
+              "(powersScienceAlienTech || questsQuestsTheyCameFromBeyond)"
+            ]
           },
           {
-            "label": "Exo Suit 2",
-            "description": "An advanced, high-powered exosuit that grants you effective Rank 2 strength and durability, but still only grants Rank 1 speed. It also grants you flight at a max speed of 300mph and includes built-in Tier 1 Ray Weaponry. Though, you cannot use the rays in anything other than the suit. ",
-            "costOptions": [
-              {
-                "cost": {
-                  "Dollars (millions)": 30
-                }
-              }
-            ],
-            "id": "gearGearExoSuit2",
-            "prerequisites": "gearGearExoSuit1 && (powersScienceAlienTech || questsQuestsTheyCameFromBeyond)"
-          },
-          {
-            "label": "Vehicle 1 ",
-            "description": "A tier one vehicle is restricted to being land-bound and can be no larger in size than a small motor home. You can cram as much tech as you can get your hands on into it.",
+            "label": "Vehicle",
+            "description": "Tier 1: A tier one vehicle is restricted to being land-bound and can be no larger in size than a small motor home. You can cram as much tech as you can get your hands on into it.\n\nTier 2: The X-Men's Blackbird, The Avengers' quinjet. All these and more cna be springboards for the kind of badass vehicle you can buy with Tier 2. At this level, your vehicle can also include high-end things like cloaking.",
             "costOptions": [
               {
                 "cost": {
                   "Dollars (millions)": 4
-                }
+                },
+                "costBySelection": [
+                  {
+                    "Dollars (millions)": 4
+                  },
+                  {
+                    "Dollars (millions)": 15
+                  }
+                ]
               }
             ],
-            "id": "gearGearVehicle1"
+            "id": "gearGearVehicle",
+            "maxSelections": 2
           },
           {
-            "label": "Vehicle 2",
-            "description": "The X-Men's Blackbird, The Avengers' quinjet. All these and more cna be springboards for the kind of badass vehicle you can buy with Tier 2. At this level, your vehicle can also include high-end things like cloaking. ",
-            "costOptions": [
-              {
-                "cost": {
-                  "Dollars (millions)": 15
-                }
-              }
-            ],
-            "id": "gearGearVehicle2",
-            "prerequisites": "gearGearVehicle1"
-          },
-          {
-            "label": "Explosives 1",
-            "description": "Grenades, Landmines, Tripwires, Breaching charges, and basically any other \"normal\" kind of explosive ordinance that is not fired from a gun.",
+            "label": "Explosives",
+            "description": "Tier 1: Grenades, Landmines, Tripwires, Breaching charges, and basically any other \"normal\" kind of explosive ordinance that is not fired from a gun.\n\nTier 2: You can make explosives with effects other than death. Freezing grenades, sticky grenades, gas grenades, and more. Anything you can pack into a grenade is now open to you. You can also make more advanced grenades, such as a drilling grenade, homing grenades, or cute little helicopter grenades.",
             "costOptions": [
               {
                 "cost": {
                   "Dollars (millions)": 3
-                }
+                },
+                "costBySelection": [
+                  {
+                    "Dollars (millions)": 3
+                  },
+                  {
+                    "Dollars (millions)": 8
+                  }
+                ]
               }
             ],
-            "id": "gearGearExplosives1"
+            "id": "gearGearExplosives",
+            "maxSelections": 2
           },
           {
-            "label": "Explosives 2",
-            "description": "You can make explosives with effects other than death. Freezing grenades, sticky grenades, gas grenades, and more. Anything you can pack into a grenade is now open to you. You can also make more advanced grenades, such as a drilling grenade, homing grenades, or cute little helicopter grenades.",
-            "costOptions": [
-              {
-                "cost": {
-                  "Dollars (millions)": 8
-                }
-              }
-            ],
-            "id": "gearGearExplosives2",
-            "prerequisites": "gearGearExplosives1"
-          },
-          {
-            "label": "Teleporter 1",
-            "description": "You can, once per ten minutes or so, teleport anywhere within 1000 yards of yourself. You must know your destination or be able to see it, otherwise you risk teleporting yourself into a wall and killing yourself. ",
+            "label": "Teleporter",
+            "description": "Tier 1: You can, once per ten minutes or so, teleport anywhere within 1000 yards of yourself. You must know your destination or be able to see it, otherwise you risk teleporting yourself into a wall and killing yourself.\n\nTier 2: The cooldown on your teleport is reduced to a mere ten seconds, and you can teleport up to 1,000 miles.",
             "costOptions": [
               {
                 "cost": {
                   "Dollars (millions)": 6
-                }
+                },
+                "costBySelection": [
+                  {
+                    "Dollars (millions)": 6
+                  },
+                  {
+                    "Dollars (millions)": 15
+                  }
+                ]
               }
             ],
-            "id": "gearGearTeleporter1"
+            "id": "gearGearTeleporter",
+            "maxSelections": 2
           },
           {
-            "label": "Teleporter 2",
-            "description": "The cooldown on your teleport is reduced to a mere ten seconds, and you can teleport up to 1,000 miles. ",
-            "costOptions": [
-              {
-                "cost": {
-                  "Dollars (millions)": 15
-                }
-              }
-            ],
-            "id": "gearGearTeleporter2",
-            "prerequisites": "gearGearTeleporter1"
-          },
-          {
-            "label": "Nanomachines 1",
-            "description": "You gain an injection of of nanomachines, which can respond to your mental commands and grant you powers at need. The nanomachines are the equivalent of three points of physical powers, which can be changed at will. ",
+            "label": "Nanomachines",
+            "description": "Tier 1: You gain an injection of of nanomachines, which can respond to your mental commands and grant you powers at need. The nanomachines are the equivalent of three points of physical powers, which can be changed at will.\n\nTier 2: The nanomachines are both more potent and more versatile, functioning as five effective points of physical power and two points of either magic or psychic points.",
             "costOptions": [
               {
                 "cost": {
                   "Dollars (millions)": 20
-                }
+                },
+                "costBySelection": [
+                  {
+                    "Dollars (millions)": 20
+                  },
+                  {
+                    "Dollars (millions)": 50
+                  }
+                ]
               }
             ],
-            "id": "gearGearNanomachines1"
+            "id": "gearGearNanomachines",
+            "maxSelections": 2,
+            "prerequisitesBySelection": [
+              null,
+              "(powersScienceAlienTech || questsQuestsTheyCameFromBeyond)"
+            ]
           },
           {
-            "label": "Nanomachines 2",
-            "description": "The nanomachines are both more potent and more versatile, functioning as five effective points of physical power and two points of either magic or psychic points.",
-            "costOptions": [
-              {
-                "cost": {
-                  "Dollars (millions)": 50
-                }
-              }
-            ],
-            "id": "gearGearNanomachines2",
-            "prerequisites": "gearGearNanomachines1 && (powersScienceAlienTech || questsQuestsTheyCameFromBeyond)"
-          },
-          {
-            "label": "Lair 1",
-            "description": "A nice penthouse suite, A house in a surburban neighborhood, or a basement with a secret entrance from a shop above you: Contains all the amenities you need for your superhero and civilian lives. ",
+            "label": "Lair",
+            "description": "Tier 1: A nice penthouse suite, A house in a surburban neighborhood, or a basement with a secret entrance from a shop above you: Contains all the amenities you need for your superhero and civilian lives.\n\nTier 2: A base on the level of Avengers Tower or The Batcave. You have all that you could need for your life of crime/heroism, including a place to store your vehicle if you have one in addition to sweet living quarters for your civilian life.",
             "costOptions": [
               {
                 "cost": {
                   "Dollars (millions)": 5
-                }
+                },
+                "costBySelection": [
+                  {
+                    "Dollars (millions)": 5
+                  },
+                  {
+                    "Dollars (millions)": 30
+                  }
+                ]
               }
             ],
-            "id": "gearGearLair1"
+            "id": "gearGearLair",
+            "maxSelections": 2
           },
           {
-            "label": "Lair 2",
-            "description": "A base on the level of Avengers Tower or The Batcave. You have all that you could need for your life of crime/heroism, including a place to store your vehicle if you have one in addition to sweet living quarters for your civilian life. ",
-            "costOptions": [
-              {
-                "cost": {
-                  "Dollars (millions)": 30
-                }
-              }
-            ],
-            "id": "gearGearLair2",
-            "prerequisites": "gearGearLair1"
-          },
-          {
-            "label": "Ray Weaonry 1 ",
-            "description": "You have access to the most basic rays: Heat and Cold. You can burn things, melt things, and vaporize things with heat or you can freeze and shatter things with cold.",
+            "label": "Ray Weaonry",
+            "description": "Tier 1: You have access to the most basic rays: Heat and Cold. You can burn things, melt things, and vaporize things with heat or you can freeze and shatter things with cold.\n\nTier 2: You can create rays with more bizarre and exotic effects, such as shrink rays, death rays, mind control rays, and more! Your potential is essentially limitless, though you will be in the end still just a guy with a gun.",
             "costOptions": [
               {
                 "cost": {
                   "Dollars (millions)": 8
-                }
+                },
+                "costBySelection": [
+                  {
+                    "Dollars (millions)": 8
+                  },
+                  {
+                    "Dollars (millions)": 16
+                  }
+                ]
               }
             ],
-            "id": "gearGearRayWeaonry1"
+            "id": "gearGearRayWeaonry",
+            "maxSelections": 2
           },
           {
-            "label": "Ray Weaonry 2",
-            "description": "You can create rays with more bizarre and exotic effects, such as shrink rays, death rays, mind control rays, and more! Your potential is essentially limitless, though you will be in the end still just a guy with a gun.",
-            "costOptions": [
-              {
-                "cost": {
-                  "Dollars (millions)": 16
-                }
-              }
-            ],
-            "id": "gearGearRayWeaonry2",
-            "prerequisites": "gearGearRayWeaonry1"
-          },
-          {
-            "label": "Drones 1",
-            "description": "You can design and program drones roughly up to modern technology, Small flying drones and tread crawling drones and similar. These can only perform simple tasks unless you can create AI yourself. ",
+            "label": "Drones",
+            "description": "Tier 1: You can design and program drones roughly up to modern technology, Small flying drones and tread crawling drones and similar. These can only perform simple tasks unless you can create AI yourself.\n\nTier 2: You can create advanced, humanoid drones, capable of high-powered combat or recon and controlled with specialized AI. Combat drones can be equipped with any weaponry you have purchased.",
             "costOptions": [
               {
                 "cost": {
                   "Dollars (millions)": 10
-                }
+                },
+                "costBySelection": [
+                  {
+                    "Dollars (millions)": 10
+                  },
+                  {
+                    "Dollars (millions)": 30
+                  }
+                ]
               }
             ],
-            "id": "gearGearDrones1"
+            "id": "gearGearDrones",
+            "maxSelections": 2
           },
           {
-            "label": "Drones 2",
-            "description": "You can create advanced, humanoid drones, capable of high-powered combat or recon and controlled with specialized AI. Combat drones can be equipped with any weaponry you have purchased. ",
-            "costOptions": [
-              {
-                "cost": {
-                  "Dollars (millions)": 30
-                }
-              }
-            ],
-            "id": "gearGearDrones2",
-            "prerequisites": "gearGearDrones1"
-          },
-          {
-            "label": "Radiation 1",
-            "description": "Exposure to radiation has granted you a second form that only triggers under certain conditions. When activated, you gain an additional rank in all physical stats. This form can only be maintained for 10 minutes per day, and leaves you drained afterwards. ",
+            "label": "Radiation",
+            "description": "Tier 1: Exposure to radiation has granted you a second form that only triggers under certain conditions. When activated, you gain an additional rank in all physical stats. This form can only be maintained for 10 minutes per day, and leaves you drained afterwards.\n\nTier 2: You can refine the radiation exposure to either provide you with a permanent extra rank of every physical power, or boost your physical powers by two effective ranks while in your alternate form.",
             "costOptions": [
               {
                 "cost": {
                   "Dollars (millions)": 15
-                }
+                },
+                "costBySelection": [
+                  {
+                    "Dollars (millions)": 15
+                  },
+                  {
+                    "Dollars (millions)": 40
+                  }
+                ]
               }
             ],
-            "id": "gearGearRadiation1"
-          },
-          {
-            "label": "Radiation 2",
-            "description": "You can refine the radiation exposure to either provide you with a permanent extra rank of every physical power, or boost your physical powers by two effective ranks while in your alternate form. ",
-            "costOptions": [
-              {
-                "cost": {
-                  "Dollars (millions)": 40
-                }
-              }
-            ],
-            "id": "gearGearRadiation2",
-            "prerequisites": "gearGearRadiation1 && (powersScienceAlienTech || questsQuestsTheyCameFromBeyond)"
+            "id": "gearGearRadiation",
+            "maxSelections": 2,
+            "prerequisitesBySelection": [
+              null,
+              "(powersScienceAlienTech || questsQuestsTheyCameFromBeyond)"
+            ]
           }
         ],
         "subcategories": [],
         "backgroundColor": "#334155",
-        "accentColor": "#0F172A",
-        "textColor": "#ffffff",
-        "darkBackgroundColor": "#1E293B",
-        "darkTextColor": "#F8FAFC",
-        "darkAccentColor": "#020617",
+        "accentColor": "#F9C74F",
+        "textColor": "#FFFFFF",
+        "darkBackgroundColor": "#1C2533",
+        "darkTextColor": "#E5E7EB",
+        "darkAccentColor": "#475569",
         "columnsPerRow": 4
       }
     ]
@@ -1450,7 +1419,13 @@
         "defaultCost": {
           "RP": 1
         },
-        "columnsPerRow": 4
+        "columnsPerRow": 4,
+        "darkBackgroundColor": "#10233F",
+        "darkTextColor": "#DCEBFF",
+        "darkAccentColor": "#1D4ED8",
+        "backgroundColor": "#1D4ED8",
+        "textColor": "#FFFFFF",
+        "accentColor": "#F9C74F"
       },
       {
         "name": "Reality-Warpers",
@@ -1502,7 +1477,13 @@
         "defaultCost": {
           "RP": 1
         },
-        "columnsPerRow": 4
+        "columnsPerRow": 4,
+        "darkBackgroundColor": "#281943",
+        "darkTextColor": "#EEE7FF",
+        "darkAccentColor": "#6D28D9",
+        "backgroundColor": "#7E22CE",
+        "textColor": "#FFFFFF",
+        "accentColor": "#F0ABFC"
       },
       {
         "name": "Villains",
@@ -1554,7 +1535,13 @@
         "defaultCost": {
           "RP": 1
         },
-        "columnsPerRow": 4
+        "columnsPerRow": 4,
+        "darkBackgroundColor": "#3B1119",
+        "darkTextColor": "#FCE7E7",
+        "darkAccentColor": "#991B1B",
+        "backgroundColor": "#B91C1C",
+        "textColor": "#FFFFFF",
+        "accentColor": "#111827"
       },
       {
         "name": "Miscellaneous",
@@ -1810,7 +1797,13 @@
               "RP": -2
             }
           }
-        ]
+        ],
+        "darkBackgroundColor": "#421316",
+        "darkTextColor": "#FEE2E2",
+        "darkAccentColor": "#B91C1C",
+        "backgroundColor": "#991B1B",
+        "textColor": "#FFFFFF",
+        "accentColor": "#F97316"
       }
     ]
   },
@@ -1886,7 +1879,13 @@
             "id": "questsQuestsPeaceOnEarth"
           }
         ],
-        "subcategories": []
+        "subcategories": [],
+        "darkBackgroundColor": "#10233F",
+        "darkTextColor": "#DCEBFF",
+        "darkAccentColor": "#1E40AF",
+        "backgroundColor": "#0369A1",
+        "textColor": "#FFFFFF",
+        "accentColor": "#F9C74F"
       }
     ]
   }
