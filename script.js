@@ -420,20 +420,20 @@ function getOptionBaseCostByChoice(option, costOptionIndex = null, { selectionNu
     return { ...selected.cost };
 }
 
-function getSelectedCostOptionIndex(option) {
-    const options = normalizeOptionCostOptions(option);
+function getSelectedCostOptionIndex(option, selectionNumber = null) {
+    const options = normalizeOptionCostOptions(option, { selectionNumber });
     if (!options.length) return null;
     const selected = selectedCostOptionIndexes[option.id];
     return options.some(entry => entry.index === Number(selected)) ? Number(selected) : options[0].index;
 }
 
-function getInitialCostOptionIndex(option) {
-    const options = normalizeOptionCostOptions(option);
+function getInitialCostOptionIndex(option, selectionNumber = null) {
+    const options = normalizeOptionCostOptions(option, { selectionNumber });
     if (!options.length) return null;
-    const selected = getSelectedCostOptionIndex(option);
-    const selectedCost = getOptionEffectiveCost(option, { costOptionIndex: selected });
+    const selected = getSelectedCostOptionIndex(option, selectionNumber);
+    const selectedCost = getOptionEffectiveCost(option, { costOptionIndex: selected, selectionNumber });
     if (canAffordCost(selectedCost)) return selected;
-    const affordable = options.find(choice => canAffordCost(getOptionEffectiveCost(option, { costOptionIndex: choice.index })));
+    const affordable = options.find(choice => canAffordCost(getOptionEffectiveCost(option, { costOptionIndex: choice.index, selectionNumber })));
     return affordable ? affordable.index : selected;
 }
 
@@ -793,7 +793,7 @@ function removeSelectionsAffectedByCostModifierChange(changingOption, nextCount,
 }
 
 function getOptionEffectiveCostChoices(option, options = {}) {
-    const costOptions = normalizeOptionCostOptions(option);
+    const costOptions = normalizeOptionCostOptions(option, options);
     if (!costOptions.length) {
         return [{
             index: null,
@@ -2099,7 +2099,10 @@ window.loadCyoaData = (data, options = {}) => applyCyoaData(data, options);
 function removeDependentOptions(deselectedId) {
     for (const cat of categories) {
         forEachCategoryOption(cat, opt => {
-            if (prereqReferencesId(opt.prerequisites, deselectedId) && selectedOptions[opt.id]) {
+            const selectionRequirements = Array.isArray(opt.prerequisitesBySelection) ? opt.prerequisitesBySelection : [];
+            const referencesDeselected = prereqReferencesId(opt.prerequisites, deselectedId)
+                || selectionRequirements.some(requirement => prereqReferencesId(requirement, deselectedId));
+            if (referencesDeselected && selectedOptions[opt.id]) {
                 removeSelection(opt, { force: true });
                 removeDependentOptions(opt.id); // Recursively remove dependents
             }
@@ -2420,7 +2423,8 @@ function addSelection(option, options = {}) {
     if (!isAutoGrant) {
         const effectiveCost = getOptionEffectiveCost(option, {
             includeFirstNPreview: false,
-            costOptionIndex: options.costOptionIndex ?? getSelectedCostOptionIndex(option)
+            costOptionIndex: options.costOptionIndex ?? getSelectedCostOptionIndex(option, current + 1),
+            selectionNumber: current + 1
         });
         Object.entries(effectiveCost).forEach(([type, cost]) => {
             let finalCost;
@@ -2479,7 +2483,8 @@ function updatePointsDisplay() {
  * @returns {boolean} True if the option can be selected, false otherwise.
  */
 function canSelect(option) {
-    const meetsPrereq = optionPrerequisitesMet(option);
+    const currentOptionCount = selectedOptions[option.id] || 0;
+    const meetsPrereq = optionPrerequisitesMet(option, currentOptionCount + 1);
 
     // Check outgoing conflicts (option conflicts with an already selected option)
     const hasNoOutgoingConflicts = !option.conflictsWith || option.conflictsWith.every(id => !selectedOptions[id]);
@@ -2500,42 +2505,58 @@ function canSelect(option) {
 
     // Check option-specific max selections
     const maxPerOption = option.maxSelections || 1; // Default to 1 selection
-    const currentOptionCount = selectedOptions[option.id] || 0;
     const underOptionLimit = currentOptionCount < maxPerOption;
     const categoryMaxSelections = getCategorySelectionLimit(option.id);
     const categorySelectionCount = getCategorySelectionCount(option.id);
     const underCategoryLimit = categorySelectionCount < categoryMaxSelections;
 
     // Check if enough points (only for positive costs)
-    const selectedCostOptionIndex = getInitialCostOptionIndex(option);
-    const costChoices = getOptionEffectiveCostChoices(option, { costOptionIndex: selectedCostOptionIndex });
+    const nextSelectionNumber = currentOptionCount + 1;
+    const selectedCostOptionIndex = getInitialCostOptionIndex(option, nextSelectionNumber);
+    const costChoices = getOptionEffectiveCostChoices(option, {
+        costOptionIndex: selectedCostOptionIndex,
+        selectionNumber: nextSelectionNumber
+    });
     const selectedChoice = costChoices.find(choice => choice.index === selectedCostOptionIndex) || costChoices[0];
     const hasPoints = normalizeOptionCostOptions(option).length
         ? canAffordCost(selectedChoice?.cost || {})
-        : canAffordCost(getOptionEffectiveCost(option));
+        : canAffordCost(getOptionEffectiveCost(option, { selectionNumber: nextSelectionNumber }));
 
     return meetsPrereq && hasPoints && hasNoOutgoingConflicts && hasNoIncomingConflicts && underOptionLimit && underSubcatLimit && underCategoryLimit;
 }
 
-function optionPrerequisitesMet(option) {
-    if (!option || !option.prerequisites) return true;
-    if (typeof option.prerequisites === 'string') {
+function requirementMet(requirement) {
+    if (!requirement) return true;
+    if (typeof requirement === 'string') {
         try {
-            return !!window.evaluatePrereqExpr(option.prerequisites, id => selectedOptions[id] || 0);
+            return !!window.evaluatePrereqExpr(requirement, id => selectedOptions[id] || 0);
         } catch (e) {
-            console.error('Invalid prerequisite expression:', option.prerequisites, e);
+            console.error('Invalid prerequisite expression:', requirement, e);
             return false;
         }
     }
-    if (Array.isArray(option.prerequisites)) {
-        return option.prerequisites.every(id => selectedOptions[id]);
+    if (Array.isArray(requirement)) {
+        return requirement.every(id => meetsCountRequirement(id));
     }
-    if (typeof option.prerequisites === 'object') {
-        const andList = option.prerequisites.and || [];
-        const orList = option.prerequisites.or || [];
-        const andMet = andList.every(id => selectedOptions[id]);
-        const orMet = orList.length === 0 || orList.some(id => selectedOptions[id]);
-        return andMet && orMet;
+    if (typeof requirement === 'object') {
+        const andList = requirement.and || [];
+        const orList = requirement.or || [];
+        const notList = requirement.not ? [requirement.not] : [];
+        const andMet = andList.every(id => meetsCountRequirement(id));
+        const orMet = orList.length === 0 || orList.some(id => meetsCountRequirement(id));
+        const notMet = notList.every(id => !meetsCountRequirement(id));
+        return andMet && orMet && notMet;
+    }
+    return true;
+}
+
+function optionPrerequisitesMet(option, selectionNumber = null) {
+    if (!option) return true;
+    if (!requirementMet(option.prerequisites)) return false;
+    const nextSelectionNumber = Number(selectionNumber) || (selectedOptions[option.id] || 0);
+    const selectionRequirements = Array.isArray(option.prerequisitesBySelection) ? option.prerequisitesBySelection : [];
+    for (let index = 0; index < nextSelectionNumber; index += 1) {
+        if (!requirementMet(selectionRequirements[index])) return false;
     }
     return true;
 }
@@ -3218,6 +3239,104 @@ function buildPrerequisiteDisplayLines(expression = "") {
         const label = getOptionLabelMarkup(id) + (requiredCount > 1 ? ` (x${requiredCount})` : "");
         return `${entry.satisfied ? "✅" : "❌"} ${entry.negated ? "NOT " : ""}${label}`;
     });
+}
+
+function buildRequirementDisplayLines(requirement) {
+    if (!requirement) return [];
+    if (typeof requirement === 'string') {
+        const parsedLines = buildPrerequisiteDisplayLines(requirement);
+        if (parsedLines) return parsedLines;
+
+        const prereqLines = [];
+        const tokens = requirement.match(/!?[a-zA-Z_][a-zA-Z0-9_]*(?:__\d+)?/g) || [];
+        const reserved = new Set(['true', 'false', 'null', 'undefined', 'if', 'else', 'return', 'let', 'var', 'const', 'function', 'while', 'for', 'do', 'switch', 'case', 'break', 'continue', 'default', 'new', 'this', 'typeof', 'instanceof', 'void', 'delete', 'in', 'of', 'with', 'try', 'catch', 'finally', 'throw', 'class', 'extends', 'super', 'import', 'export', 'from', 'as', 'await', 'async', 'yield']);
+        const seen = new Set();
+        let exprTrue = false;
+        try {
+            exprTrue = !!window.evaluatePrereqExpr(requirement, id => selectedOptions[id] || 0);
+        } catch (e) {
+            exprTrue = false;
+        }
+        tokens.forEach(token => {
+            const negated = token.startsWith('!');
+            const core = negated ? token.slice(1) : token;
+            const [id, minSuffix] = core.split('__');
+            if (reserved.has(id) || seen.has(core)) return;
+            seen.add(core);
+            const requiredCount = minSuffix ? Number(minSuffix) : 1;
+            const actual = selectedOptions[id] || 0;
+            const satisfied = exprTrue || (negated ? actual < requiredCount : actual >= requiredCount);
+            const label = getOptionLabelMarkup(id) + (requiredCount > 1 ? ` (x${requiredCount})` : "");
+            prereqLines.push(`${satisfied ? "✅" : "❌"} ${negated ? "NOT " : ""}${label}`);
+        });
+        return prereqLines;
+    }
+    if (Array.isArray(requirement)) {
+        return requirement.map(id => {
+            const label = getOptionLabelMarkup(id);
+            const isSelected = selectedOptions[id];
+            const symbol = isSelected ? "✅" : "❌";
+            return `${symbol} ${label}`;
+        });
+    }
+    if (typeof requirement === 'object' && requirement !== null) {
+        const prereqLines = [];
+        const andList = requirement.and || [];
+        const orList = requirement.or || [];
+        const orAccepted = orList.some(id => meetsCountRequirement(String(id)));
+        if (andList.length) {
+            prereqLines.push(...andList.map(rawId => {
+                const [id, minSuffix] = String(rawId).split('__');
+                const requiredCount = minSuffix ? Number(minSuffix) : 1;
+                const label = getOptionLabelMarkup(id) + (requiredCount > 1 ? ` (x${requiredCount})` : "");
+                const isSelected = meetsCountRequirement(String(rawId));
+                return `${isSelected ? "✅" : "❌"} ${label}`;
+            }));
+        }
+        if (orList.length) {
+            prereqLines.push(...orList.map(rawId => {
+                const [id, minSuffix] = String(rawId).split('__');
+                const requiredCount = minSuffix ? Number(minSuffix) : 1;
+                const label = getOptionLabelMarkup(id) + (requiredCount > 1 ? ` (x${requiredCount})` : "");
+                const symbol = orAccepted ? "✅" : (meetsCountRequirement(String(rawId)) ? "✅" : "❌");
+                return `${symbol} ${label}`;
+            }));
+        }
+        return prereqLines;
+    }
+    return [];
+}
+
+function buildRequirementHelpText(requirement) {
+    const defaultText = "Prerequisites are checked against selected options. String expressions support &&, ||, and !. When the overall expression evaluates true the UI marks referenced prerequisites as satisfied for clarity.";
+    if (typeof requirement !== 'string') return defaultText;
+
+    const rawExpr = requirement;
+    const tokens = rawExpr.match(/\b[a-zA-Z_][a-zA-Z0-9_]*(?:__\d+)?\b/g) || [];
+    let human = rawExpr;
+    const seenIds = new Set();
+    tokens.forEach(tok => {
+        const [id] = tok.split('__');
+        if (seenIds.has(tok)) return;
+        seenIds.add(tok);
+        const label = getOptionLabelPlainText(id) || id;
+        const esc = tok.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        human = human.replace(new RegExp('\\b' + esc + '\\b', 'g'), `"${label}"`);
+    });
+    human = human.replace(/\|\|/g, ' OR ').replace(/&&/g, ' AND ').replace(/!/g, 'NOT ');
+    return `${human}\n\nExpression: ${rawExpr}`;
+}
+
+function getOptionDisplayRequirements(option, selectionNumber = null) {
+    const requirements = [];
+    if (option?.prerequisites) requirements.push(option.prerequisites);
+    const effectiveSelectionNumber = Number(selectionNumber);
+    const selectionRequirements = Array.isArray(option?.prerequisitesBySelection) ? option.prerequisitesBySelection : [];
+    if (Number.isFinite(effectiveSelectionNumber) && effectiveSelectionNumber > 0) {
+        const selectionRequirement = selectionRequirements[effectiveSelectionNumber - 1];
+        if (selectionRequirement) requirements.push(selectionRequirement);
+    }
+    return requirements;
 }
 
 function getModifiedCostDisplayRows(option, subcat) {
@@ -4031,18 +4150,21 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
     const requirements = document.createElement("div");
     requirements.className = "option-requirements";
 
-    // Default display cost is what the next selection would cost after modifiers.
-    const selectedCostOptionIndex = getInitialCostOptionIndex(opt);
-    const costChoices = getOptionEffectiveCostChoices(opt);
+    const showingNextSelection = selectedCount < maxSelections;
+    const displaySelectionNumber = showingNextSelection ? selectedCount + 1 : Math.max(selectedCount, 1);
+    const selectedCostOptionIndex = getInitialCostOptionIndex(opt, displaySelectionNumber);
+    const costChoices = getOptionEffectiveCostChoices(opt, { selectionNumber: displaySelectionNumber });
     const shouldShowCostOptions = costChoices.length > 1 && selectedCount === 0;
-    const displayCost = getOptionEffectiveCost(opt, { costOptionIndex: selectedCostOptionIndex });
-    const originalCost = getOptionBaseCostByChoice(opt, selectedCostOptionIndex);
+    const displayCost = getOptionEffectiveCost(opt, {
+        costOptionIndex: selectedCostOptionIndex,
+        selectionNumber: displaySelectionNumber
+    });
+    const originalCost = getOptionBaseCostByChoice(opt, selectedCostOptionIndex, {
+        selectionNumber: displaySelectionNumber
+    });
 
-    // If this option is already selected, prefer showing the actual paid cost for the existing instance(s)
     let costToShow = displayCost;
-    // selectedCount is already declared above
-    if (selectedCount > 0 && discountedSelections[opt.id] && discountedSelections[opt.id].length >= selectedCount) {
-        // Show the cost that was actually paid for the last recorded instance
+    if (!showingNextSelection && selectedCount > 0 && discountedSelections[opt.id] && discountedSelections[opt.id].length >= selectedCount) {
         costToShow = discountedSelections[opt.id][selectedCount - 1] || displayCost;
     }
 
@@ -4065,7 +4187,7 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
     if (!shouldShowCostOptions) {
         appendOptionMetaSection(
             requirements,
-            "Points",
+            showingNextSelection && selectedCount > 0 ? "Next Selection" : "Points",
             [
                 ...gain.map(line => `Gain: ${line}`),
                 ...spend.map(line => `Cost: ${line}`)
@@ -4107,18 +4229,18 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
 
     // Indicate modified cost availability/applied for this item.
     const displayDiffers = Object.entries(displayCost || {}).some(([type, val]) => val !== (originalCost[type] ?? val));
-    const currentPaidDiffers = Object.entries(costToShow || {}).some(([type, val]) => val !== (originalCost[type] ?? val));
     const displayShowsFree = Object.entries(displayCost || {}).some(([type, val]) => val === 0 && (originalCost[type] ?? 0) > 0);
-    const currentShowsFree = Object.entries(costToShow || {}).some(([type, val]) => val === 0 && (originalCost[type] ?? 0) > 0);
+    const costToShowDiffers = Object.entries(costToShow || {}).some(([type, val]) => val !== (originalCost[type] ?? val));
+    const costToShowShowsFree = Object.entries(costToShow || {}).some(([type, val]) => val === 0 && (originalCost[type] ?? 0) > 0);
 
-    if (selectedCount > 0 && currentPaidDiffers) {
+    if (selectedCount > 0 && !showingNextSelection && costToShowDiffers) {
         appendOptionMetaSection(
             requirements,
             "Pricing Status",
-            [currentShowsFree ? "Modified Cost Applied (Free)" : "Modified Cost Applied"],
+            [costToShowShowsFree ? "Modified Cost Applied (Free)" : "Modified Cost Applied"],
             "option-meta-pricing-status"
         );
-    } else if (selectedCount === 0 && displayDiffers) {
+    } else if ((selectedCount === 0 || showingNextSelection) && displayDiffers) {
         appendOptionMetaSection(
             requirements,
             "Pricing Status",
@@ -4127,83 +4249,11 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
         );
     }
 
-    // Show prerequisites...
     let conflictRendered = false;
-    if (opt.prerequisites && (typeof opt.prerequisites === "object" || opt.prerequisites.length > 0)) {
-        let prereqLines = [];
-        if (typeof opt.prerequisites === 'string') {
-            prereqLines = buildPrerequisiteDisplayLines(opt.prerequisites);
-            if (!prereqLines) {
-                prereqLines = [];
-                const tokens = opt.prerequisites.match(/!?[a-zA-Z_][a-zA-Z0-9_]*(?:__\d+)?/g) || [];
-                const reserved = new Set(['true', 'false', 'null', 'undefined', 'if', 'else', 'return', 'let', 'var', 'const', 'function', 'while', 'for', 'do', 'switch', 'case', 'break', 'continue', 'default', 'new', 'this', 'typeof', 'instanceof', 'void', 'delete', 'in', 'of', 'with', 'try', 'catch', 'finally', 'throw', 'class', 'extends', 'super', 'import', 'export', 'from', 'as', 'await', 'async', 'yield']);
-                const seen = new Set();
-                let exprTrue = false;
-                try {
-                    exprTrue = !!window.evaluatePrereqExpr(opt.prerequisites, id => selectedOptions[id] || 0);
-                } catch (e) {
-                    exprTrue = false;
-                }
-                tokens.forEach(token => {
-                    const negated = token.startsWith('!');
-                    const core = negated ? token.slice(1) : token;
-                    const [id, minSuffix] = core.split('__');
-                    if (reserved.has(id) || seen.has(core)) return;
-                    seen.add(core);
-                    const requiredCount = minSuffix ? Number(minSuffix) : 1;
-                    let satisfied;
-                    if (exprTrue) {
-                        satisfied = true;
-                    } else {
-                        const actual = selectedOptions[id] || 0;
-                        satisfied = negated ? actual < requiredCount : actual >= requiredCount;
-                    }
-                    const label = getOptionLabelMarkup(id) + (requiredCount > 1 ? ` (x${requiredCount})` : "");
-                    prereqLines.push(`${satisfied ? "✅" : "❌"} ${label}`);
-                });
-            }
-        } else if (Array.isArray(opt.prerequisites)) {
-            prereqLines = opt.prerequisites.map(id => {
-                const label = getOptionLabelMarkup(id);
-                const isSelected = selectedOptions[id];
-                const symbol = isSelected ? "✅" : "❌";
-                return `${symbol} ${label}`;
-            });
-        } else if (typeof opt.prerequisites === 'object' && opt.prerequisites !== null) {
-            const andList = opt.prerequisites.and || [];
-            const orList = opt.prerequisites.or || [];
-            let orAccepted = orList.some(id => selectedOptions[id]);
-            if (andList.length)
-                prereqLines.push(...andList.map(id => {
-                    const label = getOptionLabelMarkup(id);
-                    const isSelected = selectedOptions[id];
-                    const symbol = isSelected ? "✅" : "❌";
-                    return `${symbol} ${label}`;
-                }));
-            if (orList.length)
-                prereqLines.push(...orList.map(id => {
-                    const label = getOptionLabelMarkup(id);
-                    const symbol = orAccepted ? "✅" : (selectedOptions[id] ? "✅" : "❌");
-                    return `${symbol} ${label}`;
-                }));
-        }
-        let prereqHelpTitle = "Prerequisites are checked against selected options. String expressions support &&, ||, and !. When the overall expression evaluates true the UI marks referenced prerequisites as satisfied for clarity.";
-        if (typeof opt.prerequisites === 'string') {
-            const rawExpr = opt.prerequisites;
-            const tokens = rawExpr.match(/\b[a-zA-Z_][a-zA-Z0-9_]*(?:__\d+)?\b/g) || [];
-            let human = rawExpr;
-            const seenIds = new Set();
-            tokens.forEach(tok => {
-                const [id] = tok.split('__');
-                if (seenIds.has(tok)) return;
-                seenIds.add(tok);
-                const label = getOptionLabelPlainText(id) || id;
-                const esc = tok.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                human = human.replace(new RegExp('\\b' + esc + '\\b', 'g'), `"${label}"`);
-            });
-            human = human.replace(/\|\|/g, ' OR ').replace(/&&/g, ' AND ').replace(/!/g, 'NOT ');
-            prereqHelpTitle = `${human}\n\nExpression: ${rawExpr}`;
-        }
+    const displayRequirements = getOptionDisplayRequirements(opt, displaySelectionNumber);
+    if (displayRequirements.length > 0) {
+        const prereqLines = displayRequirements.flatMap(requirement => buildRequirementDisplayLines(requirement));
+        const prereqHelpTitle = displayRequirements.map(buildRequirementHelpText).join("\n\n");
         const helpHtml = `<span class=\"prereq-help\" title=\"${prereqHelpTitle.replace(/\"/g, '&quot;')}\">?</span>`;
         appendOptionMetaSection(requirements, `🔒 Requires ${helpHtml}`, prereqLines, "option-meta-prerequisites");
 
@@ -4579,8 +4629,9 @@ function renderSelectionButton(opt, contentWrapper) {
 
     const count = selectedOptions[opt.id] || 0;
     const max = opt.maxSelections || 1;
-    const costOptions = normalizeOptionCostOptions(opt);
-    const selectedCostOptionIndex = getInitialCostOptionIndex(opt);
+    const nextSelectionNumber = count + 1;
+    const costOptions = normalizeOptionCostOptions(opt, { selectionNumber: nextSelectionNumber });
+    const selectedCostOptionIndex = getInitialCostOptionIndex(opt, nextSelectionNumber);
     const canAdd = canSelect(opt);
     const grant = autoGrantedSelections[opt.id];
     const lockedAutoGrant = isAutoGrantedLocked(opt.id);
@@ -4591,7 +4642,10 @@ function renderSelectionButton(opt, contentWrapper) {
         select.className = "cost-option-select";
         costOptions.forEach(choice => {
             const option = document.createElement("option");
-            const effectiveCost = getOptionEffectiveCost(opt, { costOptionIndex: choice.index });
+            const effectiveCost = getOptionEffectiveCost(opt, {
+                costOptionIndex: choice.index,
+                selectionNumber: nextSelectionNumber
+            });
             option.value = String(choice.index);
             option.textContent = formatCostMapPlainText(effectiveCost) || "Free";
             option.disabled = !canAffordCost(effectiveCost);
@@ -4618,7 +4672,7 @@ function renderSelectionButton(opt, contentWrapper) {
             e.stopPropagation();
             ensureSubcategoryLimit(opt);
             if (canSelect(opt)) {
-                addSelection(opt, { costOptionIndex: getInitialCostOptionIndex(opt) });
+                addSelection(opt, { costOptionIndex: getInitialCostOptionIndex(opt, nextSelectionNumber) });
             }
         };
 
@@ -4662,7 +4716,7 @@ function renderSelectionButton(opt, contentWrapper) {
             } else {
                 ensureSubcategoryLimit(opt);
                 if (canSelect(opt)) {
-                    addSelection(opt, { costOptionIndex: getInitialCostOptionIndex(opt) });
+                    addSelection(opt, { costOptionIndex: getInitialCostOptionIndex(opt, nextSelectionNumber) });
                 }
             }
         };

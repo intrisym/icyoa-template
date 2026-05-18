@@ -325,6 +325,10 @@ function validateCyoaData(file, data) {
         validateCostOptions(file, context, option.costOptions, pointTypes, errors, warnings);
         validateRequirementExpression(file, `${context}.prerequisites`, option.prerequisites, errors);
         validateIdRefs(file, `${context}.prerequisites`, extractRequirementIds(option.prerequisites), optionIds, errors);
+        (option.prerequisitesBySelection || []).forEach((requirement, index) => {
+            validateRequirementExpression(file, `${context}.prerequisitesBySelection[${index}]`, requirement, errors);
+            validateIdRefs(file, `${context}.prerequisitesBySelection[${index}]`, extractRequirementIds(requirement), optionIds, errors);
+        });
         validateIdRefs(file, `${context}.conflictsWith`, normalizeIdList(option.conflictsWith), optionIds, errors);
         validateModifiedCostRules(file, `${context}.modifiedCosts`, option.modifiedCosts, optionIds, pointTypes, errors, warnings);
         validateModifiedCostRules(file, `${context}.discounts`, option.discounts, optionIds, pointTypes, errors, warnings);

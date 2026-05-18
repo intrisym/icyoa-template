@@ -19,6 +19,7 @@ const FEATURE_COVERAGE = [
     "single-select options and maxSelections replacement",
     "multi-select options and option maxSelections",
     "selection-specific costs for repeatable options",
+    "selection-specific prerequisites for repeatable options",
     "countsAsOneSelection for subcategory limits",
     "bypassSubcategoryMaxSelections options do not consume subcategory limit slots",
     "string, array, object, negated, OR, AND, and count-suffix prerequisites",
@@ -410,6 +411,14 @@ class CyoaEngine {
                             { id: "requiresArray", label: "Requires Array", cost: {}, prerequisites: ["preA"] },
                             { id: "requiresObject", label: "Requires Object", cost: {}, prerequisites: { and: ["preA"], or: ["preB", "multi__2"] } },
                             { id: "requiresCount", label: "Requires Count", cost: {}, prerequisites: "multi__2" },
+                            {
+                                id: "repeatablePrereqGear",
+                                label: "Repeatable Prereq Gear",
+                                maxSelections: 2,
+                                costOptions: [{ cost: { Points: 1 }, costBySelection: [{ Points: 1 }, { Points: 3 }] }],
+                                prerequisitesBySelection: [null, "repeatablePrereqUnlock"]
+                            },
+                            { id: "repeatablePrereqUnlock", label: "Repeatable Prereq Unlock", cost: {} },
                             { id: "gearGearExoSuit1", label: "Exo Suit 1", cost: {} },
                             { id: "powersScienceAlienTech", label: "Alien Tech", cost: {} },
                             { id: "questsQuestsTheyCameFromBeyond", label: "They Came from Beyond!", cost: {} },
@@ -1075,14 +1084,27 @@ class CyoaEngine {
         return true;
     }
 
-    effectiveCostChoices(optionOrId) {
+    effectiveCostChoices(optionOrId, options = {}) {
         const option = typeof optionOrId === "string" ? this.option(optionOrId) : optionOrId;
-        const choices = this.normalizeCostOptions(option);
-        if (!choices.length) return [{ index: null, label: "Cost", cost: this.effectiveCost(option) }];
+        const choices = this.normalizeCostOptions(option, options);
+        if (!choices.length) return [{ index: null, label: "Cost", cost: this.effectiveCost(option, options) }];
         return choices.map(choice => ({
             index: choice.index,
-            cost: this.effectiveCost(option, { costOptionIndex: choice.index })
+            cost: this.effectiveCost(option, { ...options, costOptionIndex: choice.index })
         }));
+    }
+
+    displayedNextSelectionCost(optionOrId, costOptionIndex = null) {
+        const option = typeof optionOrId === "string" ? this.option(optionOrId) : optionOrId;
+        const selectedCount = this.selectedOptions[option.id] || 0;
+        const maxSelections = option.maxSelections || 1;
+        const displaySelectionNumber = selectedCount < maxSelections ? selectedCount + 1 : Math.max(selectedCount, 1);
+        const choices = this.normalizeCostOptions(option, { selectionNumber: displaySelectionNumber });
+        const resolvedCostOptionIndex = costOptionIndex ?? (choices[0]?.index ?? null);
+        return this.effectiveCost(option, {
+            costOptionIndex: resolvedCostOptionIndex,
+            selectionNumber: displaySelectionNumber
+        });
     }
 
     highestPriorityModifiedCostRule(rules = []) {
@@ -1211,6 +1233,16 @@ class CyoaEngine {
         return true;
     }
 
+    optionPrerequisitesMet(option, selectionNumber = null) {
+        if (!this.prerequisiteMet(option.prerequisites)) return false;
+        const nextSelectionNumber = Number(selectionNumber) || (this.selectedOptions[option.id] || 0);
+        const selectionRequirements = Array.isArray(option.prerequisitesBySelection) ? option.prerequisitesBySelection : [];
+        for (let index = 0; index < nextSelectionNumber; index += 1) {
+            if (!this.prerequisiteMet(selectionRequirements[index])) return false;
+        }
+        return true;
+    }
+
     hasNoConflicts(option) {
         const outgoing = !option.conflictsWith || option.conflictsWith.every(id => !this.selectedOptions[id]);
         const incoming = Object.keys(this.selectedOptions).every(id => {
@@ -1270,10 +1302,11 @@ class CyoaEngine {
         const underOptionLimit = (this.selectedOptions[option.id] || 0) < maxPerOption;
         const categoryMax = Number(this.findSubcategoryInfo(option.id).category?.maxSelections);
         const underCategoryLimit = !Number.isFinite(categoryMax) || categoryMax <= 0 || this.categorySelectionCount(this.findSubcategoryInfo(option.id).category) < categoryMax;
-        const choices = this.normalizeCostOptions(option);
+        const nextSelectionNumber = (this.selectedOptions[option.id] || 0) + 1;
+        const choices = this.normalizeCostOptions(option, { selectionNumber: nextSelectionNumber });
         const cost = choices.length
-            ? this.effectiveCost(option, { costOptionIndex: costOptionIndex ?? choices[0].index })
-            : this.effectiveCost(option);
+            ? this.effectiveCost(option, { costOptionIndex: costOptionIndex ?? choices[0].index, selectionNumber: nextSelectionNumber })
+            : this.effectiveCost(option, { selectionNumber: nextSelectionNumber });
         const hasPoints = Object.entries(cost).every(([type, cost]) => {
             if (cost < 0) return true;
             const current = Number(this.points[type]);
@@ -1282,7 +1315,7 @@ class CyoaEngine {
         });
 
         return this.structuralRequirementsMet(option)
-            && this.prerequisiteMet(option.prerequisites)
+            && this.optionPrerequisitesMet(option, nextSelectionNumber)
             && this.hasNoConflicts(option)
             && underSubcatLimit
             && underCategoryLimit
@@ -1310,17 +1343,23 @@ class CyoaEngine {
 
     select(optionId, { costOptionIndex = null, skipCostModifierAffectedRemoval = false } = {}) {
         const option = this.option(optionId);
+        const nextSelectionNumber = (this.selectedOptions[option.id] || 0) + 1;
         if (!this.pendingAutoGrantSourceId) {
-            const confirmed = this.removeSelectionsAffectedByCostModifierChange(option, (this.selectedOptions[option.id] || 0) + 1, {
+            const confirmed = this.removeSelectionsAffectedByCostModifierChange(option, nextSelectionNumber, {
                 skipCostModifierAffectedRemoval
             });
             if (!confirmed) return false;
         }
         this.ensureSubcategoryLimit(option);
         assert(this.canSelect(option, { costOptionIndex }), `${this.filename}: expected ${optionId} to be selectable`);
-        const cost = this.effectiveCost(option, { costOptionIndex });
-        if (costOptionIndex !== null && costOptionIndex !== undefined) {
-            this.selectedCostOptionIndexes[option.id] = Number(costOptionIndex);
+        const choices = this.normalizeCostOptions(option, { selectionNumber: nextSelectionNumber });
+        const resolvedCostOptionIndex = costOptionIndex ?? (choices[0]?.index ?? null);
+        const cost = this.effectiveCost(option, {
+            costOptionIndex: resolvedCostOptionIndex,
+            selectionNumber: nextSelectionNumber
+        });
+        if (resolvedCostOptionIndex !== null && resolvedCostOptionIndex !== undefined) {
+            this.selectedCostOptionIndexes[option.id] = Number(resolvedCostOptionIndex);
         }
         const isAutoGrant = !!this.pendingAutoGrantSourceId;
         if (!isAutoGrant) {
@@ -1362,6 +1401,7 @@ class CyoaEngine {
         const historyIndex = this.selectionHistory.indexOf(option.id);
         if (historyIndex >= 0) this.selectionHistory.splice(historyIndex, 1);
         this.removeAutoGrantsFromSource(option.id);
+        this.removeOptionsWithUnmetPrerequisites();
         return true;
     }
 
@@ -1403,7 +1443,7 @@ class CyoaEngine {
             removedAny = false;
             for (const id of Object.keys(this.selectedOptions)) {
                 const option = this.optionMap.get(id);
-                if (option && (!this.structuralRequirementsMet(option) || !this.prerequisiteMet(option.prerequisites))) {
+                if (option && (!this.structuralRequirementsMet(option) || !this.optionPrerequisitesMet(option))) {
                     this.remove(id);
                     removedAny = true;
                     break;
@@ -1414,6 +1454,19 @@ class CyoaEngine {
 
     prerequisiteDisplayStatuses(expression) {
         return computePrerequisiteDisplayStatuses(expression, id => this.meetsCountRequirement(id));
+    }
+
+    displayRequirements(optionOrId, selectionNumber = null) {
+        const option = typeof optionOrId === "string" ? this.option(optionOrId) : optionOrId;
+        const requirements = [];
+        if (option.prerequisites) requirements.push(option.prerequisites);
+        const effectiveSelectionNumber = Number(selectionNumber);
+        const selectionRequirements = Array.isArray(option.prerequisitesBySelection) ? option.prerequisitesBySelection : [];
+        if (Number.isFinite(effectiveSelectionNumber) && effectiveSelectionNumber > 0) {
+            const selectionRequirement = selectionRequirements[effectiveSelectionNumber - 1];
+            if (selectionRequirement) requirements.push(selectionRequirement);
+        }
+        return requirements;
     }
 
     setTextInput(optionId, value) {
@@ -1921,6 +1974,68 @@ test("repeatable options should use selection-specific costs for later selection
     );
 });
 
+test("repeatable option display costs should match charged selection-specific costs", () => {
+    const engine = CyoaEngine.synthetic();
+
+    const firstDisplayedCost = engine.displayedNextSelectionCost("tieredRepeatCost", 0);
+    assert.deepStrictEqual(firstDisplayedCost, { Points: 1 });
+    engine.select("tieredRepeatCost", { costOptionIndex: 0 });
+    assert.deepStrictEqual(engine.discountedSelections.tieredRepeatCost[0], firstDisplayedCost);
+    assert.strictEqual(engine.points.Points, 9);
+
+    const secondDisplayedCost = engine.displayedNextSelectionCost("tieredRepeatCost", 0);
+    assert.deepStrictEqual(secondDisplayedCost, { Points: 2 });
+    engine.select("tieredRepeatCost", { costOptionIndex: 0 });
+    assert.deepStrictEqual(engine.discountedSelections.tieredRepeatCost[1], secondDisplayedCost);
+    assert.strictEqual(engine.points.Points, 7);
+});
+
+test("repeatable options should enforce selection-specific prerequisites", () => {
+    const engine = CyoaEngine.synthetic();
+    const gear = engine.option("repeatablePrereqGear");
+
+    assert.strictEqual(engine.canSelect("repeatablePrereqGear"), true);
+    assert.deepStrictEqual(engine.effectiveCost("repeatablePrereqGear", { costOptionIndex: 0, selectionNumber: 1 }), { Points: 1 });
+    assert.deepStrictEqual(engine.effectiveCost("repeatablePrereqGear", { costOptionIndex: 0, selectionNumber: 2 }), { Points: 3 });
+    assert.deepStrictEqual(engine.displayRequirements(gear, 1), []);
+    assert.deepStrictEqual(engine.displayRequirements(gear, 2), ["repeatablePrereqUnlock"]);
+    engine.select("repeatablePrereqGear");
+    assert.strictEqual(engine.points.Points, 9);
+    assert.strictEqual(engine.selectedOptions.repeatablePrereqGear, 1);
+    assert.strictEqual(engine.canSelect("repeatablePrereqGear"), false);
+    assert.deepStrictEqual(engine.displayRequirements(gear, engine.selectedOptions.repeatablePrereqGear + 1), ["repeatablePrereqUnlock"]);
+    assert.deepStrictEqual(engine.prerequisiteDisplayStatuses(gear.prerequisitesBySelection[1]), [{
+        id: "repeatablePrereqUnlock",
+        negated: false,
+        satisfied: false
+    }]);
+
+    engine.select("repeatablePrereqUnlock");
+    assert.strictEqual(engine.canSelect("repeatablePrereqGear"), true);
+    assert.deepStrictEqual(engine.effectiveCost("repeatablePrereqGear", { costOptionIndex: 0, selectionNumber: 2 }), { Points: 3 });
+    assert.deepStrictEqual(engine.prerequisiteDisplayStatuses(gear.prerequisitesBySelection[1]), [{
+        id: "repeatablePrereqUnlock",
+        negated: false,
+        satisfied: true
+    }]);
+    engine.select("repeatablePrereqGear");
+    assert.strictEqual(engine.points.Points, 6);
+    assert.strictEqual(engine.selectedOptions.repeatablePrereqGear, 2);
+    assert.deepStrictEqual(engine.discountedSelections.repeatablePrereqGear, [{ Points: 1 }, { Points: 3 }]);
+
+    engine.remove("repeatablePrereqUnlock");
+    assert.strictEqual(engine.selectedOptions.repeatablePrereqGear, 1);
+    assert.strictEqual(engine.points.Points, 9);
+    assert(
+        PLAYER_SCRIPT_SOURCE.includes("getOptionDisplayRequirements"),
+        "player UI should include next-selection prerequisite rendering for repeatable options"
+    );
+    assert(
+        PLAYER_SCRIPT_SOURCE.includes("selectionNumber: displaySelectionNumber"),
+        "player UI should render selection-specific tier costs instead of the last paid cost"
+    );
+});
+
 test("payment option labels should not be player-facing because costs describe the choice", () => {
     assert(
         !EDITOR_SCRIPT_SOURCE.includes("Player-facing label"),
@@ -2250,7 +2365,7 @@ test("complex prerequisite displays should mark fulfilled OR branches as satisfi
         satisfied: false
     });
     assert(
-        PLAYER_SCRIPT_SOURCE.includes("buildPrerequisiteDisplayLines(opt.prerequisites)"),
+        PLAYER_SCRIPT_SOURCE.includes("buildPrerequisiteDisplayLines(requirement)"),
         "player prerequisite display should use expression-aware OR group rendering"
     );
 });
