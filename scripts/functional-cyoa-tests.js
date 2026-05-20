@@ -27,6 +27,7 @@ const FEATURE_COVERAGE = [
     "one-way outgoing and incoming conflicts",
     "category requiresOption and category maxSelections",
     "category and nested subcategory display mode and theme-specific color metadata",
+    "single-subcategory categories render their lone subcategory open by default",
     "visual editor opens loaded CYOAs with category details collapsed",
     "visual editor collapse all includes option details",
     "adding and removing categories, subcategories, and options",
@@ -2149,6 +2150,17 @@ test("category tabs should support multiple open panels and bulk expansion", () 
     assert(
         PLAYER_SCRIPT_SOURCE.includes("activeCategories.forEach(cat => renderCategoryContent(cat"),
         "player should render multiple active category contents in one pass"
+    );
+});
+
+test("single-subcategory categories should render the only subcategory open by default", () => {
+    assert(
+        PLAYER_SCRIPT_SOURCE.includes('const hasTabbedNav = mode === "tabs" && children.length > 1'),
+        "player should skip subcategory tab gating when a category has only one subcategory"
+    );
+    assert(
+        PLAYER_SCRIPT_SOURCE.includes("hasTabbedNav\n            ? childMeta.filter(meta => openSubcategories.has(meta.key))\n            : childMeta"),
+        "player should render all child metadata when no subcategory tab navigation is needed"
     );
 });
 

@@ -3906,7 +3906,7 @@ function renderSubcategoryLevel(parentEntity, children, container, {
         return { child, idx, path, key, unlocked };
     });
 
-    const hasTabbedNav = mode === "tabs" && (children.length > 1 || children.some(child => child?.name));
+    const hasTabbedNav = mode === "tabs" && children.length > 1;
     if (hasTabbedNav) {
         const nav = document.createElement("div");
         nav.className = "subcategory-navigation";
