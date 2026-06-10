@@ -71,9 +71,6 @@
         "discountAmount": {
           "Points": 1
         },
-        "defaultCost": {
-          "Points": 1
-        },
         "options": [
           {
             "label": "Costume Ring",
@@ -104,7 +101,14 @@
             "image": "https://screenrant.com/wp-content/uploads/2017/05/Flash-Comic-Jay-Garrick-Return-Rebirth.jpg"
           }
         ],
-        "columnsPerRow": 2
+        "columnsPerRow": 2,
+        "costOptions": [
+          {
+            "cost": {
+              "Points": 1
+            }
+          }
+        ]
       }
     ]
   },
@@ -187,9 +191,13 @@
             "image": "https://static1.srcdn.com/wordpress/wp-content/uploads/Reverse-Flash-Killing-Vibrating-Hand.jpg"
           }
         ],
-        "defaultCost": {
-          "Points": 1
-        }
+        "costOptions": [
+          {
+            "cost": {
+              "Points": 1
+            }
+          }
+        ]
       },
       {
         "name": "Redline Stunts",
@@ -225,9 +233,13 @@
             "image": "https://1.bp.blogspot.com/-RC5Mn3_JPvY/Xs2XgE8D84I/AAAAAAAACVg/Day0xIHi3ssuaHI3q2TwJz_bwVul49hOQCLcBGAsYHQ/s1600/2.jpg"
           }
         ],
-        "defaultCost": {
-          "Points": 2
-        }
+        "costOptions": [
+          {
+            "cost": {
+              "Points": 2
+            }
+          }
+        ]
       }
     ]
   },
@@ -373,9 +385,13 @@
             "image": "https://static1.srcdn.com/wordpress/wp-content/uploads/2022/11/The-Top-Reinvented.jpg"
           }
         ],
-        "defaultCost": {
-          "Points": 1
-        }
+        "costOptions": [
+          {
+            "cost": {
+              "Points": 1
+            }
+          }
+        ]
       }
     ]
   },
@@ -455,9 +471,13 @@
             "image": "https://static0.gamerantimages.com/wordpress/wp-content/uploads/2023/04/dark-flash-in-comics-1.jpg"
           }
         ],
-        "defaultCost": {
-          "Points": 1
-        }
+        "costOptions": [
+          {
+            "cost": {
+              "Points": 1
+            }
+          }
+        ]
       }
     ]
   },
@@ -545,9 +565,13 @@
             "image": "https://comicvine.gamespot.com/a/uploads/original/11125/111253436/5609266-solovar.jpg"
           }
         ],
-        "defaultCost": {
-          "Points": 1
-        }
+        "costOptions": [
+          {
+            "cost": {
+              "Points": 1
+            }
+          }
+        ]
       },
       {
         "name": "The Rogues",
@@ -604,14 +628,18 @@
             "image": "https://dailysuperheroes.com/wp-content/uploads/2016/11/5-top.jpg"
           }
         ],
-        "defaultCost": {
-          "Points": -1
-        }
+        "costOptions": [
+          {
+            "cost": {
+              "Points": -1
+            }
+          }
+        ]
       },
       {
         "name": "Other Enemies",
         "type": "storyBlock",
-        "text": "Miscellenois enemies that have plagued the Flash Family thorughout the years. They are generally more violent and deadly, having greater ambitions than petty robbery (and also likely insane).. So, choose wisely before taking them up as your enemies. \n\nEach enemy adds +2 points",
+        "text": "Miscellaneous enemies that have plagued the Flash Family throughout the years. They are generally more violent and deadly, having greater ambitions than petty robbery (and also likely insane).. So, choose wisely before taking them up as your enemies. \n\nEach enemy adds +2 points",
         "options": [
           {
             "label": "Abra Kadabra",
@@ -698,9 +726,13 @@
             "image": "https://static1.cbrimages.com/wordpress/wp-content/uploads/2018/04/Johnny-Quick-Cropped.jpg"
           }
         ],
-        "defaultCost": {
-          "Points": -2
-        }
+        "costOptions": [
+          {
+            "cost": {
+              "Points": -2
+            }
+          }
+        ]
       }
     ]
   }

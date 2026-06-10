@@ -1,0 +1,2658 @@
+[
+  {
+    "type": "title",
+    "text": "Superpowered World"
+  },
+  {
+    "type": "description",
+    "text": "Congratulations. You are now apart of a world of superpowers. Or rather, you will be, once you choose how your superpowered adventure will unfold.\n\n## The Rules\n* In the following sections, you will make choices to determine what your new life is like, and how it affects you specifically\n* Some choices are outlined or colored in gold or red. Gold choices are boons while red choices are banes.\n* When you made all of your choices, you must have at least as many banes as you have boons.\n* Some Powers and Equipment may have multiple options within them. If you want to take more of the presented options, and you have enough available picks to do so, you can take such options multiple times to gain more effects.  Outside of this, there is generally no benefit to taking an option multiple times. Exceptions will be spelled out in the text itself. "
+  },
+  {
+    "type": "headerImage",
+    "url": "",
+    "preventUpscale": true
+  },
+  {
+    "type": "points",
+    "values": {
+      "Boons": 0,
+      "Powers": 0,
+      "Allies": 0,
+      "Skills": 0,
+      "Equipment": 0
+    },
+    "allowNegative": [
+      "Boons"
+    ],
+    "attributeRanges": {}
+  },
+  {
+    "type": "settings",
+    "themeMode": "dark"
+  },
+  {
+    "type": "backpack",
+    "enabled": true
+  },
+  {
+    "type": "theme",
+    "bg-color": "#f9f9f9",
+    "container-bg": "#ffffff",
+    "text-color": "#C0C0C0",
+    "text-muted": "#C0C0C0",
+    "accent-color": "#8886D1",
+    "accent-text": "#C0C0C0",
+    "border-color": "#dddddd",
+    "item-bg": "#f4f4f4",
+    "item-header-bg": "#e0e0e0",
+    "points-bg": "#2F2E5F",
+    "points-border": "#8886D1",
+    "points-text": "#C0C0C0",
+    "selection-glow-color": "#2563eb",
+    "shadow-color": "rgba(0,0,0,0.1)",
+    "option-meta-bg": "#f8fafc",
+    "option-meta-heading-bg": "rgba(0, 122, 204, 0.14)",
+    "option-meta-heading-text": "#333333",
+    "option-meta-points-color": "#cccccc",
+    "option-meta-conditional-color": "#0ea5e9",
+    "option-meta-auto-grants-color": "#16a34a",
+    "option-meta-prerequisites-color": "#f59e0b",
+    "option-meta-conflicts-color": "#dc2626",
+    "font-base": "20px",
+    "font-title": "44px",
+    "font-description": "22px",
+    "font-tab": "20px",
+    "font-accordion": "22px",
+    "font-subcategory": "24px",
+    "font-option-title": "24px",
+    "font-option-req": "19px",
+    "font-option-desc": "23px",
+    "font-story": "21px",
+    "font-story-input": "20px",
+    "font-points": "20px",
+    "font-points-value": "20px",
+    "font-prereq-help": "17px",
+    "font-label": "19px",
+    "font-heading": "Verdana, sans-serif",
+    "font-body": "'Quicksand', sans-serif"
+  },
+  {
+    "type": "darkTheme",
+    "bg-color": "#111827",
+    "container-bg": "#1f2937",
+    "text-color": "#C0C0C0",
+    "text-muted": "#C0C0C0",
+    "accent-color": "#8886D1",
+    "accent-text": "#C0C0C0",
+    "border-color": "#374151",
+    "item-bg": "#1f2937",
+    "item-header-bg": "#374151",
+    "points-bg": "#2F2E5F",
+    "points-border": "#8886D1",
+    "points-text": "#C0C0C0",
+    "selection-glow-color": "#2563eb",
+    "shadow-color": "rgba(0, 0, 0, 0.5)",
+    "option-meta-bg": "#111827",
+    "option-meta-heading-bg": "rgba(185, 28, 28, 0.18)",
+    "option-meta-heading-text": "#f3f4f6",
+    "option-meta-points-color": "#fbbf24",
+    "option-meta-conditional-color": "#38bdf8",
+    "option-meta-auto-grants-color": "#22c55e",
+    "option-meta-prerequisites-color": "#f59e0b",
+    "option-meta-conflicts-color": "#f87171",
+    "font-base": "20px",
+    "font-title": "44px",
+    "font-description": "22px",
+    "font-tab": "20px",
+    "font-accordion": "22px",
+    "font-subcategory": "24px",
+    "font-option-title": "24px",
+    "font-option-req": "19px",
+    "font-option-desc": "23px",
+    "font-story": "21px",
+    "font-story-input": "20px",
+    "font-points": "20px",
+    "font-points-value": "20px",
+    "font-prereq-help": "17px",
+    "font-label": "19px",
+    "font-heading": "Verdana, sans-serif",
+    "font-body": "'Quicksand', sans-serif"
+  },
+  {
+    "name": "World",
+    "subcategories": [
+      {
+        "name": "How did this happen?",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Random Portal",
+            "description": "You just got dumped through a portal into a different world. This can either be an established setting or a new one. You appear with no identity, but you will be able to locate help in getting yourself settled fairly easily. ",
+            "id": "worldHowDidThisHappenRandomPortal"
+          },
+          {
+            "label": "Cosmic Event",
+            "description": "Sometime in the last month, an event happened, and superpowers are now a thing. It could have been just a second ago if you want. Whatever the case, you are one of the first with powers, though not necessarily the most powerful. ",
+            "id": "worldHowDidThisHappenCosmicEvent"
+          },
+          {
+            "label": "Crossover!",
+            "description": "A combination of Random Portal and Cosmic Event. Your world, and a world from a supernatural setting are now colliding. This can take the form of random portals connecting the two worlds, or maybe your two planets actually being combined in one big mosaic. ",
+            "id": "worldHowDidThisHappenCrossover"
+          },
+          {
+            "label": "Living under a rock",
+            "description": "So... it turns out that superpowers have always been a thing, you have just been really, really oblivious about it up until now.. Surprise? ",
+            "id": "worldHowDidThisHappenLivingUnderARock"
+          }
+        ],
+        "subcategories": [],
+        "maxSelections": 1,
+        "columnsPerRow": 4,
+        "textColor": "#C0C0C0",
+        "darkTextColor": "#C0C0C0"
+      },
+      {
+        "name": "How common are superpowers?",
+        "type": "storyBlock",
+        "text": "Choose how common superpowers are. Pick 1 option",
+        "options": [
+          {
+            "label": "Everyone",
+            "description": "Every person on the planet has at least some superpower, even if it is a somewhat weak one. People who are basically ordinary humans are extremely rare. ",
+            "id": "worldHowCommonAreSuperpowersEveryone"
+          },
+          {
+            "label": "Numerous",
+            "description": "At least one out of every three people has a superpower, possibly more, and even those that do not are at least in excellent physical shape. ",
+            "id": "worldHowCommonAreSuperpowersNumerous"
+          },
+          {
+            "label": "Fairly Common",
+            "description": "Between one in ten to one hundred people has a power, and artificial powers can be created successfully more often than not. ",
+            "id": "worldHowCommonAreSuperpowersFairlyCommon"
+          },
+          {
+            "label": "Scattered",
+            "description": "Only around one person in ten thousand will have a superpower, though they will likely be strong if they do. ",
+            "id": "worldHowCommonAreSuperpowersScattered"
+          },
+          {
+            "label": "Rare",
+            "description": "Superpowers are one in a million, or possibly even a bit less, and will be considered to be a very valuable commodity. ",
+            "id": "worldHowCommonAreSuperpowersRare"
+          },
+          {
+            "label": "Unique",
+            "description": "If there are any other superpowered beings in the world, there won't be more than about half a dozen or so, if that. \n\nRequires **Lone Wolf** to reflect your lack of peers plus one other bane. ",
+            "costOptions": [
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "id": "worldHowCommonAreSuperpowersUnique",
+            "borderColor": "gold",
+            "prerequisites": "originStoryYourTeamLoneWolf && (boonsAndBanesBanesAllergy || boonsAndBanesBanesBadRep || boonsAndBanesBanesConspiracy || boonsAndBanesBanesCycle || boonsAndBanesBanesPlotMagnet)"
+          }
+        ],
+        "subcategories": [],
+        "columnsPerRow": 3,
+        "maxSelections": 1,
+        "textColor": "#C0C0C0",
+        "darkTextColor": "#C0C0C0"
+      },
+      {
+        "name": "What is the balance of the world?",
+        "type": "storyBlock",
+        "text": "Choose the balance between good and evil in your world. \n\nPick 1 option",
+        "options": [
+          {
+            "label": "Evil Rules",
+            "description": "VIllainy reigns supreme in this world, with powerful villains dividing up the world between them. If any heroes still exist, they have to keep their activities very covert, or work secretly to take them down.\n\nChoose the cost option that matches your role:\n- [color=red]Heroic: +1 Boon[/color]\n- [color=gold]Villainous: -1 Boon[/color]",
+            "costOptions": [
+              {
+                "cost": {
+                  "Boons": -1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "id": "worldWhatIsTheBalanceOfTheWorldEvilRules"
+          },
+          {
+            "label": "Many Evil, Few Good",
+            "description": "Villains outnumber the heroes, but all hope is not lost. The heroes are still putting up a fight and the balance could possibly shift more in their favor if you decided to help them.",
+            "id": "worldWhatIsTheBalanceOfTheWorldManyEvilFewGood"
+          },
+          {
+            "label": "Even Fight",
+            "description": "Things are more or less even. The heroes and villains both win and lose fairly regularly and things have settled into a semi-comfortable status quo.",
+            "id": "worldWhatIsTheBalanceOfTheWorldEvenFight"
+          },
+          {
+            "label": "Many Good, Few Evil",
+            "description": "The side of angels is definitely winning this fight, with any villains out there having to keep their heads down for the most part. They may get in a few good hits, but the heroes will come down on them more often than not. ",
+            "id": "worldWhatIsTheBalanceOfTheWorldManyGoodFewEvil"
+          },
+          {
+            "label": "Good Rules",
+            "description": "This world could probably be called a utopia. Heroes are everywhere, crime is at all time lows, and the few villains that are around are deep in hiding, or are actually actors playing a role to give the public some heroics to watch.\n\nChoose the cost option that matches your role:\n- [color=gold]Heroic: -1 Boon[/color]\n- [color=red]Villainous: +1 Boon[/color]",
+            "costOptions": [
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -1
+                }
+              }
+            ],
+            "id": "worldWhatIsTheBalanceOfTheWorldGoodRules"
+          }
+        ],
+        "subcategories": [],
+        "columnsPerRow": 5,
+        "textColor": "#C0C0C0",
+        "darkTextColor": "#C0C0C0",
+        "maxSelections": 1
+      },
+      {
+        "name": "Balance of the World Misc",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Other",
+            "description": "Maybe you dislike the whole good/evil dichotomy? Then you can define some other balance between two forces, such as science and mysticism or comedy and tragedy, but the rules about Rules still apply. \n\nIf the side you favor completely dominates, it will count as a [color=gold]Boon[/color] for you, while if the side you oppose dominates, it will be a [color=red]Bane[/color].",
+            "id": "worldBalanceOfTheWorldMiscOther"
+          }
+        ],
+        "subcategories": [],
+        "textColor": "#C0C0C0",
+        "darkTextColor": "#C0C0C0"
+      }
+    ]
+  },
+  {
+    "name": "Origin Story",
+    "subcategories": [
+      {
+        "name": "Origin Story",
+        "type": "storyBlock",
+        "text": "Choose what the origin of your superpowers are. \n\nPick 1 option",
+        "options": [
+          {
+            "label": "Genetics",
+            "description": "The origin of your powers lie within your DNA. Some quirk or mutation has caused your boy to alter itself, granting your many and varied abilities. This has the benefit of making your powers harder to take away from you, but it also means that they are more closely tied to your health and physical condition, and will likely strain your body to use.",
+            "id": "originStoryOriginStoryGenetics"
+          },
+          {
+            "label": "Psionics",
+            "description": "Your powers are a function of your mind, reaching out to alter the world around you with your mere thoughts. Your powers will generally be easier for you to control, but will be dependent on your mental state and focus, and backlash from them could end up harming your mind. ",
+            "id": "originStoryOriginStoryPsionics"
+          },
+          {
+            "label": "Magic",
+            "description": "Your powers come from a mystic source. Whether it is spells you have discovered in an ancient tomb, sorcery tied to your bloodline, or perhaps a gift with alchemy, your powers come from magic, and are tied to your creativity. This means that they could grow in unexpected ways, but also that they may have symbolic weaknesses or other disadvantages that other practitioners could exploit. ",
+            "id": "originStoryOriginStoryMagic"
+          },
+          {
+            "label": "Tech",
+            "description": "Your powers come from technology. This could be inventions that you wield, or cybernetics that are implanted within you. While their technological basis means that it is easier for you to find ways to upgrade them, it also means that they are vulnerable to being reverse-engineered or disabled by others with the knowledge to learn how they work. ",
+            "id": "originStoryOriginStoryTech"
+          },
+          {
+            "label": "Cosmic",
+            "description": "You are linked to some greater cosmic forces, whether a living being or simply some manifestation of the universe. This means that your powers are several times stronger than they would ordinarily be, but cosmic level power also leads to cosmic level attention potentially being drawn to you. ",
+            "costOptions": [
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "id": "originStoryOriginStoryCosmic",
+            "borderColor": "gold"
+          },
+          {
+            "label": "Training",
+            "description": "You do not actually possess any super-powers at all. You are a pure human, but you have trained hard to stand up to the best. \n\nCannot take any selections from the power section. Can use Power sections in the Skill, Equipment, or Ally sections. ",
+            "costOptions": [
+              {
+                "cost": {
+                  "Boons": -1
+                }
+              }
+            ],
+            "id": "originStoryOriginStoryTraining",
+            "borderColor": "red"
+          },
+          {
+            "label": "None",
+            "description": "Your powers do not have any identifiable origin, they just are. This means that, while they are not exactly outstanding in any given area, they will not have any particular weaknesses either. ",
+            "id": "originStoryOriginStoryNone"
+          }
+        ],
+        "subcategories": [],
+        "maxSelections": 1,
+        "columnsPerRow": 4,
+        "textColor": "#C0C0C0",
+        "darkTextColor": "#C0C0C0"
+      },
+      {
+        "name": "Origin Modifiers",
+        "type": "storyBlock",
+        "text": "Choose any modifiers for your origin story. Pick as many as you like. ",
+        "options": [
+          {
+            "label": "Accident",
+            "description": "Your powers were bestowed on you by accident, and you are not entirely sure how to replicate the accident. Whether some chemicals spilling in a lab, or being caught up in some ritual, you probably should have died, but you got powers instead. ",
+            "id": "originStoryOriginModifiersAccident"
+          },
+          {
+            "label": "Symbiotic",
+            "description": "Your powers do not actually exist in you, but actually come from someone or something that is bound to you, such as an alien parasite, possessing spirit, AI in your cybernetics, or something else. ",
+            "id": "originStoryOriginModifiersSymbiotic"
+          },
+          {
+            "label": "Temporary",
+            "description": "You do not have your powers all the time. You have to enter some sort of super-powered state, or trigger them by consuming some specific substance or chanting a specific phrase. Whatever the method, you can only hold onto your powers for a few minutes before you will need to take a rest and recharge. ",
+            "costOptions": [
+              {
+                "cost": {
+                  "Boons": -1
+                }
+              }
+            ],
+            "id": "originStoryOriginModifiersTemporary",
+            "borderColor": "red"
+          }
+        ],
+        "subcategories": [],
+        "columnsPerRow": 3,
+        "textColor": "#C0C0C0",
+        "darkTextColor": "#C0C0C0"
+      },
+      {
+        "name": "Your team",
+        "type": "storyBlock",
+        "text": "Choose what sort of team or organization you will be a part of. Determines the number of Skills, Equipment, and Ally picks you will have.\n\nPick 1 option ",
+        "options": [
+          {
+            "label": "Lone Wolf",
+            "description": "You do not need a team, and it is a good thing to, because something about you keep driving people away. No matter what you do, any team-ups you are apart of will only be temporary. You may be able to make friends and form relationships outside of costume, but as far as your super-powered life goes, you are pretty much on your own. \n\nCannot take allies, but you may still choose bitter enemies from Sidekicks, Average Joes, Icons, and Supericons.",
+            "id": "originStoryYourTeamLoneWolf",
+            "pointAllocation": {
+              "total": 13,
+              "types": [
+                "Skills",
+                "Equipment"
+              ]
+            },
+            "costOptions": [
+              {
+                "cost": {
+                  "Boons": -1
+                }
+              }
+            ],
+            "borderColor": "red"
+          },
+          {
+            "label": "Fighting Family",
+            "description": "You operate as part of a small dedicated team. You are a really close-knit group, with each member playing a vital role in what you do. You all have trained heavily and equipped yourself for the fight. You are not necessarily related, but you probably all view each other as family. ",
+            "costOptions": [
+              {
+                "cost": {
+                  "Allies": -4
+                }
+              }
+            ],
+            "id": "originStoryYourTeamFightingFamily",
+            "pointAllocation": {
+              "total": 11,
+              "types": [
+                "Skills",
+                "Equipment"
+              ]
+            }
+          },
+          {
+            "label": "Local Team",
+            "description": "You are part of a locally-based and supported team, with contacts among the independent operators in your area. You have got a decent level of training and equipment. You will probably be quite famous on a local level, but not many people will know who you are outside of your chosen city. ",
+            "costOptions": [
+              {
+                "cost": {
+                  "Allies": -7
+                }
+              }
+            ],
+            "id": "originStoryYourTeamLocalTeam",
+            "pointAllocation": {
+              "total": 8,
+              "types": [
+                "Skills",
+                "Equipment"
+              ]
+            }
+          },
+          {
+            "label": "National Franchise",
+            "description": "You are part of just one subgroup of a larger organization, spanning your entire country and into several neighboring ones. You have a lot of reinforcements to call on, but resources are also divided up among a lot of groups, so you have to take what you can get. ",
+            "costOptions": [
+              {
+                "cost": {
+                  "Allies": -9
+                }
+              }
+            ],
+            "id": "originStoryYourTeamNationalFranchise",
+            "pointAllocation": {
+              "total": 6,
+              "types": [
+                "Skills",
+                "Equipment"
+              ]
+            }
+          },
+          {
+            "label": "World-Wide Organization",
+            "description": "The organization that you are apart of is one that spans the entire globe, capable of deploying in force almost anywhere at need. This grants you a wide net of contacts to call on, but it also means that you are just a small cog in the overall workings, leaving you with just what training and equipment you can pull together yourself. ",
+            "costOptions": [
+              {
+                "cost": {
+                  "Allies": -13
+                }
+              }
+            ],
+            "id": "originStoryYourTeamWorldWideOrganization",
+            "pointAllocation": {
+              "total": 2,
+              "types": [
+                "Skills",
+                "Equipment"
+              ]
+            }
+          }
+        ],
+        "subcategories": [],
+        "maxSelections": 1,
+        "textColor": "#C0C0C0",
+        "darkTextColor": "#C0C0C0"
+      }
+    ],
+    "textColor": "#C0C0C0",
+    "darkTextColor": "#C0C0C0"
+  },
+  {
+    "name": "Powers",
+    "subcategories": [
+      {
+        "name": "Level",
+        "type": "storyBlock",
+        "text": "Choose the level of power that you will possess. \n\nDetermines the number of Power ticks that you will have. \n\nPick only 1 option.",
+        "options": [
+          {
+            "label": "Sidekick",
+            "description": "You are definitely on the low-end of the totem pole. so you better see about attaching yourself to some more powerful allies, or making sure you are well-trained before you try going  out on the streets by yourself. ",
+            "id": "powersLevelSidekick",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": -3,
+                  "Boons": -1
+                }
+              }
+            ],
+            "borderColor": "red"
+          },
+          {
+            "label": "Average Joe",
+            "description": "You are pretty much the middle of the pack as far as powers go. Not too strong, not too weak. You can definitely hold your own, but having some back-up would still probably be a good idea. ",
+            "id": "powersLevelAverageJoe",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": -5
+                }
+              }
+            ]
+          },
+          {
+            "label": "Icon",
+            "description": "You stand head and shoulders above the rest, with a wide variety of powers at your fingertips. It is your foes that will need to watch out when you come to call. ",
+            "id": "powersLevelIcon",
+            "costOptions": [
+              {
+                "cost": {
+                  "Boons": 1,
+                  "Powers": -8
+                }
+              }
+            ],
+            "borderColor": "gold"
+          }
+        ],
+        "subcategories": [],
+        "columnsPerRow": 3,
+        "maxSelections": 1
+      },
+      {
+        "name": "Powers",
+        "type": "storyBlock",
+        "text": "Choose your superpowers. You may take as many as you have options for.\n\nYou only need to select a power, and you gain it at the base level. You can then take the [color=gold]Boon[/color] modification, the [color=red]Bane[/color] modification, or both, if available. If you take both a [color=red]Bane[/color] and [color=gold]Boon[/color], they cancel out / pay for each other. \n\nThe [color=red]Bane[/color] description of a power supersedes the [color=gold]Boon[/color] description.\n\nSome powers have multiple options. If you want to take more of the options, then you can pick that power again. Otherwise, there is not really any benefit to picking a power multiple times. \n\nFor each power, you gain secondary abilities which are just enough to protect you from backlash from your own abilities, and only your own abilities. For example, your body is sturdy enough to withstand your Enhanced Strength, but this odes not apply to anything other than your Enhanced Strength. ",
+        "options": [
+          {
+            "label": "Enhanced Strength",
+            "description": "You can bend metal by squeezing it, and can lift and throw cars with some effort. Bulging muscles are entirely optional. \n\n-----[color=gold]\nYou are strong enough to swing a skyscraper like a baseball bat, and you can cause shockwaves by swinging your arms. These shockwaves can be directed with practice. \n[/color]",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "id": "powersPowersEnhancedStrength",
+            "maxSelections": 2
+          },
+          {
+            "label": "Enhanced Durability",
+            "description": "Your skin is touch enough that most bullets will just bruise you, and your bones can survive a multi-story drop without breaking. \n\n---- [color=gold]\nYou can tank missiles to the face and only have a few burns, and you could walk away from a fall from orbit. [/color]",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "id": "powersPowersEnhancedDurability",
+            "maxSelections": 2
+          },
+          {
+            "label": "Enhanced Agility",
+            "description": "You have flawless sense of balance, and are as flexible as a trained contortionist. All of your limbs are double-jointed, with no inherent weakness from this flexibility. \n---- [color=gold]\nYou have perfect control, and can react as quickly as your body can move, with no pause for thought. ",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "id": "powersPowersEnhancedAgility",
+            "maxSelections": 2
+          },
+          {
+            "label": "Regeneration",
+            "description": "You heal dozens of times faster than normal. Your aging as slowed, and you are resistant to most diseases and poisons. \n---- [color=gold]\nYour aging has stopped, you can heal from even \"minor mortal wounds\" in no more than an hour, and are immune to to all but the most virulent diseases and poisons. Wounds from the level of decapitation and beyond can still take you down, however. ",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "id": "powersPowersRegeneration",
+            "maxSelections": 2
+          },
+          {
+            "label": "Healing",
+            "description": "You can heal injuries in others, up to the complexity of broken bones or concussions. Larger injuries will tire you out faster. \n---- [color=gold]\nYou can now correct issue with genetic conditions or cancers and similar problems. You passively encourage health in those nearby. ",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "id": "powersPowersHealing",
+            "maxSelections": 2
+          },
+          {
+            "label": "Shapeshift",
+            "description": "You can shift your features to mimic any human, and even gain some limited animal traits. \n---- [color=gold]\nYou can turn into animals, even gaining the ability to mix some animals together.  \nOR \nYou can alter your body to mimic different substances like stone or metal, and reshape limbs and such to reform blades or other simple shapes. \n[/color]",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "id": "powersPowersShapeshift",
+            "maxSelections": 3
+          },
+          {
+            "label": "Hyper Running",
+            "description": "You can run and move at a vastly accelerated rate, with an average running speed equal to a car on a highway. \n----\n[color=gold]Your average running speed is now around Mach 3[/color]\n----\n[color=red]You have an extremely fast metabolism, forcing you to eat up to ten times as much food as before. [/color]",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -1
+                }
+              }
+            ],
+            "id": "powersPowersHyperRunning",
+            "maxSelections": 3
+          },
+          {
+            "label": "Invisibility",
+            "description": "You can become transparent to both sight and sounds, including objects on your person. You can choose to become invisible to only one sense if your want. \n----\n[color=gold]Pick 2 of the senses listed under \"Extra Senses\" to become invisible to[/color]\n----\n[color=red]You lose access to a sense while you are invisible to it.[/color]",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -1
+                }
+              }
+            ],
+            "id": "powersPowersInvisibility",
+            "maxSelections": 4
+          },
+          {
+            "label": "Intangibility",
+            "description": "You can become intangible while holding your breath, allowing matter to pass through you.\n----\n[color=gold]You no longer have a limit on how long you can be intangible, and you can pass through most forms of energy without a problem as well.[/color]",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "id": "powersPowersIntangibility",
+            "maxSelections": 2
+          },
+          {
+            "label": "Enhanced Sight",
+            "description": "Your vision has improved in both precision and strength, giving you both telescopic and microscopic vision, as well as the ability to process even tiny details very quickly. \n----\n[color=gold]Your eyes can now see through materials, though it takes more focus to see through denser materials. You can effectively \"peel away\" layers from your skin.\n----\n[color=red]Your brain cannot process all of the visual stimulus at once, meaning that you must narrow your focus, or you will end up utterly overwhelmed by the sensory input.[/color]",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -1
+                }
+              }
+            ],
+            "id": "powersPowersEnhancedSight",
+            "maxSelections": 3
+          },
+          {
+            "label": "Enhanced Hearing",
+            "description": "Your hearing is greatly enhanced, allowing you to hear in higher and lower ranges and across great distances. \n----\n[color=gold]You can hear from impossible differences, and sort through sounds with extreme levels of precision. [/color]\n----\n[color=red]You cannot turn off or turn down your hearing, resulting in a constant bombardment of noise at all times. The most you can do is focus on one particular set of sounds while trying to ignore others.[/color]",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -1
+                }
+              }
+            ],
+            "id": "powersPowersEnhancedHearing",
+            "maxSelections": 3
+          },
+          {
+            "label": "Enhanced Nose",
+            "description": "Your nose is improved, allowing for you to detect and process a wider variety of smells and tastes than you could before. You can focus down to pick out a specific scent out of several others.\n----\n[color=gold]You have gained a set of instincts regarding the smells you can detect, allowing you to identify them and determine quite a few details about them, such as emotional state for people or age for some materials. [/color]\n----\n[color=red]The change in your sense of smell results in most foods being unpalatable for you, forcing you to give up many of your favorite foods or suffer through their new flavor. [/color]",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -1
+                }
+              }
+            ],
+            "id": "powersPowersEnhancedNose",
+            "maxSelections": 3
+          },
+          {
+            "label": "Thought-Reading",
+            "description": "You can send mental images to those around you and hear some of their surface thoughts. Your mental voice is distinct, but you could try to disguise it. \n----\n[color=gold]You can now read deeper into people's thoughts and memories, and can even implant ideas at this deeper level, though their mind will fight against thoughts that are too out-of-character or self-destructive. [/color]\n----\n[color=red]You cannot tune out the thoughts of those around you, leaving you constantly adrift in a sea of mental noise from those around you. [/color]",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -1
+                }
+              }
+            ],
+            "id": "powersPowersThoughtReading",
+            "maxSelections": 3
+          },
+          {
+            "label": "Psychometry",
+            "description": "You can touch an object to gain impressions about its history and past usage. Older history is more faded, but significant events leave a larger mark.\n----\n[color=gold]You can sense information from objects and locations at range, without needing to touch them.[/color]\n----\n[color=red]Your power activates automatically each time that you touch something with your hands, and occasionally when something touches your skin elsewhere.[/color]",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -1
+                }
+              }
+            ],
+            "id": "powersPowersPsychometry",
+            "maxSelections": 3
+          },
+          {
+            "label": "Danger Sense",
+            "description": "You can sense immediate danger around you. The large the danger, the more it stands out and the earlier you get warned about it.\n----\n[color=gold]You can target a few other people to also receive warning of danger for them. \nOR\nYou can also see how a given object, person, or location could potentially be dangerous to you in the future. \n----\n[color=red]There is a certain common category of danger that does not set off your danger sense\nOR\nYou will occasionally receive false positive readings of danger. [/color]",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -1
+                }
+              }
+            ],
+            "id": "powersPowersDangerSense",
+            "maxSelections": 6
+          },
+          {
+            "label": "Sense Manipulation",
+            "description": "You can focus on someone, gaining impressions of what they are sensing with senses you share, and later what they are sensing.\n----\n[color=gold]You can affect an entire crowd of people at once. \nOR\nYou can now alter senses with a fine level of detail rather than just broad strokes.[/color]",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "id": "powersPowersSenseManipulation",
+            "maxSelections": 3
+          },
+          {
+            "label": "Extra Sense",
+            "description": "You now have ONE of the following extra senses: Thermal, Electric, Truth, Patterns, Weakness, Weather, Relations, Distance, Aura, Radio, Power\n----\n[color=gold]You have THREE of the extra senses from the prior list. [/color]\n----\n[color=red]Your extra senses are extra sensitive and intrusive.[/color]",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -1
+                }
+              }
+            ],
+            "id": "powersPowersExtraSense",
+            "maxSelections": 15
+          },
+          {
+            "label": "Precognition",
+            "description": "You can get occasional glimpses of future events that will affect you, and you can sit down and focus to gain a glimpse on purpose. Glimpses will be clear, but may lack context. \n----\n[color=gold]Future visions come with an impression of the context around the event, roughly how long until the vision occurs, and the immediate next step to cause the vision.[/color]\n----\n[color=red]You visions are now cryptic, with a great deal of symbolism and hidden meanings.[/color]",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -1
+                }
+              }
+            ],
+            "id": "powersPowersPrecognition",
+            "maxSelections": 3
+          },
+          {
+            "label": "Technopathy",
+            "description": "You can interact with and control nearby computer and electronics. The feedback you get depends on the objects' complexity. \n----\n[color=gold]Your technopathy now extends to anything with mechanisms such as gears, springs, or pistons, and you can push out a form of energy to temporarily \"upgrade\" items and make them run a bit better. [/color]",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "id": "powersPowersTechnopathy",
+            "maxSelections": 2
+          },
+          {
+            "label": "Enhanced Mind",
+            "description": "Your intellect and information processing capacity are in the top 1% of humanity. You have an eidetic memory. \n----\n[color=gold]You are a certified comic-book level supergenius, with a mind and memory that can operate like a supercomputer.[/color]",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "id": "powersPowersEnhancedMind",
+            "maxSelections": 2
+          },
+          {
+            "label": "Luck",
+            "description": "Fortune falls in your favor and those that oppose you are more likely to experience bad luck. This is not absolute, and you do not have any active control over it. \n----\n[color=gold]You will instinctively \"spend\" your enhanced luck to negate a life-threatening danger right before it would actually kill you, but this will disable your extra luck for a time, depending on how much probability had to be skewed to rescue you.[/color]",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "id": "powersPowersLuck",
+            "maxSelections": 2
+          },
+          {
+            "label": "Telekinetics",
+            "description": "You can remotely move physical objects within a hundred feet or so, weighing up to around one thousand pounds. \n----\n[color=gold]Your range expands to a few miles, and up to several tons.[/color]\n----\n[color=red]There is a certain common substance that you cannot affect with your telekinesis at all, even indirectly. [/color]",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -1
+                }
+              }
+            ],
+            "id": "powersPowersTelekinetics",
+            "maxSelections": 3
+          },
+          {
+            "label": "Force Blast",
+            "description": "You can project blasts of raw kinetic force, capable of shattering wood and cracking stone. These blasts can be reshaped to a limited degree, from bursts to beams to cones. \n----\n[color=gold]Your blasts can now reach strengths sufficient to knock down buildings in a single burst, and can even be curved or redirected while in flight.[/color]",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "id": "powersPowersForceBlast",
+            "maxSelections": 2
+          },
+          {
+            "label": "Barriers",
+            "description": "You can create barriers that can deflect or block most forms of matter or energy, and have the toughness of sheet metal. \n----\n[color=gold]Your barriers are now akin to thick, reinforced concrete, and can even be attuned to reflect attacks back at the attacker.[/color]\n----\n[color=red]There is a common substance or type of energy that simply passes through your barriers as if they do not exist.[/color]",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -1
+                }
+              }
+            ],
+            "id": "powersPowersBarriers",
+            "maxSelections": 3
+          },
+          {
+            "label": "Fire Control",
+            "description": "You can create and manipulate heat and flame, with control fading over distance. You have a small degree of heat and fire resistance from sources you do not control. \n----\n[color=gold]You are immune to heat and flame, and can give your flame limited physical substance. [/color]",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "id": "powersPowersFireControl",
+            "maxSelections": 2
+          },
+          {
+            "label": "Water Control",
+            "description": "You can manipulate water and other liquids, and can breathe underwater. With effort, you can condense water of of the air around you.\n----\n[color=gold]Your fine control and force increase, allowing you to create water saws from jets of water, and allowing you to manipulate the water within people's bodies.[/color]",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "id": "powersPowersWaterControl",
+            "maxSelections": 2
+          },
+          {
+            "label": "Earth Control",
+            "description": "You can manipulate dirt and stone, including levitating to fly on top of it, and projecting shockwaves through it to create localized earthquakes. \n----\n[color=gold]You can draw strength form earth and stone, becoming stronger while in contact with the soil or surrounded in it.[/color]",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "id": "powersPowersEarthControl",
+            "maxSelections": 2
+          },
+          {
+            "label": "Air Control",
+            "description": "You can manipulate the air to create gusts of wind, and can even create thickened areas of air or areas of vacuum with focused effort. \n----\n[color=gold]Your range greatly increases, as does your fine control allowing for the creation of extremely fine blades of air.[/color]",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "id": "powersPowersAirControl",
+            "maxSelections": 2
+          },
+          {
+            "label": "Lightning Control",
+            "description": "You can generate and manipulate electrical energy, and are resistant to electrical energy from sources other than yourself. \n----\n[color=gold]You can bend your control of electricity enough to alter other forces such as magnetism or radiation.[/color]",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "id": "powersPowersLightningControl",
+            "maxSelections": 2
+          },
+          {
+            "label": "Ice Control",
+            "description": "You can generate bursts of cold and form ice on surfaces, and can alter the shape of ice extent. You are resistant to cold temperatures.\n----\n[color=gold]You are immune to cold, and you can generate extreme levels of cold, and can negate most forms of energy with your blasts.[/color]",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "id": "powersPowersIceControl",
+            "maxSelections": 2
+          },
+          {
+            "label": "Plants Control",
+            "description": "You can control planets and super-charge their growth, forcing them to move according to your desires. \n----\n[color=gold]You can alter plant biologies, and grant them intelligence up to a trained dog.[/color]",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "id": "powersPowersPlantsControl",
+            "maxSelections": 2
+          },
+          {
+            "label": "Light Control",
+            "description": "You can manipulate and redirect light to create flashes, lasers, and basic images. \n----\n[color=gold]You can give your light physical substance. \nOR\nYour light is now \"Holy\" having an extremely damaging effect on things that are Evil or Chaotic.",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "id": "powersPowersLightControl",
+            "maxSelections": 3
+          },
+          {
+            "label": "Shadow Control",
+            "description": "You can summon shadows and manipulate them, giving them the density of a thick fog.\n----\n[color=gold]Can make shadows completely solid and create imitations of matter out of them.\nOR\nYou shadows are now \"Eldritch,\" and have a draining effect on things that are Orderly or Good.",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "id": "powersPowersShadowControl",
+            "maxSelections": 3
+          },
+          {
+            "label": "Doppelganger",
+            "description": "You can create a single clone of yourself that has half of your powers (which cannot include this one), or half a dozen clones of yourself that are completely powerless. They think and operate independently of you, but are loyal to you.\n----\n[color=gold]You can create three clones of yourself that have all of your powers except this one. Either type are linked to you mentally and can communicate, and the powered clones can swap with you if you happen to die.[/color]\n----\n[color=red]There is a 15% chance that a clone will be created entirely independent of you. They still take up your capacity, but you cannot dismiss them and they are not loyal to you. They may or may not have the mental link if such exists, but won't take your position upon death.[/color]",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -1
+                }
+              }
+            ],
+            "id": "powersPowersDoppelganger",
+            "maxSelections": 3
+          },
+          {
+            "label": "Summons",
+            "description": "You can summon ONE of the following: A thin human-sized swarm of assorted insects, a pack of ten small creatures (such as cats or songbirds), a trio of medium-sized creatures (such as pigs or chimpanzees), a single large creature (such as a horse or a tiger), or a humanoid creature with the equivalent of one basic power level. \n----\n[color=gold]You can summon THREE from the prior list.\nOR\nONE of the following: A single huge creature (such as an elephant or a whale) or an elite creature with the equivalent of three basic level powers or one boon level power. ",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "id": "powersPowersSummons",
+            "maxSelections": 8
+          },
+          {
+            "label": "Animation",
+            "description": "You can imbue animating force into inanimate objects and material to create basic golems. These function like robots, following basic programmed behaviors and routines, and you can maintain half-a-dozen at any one time. \n----\n[color=gold]You can reshape matter into more intelligent and sophisticated golems, equal to an above-average intelligence human, and can sustain up to a dozen of them at once.[/color]",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "id": "powersPowersAnimation",
+            "maxSelections": 2
+          },
+          {
+            "label": "Flight",
+            "description": "You can move through the air or space under your own power, achieving speeds of around 300 miles per hour. \n----\n[color=gold]Your top flight speed is now around Mach 60[/color]\n----\n[color=red]Your flight is tied to a massive pair of bird wings on your back that you cannot get rid of.[/color]",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -1
+                }
+              }
+            ],
+            "id": "powersPowersFlight",
+            "maxSelections": 3
+          },
+          {
+            "label": "Teleportation",
+            "description": "You can teleport to a location you can visualize within 1 mile. You can take yourself, your clothes, and some light objects you are carrying. \n----\n[color=gold]Your teleportation can now extend to a small crowd of nearby people or objects \nOR\nYour range extends out to several hundred miles and can include more vague images of destinations[/color]\n----\n[color=red]Your teleportation is somewhat imprecise, leaving you off-target some of the time, but still in a safe arrival location.[/color]",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -1
+                }
+              }
+            ],
+            "id": "powersPowersTeleportation",
+            "maxSelections": 4
+          },
+          {
+            "label": "Portals",
+            "description": "You can create a pair of linked portals within line of sight, and can maintain up to three pairs of portals at once. Portals are more stable with placed on a solid surface. \n----\n[color=gold]You can create markers by touching a surface or object, and then open a portal to that point regardless of distance. You can maintain a few dozen such markers at once.[/color]",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "id": "powersPowersPortals",
+            "maxSelections": 2
+          },
+          {
+            "label": "Wall Walking",
+            "description": "You can move up walls and across ceilings as if they were horizontal surfaces. \n----\n[color=gold]You now alter gravity in a small area around you, allowing you to jump while on a wall or ceiling and still fall towards it. Allows for others to move with you. Incompatible with [color=red]Bane.[/color][/color]\n----\n[color=red]You merely stick to these surfaces, with gravity still having full effect on you. Incompatible with [color=gold]Boon.[/color][/color]",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -1
+                }
+              }
+            ],
+            "id": "powersPowersWallWalking",
+            "maxSelections": 2
+          },
+          {
+            "label": "Conjuration",
+            "description": "You can temporarily conjure small amounts of matter in basic shapes, lasting for a few minutes. \n----\n[color=gold]You can now create visually flawless replicas of any item you have ever touched, though they may lack more esoteric qualities. These replicas can last for hours.[/color]",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "id": "powersPowersConjuration",
+            "maxSelections": 2
+          },
+          {
+            "label": "Domain",
+            "description": "You can, over the course of about a minute, claim an area up to the size of a small bedroom. Within this area, you can use senses and ranged abilities as if you were present, even while far away. \n----\n[color=gold]You can now maintain up to six such areas \nOR\nThe size of your area stretches up to the size of a three-story office building.[/color]\n----\n[color=red]It takes ten minutes to establish a domain, and you must spend ten minutes per day in the domain to maintain it.[/color]",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -1
+                }
+              }
+            ],
+            "id": "powersPowersDomain",
+            "maxSelections": 4
+          },
+          {
+            "label": "Copy",
+            "description": "You can touch another person and gain a temporary copy of one of their superpowers or abilities. This power only lasts for an hour at most, and is roughly half as powerful as the original. \n----\n[color=gold]You can now copy up to three powers at once, and can do so from a distance. These powers almost match the full strength of the original.[/color]\n----\n[color=red]You have no control over this ability, activating it automatically upon touching someone. Both you and the target feel pain while in contact, even if they do not have a power to copy. [/color]",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -1
+                }
+              }
+            ],
+            "id": "powersPowersCopy",
+            "maxSelections": 3
+          },
+          {
+            "label": "Null",
+            "description": "You can focus on someone and nullify any superpowers that they possess. This effect only lasts for as long as you can focus on them. \n----\n[color=gold]You can target up to three people to nullify their superpowers. They must be in sight to be targeted, but the nullification lasts for as long as you keep them targeted. [/color]\n----\n[color=red]Your own powers are nullified while you are nullifying someone else's.[/color]",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -1
+                }
+              }
+            ],
+            "id": "powersPowersNull",
+            "maxSelections": 3
+          },
+          {
+            "label": "Gift",
+            "description": "You can temporarily transfer one of your powers to someone else. You lose the power for the duration until you decide to take it back. \n----\n[color=gold]You can give someone their own temporary copy of up to two of your powers, and can sustain three such copies at once. These copies last for an hour or until you take them back.[/color]",
+            "costOptions": [
+              {
+                "cost": {
+                  "Powers": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "id": "powersPowersGift",
+            "maxSelections": 2
+          }
+        ],
+        "subcategories": [],
+        "columnsPerRow": 3,
+        "textColor": "#C0C0C0",
+        "darkTextColor": "#C0C0C0"
+      }
+    ],
+    "textColor": "#C0C0C0",
+    "darkTextColor": "#C0C0C0",
+    "requiresOption": "!originStoryOriginStoryTraining"
+  },
+  {
+    "name": "Skills and Equipment",
+    "subcategories": [
+      {
+        "name": "Skills",
+        "type": "storyBlock",
+        "text": "Choose the skills that you have. Pick as many as you have options to take.\n\nEach skill represents several years worth of fairly dedicated training in the indicated area. After buying a non-Ph.D skill with a Skill pick, you can buy its [color=gold]Mastery[/color] upgrade for 1 Boon. Mastery pushes that skill into the realm of the superhuman, making it practically qualify as a power in its own right.",
+        "options": [
+          {
+            "label": "Fitness",
+            "description": "You are in peak physical condition, and you know simple workouts that can help maintain this condition with a minimal time commitment.\n----\n[color=gold]Mastery: Your body moves and recovers with uncanny efficiency, letting you push through exertion, injury, and fatigue at levels that look impossible without an obvious power.[/color]",
+            "id": "skillsAndEquipmentSkillsFitness",
+            "maxSelections": 2,
+            "costOptions": [
+              {
+                "cost": {
+                  "Skills": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "borderColor": "gold"
+          },
+          {
+            "label": "Martial Arts",
+            "description": "You have a basic level of competence in up to three real-world martial arts, and can hold your own admirably in close-quarters combat.\n----\n[color=gold]Mastery: Your combat skill borders on cinematic precognition, letting you read openings, redirect stronger foes, and turn almost any close-range exchange in your favor.[/color]",
+            "id": "skillsAndEquipmentSkillsMartialArts",
+            "maxSelections": 2,
+            "costOptions": [
+              {
+                "cost": {
+                  "Skills": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "borderColor": "gold"
+          },
+          {
+            "label": "Parkour",
+            "description": "You can move across most forms of urban terrain easily, and have an excellent sense of spatial awareness and balance.\n----\n[color=gold]Mastery: You move through terrain like gravity is only a suggestion, chaining leaps, climbs, rolls, and wall-runs with impossible confidence and precision.[/color]",
+            "id": "skillsAndEquipmentSkillsParkour",
+            "maxSelections": 2,
+            "costOptions": [
+              {
+                "cost": {
+                  "Skills": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "borderColor": "gold"
+          },
+          {
+            "label": "Investigation",
+            "description": "You are a trained detective, with a knowledge of basic crime-scene investigation and training to spot small details or clues.\n----\n[color=gold]Mastery: Your eye for clues becomes almost supernatural, letting you reconstruct scenes from tiny details and follow patterns others would never notice.[/color]",
+            "id": "skillsAndEquipmentSkillsInvestigation",
+            "maxSelections": 2,
+            "costOptions": [
+              {
+                "cost": {
+                  "Skills": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "borderColor": "gold"
+          },
+          {
+            "label": "Stealth",
+            "description": "You know how to avoid attention and move silently, with a working knowledge of lock-picking and gaining entry into most buildings.\n----\n[color=gold]Mastery: You can vanish from attention with absurd ease, moving through guarded spaces and social situations like people instinctively look anywhere but at you.[/color]",
+            "id": "skillsAndEquipmentSkillsStealth",
+            "maxSelections": 2,
+            "costOptions": [
+              {
+                "cost": {
+                  "Skills": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "borderColor": "gold"
+          },
+          {
+            "label": "Diguise",
+            "description": "You know about makeup and building disguises, with a basic knowledge of fashion and how to create and act within a persona.\n----\n[color=gold]Mastery: Your disguises become nearly transformative, letting you pass as wildly different personas with flawless presentation, voice, posture, and mannerisms.[/color]",
+            "id": "skillsAndEquipmentSkillsDiguise",
+            "maxSelections": 2,
+            "costOptions": [
+              {
+                "cost": {
+                  "Skills": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "borderColor": "gold"
+          },
+          {
+            "label": "Firearms",
+            "description": "You know general firearm maintenance and care, are are a trained marksman.\n----\n[color=gold]Mastery: Your marksmanship reaches trick-shot legend, letting you account for motion, cover, stress, and bad angles with impossible consistency.[/color]",
+            "id": "skillsAndEquipmentSkillsFirearms",
+            "maxSelections": 2,
+            "costOptions": [
+              {
+                "cost": {
+                  "Skills": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "borderColor": "gold"
+          },
+          {
+            "label": "Tactics",
+            "description": "You are skilled at working with a small team to come up with plans that make the most out of available resources.\n----\n[color=gold]Mastery: Your battlefield awareness becomes frighteningly sharp, letting you coordinate allies, predict enemy responses, and turn poor situations into traps.[/color]",
+            "id": "skillsAndEquipmentSkillsTactics",
+            "maxSelections": 2,
+            "costOptions": [
+              {
+                "cost": {
+                  "Skills": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "borderColor": "gold"
+          },
+          {
+            "label": "Hacker",
+            "description": "You have a working knowledge of computer and network technology and are skilled at finding vulnerabilities in such set-ups.\n----\n[color=gold]Mastery: Your technical intuition becomes almost technopathic, letting you exploit systems, improvise tools, and read networks with improbable speed.[/color]",
+            "id": "skillsAndEquipmentSkillsHacker",
+            "maxSelections": 2,
+            "costOptions": [
+              {
+                "cost": {
+                  "Skills": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "borderColor": "gold"
+          },
+          {
+            "label": "First Aid",
+            "description": "You know medical care up to the level of at least a trained EMT.\n----\n[color=gold]Mastery: Your medical skill lets you stabilize and treat injuries far beyond normal field medicine, keeping people alive through wounds that should be hopeless.[/color]",
+            "id": "skillsAndEquipmentSkillsFirstAid",
+            "maxSelections": 2,
+            "costOptions": [
+              {
+                "cost": {
+                  "Skills": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "borderColor": "gold"
+          },
+          {
+            "label": "Arcana",
+            "description": "You have a general knowledge of magic and mysticism, and broad understanding of how magic works.\n----\n[color=gold]Mastery: Your occult knowledge becomes instinctive and actionable, letting you identify, improvise around, and counter strange supernatural phenomena with little warning.[/color]",
+            "id": "skillsAndEquipmentSkillsArcana",
+            "maxSelections": 2,
+            "costOptions": [
+              {
+                "cost": {
+                  "Skills": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "borderColor": "gold"
+          },
+          {
+            "label": "Willpower",
+            "description": "You have a strong will, and can resist attempts to alter your mental state against your wishes.\n----\n[color=gold]Mastery: Your mental discipline becomes a fortress, letting you endure fear, pain, temptation, and psychic pressure with superhuman composure.[/color]",
+            "id": "skillsAndEquipmentSkillsWillpower",
+            "maxSelections": 2,
+            "costOptions": [
+              {
+                "cost": {
+                  "Skills": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "borderColor": "gold"
+          },
+          {
+            "label": "Glibness",
+            "description": "You are trained in public speaking and have a working knowledge of psychology with a focus on interpersonal interactions.\n----\n[color=gold]Mastery: Your social instincts become almost hypnotic, letting you read rooms, shape impressions, and talk people into positions they would normally reject.[/color]",
+            "id": "skillsAndEquipmentSkillsGlibness",
+            "maxSelections": 2,
+            "costOptions": [
+              {
+                "cost": {
+                  "Skills": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "borderColor": "gold"
+          },
+          {
+            "label": "Business",
+            "description": "You understand finance and mercantilism, and have training in methods of making money.\n----\n[color=gold]Mastery: Your grasp of money and organizations becomes predatory in the best possible way, letting you spot opportunities, build leverage, and turn resources into power with alarming speed.[/color]",
+            "id": "skillsAndEquipmentSkillsBusiness",
+            "maxSelections": 2,
+            "costOptions": [
+              {
+                "cost": {
+                  "Skills": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ],
+            "borderColor": "gold"
+          },
+          {
+            "label": "Ph.D",
+            "description": "You have the equivalent knowledge and experience in a specific field of study as someone who graduated with a full doctorate. ",
+            "id": "skillsAndEquipmentSkillsPhD",
+            "costOptions": [
+              {
+                "cost": {
+                  "Skills": 1,
+                  "Boons": 1
+                }
+              }
+            ],
+            "borderColor": "gold"
+          }
+        ],
+        "subcategories": [],
+        "columnsPerRow": 3,
+        "costOptions": [
+          {
+            "cost": {
+              "Skills": 1
+            }
+          }
+        ],
+        "textColor": "#C0C0C0",
+        "darkTextColor": "#C0C0C0"
+      },
+      {
+        "name": "Equipment",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Costume",
+            "description": "A personally designed costume that offers a decent level of protection, equivalent to bullet-proof decent levels of protection in the areas it covers. Comes with several copies, including more formal versions or other variants, if desired. ",
+            "id": "skillsAndEquipmentEquipmentCostume"
+          },
+          {
+            "label": "Glider Cape",
+            "description": "A large cape that is designed to flow out of your way, preventing you from getting tangled or tripped up in it. Can extend out to a set of gliding wings to allow for limited aerial movement. ",
+            "id": "skillsAndEquipmentEquipmentGliderCape"
+          },
+          {
+            "label": "Grappling Hook",
+            "description": "A hand-held device that can fire a 'hook' that can latch onto most surfaces without damaging them, and that has a special winch that can lift the weight of a couple of humans easily if needed. Comes with several dozen feet of reusable cable. ",
+            "id": "skillsAndEquipmentEquipmentGrapplingHook"
+          },
+          {
+            "label": "Collapsible Weapon",
+            "description": "A basic, but indestructible melee weapon, such a a blade or staff which can be collapsed down for easy transport. Has a heating, an electrifying, a vibration, and a gas dispensing attachment. Can hold one of these attachments at a time. ",
+            "id": "skillsAndEquipmentEquipmentCollapsibleWeapon"
+          },
+          {
+            "label": "Ranged Weapon",
+            "description": "A ranged weapon, such as a wireless taser, handgun, or crossbow. Comes with a large supply of ammunition if needed, and a cheap source for getting more. ",
+            "id": "skillsAndEquipmentEquipmentRangedWeapon"
+          },
+          {
+            "label": "Throwing Item",
+            "description": "A very large supply of small boomerangs, throwing knives, or other thrown objects. Comes with a cheap source for getting more. Can come in explosive. taser sticky web, or flashing varieties. ",
+            "id": "skillsAndEquipmentEquipmentThrowingItem"
+          },
+          {
+            "label": "Smoke Bombs",
+            "description": "A large supply of small spheres that can release a large amount of harmless smoke to obscure vision. Comes with a special visor that can see through the smoke, and a cheap source for getting more bombs. Can come in tear gas, sleeping gas, or stink bombs varieties. ",
+            "id": "skillsAndEquipmentEquipmentSmokeBombs"
+          },
+          {
+            "label": "Scanning Goggles",
+            "description": "A special set of goggles that can allow for a variety of vision modes, including thermal, night vision, blood trace, telescopic, or microsopic. Can integrate the visor from the smoke bombs if desired. ",
+            "id": "skillsAndEquipmentEquipmentScanningGoggles"
+          },
+          {
+            "label": "Wrist Computer",
+            "description": "A top-of-the-line computer system, contained within a sleek casing on one arm. Can access local networks, and comes with basic \"hacking software\" and alarge amounts of internal memory. Can be taken in the form of a laptop or desktop instead, with identical capabilities. ",
+            "id": "skillsAndEquipmentEquipmentWristComputer"
+          },
+          {
+            "label": "Toolkit",
+            "description": "A kit of basic tools, that can include some specialty tools such as lock-picks or radiation detectors. ",
+            "id": "skillsAndEquipmentEquipmentToolkit"
+          },
+          {
+            "label": "Motorbike",
+            "description": "A large motorcycle with internal auto-gyros that helps maintain balance. \n----\n[color=gold]Can be upgraded with the ability to drive on walls and a small ranged weapon system, such as a machine gun or small rockets.[/color]",
+            "id": "skillsAndEquipmentEquipmentMotorbike",
+            "maxSelections": 2,
+            "costOptions": [
+              {
+                "cost": {
+                  "Equipment": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": 1
+                }
+              }
+            ]
+          },
+          {
+            "label": "Plane",
+            "description": "A one-person plane that is capable of VTOL and supersonic flight. Can have a small weapons system, such as rockets or machine guns. ",
+            "id": "skillsAndEquipmentEquipmentPlane",
+            "costOptions": [
+              {
+                "cost": {
+                  "Boons": 1,
+                  "Equipment": 1
+                }
+              }
+            ],
+            "borderColor": "gold"
+          },
+          {
+            "label": "Holo-Cloak",
+            "description": "A special device that can project a holographic image over the user, allowing for convincing disguises or invisibility. ",
+            "id": "skillsAndEquipmentEquipmentHoloCloak",
+            "costOptions": [
+              {
+                "cost": {
+                  "Boons": 1,
+                  "Equipment": 1
+                }
+              }
+            ],
+            "borderColor": "gold"
+          },
+          {
+            "label": "Hideout",
+            "description": "A small storage hideout with a couple of concealed entrances. Contains very basic utilities, but functions more as a storage location than a place to stay. ",
+            "id": "skillsAndEquipmentEquipmentHideout"
+          },
+          {
+            "label": "Lair",
+            "description": "A large hidden area with living space, utilities, vehicle access, and a basic training area. Can be connected to a basic house with equal level of living space. ",
+            "id": "skillsAndEquipmentEquipmentLair",
+            "costOptions": [
+              {
+                "cost": {
+                  "Equipment": 1,
+                  "Boons": 1
+                }
+              }
+            ],
+            "borderColor": "gold"
+          }
+        ],
+        "subcategories": [],
+        "costOptions": [
+          {
+            "cost": {
+              "Equipment": 1
+            }
+          }
+        ],
+        "textColor": "#C0C0C0",
+        "darkTextColor": "#C0C0C0",
+        "columnsPerRow": 3
+      }
+    ],
+    "textColor": "#C0C0C0",
+    "darkTextColor": "#C0C0C0"
+  },
+  {
+    "name": "Allies",
+    "subcategories": [
+      {
+        "name": "Sidekicks",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Missilemen",
+            "description": "**Members and Powers**: \n* Mechanical suit granting superstrength, forcefields, and flight (Unit One)\n* Mechanical suit granting superstrength, forcefields, and flight (Unit Two)\n* Mechanical suit granting superstrength, forcefields, and flight (Unit Three)\n\n**Alignment:** Hero\n\nA group of drinking buddies, two men and a woman, that stumbled across a set of flight suits made by a dead engineer and took them for a drunken, heroic joyride. They found out about their heroic escapades the next day, and decided that being heroic was rather fun. Enthusiastic, but generally unskilled, they have worked out how to maintain their suits.",
+            "id": "alliesSidekicksMissilemen",
+            "costOptions": [
+              {
+                "cost": {
+                  "Allies": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -0.5
+                }
+              }
+            ]
+          },
+          {
+            "label": "D-Feats",
+            "description": "**Members and Powers**\n* Acrobatics, Parkour, and limited martial arts skills (Carnivaleer) \n* Light controlling lighthouse-shaped hat, allowing for illusions and barriers (The Human Lighthouse) \n* Bizarre levels of luck that make the world around him act like slapstick (Llamaman) \n**Alignment:** Neutral\nA group of friends that adopted costumed personas after The Human Lighthouse found his hat at a garage sale. They have failed in their chosen endeavors more often than they succeed, resulting in a local nickname of the defeats, but decided to take the name as their own, and \"turn it around.\" Undaunted by failing, and have a good amount of potential that they just aren't using properly.  \n",
+            "id": "alliesSidekicksDFeats",
+            "costOptions": [
+              {
+                "cost": {
+                  "Allies": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -0.5
+                }
+              }
+            ]
+          },
+          {
+            "label": "Verminites",
+            "description": "**Members and Powers:**\n* Shapeshifting into a were-rat with noxious gas generation (Bilge Rat) \n* Amazonian physique and mastery of bladed weapons (Snake Eater) \n* Hair made of launchable crystal spikes (Prick) \n* Super bouncy with hyper-elastic fat (Gus) \n**Alignment:** Villain\nA small-time street gang gathered by Bilge Rat after he escaped from a hidden lab. They are good at escaping when trouble finds them, and have a good ear for the 'pulse' of the local underbelly. They tend to live in abandoned areas and function as a close-knit pseudo-family. Loyal to those who treat them well, even if they have unsavory personal habits. ",
+            "id": "alliesSidekicksVerminites",
+            "costOptions": [
+              {
+                "cost": {
+                  "Allies": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -0.5
+                }
+              }
+            ]
+          },
+          {
+            "label": "H.A.M",
+            "description": "**Members and Powers: **\n* Generation of kinetic shockwaves from moving body parts (Upbeat) \n* Creation of panes of energy that selectively block matter (Prisma)\n* Magic whip that can be mentally controlled, grow, and take on plant properties (Hellyvine) \n* Can mentally ask a question and get the response he would get from someone he sees if asked aloud (Almanac) \n**Alignment:** Hero\nThe local branch of the 'Heroic Assistance Marketplace,' a group set up to essentially sell 'minion services' to heroes. The organization itself is new and fairly unknown, so they are eager to get the word out about what they offer. They have some decent training, but are often overeager to throw themselves out there and 'help.'",
+            "id": "alliesSidekicksHAM",
+            "costOptions": [
+              {
+                "cost": {
+                  "Allies": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -0.5
+                }
+              }
+            ]
+          },
+          {
+            "label": "The Clique",
+            "description": "**Members and Powers:**\n* Personal body control and a cooperation-encouraging energy field (Cheer) \n* Genius with a focus on adding unusual properties to everyday gadgets\n* Shadowy illusions and a master-level kickboxer\n**Alignment:** Neutral\nA group that met in high school and discovered their respective superpowers. Mostly interested in hanging out and developing \"cool tricks\" with their various abilities, they are mainly in the superpowered scene for the social aspect, rather than dedication to a specific alignment. Inventive with their respective powers, but act a lot like teenagers despite being adults now, given strong nostalgia for their high school years. ",
+            "id": "alliesSidekicksTheClique",
+            "costOptions": [
+              {
+                "cost": {
+                  "Allies": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -0.5
+                }
+              }
+            ]
+          },
+          {
+            "label": "Gen Sin",
+            "description": "**Members and Powers:**\n* Low-level personal temporal acceleration and pre-cog (Hypester) \n* Manifestation of target's fears as a semi-tangible illusion (Phoebe Phobia) \n* Random low-to-mid level powerset based on shifting tattoos on arms, changes once a minute or so (Sigil)\n**Alignment:** Villain\nA trio of 'bad seeds' that set out to be evil for the sake of appearing evil. They can generally be considered to be 'villain groupies' and they find being evil and breaking rules to be fun. They all have fairly potent abilities, but this is offset by their poor interpersonal relations, with them often squabbling with each other and fighting over minor slights. ",
+            "id": "alliesSidekicksGenSin",
+            "costOptions": [
+              {
+                "cost": {
+                  "Allies": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -0.5
+                }
+              }
+            ]
+          }
+        ],
+        "subcategories": [],
+        "columnsPerRow": 3,
+        "costOptions": [
+          {
+            "cost": {
+              "Allies": 1
+            }
+          }
+        ],
+        "textColor": "#C0C0C0",
+        "darkTextColor": "#C0C0C0"
+      },
+      {
+        "name": "Average Joes",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Meritorious",
+            "description": "**Power**: \"Flying brick\" (flight, strength, durability, and energy blasts that gains or loses power based on how famous she is or how many people are paying attention to her. \n**Alignment**: Hero\nA superheroine that tries to hog the limelight, not out of an actual desire for fame, but due to the fact that her powers rely on her being well-known and famous. In private, she is much more reserved and introverted, but she puts on a more vibrant act while out and about to keep herself on top of the game. ",
+            "id": "alliesAverageJoesMeritorious",
+            "costOptions": [
+              {
+                "cost": {
+                  "Allies": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -0.5
+                }
+              }
+            ]
+          },
+          {
+            "label": "Gravistar",
+            "description": "**Power**: Creates 'black holes,' spheres of basketball-sized darkness that can exert 1G of gravity and can disintegrate things caught within.\n**Alignment**: Hero\nA gentle giant with a destructive power, Gravistar wants to help people, but has to deal with the raw level of destruction that his powers can cause. Calm and soft-spoken, he is also built like a brick-wall, causing many to be reluctant to engage him in close-combat, despite him actually being fairly weak in CQC",
+            "id": "alliesAverageJoesGravistar",
+            "costOptions": [
+              {
+                "cost": {
+                  "Allies": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -0.5
+                }
+              }
+            ]
+          },
+          {
+            "label": "Treasure",
+            "description": "**Power**: Creates, shapes, and manipulates a golden substance that can harden to the density of steel. Dissipates when she moves too far away or loses concentration on it \n\n**Alignment**: Hero\nA superheroine with the looks of a supermodel and the attitude of a tomboy. Brash and hyperactive, her primary approach to using her power is to make gauntlets and boots that can allow her to add force to her blows, so that she can get in close and punch 'bad guys' in the face. She only operates from range, making walls or other objects, as a last resort. ",
+            "id": "alliesAverageJoesTreasure",
+            "costOptions": [
+              {
+                "cost": {
+                  "Allies": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -0.5
+                }
+              }
+            ]
+          },
+          {
+            "label": "BladeFall",
+            "description": "**Power**: Mentally controls a flying blade that can change size between a small dagger up to a blade the size of a bus.\n**Alignment**: Neutral\nThe blade she controls was a family heirloom before she discovered that she could make it move around and change size with her mind. She had tried to find other blades that she can manipulate but she has not run across any so far. On occasion, the blade seems to react on its own, before she realizes she needs to move it. ",
+            "id": "alliesAverageJoesBladeFall",
+            "costOptions": [
+              {
+                "cost": {
+                  "Allies": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -0.5
+                }
+              }
+            ]
+          },
+          {
+            "label": "Chardonnay",
+            "description": "**Power**: Creates and controls a thick, reddish mist, which he can thicken to give some physical substance, and which inebriates those that inhale it.\n**Alignment**: Neutral\nA handsome man with a suave manner, he tends to act the part of the stereotypical image of a Victorian gentlemen. He enjoys the finer things in life, and has worked to commercialize the effect of his powers to help fund his more expensive tastes. In truth, he is quite a bit more charming than he truly is, but typically does not lack for companionship nonetheless.",
+            "id": "alliesAverageJoesChardonnay",
+            "costOptions": [
+              {
+                "cost": {
+                  "Allies": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -0.5
+                }
+              }
+            ]
+          },
+          {
+            "label": "Tyranna",
+            "description": "**Power**: Very high levels of super-strength, with a powerful 'roar' that causes most who hear it to freeze in place and afflicts them with feelings of terror. \n**Alignment**: Neutral\nShe claims to be the reincarnation of an 'ancient dinosaur queen,' though this assertion has not been proven or denied by anything but her own words. She tends to be very jovial around those she likes, and takes pleasure in attacking those that she dislikes. She is rather headstrong and frequently rushes in before she thinks. ",
+            "id": "alliesAverageJoesTyranna",
+            "costOptions": [
+              {
+                "cost": {
+                  "Allies": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -0.5
+                }
+              }
+            ]
+          },
+          {
+            "label": "Cogwheel",
+            "description": "**Power**: A complex clockwork right arm that can absorb and integrate other mechanical devices into itself and replicate their functions.\n**Alignment**: Neutral\nCogwheel loves the feeling of power he gets from his arm, but is also somewhat worried about the fact it has been slowly 'growing,' moving upward from his elbow towards his shoulder. Despite this, he still is always on the lookout for new items to integrate into his arm and acquiring them however he can.",
+            "id": "alliesAverageJoesCogwheel",
+            "costOptions": [
+              {
+                "cost": {
+                  "Allies": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -0.5
+                }
+              }
+            ]
+          },
+          {
+            "label": "Endgame",
+            "description": "**Power**: Enhanced cognition with a focus on creating large strategic battleplans, political maneuvers, and high-level manipulations to 'guide' people into being where she needs them.\n**Alignment**: Neutral\nA planner and schemer at heart, she enjoys the mental exercise of coming up with plans and contingencies , even if she does not and will not need them. Part of her power is an ability to very accurately quantify a person's strengths and weaknesses, including both mental social areas as well as physical abilities, which can make conversations with her feel more like a battle than anything. ",
+            "id": "alliesAverageJoesEndgame",
+            "costOptions": [
+              {
+                "cost": {
+                  "Allies": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -0.5
+                }
+              }
+            ]
+          },
+          {
+            "label": "Polka Dark",
+            "description": "**Power**: Creation of linked 'holes' which cause disorientation in anyone aside from her that passes through them. Can change which 'holes' link to which on the fly. \n**Alignment**: Neutral\nAn apparently cheerful girl when you first meet her, but a deep love of horror and a somewhat buried streak of sadism can make her a very frightening person when you get to know her better. She has a twisted idea on what is 'cute' and what is 'scary,' and she dearly enjoys messing with those she considers to be enemies. ",
+            "id": "alliesAverageJoesPolkaDark",
+            "costOptions": [
+              {
+                "cost": {
+                  "Allies": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -0.5
+                }
+              }
+            ]
+          },
+          {
+            "label": "Roundstep",
+            "description": "**Power**: Can spend some time to link two identically sized locations, allowing for objects and people to be freely transferred between them.\n**Alignment**: Neutral\nHe runs a specialized delivery service using his powers, on top of any other superpowered activities he might engage in, linking up a series of warehouses around the globe to securely transfer items between them. He can maintain multiple links at once, but has to spend some time moving between the different locations each day to maintain the links as well. ",
+            "id": "alliesAverageJoesRoundstep",
+            "costOptions": [
+              {
+                "cost": {
+                  "Allies": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -0.5
+                }
+              }
+            ]
+          },
+          {
+            "label": "Old Man Gnome",
+            "description": "**Power**: Has a magic bag full of seemingly infinite number of guns. Expert marksman\n**Alignment**: Neutral\nA superpowered retiree. Old Man Gnome is small and hunched over, and more likely to want to just sit and shoot the breeze, both literally and figuratively, than go out and do anything 'exciting.' He has led a fairly eventful life, which leaves him with a lot interesting stories and possibly a few old contacts here and there he could introduce you to. ",
+            "id": "alliesAverageJoesOldManGnome",
+            "costOptions": [
+              {
+                "cost": {
+                  "Allies": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -0.5
+                }
+              }
+            ]
+          },
+          {
+            "label": "Waymotion",
+            "description": "**Power**: Can generate 'afterimages' around herself that distort her form and allow her to redirect her own momentum in a variety of ways. \n**Alignment**: Neutral\nA former stuntwoman, she had to retire after getting her powers given her difficulty suppressing them in high-stress situations. She has considered simply outing herself and working as an obviously super-powered stuntwoman, but is not quite certain whether she should or not. She has a tendency to overthink decisions like this, waffling between deciding one way or another.",
+            "id": "alliesAverageJoesWaymotion",
+            "costOptions": [
+              {
+                "cost": {
+                  "Allies": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -0.5
+                }
+              }
+            ]
+          },
+          {
+            "label": "Goblinforge",
+            "description": "**Power**: has molten metal for blood, which he can generate in large quantities and create crude minions with.\n**Alignment**: Villain\nHis powers are painful for him to use, though powerful once he has had a chance to set-up. He has something of an inferiority complex, and resents that his powers are more difficult to use than most. He also has a very keen mind, approaching the levels of super-genius, but any 'evil' plan he makes, he has a tendency to sabotage accidentally while trying to 'prove himself.'",
+            "id": "alliesAverageJoesGoblinforge",
+            "costOptions": [
+              {
+                "cost": {
+                  "Allies": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -0.5
+                }
+              }
+            ]
+          },
+          {
+            "label": "Liger",
+            "description": "**Power**: Absorbs pieces of animal bodies, such as leather made from their skin, to enter a temporary energy form based on that animal, with some 'totemic' abilities thereof.\n**Alignment**: Villain\nA hunter and survivalist, Liger lives for the rush that he gets from his transformations, and is constantly seeking out new beasts to hunt down so he can add them to his collection. His power does not really work on humans and sentients luckily, so he does not go after people, but he does not shy away from attacking those that get in the way of his hunts. ",
+            "id": "alliesAverageJoesLiger",
+            "costOptions": [
+              {
+                "cost": {
+                  "Allies": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -0.5
+                }
+              }
+            ]
+          },
+          {
+            "label": "Quaestor",
+            "description": "**Power**: Flight, minor shapeshifting, and a 'mind blank' beam that makes those hit with it very suggestible.\n**Alignment**: Villain\nAn alien representative sent to Earth by a space government to collect taxes. He is considered a villain largely because he disregards any Earth laws as beneath him, and does not really care about the idea of 'personal property.' He presents as male, but his actual gender is variable thanks to his psychology.  ",
+            "id": "alliesAverageJoesQuaestor",
+            "costOptions": [
+              {
+                "cost": {
+                  "Allies": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -0.5
+                }
+              }
+            ]
+          }
+        ],
+        "subcategories": [],
+        "costOptions": [
+          {
+            "cost": {
+              "Allies": 1
+            }
+          }
+        ],
+        "columnsPerRow": 3,
+        "textColor": "#C0C0C0",
+        "darkTextColor": "#C0C0C0"
+      },
+      {
+        "name": "Icons",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Varicell",
+            "description": "**Power**: Super genius, with a 'power staff' he created as a primary weapon that can absorb, generate, and manipulate most forms of energy. \n**Alignment**: Hero\nA genius that has developed a wide variety of advances in different technologies, especially in the area of power generation, he is somewhat absent-minded in actually patenting and profiting off his ideas, but luckily has a small team that helps him keep track of that sort of thing. ",
+            "id": "alliesIconsVaricell",
+            "borderColor": "gold",
+            "costOptions": [
+              {
+                "cost": {
+                  "Boons": 1,
+                  "Allies": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -1
+                }
+              }
+            ]
+          },
+          {
+            "label": "Blankman",
+            "description": "**Power**: Nullifies super-powered effects around him, has high durability, and gains 'energy' from nullifying effects that he can spend to gain strength, speed, or flight. \n**Alignment**: Neutral\nCompletely hairless, Blankman has the effect of leeching color from his surroundings, causing everything around him to be monochrome until he moves on. His emotional state is similarly colorless, with him seeming a combination between intense boredom and calm pretty much all the time. He enjoys intense experiences that can help break through this blandness. ",
+            "id": "alliesIconsBlankman",
+            "borderColor": "gold",
+            "costOptions": [
+              {
+                "cost": {
+                  "Boons": 1,
+                  "Allies": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -1
+                }
+              }
+            ]
+          },
+          {
+            "label": "Excelius",
+            "description": "**Power**: Absolute control and shapeshifting\n**Alignment**: Villain\nExcelius actually maintains a few different 'personas' via his powers. The form where he actually goes by Excelius is a massive brute where he packed as many 'transhumanist' transformations into his form as he can. Other identities will have lesser tweaks, or will simply operate at 'normal human' levels. ",
+            "id": "alliesIconsExcelius",
+            "borderColor": "gold",
+            "costOptions": [
+              {
+                "cost": {
+                  "Boons": 1,
+                  "Allies": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -1
+                }
+              }
+            ]
+          },
+          {
+            "label": "Infinitress",
+            "description": "**Power**: 'Quantum' clone creation, probability manipulation to allow for multiple actions to be performed simultaneously. \n**Alignment**: Hero\nA superheroine that is physically an ordinary woman, but who can use her abilities to turn into a one-woman army, She tends to be something of a loner, charging ahead without waiting for others to help, and can be a little difficult to coordinate with, but she can give effectively infinite amounts of backup when needed.",
+            "id": "alliesIconsInfinitress",
+            "borderColor": "gold",
+            "costOptions": [
+              {
+                "cost": {
+                  "Boons": 1,
+                  "Allies": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -1
+                }
+              }
+            ]
+          },
+          {
+            "label": "Evergreen",
+            "description": "**Power**: Generates a green glow that can control and manipulate plants and heal those that get encased within it. \n**Alignment**: Neutral\nThe quintessential picture of a wandering hippie, she wants to spread love and joy wherever she goes. She has a love for plants, but understands that they are part of nature, so she does not bear any major ill will to those who use them. Unnecessary destruction can get her to give a response, though it is usually in the form of using plants to make further destruction infeasible, via destroyed equipment or altered terrain. ",
+            "id": "alliesIconsEvergreen",
+            "borderColor": "gold",
+            "costOptions": [
+              {
+                "cost": {
+                  "Boons": 1,
+                  "Allies": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -1
+                }
+              }
+            ]
+          },
+          {
+            "label": "Boilerplate",
+            "description": "**Power**: Living body made of metal, incorporating several guns and other armaments, with an ability to self-repair over time. \n**Alignment**: Villain\nA composite entity comprised of the grudges of a bunch of ghosts from sunken battleship. Exactly which ship is unknown. All that he knows is that he has a large mass of anger bound up in his chest, and a deep, burning love for seeing things go 'Boom.' He needs to eat metal and other materials to replenish ammunition for his weapons. ",
+            "id": "alliesIconsBoilerplate",
+            "borderColor": "gold",
+            "costOptions": [
+              {
+                "cost": {
+                  "Boons": 1,
+                  "Allies": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -1
+                }
+              }
+            ]
+          }
+        ],
+        "subcategories": [],
+        "costOptions": [
+          {
+            "cost": {
+              "Boons": 1,
+              "Allies": 1
+            }
+          }
+        ],
+        "textColor": "#C0C0C0",
+        "darkTextColor": "#C0C0C0",
+        "columnsPerRow": 3
+      },
+      {
+        "name": "Supericons",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Victor",
+            "description": "**Power**: Flight, super-strength, a sense for detecting innocents in need of help, and a 'protection field' that can be shared with others. \n**Alignment**: Hero\nThe quintessential view of a superhero, Victor does not respect any political boundaries or entities. He will try to work with local governments, but he views helping innocent people to be more important than working with any specific local powers. His flight speed and strength are astronomical, but his 'protection field' helps extend to even his enemies, dampening his blows enough to defeat them without killing, though he will take lives to protect the innocent if needed. ",
+            "id": "alliesSupericonsVictor",
+            "borderColor": "gold",
+            "costOptions": [
+              {
+                "cost": {
+                  "Boons": 2,
+                  "Allies": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -1
+                }
+              }
+            ]
+          },
+          {
+            "label": "Loco",
+            "description": "**Powers**: Numerous (Some examples: Pyrokinesis, Clawed Hands Transformation, Position Swapping, Acidic Energy blasts, Postcognitive Visions, Super Jumps)\n**Alignment**: Neutral\nSometimes referred to as the Woman of a Hundred Origins, Loco has gained powers from virtually every source under the sun. Magic, Technology, quirks of genetics, cosmic blessings, and things even stranger. Somehow, she has come out of all this fairly sane and well-adjusted, with several swiss-army knives worth of powers to call on. ",
+            "id": "alliesSupericonsLoco",
+            "borderColor": "gold",
+            "costOptions": [
+              {
+                "cost": {
+                  "Boons": 2,
+                  "Allies": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -1
+                }
+              }
+            ]
+          },
+          {
+            "label": "Nimrod",
+            "description": "**Powers**: Limited temporal manipulation, especially in setting up time loops to avoid defeat, and a 'conceptual death weapon' in the form of a bone club. \n**Alignment**: Villain\nAn ancient warlord from antiquity, he has gained limited temporal manipulation abilities that he is using to try and move through time, setting up victories for himself by learning from his mistakes over time. He ultimately seeks to rule, but prior defeats have convinced him that he needs to learn more about \"sneakiness\" and how he can arrange for people to simply choose to accept his rule, rather than fighting him. ",
+            "id": "alliesSupericonsNimrod",
+            "borderColor": "gold",
+            "costOptions": [
+              {
+                "cost": {
+                  "Boons": 2,
+                  "Allies": 1
+                }
+              },
+              {
+                "cost": {
+                  "Boons": -1
+                }
+              }
+            ]
+          }
+        ],
+        "subcategories": [],
+        "costOptions": [
+          {
+            "cost": {
+              "Boons": 2,
+              "Allies": 1
+            }
+          }
+        ],
+        "textColor": "#C0C0C0",
+        "darkTextColor": "#C0C0C0",
+        "columnsPerRow": 3
+      },
+      {
+        "name": "Other",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Alternate",
+            "description": "Do you like one of the listed choices, but want to alter a few details, such as gender or personality. You can do so, with the only limitation being that you cannot make them more dangerous or competent than they currently are, and you cannot make them fall in love with you unless you took **Perfect Match**\n\nIt is up to you whether the unchosen choices will exist in your new world or not. ",
+            "id": "alliesOtherAlternate",
+            "prerequisites": "!originStoryYourTeamLoneWolf"
+          },
+          {
+            "label": "Canon",
+            "description": "If you want, and you are merged with / part of an existing franchise, you can gain a canonical character as an ally. This can take the form of a team of young sidekicks / D-list level characters as a single selection, along the lines of the sidekick teams listed above. \n\nIf your character is very well-known throughout the setting (Iron Man or Batman), they would count as an icon and thus a [color=gold]Boon[/color] for you. \n\nIf the character is extraordinarily powerful and can shake the very setting with their actions (such as Silver Surfer or Darkseid), they count as a Supericon and thus require [color=gold]Two Boons[/color] to pay for them.",
+            "id": "alliesOtherCanon",
+            "prerequisites": "!originStoryYourTeamLoneWolf"
+          },
+          {
+            "label": "Custom",
+            "description": "You can custom-build a character and their powers, but it costs a flat [color=gold]Boon[/color] to do so. You can choose to make three Sidekick-level characters as a team if you want. You will make selections for Power Level, Origin Story, Origin Modifiers, and Powers, paying for any [color=gold]Boons[/color] that you take, and ignoring any [color=red]Banes[/color] that you select \n\nIn other words, you have to pay for your ally's [color=gold]Boons[/color] with your own [color=red]Banes[/color]",
+            "id": "alliesOtherCustom",
+            "prerequisites": "!originStoryYourTeamLoneWolf"
+          }
+        ],
+        "subcategories": [],
+        "textColor": "#C0C0C0",
+        "darkTextColor": "#C0C0C0",
+        "columnsPerRow": 3
+      }
+    ],
+    "description": "Choose your allies. You may take as many as you have options for. \n\nAllies will either be a \"Hero,\" \"Villain,\" or \"Neutral\" alignment. Those with neutral alignment can be either heroes or villains, depending on your preference. \n\nYou can select Allies regardless of their alignment and yours. If their alignment is different, that can mean they are friendly rivals, or perhaps a mole for you.\n\nThose under the section \"Supericons\" only require one pick. But they count for [color=gold]Two Boons[/color], and so you will need [color=red]Two Banes[/color] to 'pay' for them.\n\nWhen choosing from Sidekicks, Average Joes, Icons, or Supericons, each entry can be taken either as an ally or as a bitter enemy. Sidekick and Average Joe bitter enemies grant half a Boon each, so choosing any two grants 1 Boon. Icon and Supericon bitter enemies grant 1 Boon each. The Other section cannot be chosen as bitter enemies.\n\n**If you chose Lone Wolf, you cannot take entries here as allies, but you can still choose eligible entries as bitter enemies.**",
+    "textColor": "#C0C0C0",
+    "darkTextColor": "#C0C0C0"
+  },
+  {
+    "name": "Boons and Banes",
+    "subcategories": [
+      {
+        "name": "Boons",
+        "type": "storyBlock",
+        "text": "Choose the additional [color=gold]Boons[/color] that you want. Pick as many as you want, but each one can only be taken once unless specified otherwise. ",
+        "options": [
+          {
+            "label": "Contacts",
+            "description": "You have several non-powered contacts, whether in the police, local criminals, politics, or research groups. They can help you out with various logistics or research, but won't be much help if it comes to a fight. ",
+            "id": "boonsAndBanesBoonsContacts",
+            "borderColor": "gold"
+          },
+          {
+            "label": "Fan Club",
+            "description": "For whatever reason, your superpowered persona will prove toe be fairly popular, and thus, licensed merchandise of you will be fairly profitable. \n\nYou will be able to make quite a bit of money from licensing your image. ",
+            "id": "boonsAndBanesBoonsFanClub",
+            "borderColor": "gold"
+          },
+          {
+            "label": "Identities",
+            "description": "You have been set up with a couple of cover identities that should stand up to all but the tightest scrutiny. This will not protect you from slipping on your own, but as long as you make the effort, you should be able to keep them separate. ",
+            "id": "boonsAndBanesBoonsIdentities",
+            "borderColor": "gold"
+          },
+          {
+            "label": "Perfect Match",
+            "description": "Simply put, you will find your perfect love. Someone who completes you in every way. It can take the form of one of your allies, or someone else that you will meet, but you are guaranteed to come across them and hit it off. It will be up to you to not neglect them and drive them away from there, however.",
+            "id": "boonsAndBanesBoonsPerfectMatch",
+            "borderColor": "gold"
+          },
+          {
+            "label": "Wealthy",
+            "description": "Simply put, you have a lot of money. This could come from owning a successful business, receiving a large inheritance, or stumbling across a large amount of treasure. Whatever the case, it would take several years of spending to exhaust this. ",
+            "id": "boonsAndBanesBoonsWealthy",
+            "costOptions": [
+              {
+                "cost": {
+                  "Boons": 1,
+                  "Equipment": -2
+                }
+              }
+            ],
+            "borderColor": "gold"
+          }
+        ],
+        "subcategories": [],
+        "columnsPerRow": 3,
+        "costOptions": [
+          {
+            "cost": {
+              "Boons": 1
+            }
+          }
+        ],
+        "textColor": "#C0C0C0",
+        "darkTextColor": "#C0C0C0"
+      },
+      {
+        "name": "Banes",
+        "type": "storyBlock",
+        "text": "Choose the additional [color=red]Banes[/color] that you want. Pick as many as you want, but each can only be taken once, unless specified otherwise.",
+        "options": [
+          {
+            "label": "Allergy",
+            "description": "There is some fairly rare substance (like gold or LSD) that, when you come in direct contact with it, blocks your powers and renders you physically weak. If you do not have powers, then it just functions as a really, really bad allergy. You can have this be a semi-common substance (such as lead or gluten) and you will gain a feeling when some of that substance is nearby. ",
+            "id": "boonsAndBanesBanesAllergy",
+            "borderColor": "red"
+          },
+          {
+            "label": "Bad Rep",
+            "description": "People around you simply do not trust you and will be quick to think the worst of you. This primarily affects your personal relationships, meaning that allies that you have will be willing to work with you, but won't like you much on a personal level. Taking this with *Lone Wolf* will lead to a fairly lonely existence. ",
+            "id": "boonsAndBanesBanesBadRep",
+            "borderColor": "red"
+          },
+          {
+            "label": "Conspiracy",
+            "description": "Whether it's a government black-ops group, a shadowy group of business moguls, a demented cult, or some other group, there is some secret society that wants to use you in some way. Whether it is as a bloody sacrifice or a pawn in their schemes, they absolutely do not have your best interests in mind, and will stop at almost nothing in their attempts to control you.",
+            "id": "boonsAndBanesBanesConspiracy",
+            "borderColor": "red"
+          },
+          {
+            "label": "Cycle",
+            "description": "Your powers and skills operate on a cycle. This cycle can range from a day to a month in length, but your abilities will only be at their peak for a short period during this cycle, before diminishing down to the point of powerlessness for a similar period, and then gaining in strength once again. ",
+            "id": "boonsAndBanesBanesCycle",
+            "borderColor": "red"
+          },
+          {
+            "label": "Plot Magnet",
+            "description": "Simply put, you will never have a break from the plot. Any attempt to settle down or take a vacation will result in some super-powered shenanigans occurring in your general vicinity which will suck you up in them. These issues will only occasionally actually pose a danger to you, but it will be exhausting to keep bouncing around between them.",
+            "id": "boonsAndBanesBanesPlotMagnet",
+            "borderColor": "red"
+          }
+        ],
+        "subcategories": [],
+        "costOptions": [
+          {
+            "cost": {
+              "Boons": -1
+            }
+          }
+        ],
+        "columnsPerRow": 3,
+        "textColor": "#C0C0C0",
+        "darkTextColor": "#C0C0C0"
+      }
+    ],
+    "textColor": "#C0C0C0",
+    "darkTextColor": "#C0C0C0"
+  }
+]

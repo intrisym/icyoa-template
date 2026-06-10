@@ -5,8 +5,10 @@
   "scripts": {
     "check:js": "node --check script.js && node --check editor.js && node --check logicExpr.js && node --check server.js && node --check generate-manifest.js",
     "test:cyoas": "node scripts/validate-cyoas.js",
+    "spellcheck:cyoas": "node scripts/spellcheck-cyoas.js",
+    "spellcheck:fix": "node scripts/spellcheck-cyoas.js --fix",
     "test:functional": "node scripts/functional-cyoa-tests.js",
-    "verify": "npm run check:js && npm run test:cyoas && npm run test:functional",
+    "verify": "npm run check:js && npm run test:cyoas && npm run spellcheck:cyoas && npm run test:functional",
     "test": "npm run verify"
   }
 }

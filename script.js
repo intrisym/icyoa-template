@@ -3,6 +3,7 @@ let points = {};
 const selectedOptions = {};
 const discountedSelections = {};
 const selectedCostOptionIndexes = {};
+const selectedCostOptionHistory = {};
 const openCategories = new Set();
 const storyInputs = {};
 let currentTab = null; // Track current active tab
@@ -16,6 +17,7 @@ const attributeSliderValues = {};
 let originalPoints = {};
 let allowNegativeTypes = new Set();
 const dynamicSelections = {};
+const pointAllocationSelections = {};
 let attributeRanges = {}; // Will be updated by dynamic effects
 let originalAttributeRanges = {}; // Stores the initial, base ranges from input.json
 const subcategoryDiscountSelections = {};
@@ -323,9 +325,11 @@ function resetGlobalState() {
     clearObject(selectedOptions);
     clearObject(discountedSelections);
     clearObject(selectedCostOptionIndexes);
+    clearObject(selectedCostOptionHistory);
     clearObject(storyInputs);
     clearObject(attributeSliderValues);
     clearObject(dynamicSelections);
+    clearObject(pointAllocationSelections);
     clearObject(subcategoryDiscountSelections);
     clearObject(categoryDiscountSelections);
     clearObject(optionGrantDiscountSelections);
@@ -356,15 +360,10 @@ function meetsCountRequirement(rawId) {
     return (selectedOptions[id] || 0) >= required;
 }
 
-// Returns the merged base cost for an option, preferring subcategory defaults when present.
+// Returns the direct base cost for an option. Subcategory defaults are represented by costOptions.
 function getOptionBaseCost(option) {
     if (!option) return {};
-    const info = findSubcategoryInfo(option.id);
-    const subDefault = info.subcat?.defaultCost || {};
     const optionCost = option.cost || {};
-    if (Object.keys(optionCost).length === 0) {
-        return { ...subDefault };
-    }
     return { ...optionCost };
 }
 
@@ -381,18 +380,78 @@ function getCostOptionCostForSelection(entry, selectionNumber = 1) {
     return entry?.cost && typeof entry.cost === "object" ? entry.cost : null;
 }
 
-function normalizeOptionCostOptions(option, { selectionNumber = null } = {}) {
+function getCostOptionSelectionCount(optionId, costOptionIndex) {
+    return (selectedCostOptionHistory[optionId] || []).filter(index => Number(index) === Number(costOptionIndex)).length;
+}
+
+function getEffectiveCostOptionSelectionCount(optionId, costOptionIndex) {
+    const history = selectedCostOptionHistory[optionId] || [];
+    const historyCount = history.filter(index => Number(index) === Number(costOptionIndex)).length;
+    if (history.length || Number(costOptionIndex) !== 0) return historyCount;
+    return selectedOptions[optionId] || 0;
+}
+
+function costOptionAvailabilityMet(option, entry, index, totalCostOptions = 1) {
+    if (!option?.id || !entry || typeof entry !== "object") return true;
+    if (!requirementMet(entry.prerequisites)) return false;
+    const currentOptionCount = selectedOptions[option.id] || 0;
+    const minSelected = Number(entry.minSelected);
+    if (Number.isFinite(minSelected) && currentOptionCount < minSelected) return false;
+    if (entry.requiresCostOption !== undefined) {
+        const requiredIndex = Number(entry.requiresCostOption);
+        if (!Number.isInteger(requiredIndex) || getEffectiveCostOptionSelectionCount(option.id, requiredIndex) <= 0) {
+            return false;
+        }
+    }
+    const hasSelectionTiers = Array.isArray(entry.costBySelection) && entry.costBySelection.length > 0;
+    const maxSelections = entry.maxSelections === undefined && totalCostOptions > 1 && !hasSelectionTiers
+        ? 1
+        : Number(entry.maxSelections);
+    if (Number.isFinite(maxSelections) && maxSelections >= 0 && getEffectiveCostOptionSelectionCount(option.id, index) >= maxSelections) {
+        return false;
+    }
+    return true;
+}
+
+function getConfiguredCostOptions(option) {
     const info = option?.id ? findSubcategoryInfo(option.id) : {};
     const ownOptions = Array.isArray(option?.costOptions) ? option.costOptions : [];
     const subcategoryOptions = Array.isArray(info.subcat?.costOptions) ? info.subcat.costOptions : [];
+    const hasDirectOptionCost = option?.cost && typeof option.cost === "object" && Object.keys(option.cost).length > 0;
     const hasOwnCostOptions = ownOptions.some(entry =>
         entry?.cost && typeof entry.cost === "object" && Object.keys(entry.cost).length
         || Array.isArray(entry?.costBySelection) && entry.costBySelection.some(cost => cost && typeof cost === "object" && Object.keys(cost).length)
     );
-    const options = hasOwnCostOptions || !subcategoryOptions.length ? ownOptions : subcategoryOptions;
+    return hasOwnCostOptions ? ownOptions : (hasDirectOptionCost ? [] : subcategoryOptions);
+}
+
+function selectedCostOptionStillValid(option, costOptionIndex) {
+    const options = getConfiguredCostOptions(option);
+    if (!options.length || costOptionIndex === null || costOptionIndex === undefined) return true;
+    const entry = options[Number(costOptionIndex)];
+    if (!entry || typeof entry !== "object") return false;
+    if (!requirementMet(entry.prerequisites)) return false;
+    const currentOptionCount = selectedOptions[option.id] || 0;
+    const minSelected = Number(entry.minSelected);
+    if (Number.isFinite(minSelected) && currentOptionCount < minSelected) return false;
+    if (entry.requiresCostOption !== undefined) {
+        const requiredIndex = Number(entry.requiresCostOption);
+        if (!Number.isInteger(requiredIndex) || getEffectiveCostOptionSelectionCount(option.id, requiredIndex) <= 0) return false;
+    }
+    return true;
+}
+
+function selectedCostOptionsStillValid(option) {
+    const history = selectedCostOptionHistory[option.id] || [];
+    return history.every(costOptionIndex => selectedCostOptionStillValid(option, costOptionIndex));
+}
+
+function normalizeOptionCostOptions(option, { selectionNumber = null } = {}) {
+    const options = getConfiguredCostOptions(option);
     const effectiveSelectionNumber = selectionNumber || getNextSelectionNumber(option);
     return options
         .map((entry, index) => {
+            if (!costOptionAvailabilityMet(option, entry, index, options.length)) return null;
             const rawCost = getCostOptionCostForSelection(entry, effectiveSelectionNumber)
                 || (entry?.cost && typeof entry.cost === "object"
                     ? entry.cost
@@ -410,14 +469,88 @@ function normalizeOptionCostOptions(option, { selectionNumber = null } = {}) {
 
 function getOptionBaseCostByChoice(option, costOptionIndex = null, { selectionNumber = null } = {}) {
     const options = normalizeOptionCostOptions(option, { selectionNumber });
-    if (!options.length || costOptionIndex === null || costOptionIndex === undefined) {
+    if (!options.length) {
         return getOptionBaseCost(option);
+    }
+    if (costOptionIndex === null || costOptionIndex === undefined) {
+        return { ...options[0].cost };
     }
     const selected = options.find(entry => entry.index === Number(costOptionIndex));
     if (!selected || Object.keys(selected.cost || {}).length === 0) {
         return getOptionBaseCost(option);
     }
     return { ...selected.cost };
+}
+
+function normalizePointAllocationConfig(option) {
+    const config = option?.pointAllocation;
+    if (!config || typeof config !== "object") return null;
+    const types = Array.isArray(config.types)
+        ? config.types.map(type => String(type || "").trim()).filter(Boolean)
+        : [];
+    const total = Math.max(0, Math.floor(Number(config.total) || 0));
+    if (!types.length || total <= 0) return null;
+    return {
+        total,
+        types: [...new Set(types)]
+    };
+}
+
+function normalizePointAllocationValues(option, rawValues = null) {
+    const config = normalizePointAllocationConfig(option);
+    if (!config) return {};
+    const values = {};
+    let remaining = config.total;
+    const source = rawValues && typeof rawValues === "object" ? rawValues : {};
+    config.types.forEach((type, index) => {
+        let value = Math.max(0, Math.floor(Number(source[type]) || 0));
+        if (index === config.types.length - 1) {
+            value = remaining;
+        } else {
+            value = Math.min(value, remaining);
+        }
+        values[type] = value;
+        remaining -= value;
+    });
+    if (remaining > 0 && config.types.length) {
+        values[config.types[0]] = (values[config.types[0]] || 0) + remaining;
+    }
+    return values;
+}
+
+function getPointAllocationValues(option) {
+    const config = normalizePointAllocationConfig(option);
+    if (!config) return {};
+    if (!pointAllocationSelections[option.id]) {
+        const defaults = {};
+        defaults[config.types[0]] = config.total;
+        pointAllocationSelections[option.id] = normalizePointAllocationValues(option, defaults);
+    } else {
+        pointAllocationSelections[option.id] = normalizePointAllocationValues(option, pointAllocationSelections[option.id]);
+    }
+    return { ...pointAllocationSelections[option.id] };
+}
+
+function getPointAllocationCost(option) {
+    const values = getPointAllocationValues(option);
+    const cost = {};
+    Object.entries(values).forEach(([type, value]) => {
+        const numeric = Number(value) || 0;
+        if (numeric > 0) cost[type] = -numeric;
+    });
+    return cost;
+}
+
+function mergeCostMaps(...maps) {
+    const result = {};
+    maps.forEach(map => {
+        Object.entries(map || {}).forEach(([type, value]) => {
+            const numeric = Number(value);
+            if (!Number.isFinite(numeric)) return;
+            result[type] = (Number(result[type]) || 0) + numeric;
+        });
+    });
+    return result;
 }
 
 function getSelectedCostOptionIndex(option, selectionNumber = null) {
@@ -442,7 +575,10 @@ function getOptionEffectiveCost(option, {
     costOptionIndex = null,
     selectionNumber = null
 } = {}) {
-    const baseCost = getOptionBaseCostByChoice(option, costOptionIndex, { selectionNumber });
+    const baseCost = mergeCostMaps(
+        getOptionBaseCostByChoice(option, costOptionIndex, { selectionNumber }),
+        getPointAllocationCost(option)
+    );
     const info = findSubcategoryInfo(option.id);
     let bestCost = baseCost;
     let bestTotal = Object.entries(baseCost).reduce((sum, [_, val]) => val > 0 ? sum + val : sum, 0);
@@ -795,6 +931,11 @@ function removeSelectionsAffectedByCostModifierChange(changingOption, nextCount,
 function getOptionEffectiveCostChoices(option, options = {}) {
     const costOptions = normalizeOptionCostOptions(option, options);
     if (!costOptions.length) {
+        const info = option?.id ? findSubcategoryInfo(option.id) : {};
+        const hasDirectOptionCost = option?.cost && typeof option.cost === "object" && Object.keys(option.cost).length > 0;
+        const hasConfiguredCostOptions = (Array.isArray(option?.costOptions) && option.costOptions.length > 0)
+            || (!hasDirectOptionCost && Array.isArray(info.subcat?.costOptions) && info.subcat.costOptions.length > 0);
+        if (hasConfiguredCostOptions) return [];
         return [{
             index: null,
             label: "Cost",
@@ -1097,9 +1238,11 @@ function buildExportState() {
         selectedOptions,
         points,
         discountedSelections,
+        selectedCostOptionHistory,
         storyInputs,
         attributeSliderValues,
         dynamicSelections,
+        pointAllocationSelections,
         subcategoryDiscountSelections,
         categoryDiscountSelections,
         optionGrantDiscountSelections,
@@ -1111,6 +1254,7 @@ function clonePlayerState() {
     return {
         ...JSON.parse(JSON.stringify(buildExportState())),
         selectedCostOptionIndexes: JSON.parse(JSON.stringify(selectedCostOptionIndexes)),
+        selectedCostOptionHistory: JSON.parse(JSON.stringify(selectedCostOptionHistory)),
         selectionHistory: [...selectionHistory]
     };
 }
@@ -1120,9 +1264,11 @@ function restorePlayerState(state) {
     clearObject(selectedOptions);
     clearObject(discountedSelections);
     clearObject(selectedCostOptionIndexes);
+    clearObject(selectedCostOptionHistory);
     clearObject(storyInputs);
     clearObject(attributeSliderValues);
     clearObject(dynamicSelections);
+    clearObject(pointAllocationSelections);
     clearObject(subcategoryDiscountSelections);
     clearObject(categoryDiscountSelections);
     clearObject(optionGrantDiscountSelections);
@@ -1132,9 +1278,11 @@ function restorePlayerState(state) {
     Object.assign(selectedOptions, state.selectedOptions || {});
     Object.assign(discountedSelections, state.discountedSelections || {});
     Object.assign(selectedCostOptionIndexes, state.selectedCostOptionIndexes || {});
+    Object.assign(selectedCostOptionHistory, state.selectedCostOptionHistory || {});
     Object.assign(storyInputs, state.storyInputs || {});
     Object.assign(attributeSliderValues, state.attributeSliderValues || {});
     Object.assign(dynamicSelections, state.dynamicSelections || {});
+    Object.assign(pointAllocationSelections, state.pointAllocationSelections || {});
     Object.assign(subcategoryDiscountSelections, state.subcategoryDiscountSelections || {});
     Object.assign(categoryDiscountSelections, state.categoryDiscountSelections || {});
     Object.assign(optionGrantDiscountSelections, state.optionGrantDiscountSelections || {});
@@ -1156,9 +1304,11 @@ function buildPackedExportState() {
     };
 
     if (hasOwnEntries(full.discountedSelections)) packed.d = full.discountedSelections;
+    if (hasOwnEntries(full.selectedCostOptionHistory)) packed.h = full.selectedCostOptionHistory;
     if (hasOwnEntries(full.storyInputs)) packed.t = full.storyInputs;
     if (hasOwnEntries(full.attributeSliderValues)) packed.a = full.attributeSliderValues;
     if (hasOwnEntries(full.dynamicSelections)) packed.y = full.dynamicSelections;
+    if (hasOwnEntries(full.pointAllocationSelections)) packed.l = full.pointAllocationSelections;
     if (hasOwnEntries(full.subcategoryDiscountSelections)) packed.u = full.subcategoryDiscountSelections;
     if (hasOwnEntries(full.categoryDiscountSelections)) packed.c = full.categoryDiscountSelections;
     if (hasOwnEntries(full.optionGrantDiscountSelections)) packed.g = full.optionGrantDiscountSelections;
@@ -1175,9 +1325,11 @@ function unpackImportedState(importedData) {
         selectedOptions: importedData.s || {},
         points: importedData.p || {},
         discountedSelections: importedData.d || {},
+        selectedCostOptionHistory: importedData.h || {},
         storyInputs: importedData.t || {},
         attributeSliderValues: importedData.a || {},
         dynamicSelections: importedData.y || {},
+        pointAllocationSelections: importedData.l || {},
         subcategoryDiscountSelections: importedData.u || {},
         categoryDiscountSelections: importedData.c || {},
         optionGrantDiscountSelections: importedData.g || {},
@@ -1325,7 +1477,9 @@ document.getElementById("resetBtn").onclick = () => {
     for (let key in attributeSliderValues) delete attributeSliderValues[key];
     for (let key in discountedSelections) delete discountedSelections[key];
     for (let key in storyInputs) delete storyInputs[key];
+    for (let key in selectedCostOptionHistory) delete selectedCostOptionHistory[key];
     for (let key in dynamicSelections) delete dynamicSelections[key];
+    for (let key in pointAllocationSelections) delete pointAllocationSelections[key];
     for (let key in subcategoryDiscountSelections) delete subcategoryDiscountSelections[key];
     for (let key in categoryDiscountSelections) delete categoryDiscountSelections[key];
     for (let key in optionGrantDiscountSelections) delete optionGrantDiscountSelections[key];
@@ -1361,8 +1515,10 @@ modalConfirmBtn.onclick = async () => {
         for (let key in selectedOptions) delete selectedOptions[key];
         for (let key in attributeSliderValues) delete attributeSliderValues[key];
         for (let key in discountedSelections) delete discountedSelections[key];
+        for (let key in selectedCostOptionHistory) delete selectedCostOptionHistory[key];
         for (let key in storyInputs) delete storyInputs[key];
         for (let key in dynamicSelections) delete dynamicSelections[key];
+        for (let key in pointAllocationSelections) delete pointAllocationSelections[key];
         for (let key in subcategoryDiscountSelections) delete subcategoryDiscountSelections[key];
         for (let key in categoryDiscountSelections) delete categoryDiscountSelections[key];
         for (let key in optionGrantDiscountSelections) delete optionGrantDiscountSelections[key];
@@ -1378,6 +1534,9 @@ modalConfirmBtn.onclick = async () => {
         Object.entries(importedData.discountedSelections || {}).forEach(([key, val]) => {
             discountedSelections[key] = val
         });
+        Object.entries(importedData.selectedCostOptionHistory || {}).forEach(([key, val]) => {
+            selectedCostOptionHistory[key] = Array.isArray(val) ? val : []
+        });
         Object.entries(importedData.storyInputs || {}).forEach(([key, val]) => {
             const config = getStoryInputConfigById(key);
             if (!config) return;
@@ -1392,6 +1551,9 @@ modalConfirmBtn.onclick = async () => {
         });
         Object.entries(importedData.dynamicSelections || {}).forEach(([key, val]) => {
             dynamicSelections[key] = val
+        });
+        Object.entries(importedData.pointAllocationSelections || {}).forEach(([key, val]) => {
+            pointAllocationSelections[key] = val
         });
         Object.entries(importedData.subcategoryDiscountSelections || {}).forEach(([key, val]) => {
             if (Array.isArray(val)) {
@@ -2231,6 +2393,10 @@ function removeSelection(option, options = {}) {
 
     // Refund the exact cost paid for this selection instance.
     const refundCost = (discountedSelections[option.id]?.pop()) ?? getOptionBaseCost(option);
+    if (selectedCostOptionHistory[option.id]) {
+        selectedCostOptionHistory[option.id].pop();
+        if (selectedCostOptionHistory[option.id].length === 0) delete selectedCostOptionHistory[option.id];
+    }
     Object.entries(refundCost).forEach(([type, cost]) => {
         points[type] += cost;
     });
@@ -2244,6 +2410,10 @@ function removeSelection(option, options = {}) {
         if (option.inputType === "text") {
             delete storyInputs[option.id];
         }
+        if (option.pointAllocation) {
+            delete pointAllocationSelections[option.id];
+        }
+        delete selectedCostOptionHistory[option.id];
         removeAutoGrantsFromSource(option.id, {
             skipRender: true,
             force: true
@@ -2444,6 +2614,13 @@ function addSelection(option, options = {}) {
         discountedSelections[option.id] = [];
     }
     discountedSelections[option.id].push(actualCost); // Store the actual cost paid for this instance
+    if (!isAutoGrant) {
+        const selectedCostOptionIndex = options.costOptionIndex ?? getSelectedCostOptionIndex(option, current + 1);
+        if (selectedCostOptionIndex !== null && selectedCostOptionIndex !== undefined) {
+            if (!selectedCostOptionHistory[option.id]) selectedCostOptionHistory[option.id] = [];
+            selectedCostOptionHistory[option.id].push(Number(selectedCostOptionIndex));
+        }
+    }
 
     selectedOptions[option.id] = current + 1;
     selectionHistory.push(option.id);
@@ -2482,7 +2659,7 @@ function updatePointsDisplay() {
  * @param {Object} option - The option object to check.
  * @returns {boolean} True if the option can be selected, false otherwise.
  */
-function canSelect(option) {
+function canSelect(option, { costOptionIndex = null } = {}) {
     const currentOptionCount = selectedOptions[option.id] || 0;
     const meetsPrereq = optionPrerequisitesMet(option, currentOptionCount + 1);
 
@@ -2512,17 +2689,26 @@ function canSelect(option) {
 
     // Check if enough points (only for positive costs)
     const nextSelectionNumber = currentOptionCount + 1;
-    const selectedCostOptionIndex = getInitialCostOptionIndex(option, nextSelectionNumber);
+    const availableCostOptions = normalizeOptionCostOptions(option, { selectionNumber: nextSelectionNumber });
+    const info = findSubcategoryInfo(option.id);
+    const hasDirectOptionCost = option?.cost && typeof option.cost === "object" && Object.keys(option.cost).length > 0;
+    const hasConfiguredCostOptions = (Array.isArray(option.costOptions) && option.costOptions.length > 0)
+        || (!hasDirectOptionCost && Array.isArray(info.subcat?.costOptions) && info.subcat.costOptions.length > 0);
+    const selectedCostOptionIndex = costOptionIndex ?? getInitialCostOptionIndex(option, nextSelectionNumber);
+    const selectedCostOption = selectedCostOptionIndex === null || selectedCostOptionIndex === undefined
+        ? availableCostOptions[0]
+        : availableCostOptions.find(choice => choice.index === Number(selectedCostOptionIndex));
+    const hasAvailableCostOption = !hasConfiguredCostOptions || !!selectedCostOption;
     const costChoices = getOptionEffectiveCostChoices(option, {
-        costOptionIndex: selectedCostOptionIndex,
+        costOptionIndex: selectedCostOption?.index ?? selectedCostOptionIndex,
         selectionNumber: nextSelectionNumber
     });
-    const selectedChoice = costChoices.find(choice => choice.index === selectedCostOptionIndex) || costChoices[0];
-    const hasPoints = normalizeOptionCostOptions(option).length
+    const selectedChoice = costChoices.find(choice => choice.index === selectedCostOption?.index) || costChoices[0];
+    const hasPoints = availableCostOptions.length
         ? canAffordCost(selectedChoice?.cost || {})
         : canAffordCost(getOptionEffectiveCost(option, { selectionNumber: nextSelectionNumber }));
 
-    return meetsPrereq && hasPoints && hasNoOutgoingConflicts && hasNoIncomingConflicts && underOptionLimit && underSubcatLimit && underCategoryLimit;
+    return meetsPrereq && hasAvailableCostOption && hasPoints && hasNoOutgoingConflicts && hasNoIncomingConflicts && underOptionLimit && underSubcatLimit && underCategoryLimit;
 }
 
 function requirementMet(requirement) {
@@ -2567,7 +2753,7 @@ function removeOptionsWithUnmetPrerequisites() {
         removedAny = false;
         for (const cat of categories) {
             forEachCategoryOption(cat, opt => {
-                if (!removedAny && selectedOptions[opt.id] && !optionPrerequisitesMet(opt)) {
+                if (!removedAny && selectedOptions[opt.id] && (!optionPrerequisitesMet(opt) || !selectedCostOptionsStillValid(opt))) {
                     removeSelection(opt, {
                         force: true,
                         skipRender: true
@@ -3599,15 +3785,30 @@ function renderAccordion() {
         }
     });
 
+    const visibleSubcategoryKeys = visibleCategories.flatMap(cat => {
+        const catIndex = categories.indexOf(cat);
+        return collectOpenableSubcategoryKeys(cat, catIndex, cat.subcategories || []);
+    });
     const allCategoriesOpen = visibleCategories.length > 0 && visibleCategories.every(cat => openCategories.has(cat.name));
+    const allVisibleSubcategoriesOpen = visibleSubcategoryKeys.every(key => openSubcategories.has(key));
+    const allCategoryPanelsOpen = allCategoriesOpen && allVisibleSubcategoriesOpen;
+
+    const openCategoryAndSubcategories = (cat) => {
+        openCategories.add(cat.name);
+        const catIndex = categories.indexOf(cat);
+        collectOpenableSubcategoryKeys(cat, catIndex, cat.subcategories || []).forEach(key => {
+            openSubcategories.add(key);
+            subcategoriesToAnimate.add(key);
+        });
+    };
 
     if (visibleCategories.length > 0) {
         const openAllButton = document.createElement("button");
         openAllButton.className = "tab-button category-bulk-button";
         openAllButton.textContent = "Open All";
-        openAllButton.disabled = allCategoriesOpen;
+        openAllButton.disabled = allCategoryPanelsOpen;
         openAllButton.onclick = () => {
-            visibleCategories.forEach(cat => openCategories.add(cat.name));
+            visibleCategories.forEach(cat => openCategoryAndSubcategories(cat));
             currentTab = visibleCategories[visibleCategories.length - 1]?.name || null;
             animateMainTab = true;
             renderAccordion();
@@ -3617,9 +3818,11 @@ function renderAccordion() {
         const closeAllButton = document.createElement("button");
         closeAllButton.className = "tab-button category-bulk-button";
         closeAllButton.textContent = "Close All";
-        closeAllButton.disabled = openCategories.size === 0;
+        closeAllButton.disabled = openCategories.size === 0 && openSubcategories.size === 0;
         closeAllButton.onclick = () => {
             openCategories.clear();
+            openSubcategories.clear();
+            subcategoriesToAnimate.clear();
             currentTab = null;
             animateMainTab = false;
             renderAccordion();
@@ -4066,7 +4269,7 @@ function renderSubcategoryOptions(subcat, subcatContent, subcatKey, cat, catInde
     registerOptionGrid(grid, columnsPerRow);
     subcatContent.appendChild(grid);
 
-    (subcat.options || []).forEach(opt => {
+    (subcat.options || []).forEach((opt, optionIndex) => {
         renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDiscountUnlocked, catAutoApplyAll, isDiscountableSubcat);
     });
 }
@@ -4108,6 +4311,12 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
     }
     if (selectedCount > 0) {
         wrapper.classList.add("selected");
+    }
+    const optionBorderColor = getEffectiveDarkMode()
+        ? (opt.darkBorderColor || opt.borderColor)
+        : opt.borderColor;
+    if (optionBorderColor && isSafeTextColor(optionBorderColor)) {
+        wrapper.style.borderColor = optionBorderColor;
     }
 
     if (isSingleChoice && !hasTextInput && !hasMultipleCostOptions) {
@@ -4462,6 +4671,9 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
         if (shouldRenderSelectionControls(opt)) {
             renderSelectionButton(opt, contentWrapper);
         }
+        if (opt.pointAllocation) {
+            renderPointAllocationControl(opt, contentWrapper);
+        }
         if (selectedOptions[opt.id] && opt.dynamicCost) {
             renderDynamicCost(opt, contentWrapper);
         }
@@ -4724,6 +4936,101 @@ function renderSelectionButton(opt, contentWrapper) {
     }
 
     contentWrapper.appendChild(controls);
+}
+
+function renderPointAllocationControl(opt, contentWrapper) {
+    const config = normalizePointAllocationConfig(opt);
+    if (!config) return;
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "dynamic-choice-wrapper point-allocation-wrapper";
+    const selected = !!selectedOptions[opt.id];
+    const values = getPointAllocationValues(opt);
+    const totalUsed = Object.values(values).reduce((sum, value) => sum + (Number(value) || 0), 0);
+
+    const heading = document.createElement("label");
+    heading.textContent = `Allocate ${config.total} picks (${totalUsed}/${config.total})`;
+    heading.style.display = "block";
+    wrapper.appendChild(heading);
+
+    const sliderControls = {};
+    const updateDisplayedAllocation = () => {
+        const currentValues = getPointAllocationValues(opt);
+        const used = Object.values(currentValues).reduce((sum, value) => sum + (Number(value) || 0), 0);
+        heading.textContent = `Allocate ${config.total} picks (${used}/${config.total})`;
+        Object.entries(sliderControls).forEach(([controlType, control]) => {
+            const nextValue = String(currentValues[controlType] || 0);
+            control.valueLabel.textContent = nextValue;
+            if (document.activeElement !== control.slider) {
+                control.slider.value = nextValue;
+            }
+        });
+    };
+
+    config.types.forEach((type, index) => {
+        const row = document.createElement("div");
+        row.className = "point-allocation-row";
+        row.style.marginTop = "0.25em";
+
+        const label = document.createElement("label");
+        label.htmlFor = `${opt.id}-${type}-allocation-slider`;
+        label.textContent = `${stripFormattingMarkup(type)}: `;
+
+        const valueLabel = document.createElement("span");
+        valueLabel.textContent = String(values[type] || 0);
+        label.appendChild(valueLabel);
+
+        const slider = document.createElement("input");
+        slider.type = "range";
+        slider.className = "point-allocation-slider";
+        slider.min = "0";
+        slider.max = String(config.total);
+        slider.step = "1";
+        slider.value = String(values[type] || 0);
+        slider.id = `${opt.id}-${type}-allocation-slider`;
+        slider.disabled = selected;
+        sliderControls[type] = { slider, valueLabel };
+        slider.addEventListener("input", () => {
+            const current = getPointAllocationValues(opt);
+            const requested = Math.max(0, Math.min(config.total, Math.floor(Number(slider.value) || 0)));
+            current[type] = requested;
+
+            let remaining = config.total - requested;
+            config.types.forEach(otherType => {
+                if (otherType === type) return;
+                const otherValue = Math.max(0, Math.floor(Number(current[otherType]) || 0));
+                const nextValue = Math.min(otherValue, remaining);
+                current[otherType] = nextValue;
+                remaining -= nextValue;
+            });
+
+            if (remaining > 0) {
+                const fallbackType = config.types.find(otherType => otherType !== type) || type;
+                current[fallbackType] = (Number(current[fallbackType]) || 0) + remaining;
+            }
+
+            pointAllocationSelections[opt.id] = normalizePointAllocationValues(opt, current);
+            updateDisplayedAllocation();
+        });
+
+        row.appendChild(label);
+        row.appendChild(slider);
+        if (index === config.types.length - 1) {
+            const note = document.createElement("span");
+            note.textContent = " (auto-balances total)";
+            row.appendChild(note);
+        }
+        wrapper.appendChild(row);
+    });
+
+    if (selected) {
+        const note = document.createElement("div");
+        note.className = "field-help";
+        note.textContent = "Remove and re-select this option to change the allocation.";
+        wrapper.appendChild(note);
+    }
+
+    contentWrapper.appendChild(wrapper);
 }
 
 function renderDynamicCost(opt, contentWrapper) {

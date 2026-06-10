@@ -237,7 +237,7 @@ function validateAutoGrants(file, context, grants, optionIds, errors) {
     });
 }
 
-function validateCostOptions(file, context, costOptions, pointTypes, errors, warnings) {
+function validateCostOptions(file, context, costOptions, pointTypes, errors, warnings, optionIds = null) {
     if (costOptions === undefined) return;
     if (!Array.isArray(costOptions)) {
         pushIssue(errors, file, `${context}.costOptions must be an array.`);
@@ -252,6 +252,30 @@ function validateCostOptions(file, context, costOptions, pointTypes, errors, war
         if (costOption.label !== undefined && typeof costOption.label !== "string") {
             pushIssue(errors, file, `${optionContext}.label must be a string.`);
         }
+        if (costOption.minSelected !== undefined) {
+            const minSelected = Number(costOption.minSelected);
+            if (!Number.isInteger(minSelected) || minSelected < 0) {
+                pushIssue(errors, file, `${optionContext}.minSelected must be a non-negative integer.`);
+            }
+        }
+        if (costOption.maxSelections !== undefined) {
+            const maxSelections = Number(costOption.maxSelections);
+            if (!Number.isInteger(maxSelections) || maxSelections < 0) {
+                pushIssue(errors, file, `${optionContext}.maxSelections must be a non-negative integer.`);
+            }
+        }
+        if (costOption.requiresCostOption !== undefined) {
+            const requiredIndex = Number(costOption.requiresCostOption);
+            if (!Number.isInteger(requiredIndex) || requiredIndex < 0 || requiredIndex >= costOptions.length) {
+                pushIssue(errors, file, `${optionContext}.requiresCostOption must reference another cost option index.`);
+            } else if (requiredIndex === index) {
+                pushIssue(errors, file, `${optionContext}.requiresCostOption cannot reference itself.`);
+            }
+        }
+        validateRequirementExpression(file, `${optionContext}.prerequisites`, costOption.prerequisites, errors);
+        if (optionIds) {
+            validateIdRefs(file, `${optionContext}.prerequisites`, extractRequirementIds(costOption.prerequisites), optionIds, errors);
+        }
         validatePointMap(file, `${optionContext}.cost`, costOption.cost || {}, pointTypes, errors, warnings);
         if (costOption.costBySelection !== undefined) {
             if (!Array.isArray(costOption.costBySelection)) {
@@ -265,11 +289,49 @@ function validateCostOptions(file, context, costOptions, pointTypes, errors, war
     });
 }
 
+function validatePointAllocation(file, context, allocation, pointTypes, errors) {
+    if (allocation === undefined) return;
+    if (!allocation || typeof allocation !== "object" || Array.isArray(allocation)) {
+        pushIssue(errors, file, `${context}.pointAllocation must be an object.`);
+        return;
+    }
+    const total = Number(allocation.total);
+    if (!Number.isInteger(total) || total < 1) {
+        pushIssue(errors, file, `${context}.pointAllocation.total must be a positive integer.`);
+    }
+    if (!Array.isArray(allocation.types) || allocation.types.length < 2) {
+        pushIssue(errors, file, `${context}.pointAllocation.types must include at least two point types.`);
+        return;
+    }
+    allocation.types.forEach(type => {
+        if (typeof type !== "string" || !type.trim()) {
+            pushIssue(errors, file, `${context}.pointAllocation.types includes an invalid point type.`);
+        } else if (!pointTypes.has(type)) {
+            pushIssue(errors, file, `${context}.pointAllocation references unknown point type "${type}".`);
+        }
+    });
+}
+
 function validateThemeSettings(file, settings, errors) {
     if (!settings) return;
     const mode = settings.themeMode;
     if (mode !== undefined && !["toggle", "light", "dark"].includes(mode)) {
         pushIssue(errors, file, `settings.themeMode must be "toggle", "light", or "dark".`);
+    }
+}
+
+function isSafeColorValue(value = "") {
+    const color = String(value).trim();
+    return /^#[0-9a-f]{3,8}$/i.test(color)
+        || /^rgba?\(\s*(\d{1,3}%?\s*,\s*){2}\d{1,3}%?(\s*,\s*(0|1|0?\.\d+|[1-9]\d*%))?\s*\)$/i.test(color)
+        || /^hsla?\(\s*-?\d+(\.\d+)?(deg|rad|turn)?\s*,\s*\d{1,3}%\s*,\s*\d{1,3}%(\s*,\s*(0|1|0?\.\d+|[1-9]\d*%))?\s*\)$/i.test(color)
+        || /^[a-z]+$/i.test(color);
+}
+
+function validateOptionalColor(file, context, value, errors) {
+    if (value === undefined) return;
+    if (typeof value !== "string" || !isSafeColorValue(value)) {
+        pushIssue(errors, file, `${context} must be a safe CSS color string.`);
     }
 }
 
@@ -322,7 +384,10 @@ function validateCyoaData(file, data) {
         const context = `${optionPath} (${option.id})`;
 
         validatePointMap(file, `${context}.cost`, option.cost || {}, pointTypes, errors, warnings);
-        validateCostOptions(file, context, option.costOptions, pointTypes, errors, warnings);
+        validateCostOptions(file, context, option.costOptions, pointTypes, errors, warnings, optionIds);
+        validatePointAllocation(file, context, option.pointAllocation, pointTypes, errors);
+        validateOptionalColor(file, `${context}.borderColor`, option.borderColor, errors);
+        validateOptionalColor(file, `${context}.darkBorderColor`, option.darkBorderColor, errors);
         validateRequirementExpression(file, `${context}.prerequisites`, option.prerequisites, errors);
         validateIdRefs(file, `${context}.prerequisites`, extractRequirementIds(option.prerequisites), optionIds, errors);
         (option.prerequisitesBySelection || []).forEach((requirement, index) => {
@@ -344,8 +409,10 @@ function validateCyoaData(file, data) {
     });
 
     collectSubcategories(data).forEach(({ subcat, path: subcatPath }) => {
-        validatePointMap(file, `${subcatPath}.defaultCost`, subcat.defaultCost, pointTypes, errors, warnings);
-        validateCostOptions(file, subcatPath, subcat.costOptions, pointTypes, errors, warnings);
+        if (subcat.defaultCost !== undefined) {
+            pushIssue(errors, file, `${subcatPath}.defaultCost is no longer supported; use costOptions instead.`);
+        }
+        validateCostOptions(file, subcatPath, subcat.costOptions, pointTypes, errors, warnings, optionIds);
         validatePointMap(file, `${subcatPath}.discountAmount`, subcat.discountAmount, pointTypes, errors, warnings);
         validateRequirementExpression(file, `${subcatPath}.requiresOption`, subcat.requiresOption, errors);
         validateIdRefs(file, `${subcatPath}.requiresOption`, extractRequirementIds(subcat.requiresOption), optionIds, errors);

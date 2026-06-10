@@ -12,10 +12,18 @@ const FEATURE_COVERAGE = [
     "synthetic CYOA data computes selectable state and effective costs",
     "point gains, costs, refunds, and allow-negative point types",
     "alternate selectable option cost maps",
+    "repeatable cost options can require base picks and enforce explicit or default per-choice limits",
+    "Superpowered World power and motorbike upgrades require base purchases",
+    "Superpowered World allies can be selected as allies or bitter enemies",
+    "Superpowered World skill mastery upgrades require base skill purchases",
+    "user-controlled fixed point grants split across multiple point types with sliders",
     "standalone points display is hidden when selectable cost options are shown",
     "single-select payment options render explicit selection controls",
     "point type renames cascade through all cost maps",
     "point type edits refresh category-level cost controls",
+    "visual editor can add, edit, and remove point allocation configs",
+    "visual editor exposes repeat payment option availability limits",
+    "visual editor can reorder subcategories from collapsed section headers",
     "single-select options and maxSelections replacement",
     "multi-select options and option maxSelections",
     "selection-specific costs for repeatable options",
@@ -35,7 +43,7 @@ const FEATURE_COVERAGE = [
     "subcategory discountFirstN with discountAmount",
     "subcategory manual discount slots, eligibility ceilings, and option opt-outs",
     "category manual discount slots, eligibility ceilings, and option opt-outs",
-    "subcategory defaultCost and inherited costOptions",
+    "subcategory inherited costOptions",
     "subcategory columnsPerRow metadata",
     "subcategory-level freeform text inputs persist in imported state",
     "option-level freeform text inputs persist in exported state",
@@ -169,9 +177,11 @@ function runPlayerScriptExportImportHelpers(state) {
         "selectedOptions",
         "points",
         "discountedSelections",
+        "selectedCostOptionHistory",
         "storyInputs",
         "attributeSliderValues",
         "dynamicSelections",
+        "pointAllocationSelections",
         "subcategoryDiscountSelections",
         "categoryDiscountSelections",
         "optionGrantDiscountSelections",
@@ -182,9 +192,11 @@ function runPlayerScriptExportImportHelpers(state) {
         state.selectedOptions || {},
         state.points || {},
         state.discountedSelections || {},
+        state.selectedCostOptionHistory || {},
         state.storyInputs || {},
         state.attributeSliderValues || {},
         state.dynamicSelections || {},
+        state.pointAllocationSelections || {},
         state.subcategoryDiscountSelections || {},
         state.categoryDiscountSelections || {},
         state.optionGrantDiscountSelections || {},
@@ -312,9 +324,11 @@ class CyoaEngine {
         this.selectionHistory = [];
         this.discountedSelections = {};
         this.selectedCostOptionIndexes = {};
+        this.selectedCostOptionHistory = {};
         this.storyInputs = {};
         this.attributeSliderValues = {};
         this.dynamicSelections = {};
+        this.pointAllocationSelections = {};
         this.subcategoryDiscountSelections = {};
         this.categoryDiscountSelections = {};
         this.optionGrantDiscountSelections = {};
@@ -334,14 +348,14 @@ class CyoaEngine {
     static synthetic() {
         return new CyoaEngine([
             { type: "title", text: "Synthetic Feature Coverage CYOA" },
-            { type: "points", values: { Points: 10, Tokens: 0 }, allowNegative: ["Debt"] },
+            { type: "points", values: { Points: 10, Tokens: 0, Skills: 0, Equipment: 0 }, allowNegative: ["Debt"] },
             {
                 name: "Core",
                 subcategories: [
                     {
                         name: "Choices",
                         maxSelections: 2,
-                        defaultCost: { Points: 1 },
+                        costOptions: [{ cost: { Points: 1 } }],
                         modifiedCosts: [
                             { ids: ["discountTrigger"], costDelta: { Points: -2 }, minCost: { Points: 0 }, priority: 1 },
                             { ids: ["surchargeTrigger"], costDelta: { Points: 3 }, maxCost: { Points: 5 }, priority: 2 },
@@ -371,10 +385,41 @@ class CyoaEngine {
                                 ]
                             },
                             {
-                                id: "defaultCostOption",
-                                label: "Default Cost Option",
+                                id: "limitedRepeatCosts",
+                                label: "Limited Repeat Costs",
+                                maxSelections: 3,
+                                bypassSubcategoryMaxSelections: true,
                                 costOptions: [
-                                    { label: "Payment Option 1", cost: {} }
+                                    { cost: { Points: 1 }, maxSelections: 1 },
+                                    { cost: { Tokens: 1 }, minSelected: 1, requiresCostOption: 0, maxSelections: 1 },
+                                    { cost: { Points: -1 }, minSelected: 1, requiresCostOption: 0, maxSelections: 1 }
+                                ]
+                            },
+                            {
+                                id: "implicitLimitedRepeatCosts",
+                                label: "Implicit Limited Repeat Costs",
+                                maxSelections: 3,
+                                bypassSubcategoryMaxSelections: true,
+                                costOptions: [
+                                    { cost: { Points: 1 } },
+                                    { cost: { Points: 2 }, minSelected: 1, requiresCostOption: 0 },
+                                    { cost: { Points: -1 }, minSelected: 1, requiresCostOption: 0 }
+                                ]
+                            },
+                            {
+                                id: "allocatedTeamGrant",
+                                label: "Allocated Team Grant",
+                                costOptions: [{ cost: {} }],
+                                pointAllocation: {
+                                    total: 6,
+                                    types: ["Skills", "Equipment"]
+                                }
+                            },
+                            {
+                                id: "inheritedDefaultOption",
+                                label: "Inherited Default Option",
+                                costOptions: [
+                                    { cost: {} }
                                 ]
                             },
                             { id: "multi", label: "Multi", cost: { Points: 1 }, maxSelections: 3, countsAsOneSelection: true },
@@ -470,7 +515,15 @@ class CyoaEngine {
                             },
                             { id: "discountGrantTargetA", label: "Discount Grant Target A", cost: { Points: 6 } },
                             { id: "discountGrantTargetB", label: "Discount Grant Target B", cost: { Points: 5 } },
-                            { id: "customFields", label: "Custom Fields", cost: {}, creatorNotes: "runtime should preserve this", customMetadata: { tier: 2 } }
+                            {
+                                id: "customFields",
+                                label: "Custom Fields",
+                                cost: {},
+                                creatorNotes: "runtime should preserve this",
+                                customMetadata: { tier: 2 },
+                                borderColor: "#8886D1",
+                                darkBorderColor: "#C0C0C0"
+                            }
                         ]
                     },
                     {
@@ -734,9 +787,8 @@ class CyoaEngine {
     }
 
     getBaseCost(option) {
-        const subcatDefault = this.findSubcategoryInfo(option.id).subcat?.defaultCost || {};
         const optionCost = option.cost || {};
-        return Object.keys(optionCost).length ? { ...optionCost } : { ...subcatDefault };
+        return { ...optionCost };
     }
 
     getNextSelectionNumber(option) {
@@ -751,17 +803,73 @@ class CyoaEngine {
         return entry?.cost && typeof entry.cost === "object" ? entry.cost : null;
     }
 
-    normalizeCostOptions(option, { selectionNumber = null } = {}) {
+    getCostOptionSelectionCount(optionId, costOptionIndex) {
+        return (this.selectedCostOptionHistory[optionId] || []).filter(index => Number(index) === Number(costOptionIndex)).length;
+    }
+
+    getEffectiveCostOptionSelectionCount(optionId, costOptionIndex) {
+        const history = this.selectedCostOptionHistory[optionId] || [];
+        const historyCount = history.filter(index => Number(index) === Number(costOptionIndex)).length;
+        if (history.length || Number(costOptionIndex) !== 0) return historyCount;
+        return this.selectedOptions[optionId] || 0;
+    }
+
+    costOptionAvailabilityMet(option, entry, index, totalCostOptions = 1) {
+        if (!option?.id || !entry || typeof entry !== "object") return true;
+        if (!this.prerequisiteMet(entry.prerequisites)) return false;
+        const currentOptionCount = this.selectedOptions[option.id] || 0;
+        const minSelected = Number(entry.minSelected);
+        if (Number.isFinite(minSelected) && currentOptionCount < minSelected) return false;
+        if (entry.requiresCostOption !== undefined) {
+            const requiredIndex = Number(entry.requiresCostOption);
+            if (!Number.isInteger(requiredIndex) || this.getEffectiveCostOptionSelectionCount(option.id, requiredIndex) <= 0) return false;
+        }
+        const hasSelectionTiers = Array.isArray(entry.costBySelection) && entry.costBySelection.length > 0;
+        const maxSelections = entry.maxSelections === undefined && totalCostOptions > 1 && !hasSelectionTiers
+            ? 1
+            : Number(entry.maxSelections);
+        return !(Number.isFinite(maxSelections) && maxSelections >= 0 && this.getEffectiveCostOptionSelectionCount(option.id, index) >= maxSelections);
+    }
+
+    configuredCostOptions(option) {
         const info = option?.id ? this.findSubcategoryInfo(option.id) : {};
         const ownOptions = Array.isArray(option?.costOptions) ? option.costOptions : [];
         const subcategoryOptions = Array.isArray(info.subcat?.costOptions) ? info.subcat.costOptions : [];
+        const hasDirectOptionCost = option?.cost && typeof option.cost === "object" && Object.keys(option.cost).length > 0;
         const hasOwnCostOptions = ownOptions.some(entry =>
             entry?.cost && typeof entry.cost === "object" && Object.keys(entry.cost).length
             || Array.isArray(entry?.costBySelection) && entry.costBySelection.some(cost => cost && typeof cost === "object" && Object.keys(cost).length)
         );
+        return hasOwnCostOptions ? ownOptions : (hasDirectOptionCost ? [] : subcategoryOptions);
+    }
+
+    selectedCostOptionStillValid(option, costOptionIndex) {
+        const options = this.configuredCostOptions(option);
+        if (!options.length || costOptionIndex === null || costOptionIndex === undefined) return true;
+        const entry = options[Number(costOptionIndex)];
+        if (!entry || typeof entry !== "object") return false;
+        if (!this.prerequisiteMet(entry.prerequisites)) return false;
+        const currentOptionCount = this.selectedOptions[option.id] || 0;
+        const minSelected = Number(entry.minSelected);
+        if (Number.isFinite(minSelected) && currentOptionCount < minSelected) return false;
+        if (entry.requiresCostOption !== undefined) {
+            const requiredIndex = Number(entry.requiresCostOption);
+            if (!Number.isInteger(requiredIndex) || this.getEffectiveCostOptionSelectionCount(option.id, requiredIndex) <= 0) return false;
+        }
+        return true;
+    }
+
+    selectedCostOptionsStillValid(option) {
+        const history = this.selectedCostOptionHistory[option.id] || [];
+        return history.every(costOptionIndex => this.selectedCostOptionStillValid(option, costOptionIndex));
+    }
+
+    normalizeCostOptions(option, { selectionNumber = null } = {}) {
+        const options = this.configuredCostOptions(option);
         const effectiveSelectionNumber = selectionNumber || this.getNextSelectionNumber(option);
-        return (hasOwnCostOptions || !subcategoryOptions.length ? ownOptions : subcategoryOptions)
+        return options
             .map((entry, index) => {
+                if (!this.costOptionAvailabilityMet(option, entry, index, options.length)) return null;
                 const cost = this.getCostOptionCostForSelection(entry, effectiveSelectionNumber);
                 return cost ? { index, cost: { ...cost } } : null;
             })
@@ -770,10 +878,83 @@ class CyoaEngine {
 
     getBaseCostChoice(option, costOptionIndex = null, { selectionNumber = null } = {}) {
         const choices = this.normalizeCostOptions(option, { selectionNumber });
-        if (!choices.length || costOptionIndex === null || costOptionIndex === undefined) return this.getBaseCost(option);
+        if (!choices.length) return this.getBaseCost(option);
+        if (costOptionIndex === null || costOptionIndex === undefined) return { ...choices[0].cost };
         const selected = choices.find(choice => choice.index === Number(costOptionIndex));
         if (!selected || Object.keys(selected.cost || {}).length === 0) return this.getBaseCost(option);
         return { ...selected.cost };
+    }
+
+    normalizePointAllocationConfig(option) {
+        const config = option?.pointAllocation;
+        if (!config || typeof config !== "object") return null;
+        const types = Array.isArray(config.types)
+            ? config.types.map(type => String(type || "").trim()).filter(Boolean)
+            : [];
+        const total = Math.max(0, Math.floor(Number(config.total) || 0));
+        if (!types.length || total <= 0) return null;
+        return { total, types: [...new Set(types)] };
+    }
+
+    normalizePointAllocationValues(option, rawValues = null) {
+        const config = this.normalizePointAllocationConfig(option);
+        if (!config) return {};
+        const values = {};
+        let remaining = config.total;
+        const source = rawValues && typeof rawValues === "object" ? rawValues : {};
+        config.types.forEach((type, index) => {
+            let value = Math.max(0, Math.floor(Number(source[type]) || 0));
+            if (index === config.types.length - 1) {
+                value = remaining;
+            } else {
+                value = Math.min(value, remaining);
+            }
+            values[type] = value;
+            remaining -= value;
+        });
+        if (remaining > 0 && config.types.length) values[config.types[0]] = (values[config.types[0]] || 0) + remaining;
+        return values;
+    }
+
+    getPointAllocationValues(optionOrId) {
+        const option = typeof optionOrId === "string" ? this.option(optionOrId) : optionOrId;
+        const config = this.normalizePointAllocationConfig(option);
+        if (!config) return {};
+        if (!this.pointAllocationSelections[option.id]) {
+            this.pointAllocationSelections[option.id] = this.normalizePointAllocationValues(option, {
+                [config.types[0]]: config.total
+            });
+        } else {
+            this.pointAllocationSelections[option.id] = this.normalizePointAllocationValues(option, this.pointAllocationSelections[option.id]);
+        }
+        return { ...this.pointAllocationSelections[option.id] };
+    }
+
+    setPointAllocation(optionOrId, values) {
+        const option = typeof optionOrId === "string" ? this.option(optionOrId) : optionOrId;
+        this.pointAllocationSelections[option.id] = this.normalizePointAllocationValues(option, values);
+    }
+
+    getPointAllocationCost(option) {
+        const values = this.getPointAllocationValues(option);
+        const cost = {};
+        Object.entries(values).forEach(([type, value]) => {
+            const numeric = Number(value) || 0;
+            if (numeric > 0) cost[type] = -numeric;
+        });
+        return cost;
+    }
+
+    mergeCostMaps(...maps) {
+        const result = {};
+        maps.forEach(map => {
+            Object.entries(map || {}).forEach(([type, value]) => {
+                const numeric = Number(value);
+                if (!Number.isFinite(numeric)) return;
+                result[type] = (Number(result[type]) || 0) + numeric;
+            });
+        });
+        return result;
     }
 
     getModifiedCostRules(entity) {
@@ -958,7 +1139,10 @@ class CyoaEngine {
     effectiveCost(optionOrId, { costOptionIndex = null, selectionNumber = null } = {}) {
         const option = typeof optionOrId === "string" ? this.option(optionOrId) : optionOrId;
         const info = this.findSubcategoryInfo(option.id);
-        let cost = this.getBaseCostChoice(option, costOptionIndex, { selectionNumber });
+        let cost = this.mergeCostMaps(
+            this.getBaseCostChoice(option, costOptionIndex, { selectionNumber }),
+            this.getPointAllocationCost(option)
+        );
         const winningRule = this.winningModifiedCostRule(option, info.subcat);
         if (winningRule) {
             cost = this.applyModifiedCostRule(cost, winningRule.rule);
@@ -1096,7 +1280,14 @@ class CyoaEngine {
     effectiveCostChoices(optionOrId, options = {}) {
         const option = typeof optionOrId === "string" ? this.option(optionOrId) : optionOrId;
         const choices = this.normalizeCostOptions(option, options);
-        if (!choices.length) return [{ index: null, label: "Cost", cost: this.effectiveCost(option, options) }];
+        if (!choices.length) {
+            const info = option?.id ? this.findSubcategoryInfo(option.id) : {};
+            const hasDirectOptionCost = option?.cost && typeof option.cost === "object" && Object.keys(option.cost).length > 0;
+            const hasConfiguredCostOptions = (Array.isArray(option?.costOptions) && option.costOptions.length > 0)
+                || (!hasDirectOptionCost && Array.isArray(info.subcat?.costOptions) && info.subcat.costOptions.length > 0);
+            if (hasConfiguredCostOptions) return [];
+            return [{ index: null, label: "Cost", cost: this.effectiveCost(option, options) }];
+        }
         return choices.map(choice => ({
             index: choice.index,
             cost: this.effectiveCost(option, { ...options, costOptionIndex: choice.index })
@@ -1313,8 +1504,16 @@ class CyoaEngine {
         const underCategoryLimit = !Number.isFinite(categoryMax) || categoryMax <= 0 || this.categorySelectionCount(this.findSubcategoryInfo(option.id).category) < categoryMax;
         const nextSelectionNumber = (this.selectedOptions[option.id] || 0) + 1;
         const choices = this.normalizeCostOptions(option, { selectionNumber: nextSelectionNumber });
-        const cost = choices.length
-            ? this.effectiveCost(option, { costOptionIndex: costOptionIndex ?? choices[0].index, selectionNumber: nextSelectionNumber })
+        const info = this.findSubcategoryInfo(option.id);
+        const hasDirectOptionCost = option?.cost && typeof option.cost === "object" && Object.keys(option.cost).length > 0;
+        const hasConfiguredCostOptions = (Array.isArray(option.costOptions) && option.costOptions.length > 0)
+            || (!hasDirectOptionCost && Array.isArray(info.subcat?.costOptions) && info.subcat.costOptions.length > 0);
+        const selectedChoice = costOptionIndex === null || costOptionIndex === undefined
+            ? choices[0]
+            : choices.find(choice => choice.index === Number(costOptionIndex));
+        const hasAvailableCostOption = !hasConfiguredCostOptions || !!selectedChoice;
+        const cost = selectedChoice
+            ? this.effectiveCost(option, { costOptionIndex: selectedChoice.index, selectionNumber: nextSelectionNumber })
             : this.effectiveCost(option, { selectionNumber: nextSelectionNumber });
         const hasPoints = Object.entries(cost).every(([type, cost]) => {
             if (cost < 0) return true;
@@ -1329,6 +1528,7 @@ class CyoaEngine {
             && underSubcatLimit
             && underCategoryLimit
             && underOptionLimit
+            && hasAvailableCostOption
             && hasPoints;
     }
 
@@ -1379,6 +1579,10 @@ class CyoaEngine {
         }
         if (!this.discountedSelections[option.id]) this.discountedSelections[option.id] = [];
         this.discountedSelections[option.id].push(isAutoGrant ? {} : cost);
+        if (!isAutoGrant && resolvedCostOptionIndex !== null && resolvedCostOptionIndex !== undefined) {
+            if (!this.selectedCostOptionHistory[option.id]) this.selectedCostOptionHistory[option.id] = [];
+            this.selectedCostOptionHistory[option.id].push(Number(resolvedCostOptionIndex));
+        }
         this.selectedOptions[option.id] = (this.selectedOptions[option.id] || 0) + 1;
         this.selectionHistory.push(option.id);
         if (isAutoGrant) {
@@ -1400,12 +1604,19 @@ class CyoaEngine {
         });
         if (!confirmed) return false;
         const cost = this.discountedSelections[option.id]?.pop() ?? this.effectiveCost(option);
+        if (this.selectedCostOptionHistory[option.id]) {
+            this.selectedCostOptionHistory[option.id].pop();
+            if (this.selectedCostOptionHistory[option.id].length === 0) delete this.selectedCostOptionHistory[option.id];
+        }
         Object.entries(cost).forEach(([type, value]) => {
             if (!Object.prototype.hasOwnProperty.call(this.points, type)) this.points[type] = 0;
             this.points[type] += value;
         });
         this.selectedOptions[option.id] -= 1;
-        if (this.selectedOptions[option.id] <= 0) delete this.selectedOptions[option.id];
+        if (this.selectedOptions[option.id] <= 0) {
+            delete this.selectedOptions[option.id];
+            if (option.pointAllocation) delete this.pointAllocationSelections[option.id];
+        }
         if (!this.selectedOptions[option.id] && option.inputType === "text") delete this.storyInputs[option.id];
         const historyIndex = this.selectionHistory.indexOf(option.id);
         if (historyIndex >= 0) this.selectionHistory.splice(historyIndex, 1);
@@ -1452,7 +1663,7 @@ class CyoaEngine {
             removedAny = false;
             for (const id of Object.keys(this.selectedOptions)) {
                 const option = this.optionMap.get(id);
-                if (option && (!this.structuralRequirementsMet(option) || !this.optionPrerequisitesMet(option))) {
+                if (option && (!this.structuralRequirementsMet(option) || !this.optionPrerequisitesMet(option) || !this.selectedCostOptionsStillValid(option))) {
                     this.remove(id);
                     removedAny = true;
                     break;
@@ -1513,9 +1724,11 @@ class CyoaEngine {
             selectedOptions: this.selectedOptions,
             points: this.points,
             discountedSelections: this.discountedSelections,
+            selectedCostOptionHistory: this.selectedCostOptionHistory,
             storyInputs: this.storyInputs,
             attributeSliderValues: this.attributeSliderValues,
             dynamicSelections: this.dynamicSelections,
+            pointAllocationSelections: this.pointAllocationSelections,
             subcategoryDiscountSelections: this.subcategoryDiscountSelections,
             categoryDiscountSelections: this.categoryDiscountSelections,
             optionGrantDiscountSelections: this.optionGrantDiscountSelections,
@@ -1527,9 +1740,11 @@ class CyoaEngine {
         const full = this.buildExportState();
         const packed = { v: 1, s: full.selectedOptions, p: full.points };
         if (hasOwnEntries(full.discountedSelections)) packed.d = full.discountedSelections;
+        if (hasOwnEntries(full.selectedCostOptionHistory)) packed.h = full.selectedCostOptionHistory;
         if (hasOwnEntries(full.storyInputs)) packed.t = full.storyInputs;
         if (hasOwnEntries(full.attributeSliderValues)) packed.a = full.attributeSliderValues;
         if (hasOwnEntries(full.dynamicSelections)) packed.y = full.dynamicSelections;
+        if (hasOwnEntries(full.pointAllocationSelections)) packed.l = full.pointAllocationSelections;
         if (hasOwnEntries(full.subcategoryDiscountSelections)) packed.u = full.subcategoryDiscountSelections;
         if (hasOwnEntries(full.categoryDiscountSelections)) packed.c = full.categoryDiscountSelections;
         if (hasOwnEntries(full.optionGrantDiscountSelections)) packed.g = full.optionGrantDiscountSelections;
@@ -1542,6 +1757,7 @@ class CyoaEngine {
         this.selectedOptions = { ...(unpacked.selectedOptions || {}) };
         this.points = { ...(unpacked.points || {}) };
         this.discountedSelections = { ...(unpacked.discountedSelections || {}) };
+        this.selectedCostOptionHistory = { ...(unpacked.selectedCostOptionHistory || {}) };
         this.storyInputs = {};
         Object.entries(unpacked.storyInputs || {}).forEach(([key, value]) => {
             const config = this.getStoryInputConfig(key);
@@ -1552,6 +1768,7 @@ class CyoaEngine {
         });
         this.attributeSliderValues = { ...(unpacked.attributeSliderValues || {}) };
         this.dynamicSelections = { ...(unpacked.dynamicSelections || {}) };
+        this.pointAllocationSelections = { ...(unpacked.pointAllocationSelections || {}) };
         this.subcategoryDiscountSelections = { ...(unpacked.subcategoryDiscountSelections || {}) };
         this.categoryDiscountSelections = { ...(unpacked.categoryDiscountSelections || {}) };
         this.optionGrantDiscountSelections = { ...(unpacked.optionGrantDiscountSelections || {}) };
@@ -1562,6 +1779,7 @@ class CyoaEngine {
         return {
             ...JSON.parse(JSON.stringify(this.buildExportState())),
             selectedCostOptionIndexes: JSON.parse(JSON.stringify(this.selectedCostOptionIndexes)),
+            selectedCostOptionHistory: JSON.parse(JSON.stringify(this.selectedCostOptionHistory)),
             selectionHistory: [...this.selectionHistory]
         };
     }
@@ -1571,9 +1789,11 @@ class CyoaEngine {
         this.points = { ...(state.points || {}) };
         this.discountedSelections = { ...(state.discountedSelections || {}) };
         this.selectedCostOptionIndexes = { ...(state.selectedCostOptionIndexes || {}) };
+        this.selectedCostOptionHistory = { ...(state.selectedCostOptionHistory || {}) };
         this.storyInputs = { ...(state.storyInputs || {}) };
         this.attributeSliderValues = { ...(state.attributeSliderValues || {}) };
         this.dynamicSelections = { ...(state.dynamicSelections || {}) };
+        this.pointAllocationSelections = { ...(state.pointAllocationSelections || {}) };
         this.subcategoryDiscountSelections = { ...(state.subcategoryDiscountSelections || {}) };
         this.categoryDiscountSelections = { ...(state.categoryDiscountSelections || {}) };
         this.optionGrantDiscountSelections = { ...(state.optionGrantDiscountSelections || {}) };
@@ -1593,9 +1813,11 @@ class CyoaEngine {
         this.selectionHistory = [];
         this.discountedSelections = {};
         this.selectedCostOptionIndexes = {};
+        this.selectedCostOptionHistory = {};
         this.storyInputs = {};
         this.attributeSliderValues = {};
         this.dynamicSelections = {};
+        this.pointAllocationSelections = {};
         this.subcategoryDiscountSelections = {};
         this.categoryDiscountSelections = {};
         this.optionGrantDiscountSelections = {};
@@ -1622,9 +1844,11 @@ function unpackImportedState(importedData) {
         selectedOptions: importedData.s || {},
         points: importedData.p || {},
         discountedSelections: importedData.d || {},
+        selectedCostOptionHistory: importedData.h || {},
         storyInputs: importedData.t || {},
         attributeSliderValues: importedData.a || {},
         dynamicSelections: importedData.y || {},
+        pointAllocationSelections: importedData.l || {},
         subcategoryDiscountSelections: importedData.u || {},
         categoryDiscountSelections: importedData.c || {},
         optionGrantDiscountSelections: importedData.g || {},
@@ -1870,10 +2094,12 @@ function renamePointTypeReferences(data, oldName, newName) {
             (option?.costOptions || []).forEach(costOption => renamePointMapKey(costOption?.cost, oldName, newName));
             (option?.costOptions || []).forEach(costOption => (costOption?.costBySelection || []).forEach(cost => renamePointMapKey(cost, oldName, newName)));
             renamePointMapKey(option?.costPerPoint, oldName, newName);
+            if (Array.isArray(option?.pointAllocation?.types)) {
+                option.pointAllocation.types = option.pointAllocation.types.map(type => type === oldName ? newName : type);
+            }
             visitCostRules(option);
         };
         const visitSubcategory = subcat => {
-            renamePointMapKey(subcat?.defaultCost, oldName, newName);
             (subcat?.costOptions || []).forEach(costOption => renamePointMapKey(costOption?.cost, oldName, newName));
             (subcat?.costOptions || []).forEach(costOption => (costOption?.costBySelection || []).forEach(cost => renamePointMapKey(cost, oldName, newName)));
             renamePointMapKey(subcat?.discountAmount, oldName, newName);
@@ -2016,6 +2242,216 @@ test("repeatable option display costs should match charged selection-specific co
     assert.strictEqual(engine.points.Points, 7);
 });
 
+test("repeatable cost options should enforce base-first and per-choice limits", () => {
+    const engine = CyoaEngine.synthetic();
+    assert.deepStrictEqual(engine.effectiveCostChoices("limitedRepeatCosts"), [
+        { index: 0, cost: { Points: 1 } }
+    ]);
+
+    const malformedImportEngine = CyoaEngine.synthetic();
+    malformedImportEngine.selectedOptions.limitedRepeatCosts = 1;
+    malformedImportEngine.selectedCostOptionHistory.limitedRepeatCosts = [1];
+    assert.deepStrictEqual(malformedImportEngine.effectiveCostChoices("limitedRepeatCosts"), [
+        { index: 0, cost: { Points: 1 } }
+    ]);
+
+    engine.points.Tokens = 1;
+    engine.select("limitedRepeatCosts", { costOptionIndex: 0 });
+    assert.deepStrictEqual(engine.selectedCostOptionHistory.limitedRepeatCosts, [0]);
+    assert.deepStrictEqual(engine.effectiveCostChoices("limitedRepeatCosts"), [
+        { index: 1, cost: { Tokens: 1 } },
+        { index: 2, cost: { Points: -1 } }
+    ]);
+
+    engine.select("limitedRepeatCosts", { costOptionIndex: 1 });
+    assert.deepStrictEqual(engine.selectedCostOptionHistory.limitedRepeatCosts, [0, 1]);
+    assert.deepStrictEqual(engine.effectiveCostChoices("limitedRepeatCosts"), [
+        { index: 2, cost: { Points: -1 } }
+    ]);
+
+    engine.select("limitedRepeatCosts", { costOptionIndex: 2 });
+    assert.strictEqual(engine.canSelect("limitedRepeatCosts"), false);
+    assert.strictEqual(engine.points.Points, 10);
+    assert.strictEqual(engine.points.Tokens, 0);
+
+    engine.remove("limitedRepeatCosts");
+    assert.deepStrictEqual(engine.selectedCostOptionHistory.limitedRepeatCosts, [0, 1]);
+    assert.deepStrictEqual(engine.effectiveCostChoices("limitedRepeatCosts"), [
+        { index: 2, cost: { Points: -1 } }
+    ]);
+});
+
+test("repeatable cost options should default each payment choice to one use", () => {
+    const engine = CyoaEngine.synthetic();
+
+    assert.deepStrictEqual(engine.effectiveCostChoices("implicitLimitedRepeatCosts"), [
+        { index: 0, cost: { Points: 1 } }
+    ]);
+    assert.strictEqual(engine.canSelect("implicitLimitedRepeatCosts", { costOptionIndex: 1 }), false);
+    assert.strictEqual(engine.canSelect("implicitLimitedRepeatCosts", { costOptionIndex: 2 }), false);
+
+    engine.select("implicitLimitedRepeatCosts", { costOptionIndex: 0 });
+    assert.deepStrictEqual(engine.selectedCostOptionHistory.implicitLimitedRepeatCosts, [0]);
+    assert.deepStrictEqual(engine.effectiveCostChoices("implicitLimitedRepeatCosts"), [
+        { index: 1, cost: { Points: 2 } },
+        { index: 2, cost: { Points: -1 } }
+    ]);
+
+    engine.select("implicitLimitedRepeatCosts", { costOptionIndex: 1 });
+    assert.deepStrictEqual(engine.selectedCostOptionHistory.implicitLimitedRepeatCosts, [0, 1]);
+    assert.deepStrictEqual(engine.effectiveCostChoices("implicitLimitedRepeatCosts"), [
+        { index: 2, cost: { Points: -1 } }
+    ]);
+    assert.strictEqual(engine.canSelect("implicitLimitedRepeatCosts", { costOptionIndex: 1 }), false);
+
+    engine.select("implicitLimitedRepeatCosts", { costOptionIndex: 2 });
+    assert.deepStrictEqual(engine.selectedCostOptionHistory.implicitLimitedRepeatCosts, [0, 1, 2]);
+    assert.deepStrictEqual(engine.effectiveCostChoices("implicitLimitedRepeatCosts"), []);
+    assert.strictEqual(engine.canSelect("implicitLimitedRepeatCosts"), false);
+});
+
+test("Superpowered World power and motorbike upgrades require base purchases", () => {
+    const data = JSON.parse(fs.readFileSync(path.join(ROOT, "CYOAs", "superpowered_world.json"), "utf8"));
+    const engine = new CyoaEngine(data, "superpowered_world.json");
+    engine.points.Boons = 10;
+
+    const powersCategory = data.find(entry => entry.name === "Powers");
+    const powersSubcategory = powersCategory.subcategories.find(subcat => subcat.name === "Powers");
+    const powerIds = powersSubcategory.options
+        .filter(option => Array.isArray(option.costOptions) && option.costOptions.length > 1)
+        .map(option => option.id);
+    powerIds.forEach(id => {
+        assert.deepStrictEqual(
+            engine.effectiveCostChoices(id).map(choice => choice.cost),
+            [{ Powers: 1 }],
+            `${id} should expose only the base power purchase before selection`
+        );
+        assert.strictEqual(engine.canSelect(id, { costOptionIndex: 1 }), false, `${id} boon should be locked before base purchase`);
+        if (engine.option(id).costOptions.length > 2) {
+            assert.strictEqual(engine.canSelect(id, { costOptionIndex: 2 }), false, `${id} bane should be locked before base purchase`);
+        }
+    });
+
+    engine.points.Powers = 10;
+    engine.select("powersPowersHyperRunning", { costOptionIndex: 0 });
+    assert.deepStrictEqual(
+        engine.effectiveCostChoices("powersPowersHyperRunning").map(choice => choice.cost),
+        [{ Boons: 1 }, { Boons: -1 }],
+        "Hyper Running should expose boon and bane only after the base power purchase"
+    );
+    assert.strictEqual(engine.canSelect("powersPowersHyperRunning", { costOptionIndex: 1 }), true);
+    assert.strictEqual(engine.canSelect("powersPowersHyperRunning", { costOptionIndex: 2 }), true);
+
+    engine.points.Equipment = 5;
+    assert.deepStrictEqual(engine.effectiveCostChoices("skillsAndEquipmentEquipmentMotorbike"), [
+        { index: 0, cost: { Equipment: 1 } }
+    ]);
+    assert.strictEqual(engine.canSelect("skillsAndEquipmentEquipmentMotorbike", { costOptionIndex: 1 }), false);
+    engine.select("skillsAndEquipmentEquipmentMotorbike", { costOptionIndex: 0 });
+    assert.deepStrictEqual(engine.effectiveCostChoices("skillsAndEquipmentEquipmentMotorbike"), [
+        { index: 1, cost: { Boons: 1 } }
+    ]);
+    assert.strictEqual(engine.canSelect("skillsAndEquipmentEquipmentMotorbike", { costOptionIndex: 1 }), true);
+
+    const importedStateEngine = new CyoaEngine(data, "superpowered_world.json imported state");
+    importedStateEngine.selectedOptions.powersPowersHyperRunning = 1;
+    importedStateEngine.points.Boons = 10;
+    assert.deepStrictEqual(
+        importedStateEngine.effectiveCostChoices("powersPowersHyperRunning").map(choice => choice.cost),
+        [{ Boons: 1 }, { Boons: -1 }],
+        "Imported selections without cost-option history should still unlock upgrades from the selected count"
+    );
+});
+
+test("Superpowered World allies can be selected as allies or bitter enemies", () => {
+    const data = JSON.parse(fs.readFileSync(path.join(ROOT, "CYOAs", "superpowered_world.json"), "utf8"));
+    const engine = new CyoaEngine(data, "superpowered_world.json");
+
+    assert.deepStrictEqual(engine.effectiveCostChoices("alliesSidekicksMissilemen"), [
+        { index: 0, cost: { Allies: 1 } },
+        { index: 1, cost: { Boons: -0.5 } }
+    ]);
+    assert.deepStrictEqual(engine.effectiveCostChoices("alliesAverageJoesMeritorious"), [
+        { index: 0, cost: { Allies: 1 } },
+        { index: 1, cost: { Boons: -0.5 } }
+    ]);
+    assert.deepStrictEqual(engine.effectiveCostChoices("alliesIconsVaricell"), [
+        { index: 0, cost: { Boons: 1, Allies: 1 } },
+        { index: 1, cost: { Boons: -1 } }
+    ]);
+    assert.deepStrictEqual(engine.effectiveCostChoices("alliesSupericonsVictor"), [
+        { index: 0, cost: { Boons: 2, Allies: 1 } },
+        { index: 1, cost: { Boons: -1 } }
+    ]);
+    assert.deepStrictEqual(engine.effectiveCostChoices("alliesOtherAlternate"), [
+        { index: null, label: "Cost", cost: {} }
+    ]);
+    assert.strictEqual(engine.optionMap.has("boonsAndBanesBanesBitterEnemies"), false);
+
+    engine.points.Allies = 4;
+    engine.select("alliesSidekicksMissilemen", { costOptionIndex: 1 });
+    engine.select("alliesAverageJoesMeritorious", { costOptionIndex: 1 });
+    assert.strictEqual(engine.points.Boons, 1);
+    assert.strictEqual(engine.canSelect("alliesSidekicksMissilemen", { costOptionIndex: 0 }), false);
+
+    const loneWolfEngine = new CyoaEngine(data, "superpowered_world.json lone wolf enemies");
+    loneWolfEngine.points.Allies = 4;
+    loneWolfEngine.points.Boons = 2;
+    loneWolfEngine.select("originStoryYourTeamLoneWolf");
+    assert.deepStrictEqual(loneWolfEngine.effectiveCostChoices("alliesSidekicksDFeats"), [
+        { index: 1, cost: { Boons: -0.5 } }
+    ]);
+    assert.deepStrictEqual(loneWolfEngine.effectiveCostChoices("alliesIconsBlankman"), [
+        { index: 1, cost: { Boons: -1 } }
+    ]);
+    assert.strictEqual(loneWolfEngine.canSelect("alliesSidekicksDFeats", { costOptionIndex: 0 }), false);
+    assert.strictEqual(loneWolfEngine.canSelect("alliesSidekicksDFeats", { costOptionIndex: 1 }), true);
+    assert.strictEqual(loneWolfEngine.canSelect("alliesIconsBlankman", { costOptionIndex: 0 }), false);
+    assert.strictEqual(loneWolfEngine.canSelect("alliesIconsBlankman", { costOptionIndex: 1 }), true);
+    assert.strictEqual(loneWolfEngine.canSelect("alliesOtherAlternate"), false);
+
+    const allyThenLoneWolfEngine = new CyoaEngine(data, "superpowered_world.json ally then lone wolf");
+    allyThenLoneWolfEngine.points.Allies = 4;
+    allyThenLoneWolfEngine.select("alliesSidekicksHAM", { costOptionIndex: 0 });
+    assert.strictEqual(allyThenLoneWolfEngine.selectedOptions.alliesSidekicksHAM, 1);
+    allyThenLoneWolfEngine.select("originStoryYourTeamLoneWolf");
+    assert.strictEqual(allyThenLoneWolfEngine.selectedOptions.alliesSidekicksHAM, undefined);
+});
+
+test("Superpowered World skill mastery upgrades require base skill purchases", () => {
+    const data = JSON.parse(fs.readFileSync(path.join(ROOT, "CYOAs", "superpowered_world.json"), "utf8"));
+    const engine = new CyoaEngine(data, "superpowered_world.json");
+    engine.points.Boons = 5;
+
+    assert.strictEqual(engine.optionMap.has("boonsAndBanesBoonsMastery"), false);
+    const skillsCategory = data.find(entry => entry.name === "Skills and Equipment");
+    const skillsSubcategory = skillsCategory.subcategories.find(subcat => subcat.name === "Skills");
+    skillsSubcategory.options
+        .filter(option => Array.isArray(option.costOptions) && option.costOptions.length > 1)
+        .forEach(option => {
+            assert.deepStrictEqual(
+                engine.effectiveCostChoices(option.id),
+                [{ index: 0, cost: { Skills: 1 } }],
+                `${option.id} should expose only the base skill purchase before selection`
+            );
+            assert.strictEqual(engine.canSelect(option.id, { costOptionIndex: 1 }), false, `${option.id} mastery should be locked before base purchase`);
+        });
+
+    engine.points.Skills = 5;
+    engine.select("skillsAndEquipmentSkillsFitness", { costOptionIndex: 0 });
+    assert.deepStrictEqual(engine.effectiveCostChoices("skillsAndEquipmentSkillsFitness"), [
+        { index: 1, cost: { Boons: 1 } }
+    ]);
+    assert.strictEqual(engine.canSelect("skillsAndEquipmentSkillsFitness", { costOptionIndex: 1 }), true);
+    engine.select("skillsAndEquipmentSkillsFitness", { costOptionIndex: 1 });
+    assert.strictEqual(engine.selectedOptions.skillsAndEquipmentSkillsFitness, 2);
+
+    assert.deepStrictEqual(engine.effectiveCostChoices("skillsAndEquipmentSkillsPhD"), [
+        { index: 0, cost: { Skills: 1, Boons: 1 } }
+    ]);
+    assert.strictEqual(engine.canSelect("skillsAndEquipmentSkillsPhD", { costOptionIndex: 1 }), false);
+});
+
 test("repeatable options should enforce selection-specific prerequisites", () => {
     const engine = CyoaEngine.synthetic();
     const gear = engine.option("repeatablePrereqGear");
@@ -2140,8 +2576,27 @@ test("category tabs should support multiple open panels and bulk expansion", () 
         "player should render an Open All category control"
     );
     assert(
-        PLAYER_SCRIPT_SOURCE.includes("visibleCategories.forEach(cat => openCategories.add(cat.name))"),
-        "Open All should add every visible category to openCategories"
+        PLAYER_SCRIPT_SOURCE.includes("visibleCategories.forEach(cat => openCategoryAndSubcategories(cat))"),
+        "Open All should add every visible category and its subcategories to open state"
+    );
+    assert(
+        PLAYER_SCRIPT_SOURCE.includes("collectOpenableSubcategoryKeys(cat, catIndex, cat.subcategories || []).forEach(key => {"),
+        "Open All should collect every unlocked subcategory key for each category"
+    );
+    assert(
+        PLAYER_SCRIPT_SOURCE.includes("openSubcategories.add(key)") &&
+        PLAYER_SCRIPT_SOURCE.includes("subcategoriesToAnimate.add(key)"),
+        "Open All should open and animate all unlocked subcategories"
+    );
+    assert(
+        PLAYER_SCRIPT_SOURCE.includes("openAllButton.disabled = allCategoryPanelsOpen"),
+        "Open All should stay available until both categories and subcategories are open"
+    );
+    assert(
+        PLAYER_SCRIPT_SOURCE.includes("closeAllButton.disabled = openCategories.size === 0 && openSubcategories.size === 0") &&
+        PLAYER_SCRIPT_SOURCE.includes("openSubcategories.clear();") &&
+        PLAYER_SCRIPT_SOURCE.includes("subcategoriesToAnimate.clear();"),
+        "Close All should include subcategory open state"
     );
     assert(
         PLAYER_SCRIPT_SOURCE.includes("const activeCategories = visibleCategories.filter(cat => openCategories.has(cat.name))"),
@@ -2196,8 +2651,9 @@ test("point type renames should update every referenced cost map", () => {
     const firstN = findCategory(data, "Subcategory Controls").subcategories.find(subcat => subcat.name === "First N Discounts");
     const inheritedCosts = findCategory(data, "Subcategory Controls").subcategories.find(subcat => subcat.name === "Inherited Payment Options");
     const tieredRepeatCost = choices.options.find(option => option.id === "tieredRepeatCost");
+    const allocatedTeamGrant = choices.options.find(option => option.id === "allocatedTeamGrant");
 
-    assert.deepStrictEqual(choices.defaultCost, { "Hero Points": 1 });
+    assert.deepStrictEqual(choices.costOptions[0].cost, { "Hero Points": 1 });
     assert.deepStrictEqual(alternateCost.costOptions[0].cost, { "Hero Points": 4 });
     assert.deepStrictEqual(tieredRepeatCost.costOptions[0].costBySelection[1], { "Hero Points": 2 });
     assert.deepStrictEqual(optionOverride.modifiedCosts[0].cost, { "Hero Points": 7 });
@@ -2205,6 +2661,9 @@ test("point type renames should update every referenced cost map", () => {
     assert.deepStrictEqual(grantTarget.cost, { "Hero Points": 6 });
     assert.deepStrictEqual(firstN.discountAmount, { "Hero Points": 2 });
     assert.deepStrictEqual(inheritedCosts.costOptions[0].cost, { "Hero Points": 3 });
+
+    renamePointTypeReferences(data, "Skills", "Talents");
+    assert.deepStrictEqual(allocatedTeamGrant.pointAllocation.types, ["Talents", "Equipment"]);
 });
 
 test("point type edits should refresh category cost controls", () => {
@@ -2220,15 +2679,15 @@ test("point type edits should refresh category cost controls", () => {
     });
 });
 
-test("subcategory defaults should price empty-cost options and repeated picks can count once", () => {
+test("subcategory inherited cost options should price empty-cost options and repeated picks can count once", () => {
     const engine = CyoaEngine.synthetic();
-    assertDeepEqual(engine.effectiveCost("freeDefault"), { Points: 1 });
-    assertDeepEqual(engine.effectiveCost("spendTwo"), { Points: 2 });
-    assertDeepEqual(engine.effectiveCost("defaultCostOption", { costOptionIndex: 0 }), { Points: 1 });
-    assertDeepEqual(engine.effectiveCostChoices("defaultCostOption")[0].cost, { Points: 1 });
-    engine.select("defaultCostOption");
+    assert.deepStrictEqual(engine.effectiveCost("freeDefault"), { Points: 1 });
+    assert.deepStrictEqual(engine.effectiveCost("spendTwo"), { Points: 2 });
+    assert.deepStrictEqual(engine.effectiveCost("inheritedDefaultOption", { costOptionIndex: 0 }), { Points: 1 });
+    assert.deepStrictEqual(engine.effectiveCostChoices("inheritedDefaultOption")[0].cost, { Points: 1 });
+    engine.select("inheritedDefaultOption");
     assert.strictEqual(engine.points.Points, 9);
-    engine.remove("defaultCostOption");
+    engine.remove("inheritedDefaultOption");
     assert.strictEqual(engine.points.Points, 10);
     engine.select("multi");
     engine.select("multi");
@@ -2238,7 +2697,6 @@ test("subcategory defaults should price empty-cost options and repeated picks ca
 
 test("subcategory cost options should be inherited unless an option defines its own choices", () => {
     const engine = CyoaEngine.synthetic();
-    engine.option("inheritedCostOptions").costOptions = [{ label: "Empty Local Choice", cost: {} }];
     assert.deepStrictEqual(engine.effectiveCostChoices("inheritedCostOptions"), [
         { index: 0, cost: { Points: 3 } },
         { index: 1, cost: { Tokens: 2 } }
@@ -2251,6 +2709,117 @@ test("subcategory cost options should be inherited unless an option defines its 
     engine.points.Tokens = 2;
     engine.select("inheritedCostOptions", { costOptionIndex: 1 });
     assert.strictEqual(engine.points.Tokens, 0);
+});
+
+test("point allocations should split a fixed grant across configured point types", () => {
+    const engine = CyoaEngine.synthetic();
+    assert.deepStrictEqual(engine.getPointAllocationValues("allocatedTeamGrant"), { Skills: 6, Equipment: 0 });
+    assert.deepStrictEqual(engine.effectiveCost("allocatedTeamGrant"), { Points: 1, Skills: -6 });
+
+    engine.setPointAllocation("allocatedTeamGrant", { Skills: 2, Equipment: 4 });
+    assert.deepStrictEqual(engine.getPointAllocationValues("allocatedTeamGrant"), { Skills: 2, Equipment: 4 });
+    assert.deepStrictEqual(engine.effectiveCost("allocatedTeamGrant"), { Points: 1, Skills: -2, Equipment: -4 });
+
+    engine.select("allocatedTeamGrant");
+    assert.strictEqual(engine.points.Points, 9);
+    assert.strictEqual(engine.points.Skills, 2);
+    assert.strictEqual(engine.points.Equipment, 4);
+    assert.deepStrictEqual(engine.discountedSelections.allocatedTeamGrant, [{ Points: 1, Skills: -2, Equipment: -4 }]);
+
+    engine.remove("allocatedTeamGrant");
+    assert.strictEqual(engine.points.Points, 10);
+    assert.strictEqual(engine.points.Skills, 0);
+    assert.strictEqual(engine.points.Equipment, 0);
+    assert.strictEqual(engine.pointAllocationSelections.allocatedTeamGrant, undefined);
+});
+
+test("point allocation controls should render as sliders instead of number boxes", () => {
+    const source = extractFunctionSource(PLAYER_SCRIPT_SOURCE, "renderPointAllocationControl");
+    assert(source.includes('slider.type = "range"'), "point allocation controls should use range sliders");
+    assert(source.includes("point-allocation-slider"), "point allocation sliders should have a stable CSS class");
+    assert(source.includes("updateDisplayedAllocation()"), "point allocation sliders should update displayed values in place while dragging");
+    assert(!source.includes("renderAccordion();"), "point allocation sliders should not re-render the accordion on each input event");
+    assert(!source.includes('input.type = "number"'), "point allocation controls should not render number input boxes");
+});
+
+test("visual editor should expose add and remove controls for point allocation", () => {
+    assert(
+        EDITOR_SCRIPT_SOURCE.includes("function renderPointAllocationEditor"),
+        "visual editor should define a point allocation editor"
+    );
+    assert(
+        EDITOR_SCRIPT_SOURCE.includes("Add point allocation"),
+        "visual editor should allow adding point allocation to an option"
+    );
+    assert(
+        EDITOR_SCRIPT_SOURCE.includes("Remove point allocation"),
+        "visual editor should allow removing point allocation from an option"
+    );
+    assert(
+        EDITOR_SCRIPT_SOURCE.includes("Total picks to allocate"),
+        "visual editor should expose the allocation total"
+    );
+    assert(
+        EDITOR_SCRIPT_SOURCE.includes("Add allocation point type"),
+        "visual editor should allow editing allocation point types"
+    );
+});
+
+test("visual editor should expose repeat payment option availability limits", () => {
+    assert(
+        EDITOR_SCRIPT_SOURCE.includes("Selection availability"),
+        "visual editor should expose payment option availability controls"
+    );
+    assert(
+        EDITOR_SCRIPT_SOURCE.includes("minSelectedInput"),
+        "visual editor should allow payment options to require existing selections"
+    );
+    assert(
+        EDITOR_SCRIPT_SOURCE.includes("maxSelectionsInput"),
+        "visual editor should allow payment options to cap uses"
+    );
+    assert(
+        EDITOR_SCRIPT_SOURCE.includes("requiresCostOptionInput"),
+        "visual editor should allow payment options to require another payment option first"
+    );
+});
+
+test("visual editor should expose subcategory reorder controls in section headers", () => {
+    assert(
+        EDITOR_SCRIPT_SOURCE.includes('subUpBtn.title = "Move section up"') &&
+        EDITOR_SCRIPT_SOURCE.includes('subDownBtn.title = "Move section down"'),
+        "visual editor should expose up/down controls for subcategories"
+    );
+    assert(
+        EDITOR_SCRIPT_SOURCE.includes("moveArrayItem(parentArray, subIndex, -1)") &&
+        EDITOR_SCRIPT_SOURCE.includes("moveArrayItem(parentArray, subIndex, 1)"),
+        "subcategory reorder controls should move the current subcategory within its parent array"
+    );
+    assert(
+        EDITOR_SCRIPT_SOURCE.includes("subSummary.appendChild(subActions)") &&
+        EDITOR_SCRIPT_SOURCE.includes("preventSummaryToggle(subActions)"),
+        "subcategory reorder controls should live in the collapsed section header without toggling it"
+    );
+});
+
+test("option border colors should be supported through visual editor style fields", () => {
+    const engine = CyoaEngine.synthetic();
+    const option = engine.option("customFields");
+    assert.strictEqual(option.borderColor, "#8886D1");
+    assert.strictEqual(option.darkBorderColor, "#C0C0C0");
+    assert(
+        PLAYER_SCRIPT_SOURCE.includes("opt.darkBorderColor || opt.borderColor")
+            && PLAYER_SCRIPT_SOURCE.includes("wrapper.style.borderColor = optionBorderColor"),
+        "player should apply safe option-level border colors"
+    );
+    assert(
+        EDITOR_SCRIPT_SOURCE.includes("Option border")
+            && EDITOR_SCRIPT_SOURCE.includes("borderColor")
+            && EDITOR_SCRIPT_SOURCE.includes("darkBorderColor")
+            && EDITOR_SCRIPT_SOURCE.includes("Light border color")
+            && EDITOR_SCRIPT_SOURCE.includes("Dark border color"),
+        "visual editor should expose first-class option border color fields"
+    );
 });
 
 test("selected option text inputs should survive export and import", () => {
@@ -2464,6 +3033,21 @@ test("CYOA validation should accept synthetic count-suffix prerequisites after o
             error.includes('references unknown option ID "oldRankedPower1"')
         ),
         "synthetic validation should catch stale prerequisite IDs without depending on existing CYOAs"
+    );
+});
+
+test("CYOA validation should reject unsafe option border colors", () => {
+    const data = CyoaEngine.synthetic().data;
+    let customOption = null;
+    walkSubcategories(data.find(entry => entry.name === "Core").subcategories, subcat => {
+        customOption = customOption || (subcat.options || []).find(option => option.id === "customFields");
+    });
+    customOption.borderColor = "url(javascript:alert(1))";
+    assert(
+        validateCyoaData("synthetic-border-validation.json", data).errors.some(error =>
+            error.includes(".borderColor must be a safe CSS color string")
+        ),
+        "synthetic validation should reject unsafe option border colors"
     );
 });
 
@@ -2975,6 +3559,7 @@ test("packed export state should round-trip selections, points, inputs, and gran
     engine.storyInputs.subcatNote = "Synth";
     engine.attributeSliderValues.Power = 4;
     engine.dynamicSelections.option = ["Power"];
+    engine.pointAllocationSelections.allocatedTeamGrant = { Skills: 2, Equipment: 4 };
     engine.subcategoryDiscountSelections.sub = { option: 1 };
     engine.categoryDiscountSelections.cat = { option: 1 };
     engine.optionGrantDiscountSelections.grant = { option: 1 };
@@ -2984,9 +3569,11 @@ test("packed export state should round-trip selections, points, inputs, and gran
     const unpacked = unpackImportedState(JSON.parse(JSON.stringify(packed)));
     assert.deepStrictEqual(unpacked.selectedOptions, engine.selectedOptions);
     assert.deepStrictEqual(unpacked.points, engine.points);
+    assert.deepStrictEqual(unpacked.selectedCostOptionHistory, engine.selectedCostOptionHistory);
     assert.deepStrictEqual(unpacked.storyInputs, engine.storyInputs);
     assert.deepStrictEqual(unpacked.attributeSliderValues, engine.attributeSliderValues);
     assert.deepStrictEqual(unpacked.dynamicSelections, engine.dynamicSelections);
+    assert.deepStrictEqual(unpacked.pointAllocationSelections, engine.pointAllocationSelections);
     assert.deepStrictEqual(unpacked.subcategoryDiscountSelections, engine.subcategoryDiscountSelections);
     assert.deepStrictEqual(unpacked.categoryDiscountSelections, engine.categoryDiscountSelections);
     assert.deepStrictEqual(unpacked.optionGrantDiscountSelections, engine.optionGrantDiscountSelections);
@@ -2996,9 +3583,11 @@ test("packed export state should round-trip selections, points, inputs, and gran
     assert.deepStrictEqual(scriptRoundTrip.unpacked.selectedOptions, engine.selectedOptions);
     assert.deepStrictEqual(scriptRoundTrip.unpacked.points, engine.points);
     assert.deepStrictEqual(scriptRoundTrip.unpacked.discountedSelections, engine.discountedSelections);
+    assert.deepStrictEqual(scriptRoundTrip.unpacked.selectedCostOptionHistory, engine.selectedCostOptionHistory);
     assert.deepStrictEqual(scriptRoundTrip.unpacked.storyInputs, engine.storyInputs);
     assert.deepStrictEqual(scriptRoundTrip.unpacked.attributeSliderValues, engine.attributeSliderValues);
     assert.deepStrictEqual(scriptRoundTrip.unpacked.dynamicSelections, engine.dynamicSelections);
+    assert.deepStrictEqual(scriptRoundTrip.unpacked.pointAllocationSelections, engine.pointAllocationSelections);
     assert.deepStrictEqual(scriptRoundTrip.unpacked.subcategoryDiscountSelections, engine.subcategoryDiscountSelections);
     assert.deepStrictEqual(scriptRoundTrip.unpacked.categoryDiscountSelections, engine.categoryDiscountSelections);
     assert.deepStrictEqual(scriptRoundTrip.unpacked.optionGrantDiscountSelections, engine.optionGrantDiscountSelections);
@@ -3009,9 +3598,11 @@ test("packed export state should round-trip selections, points, inputs, and gran
     assert.deepStrictEqual(importedEngine.selectedOptions, engine.selectedOptions);
     assert.deepStrictEqual(importedEngine.points, engine.points);
     assert.deepStrictEqual(importedEngine.discountedSelections, engine.discountedSelections);
+    assert.deepStrictEqual(importedEngine.selectedCostOptionHistory, engine.selectedCostOptionHistory);
     assert.deepStrictEqual(importedEngine.storyInputs, engine.storyInputs);
     assert.deepStrictEqual(importedEngine.attributeSliderValues, engine.attributeSliderValues);
     assert.deepStrictEqual(importedEngine.dynamicSelections, engine.dynamicSelections);
+    assert.deepStrictEqual(importedEngine.pointAllocationSelections, engine.pointAllocationSelections);
     assert.deepStrictEqual(importedEngine.subcategoryDiscountSelections, engine.subcategoryDiscountSelections);
     assert.deepStrictEqual(importedEngine.categoryDiscountSelections, engine.categoryDiscountSelections);
     assert.deepStrictEqual(importedEngine.optionGrantDiscountSelections, engine.optionGrantDiscountSelections);

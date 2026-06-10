@@ -1029,6 +1029,17 @@ div {
     font-size: var(--font-label);
 }
 
+.point-allocation-row {
+    display: grid;
+    grid-template-columns: minmax(120px, max-content) minmax(140px, 1fr);
+    gap: 10px;
+    align-items: center;
+}
+
+.point-allocation-slider {
+    width: 100%;
+}
+
 @media (max-width: 768px) {
     .options-grid {
         grid-template-columns: 1fr;

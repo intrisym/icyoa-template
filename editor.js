@@ -1,6 +1,6 @@
 (function () {
     const CORE_TYPES_ORDER = ["title", "description", "headerImage", "points", "settings"];
-    const BASE_OPTION_KEYS = new Set(["id", "label", "description", "image", "inputType", "inputLabel", "cost", "costOptions", "maxSelections", "countsAsOneSelection", "bypassSubcategoryMaxSelections", "prerequisites", "conflictsWith", "autoGrants", "modifiedCosts", "discounts", "discountGrants"]);
+    const BASE_OPTION_KEYS = new Set(["id", "label", "description", "image", "inputType", "inputLabel", "cost", "costOptions", "pointAllocation", "maxSelections", "countsAsOneSelection", "bypassSubcategoryMaxSelections", "prerequisites", "conflictsWith", "autoGrants", "modifiedCosts", "discounts", "discountGrants", "borderColor", "darkBorderColor"]);
 
     const state = {
         data: [],
@@ -358,7 +358,7 @@
     function getCategorySnapshots() {
         const result = [];
         state.data.forEach((entry, index) => {
-            if (!entry.type) {
+            if (entry && !entry.type) {
                 if (!Array.isArray(entry.subcategories)) {
                     entry.subcategories = [];
                 }
@@ -492,6 +492,15 @@
         return ids;
     }
 
+    function isSafeCssColorValue(value) {
+        if (value === undefined || value === null || value === "") return true;
+        const color = String(value).trim();
+        return /^#[0-9a-f]{3,8}$/i.test(color)
+            || /^rgba?\(\s*(\d{1,3}%?\s*,\s*){2}\d{1,3}%?(\s*,\s*(0|1|0?\.\d+|[1-9]\d*%))?\s*\)$/i.test(color)
+            || /^hsla?\(\s*-?\d+(\.\d+)?(deg|rad|turn)?\s*,\s*\d{1,3}%\s*,\s*\d{1,3}%(\s*,\s*(0|1|0?\.\d+|[1-9]\d*%))?\s*\)$/i.test(color)
+            || /^[a-z]+$/i.test(color);
+    }
+
     function getOptionValidationWarnings(option) {
         const warnings = [];
         const allIds = collectOptionIds();
@@ -511,6 +520,11 @@
                 warnUnknownPointTypes(tierCost, `Alternative cost ${index + 1} selection ${tierIndex + 1}`);
             });
         });
+        (option?.pointAllocation?.types || []).forEach(type => {
+            if (!pointTypes.has(type)) warnings.push(`Point allocation references unknown point type "${type}".`);
+        });
+        if (!isSafeCssColorValue(option?.borderColor)) warnings.push("Light border color must be a safe CSS color string.");
+        if (!isSafeCssColorValue(option?.darkBorderColor)) warnings.push("Dark border color must be a safe CSS color string.");
 
         const prereqIds = Array.from(extractReferencedIds(option?.prerequisites));
         prereqIds.forEach(id => {
@@ -2334,11 +2348,13 @@
                 (option?.costOptions || []).forEach(costOption => renamePointMapKey(costOption?.cost, oldName, newName));
                 (option?.costOptions || []).forEach(costOption => (costOption?.costBySelection || []).forEach(cost => renamePointMapKey(cost, oldName, newName)));
                 renamePointMapKey(option?.costPerPoint, oldName, newName);
+                if (Array.isArray(option?.pointAllocation?.types)) {
+                    option.pointAllocation.types = option.pointAllocation.types.map(type => type === oldName ? newName : type);
+                }
                 visitCostRules(option);
             };
 
             const visitSubcategory = (subcat) => {
-                renamePointMapKey(subcat?.defaultCost, oldName, newName);
                 (subcat?.costOptions || []).forEach(costOption => renamePointMapKey(costOption?.cost, oldName, newName));
                 (subcat?.costOptions || []).forEach(costOption => (costOption?.costBySelection || []).forEach(cost => renamePointMapKey(cost, oldName, newName)));
                 renamePointMapKey(subcat?.discountAmount, oldName, newName);
@@ -2730,6 +2746,60 @@
                     ]
                 ));
                 subSummary.appendChild(subSummaryLabel);
+
+                const subActions = document.createElement("div");
+                subActions.className = "category-actions";
+                preventSummaryToggle(subActions);
+
+                const subUpBtn = document.createElement("button");
+                subUpBtn.type = "button";
+                subUpBtn.className = "button-icon";
+                subUpBtn.disabled = subIndex === 0;
+                subUpBtn.title = "Move section up";
+                subUpBtn.textContent = "↑";
+                subUpBtn.addEventListener("click", (event) => {
+                    event.preventDefault();
+                    if (moveArrayItem(parentArray, subIndex, -1)) {
+                        keepPanelOpen(category, subcat);
+                        renderCategories();
+                        schedulePreviewUpdate();
+                    }
+                });
+
+                const subDownBtn = document.createElement("button");
+                subDownBtn.type = "button";
+                subDownBtn.className = "button-icon";
+                subDownBtn.disabled = subIndex === parentArray.length - 1;
+                subDownBtn.title = "Move section down";
+                subDownBtn.textContent = "↓";
+                subDownBtn.addEventListener("click", (event) => {
+                    event.preventDefault();
+                    if (moveArrayItem(parentArray, subIndex, 1)) {
+                        keepPanelOpen(category, subcat);
+                        renderCategories();
+                        schedulePreviewUpdate();
+                    }
+                });
+
+                const subRemoveBtn = document.createElement("button");
+                subRemoveBtn.type = "button";
+                subRemoveBtn.className = "button-icon danger";
+                subRemoveBtn.title = "Delete section";
+                subRemoveBtn.textContent = "✕";
+                subRemoveBtn.addEventListener("click", (event) => {
+                    event.preventDefault();
+                    if (!confirm(`Delete section "${subcat.name || ""}"?`)) return;
+                    parentArray.splice(subIndex, 1);
+                    keepPanelOpen(category);
+                    subcategoryOpenState.delete(subcat);
+                    renderCategories();
+                    schedulePreviewUpdate();
+                });
+
+                subActions.appendChild(subUpBtn);
+                subActions.appendChild(subDownBtn);
+                subActions.appendChild(subRemoveBtn);
+                subSummary.appendChild(subActions);
                 subDetails.appendChild(subSummary);
                 subDetails.addEventListener("toggle", () => {
                     subcategoryOpenState.set(subcat, subDetails.open);
@@ -2960,15 +3030,6 @@
                     }
                 });
 
-                renderPointTypeAmountControls(subBody, {
-                    labelPrefix: "Default cost",
-                    getMap: () => subcat.defaultCost,
-                    setMap: (next) => {
-                        if (next) subcat.defaultCost = next;
-                        else delete subcat.defaultCost;
-                    }
-                });
-
                 const subCostOptionsSection = document.createElement("div");
                 subCostOptionsSection.className = "field";
                 const subCostOptionsLabel = document.createElement("label");
@@ -2980,7 +3041,7 @@
                 subCostOptionsContainer.className = "list-stack";
                 renderCostOptionsEditor(subCostOptionsContainer, subcat, {
                     allowEmpty: true,
-                    emptyText: "No default payment options. Options use their own payment options or the default cost."
+                    emptyText: "No default payment options. Options use their own payment options."
                 });
                 subCostOptionsSection.append(subCostOptionsLabel, subCostOptionsHint, subCostOptionsContainer);
                 subBody.appendChild(subCostOptionsSection);
@@ -3041,52 +3102,6 @@
                 textField.appendChild(textLabel);
                 textField.appendChild(textArea);
                 subBody.appendChild(textField);
-
-                const subActions = document.createElement("div");
-                subActions.className = "inline-actions";
-                const subUpBtn = document.createElement("button");
-                subUpBtn.type = "button";
-                subUpBtn.className = "button-icon";
-                subUpBtn.disabled = subIndex === 0;
-                subUpBtn.title = "Move section up";
-                subUpBtn.textContent = "↑";
-                subUpBtn.addEventListener("click", () => {
-                    if (moveArrayItem(parentArray, subIndex, -1)) {
-                        keepPanelOpen(category, subcat);
-                        renderCategories();
-                        schedulePreviewUpdate();
-                    }
-                });
-                const subDownBtn = document.createElement("button");
-                subDownBtn.type = "button";
-                subDownBtn.className = "button-icon";
-                subDownBtn.disabled = subIndex === parentArray.length - 1;
-                subDownBtn.title = "Move section down";
-                subDownBtn.textContent = "↓";
-                subDownBtn.addEventListener("click", () => {
-                    if (moveArrayItem(parentArray, subIndex, 1)) {
-                        keepPanelOpen(category, subcat);
-                        renderCategories();
-                        schedulePreviewUpdate();
-                    }
-                });
-                const subRemoveBtn = document.createElement("button");
-                subRemoveBtn.type = "button";
-                subRemoveBtn.className = "button-icon danger";
-                subRemoveBtn.title = "Delete section";
-                subRemoveBtn.textContent = "✕";
-                subRemoveBtn.addEventListener("click", () => {
-                    if (!confirm(`Delete section "${subcat.name || ""}"?`)) return;
-                    parentArray.splice(subIndex, 1);
-                    keepPanelOpen(category);
-                    subcategoryOpenState.delete(subcat);
-                    renderCategories();
-                    schedulePreviewUpdate();
-                });
-                subActions.appendChild(subUpBtn);
-                subActions.appendChild(subDownBtn);
-                subActions.appendChild(subRemoveBtn);
-                subBody.appendChild(subActions);
 
                 const optionsHeading = document.createElement("div");
                 optionsHeading.className = "subheading";
@@ -3320,13 +3335,20 @@
                 defaultOpen: false
             });
             const {
+                container: styleSection,
+                body: styleBody
+            } = createSectionContainer("Style", {
+                storageKey: `${optionSectionKeyBase}-advanced-style`,
+                defaultOpen: false
+            });
+            const {
                 container: customJsonSection,
                 body: customJsonBody
             } = createSectionContainer("Custom JSON Fields", {
                 storageKey: `${optionSectionKeyBase}-advanced-custom-json`,
                 defaultOpen: false
             });
-            optionAdvancedBody.append(inputSelectionSection, dependenciesSection, automationSection, pricingSection, customJsonSection);
+            optionAdvancedBody.append(inputSelectionSection, dependenciesSection, automationSection, pricingSection, styleSection, customJsonSection);
 
             const validationBox = document.createElement("div");
             validationBox.className = "inline-warning-list";
@@ -3536,15 +3558,28 @@
             costOptionsLabel.textContent = "Payment options";
             const costOptionsHint = document.createElement("div");
             costOptionsHint.className = "field-help";
-            costOptionsHint.textContent = "Leave empty to inherit this subcategory's default payment options or default cost.";
+            costOptionsHint.textContent = "Leave empty to inherit this subcategory's default payment options.";
             const costOptionsContainer = document.createElement("div");
             costOptionsContainer.className = "list-stack";
             renderCostOptionsEditor(costOptionsContainer, option, {
                 allowEmpty: true,
-                emptyText: "No option-specific payment options. This option inherits subcategory defaults."
+                emptyText: "No option-specific payment options. This option inherits subcategory defaults. Add payment options here to configure separate choices such as Ally vs Bitter Enemy, each with its own prerequisites."
             });
             costOptionsSection.append(costOptionsLabel, costOptionsHint, costOptionsContainer);
             body.appendChild(costOptionsSection);
+
+            const pointAllocationSection = document.createElement("div");
+            pointAllocationSection.className = "field";
+            const pointAllocationLabel = document.createElement("label");
+            pointAllocationLabel.textContent = "Point allocation";
+            const pointAllocationHint = document.createElement("div");
+            pointAllocationHint.className = "field-help";
+            pointAllocationHint.textContent = "Optional. Let players split a fixed grant across multiple point types.";
+            const pointAllocationContainer = document.createElement("div");
+            pointAllocationContainer.className = "list-stack";
+            renderPointAllocationEditor(pointAllocationContainer, option);
+            pointAllocationSection.append(pointAllocationLabel, pointAllocationHint, pointAllocationContainer);
+            body.appendChild(pointAllocationSection);
 
             const prereqSection = document.createElement("div");
             prereqSection.className = "field";
@@ -3930,6 +3965,80 @@
             pricingBody.appendChild(grantsSection);
             refreshOptionWarnings();
 
+            const borderColorSection = document.createElement("div");
+            borderColorSection.className = "field";
+            const borderColorLabel = document.createElement("label");
+            borderColorLabel.textContent = "Option border";
+            const borderColorHint = document.createElement("div");
+            borderColorHint.className = "field-help";
+            borderColorHint.textContent = "Optional. Use a named CSS color, hex color, rgb(...), rgba(...), hsl(...), or hsla(...). Dark mode falls back to the light color when blank.";
+            const borderColorGrid = document.createElement("div");
+            borderColorGrid.style.display = "grid";
+            borderColorGrid.style.gridTemplateColumns = "1fr 1fr";
+            borderColorGrid.style.gap = "12px";
+
+            const renderOptionColorInput = (key, labelText, placeholder) => {
+                const field = document.createElement("div");
+                field.className = "field";
+                const label = document.createElement("label");
+                label.textContent = labelText;
+                const inputContainer = document.createElement("div");
+                inputContainer.style.display = "flex";
+                inputContainer.style.gap = "8px";
+
+                const colorInput = document.createElement("input");
+                colorInput.type = "color";
+                colorInput.style.padding = "0";
+                colorInput.style.width = "32px";
+                colorInput.style.height = "32px";
+                colorInput.style.border = "none";
+                colorInput.style.cursor = "pointer";
+
+                const textInput = document.createElement("input");
+                textInput.type = "text";
+                textInput.style.flex = "1";
+                textInput.placeholder = placeholder;
+
+                const syncColorPicker = (value) => {
+                    const color = String(value || "").trim();
+                    if (/^#[0-9a-f]{3}$/i.test(color)) {
+                        colorInput.value = `#${color[1]}${color[1]}${color[2]}${color[2]}${color[3]}${color[3]}`;
+                    } else if (/^#[0-9a-f]{6}$/i.test(color)) {
+                        colorInput.value = color;
+                    }
+                };
+
+                textInput.value = option[key] || "";
+                syncColorPicker(textInput.value);
+
+                const update = (nextValue) => {
+                    const value = String(nextValue || "").trim();
+                    if (value) {
+                        option[key] = value;
+                    } else {
+                        delete option[key];
+                    }
+                    textInput.value = value;
+                    syncColorPicker(value);
+                    refreshOptionWarnings(prereqParseError ? [prereqParseError] : []);
+                    schedulePreviewUpdate();
+                };
+
+                colorInput.addEventListener("input", () => update(colorInput.value));
+                textInput.addEventListener("input", () => update(textInput.value));
+
+                inputContainer.append(colorInput, textInput);
+                field.append(label, inputContainer);
+                return field;
+            };
+
+            borderColorGrid.append(
+                renderOptionColorInput("borderColor", "Light border color", "gold or #ffd700"),
+                renderOptionColorInput("darkBorderColor", "Dark border color", "optional")
+            );
+            borderColorSection.append(borderColorLabel, borderColorHint, borderColorGrid);
+            styleBody.appendChild(borderColorSection);
+
             const advancedKeys = Object.keys(option).filter(key => !BASE_OPTION_KEYS.has(key));
             const advancedSection = document.createElement("div");
             advancedSection.className = "field";
@@ -4064,10 +4173,30 @@
     function normalizeCostOptionsForEditor(owner, { allowEmpty = false } = {}) {
         if (!owner || typeof owner !== "object") return [];
         if (Array.isArray(owner.costOptions) && owner.costOptions.length > 0) {
+            const hasMeaningfulCostOptions = owner.costOptions.some(entry =>
+                entry?.cost && typeof entry.cost === "object" && Object.keys(entry.cost).length
+                || Array.isArray(entry?.costBySelection) && entry.costBySelection.some(cost => cost && typeof cost === "object" && Object.keys(cost).length)
+            );
+            if (allowEmpty && !hasMeaningfulCostOptions) {
+                delete owner.costOptions;
+                return [];
+            }
             owner.costOptions = owner.costOptions.map(entry => {
                 const normalized = {
                     cost: entry?.cost && typeof entry.cost === "object" ? entry.cost : {}
                 };
+                if (Number.isFinite(Number(entry?.minSelected))) {
+                    normalized.minSelected = Math.max(0, Math.floor(Number(entry.minSelected)));
+                }
+                if (Number.isFinite(Number(entry?.maxSelections))) {
+                    normalized.maxSelections = Math.max(0, Math.floor(Number(entry.maxSelections)));
+                }
+                if (Number.isFinite(Number(entry?.requiresCostOption))) {
+                    normalized.requiresCostOption = Math.max(0, Math.floor(Number(entry.requiresCostOption)));
+                }
+                if (entry?.prerequisites !== undefined) {
+                    normalized.prerequisites = entry.prerequisites;
+                }
                 if (Array.isArray(entry?.costBySelection)) {
                     normalized.costBySelection = entry.costBySelection.map(cost =>
                         cost && typeof cost === "object" && !Array.isArray(cost) ? cost : {}
@@ -4126,7 +4255,7 @@
             const titleHint = document.createElement("span");
             titleHint.textContent = costOptions.length > 1
                 ? "Chosen per selection."
-                : "Default cost.";
+                : "Default payment choice.";
             title.append(titleText, titleHint);
 
             const costMapContainer = document.createElement("div");
@@ -4158,6 +4287,101 @@
             const costLabel = document.createElement("label");
             costLabel.textContent = "Cost map";
             costField.append(costLabel, costMapContainer);
+
+            const availabilityField = document.createElement("div");
+            availabilityField.className = "field";
+            const availabilityLabel = document.createElement("label");
+            availabilityLabel.textContent = "Selection availability";
+            const availabilityHint = document.createElement("div");
+            availabilityHint.className = "field-help";
+            availabilityHint.textContent = "Optional. Use these to make repeatable payment choices unlock after base picks or expire after a set number of uses.";
+            const availabilityRow = document.createElement("div");
+            availabilityRow.className = "cost-row";
+
+            const minSelectedInput = document.createElement("input");
+            minSelectedInput.type = "number";
+            minSelectedInput.min = "0";
+            minSelectedInput.step = "1";
+            minSelectedInput.placeholder = "Min selected";
+            minSelectedInput.value = costOption.minSelected ?? "";
+            minSelectedInput.title = "Minimum existing selections required before this payment option appears";
+            minSelectedInput.addEventListener("input", () => {
+                const raw = minSelectedInput.value.trim();
+                if (!raw) {
+                    delete costOption.minSelected;
+                } else {
+                    costOption.minSelected = Math.max(0, Math.floor(Number(raw) || 0));
+                    minSelectedInput.value = String(costOption.minSelected);
+                }
+                schedulePreviewUpdate();
+            });
+
+            const maxSelectionsInput = document.createElement("input");
+            maxSelectionsInput.type = "number";
+            maxSelectionsInput.min = "0";
+            maxSelectionsInput.step = "1";
+            maxSelectionsInput.placeholder = "Max uses";
+            maxSelectionsInput.value = costOption.maxSelections ?? "";
+            maxSelectionsInput.title = "Maximum times this payment option can be used";
+            maxSelectionsInput.addEventListener("input", () => {
+                const raw = maxSelectionsInput.value.trim();
+                if (!raw) {
+                    delete costOption.maxSelections;
+                } else {
+                    costOption.maxSelections = Math.max(0, Math.floor(Number(raw) || 0));
+                    maxSelectionsInput.value = String(costOption.maxSelections);
+                }
+                schedulePreviewUpdate();
+            });
+
+            const requiresCostOptionInput = document.createElement("input");
+            requiresCostOptionInput.type = "number";
+            requiresCostOptionInput.min = "0";
+            requiresCostOptionInput.step = "1";
+            requiresCostOptionInput.placeholder = "Requires option #";
+            requiresCostOptionInput.value = costOption.requiresCostOption ?? "";
+            requiresCostOptionInput.title = "Payment option index that must already be selected first. Use 0 for Payment option 1.";
+            requiresCostOptionInput.addEventListener("input", () => {
+                const raw = requiresCostOptionInput.value.trim();
+                if (!raw) {
+                    delete costOption.requiresCostOption;
+                } else {
+                    costOption.requiresCostOption = Math.max(0, Math.floor(Number(raw) || 0));
+                    requiresCostOptionInput.value = String(costOption.requiresCostOption);
+                }
+                schedulePreviewUpdate();
+            });
+
+            availabilityRow.append(minSelectedInput, maxSelectionsInput, requiresCostOptionInput);
+            availabilityField.append(availabilityLabel, availabilityHint, availabilityRow);
+
+            const costPrereqField = document.createElement("div");
+            costPrereqField.className = "field";
+            const costPrereqLabel = document.createElement("label");
+            costPrereqLabel.textContent = "Payment option prerequisites";
+            const costPrereqHint = document.createElement("div");
+            costPrereqHint.className = "field-help";
+            costPrereqHint.textContent = "Optional. Gates only this payment choice, not the whole option. Works on any option or inherited subcategory payment option. Example: !originStoryYourTeamLoneWolf";
+            const costPrereqInput = document.createElement("textarea");
+            costPrereqInput.value = formatPrerequisiteValue(costOption.prerequisites);
+            costPrereqInput.placeholder = "e.g. !originStoryYourTeamLoneWolf";
+            const syncCostPrereq = () => {
+                const parsed = parsePrerequisiteValue(costPrereqInput.value);
+                if (parsed.error) {
+                    costPrereqInput.classList.add("field-error");
+                } else {
+                    costPrereqInput.classList.remove("field-error");
+                    if (parsed.value == null) {
+                        delete costOption.prerequisites;
+                    } else {
+                        costOption.prerequisites = parsed.value;
+                    }
+                }
+                schedulePreviewUpdate();
+            };
+            costPrereqInput.addEventListener("input", syncCostPrereq);
+            costPrereqInput.addEventListener("blur", syncCostPrereq);
+            costPrereqField.append(costPrereqLabel, costPrereqHint, costPrereqInput);
 
             const tierFields = [];
             const maxSelections = Math.max(1, Math.floor(Number(option.maxSelections) || 1));
@@ -4220,7 +4444,7 @@
                 tierFields.push(tierSection);
             }
 
-            card.append(header, costField, ...tierFields);
+            card.append(header, costField, availabilityField, costPrereqField, ...tierFields);
             container.appendChild(card);
         });
 
@@ -4238,6 +4462,155 @@
             schedulePreviewUpdate();
         });
         container.appendChild(addBtn);
+    }
+
+    function normalizePointAllocationForEditor(option) {
+        const allocation = option.pointAllocation && typeof option.pointAllocation === "object" && !Array.isArray(option.pointAllocation)
+            ? option.pointAllocation
+            : null;
+        if (!allocation) return null;
+
+        allocation.total = Math.max(1, Math.floor(Number(allocation.total) || 1));
+        const types = Array.isArray(allocation.types)
+            ? allocation.types.map(type => String(type || "").trim()).filter(Boolean)
+            : [];
+        allocation.types = [...new Set(types)];
+        return allocation;
+    }
+
+    function renderPointAllocationEditor(container, option) {
+        container.innerHTML = "";
+        const pointTypes = getPointTypeNames();
+        const allocation = normalizePointAllocationForEditor(option);
+
+        if (!allocation) {
+            const empty = document.createElement("div");
+            empty.className = "field-note";
+            empty.textContent = "No point allocation configured for this option.";
+
+            const addBtn = document.createElement("button");
+            addBtn.type = "button";
+            addBtn.className = "button-subtle";
+            addBtn.textContent = "Add point allocation";
+            addBtn.disabled = pointTypes.length < 2;
+            addBtn.title = pointTypes.length < 2
+                ? "Add at least two point types before configuring point allocation."
+                : "Add point allocation";
+            addBtn.addEventListener("click", () => {
+                if (pointTypes.length < 2) {
+                    showEditorMessage("Point allocation requires at least two point types.", "warning", 4000);
+                    return;
+                }
+                option.pointAllocation = {
+                    total: 1,
+                    types: pointTypes.slice(0, 2)
+                };
+                renderPointAllocationEditor(container, option);
+                schedulePreviewUpdate();
+            });
+
+            container.append(empty, addBtn);
+            return;
+        }
+
+        const totalField = document.createElement("div");
+        totalField.className = "field";
+        const totalLabel = document.createElement("label");
+        totalLabel.textContent = "Total picks to allocate";
+        const totalInput = document.createElement("input");
+        totalInput.type = "number";
+        totalInput.min = "1";
+        totalInput.step = "1";
+        totalInput.value = String(allocation.total);
+        totalInput.addEventListener("input", () => {
+            allocation.total = Math.max(1, Math.floor(Number(totalInput.value) || 1));
+            totalInput.value = String(allocation.total);
+            schedulePreviewUpdate();
+        });
+        totalField.append(totalLabel, totalInput);
+        container.appendChild(totalField);
+
+        const typeList = document.createElement("div");
+        typeList.className = "list-stack";
+        allocation.types.forEach((currentType, index) => {
+            const row = document.createElement("div");
+            row.className = "cost-row";
+
+            const select = document.createElement("select");
+            const availablePointTypes = pointTypes.includes(currentType)
+                ? pointTypes
+                : [currentType, ...pointTypes];
+            availablePointTypes.forEach(pointType => {
+                const opt = document.createElement("option");
+                opt.value = pointType;
+                opt.textContent = getPointTypeDisplayName(pointType);
+                opt.disabled = pointType !== currentType && allocation.types.includes(pointType);
+                select.appendChild(opt);
+            });
+            select.value = currentType;
+            select.addEventListener("change", () => {
+                const nextType = select.value;
+                if (!nextType || allocation.types.includes(nextType)) {
+                    select.value = currentType;
+                    return;
+                }
+                allocation.types[index] = nextType;
+                renderPointAllocationEditor(container, option);
+                schedulePreviewUpdate();
+            });
+
+            const removeBtn = document.createElement("button");
+            removeBtn.type = "button";
+            removeBtn.className = "button-icon danger";
+            removeBtn.textContent = "✕";
+            removeBtn.title = "Remove allocation point type";
+            removeBtn.disabled = allocation.types.length <= 2;
+            removeBtn.addEventListener("click", () => {
+                if (allocation.types.length <= 2) {
+                    showEditorMessage("Point allocation requires at least two point types.", "warning", 4000);
+                    return;
+                }
+                allocation.types.splice(index, 1);
+                renderPointAllocationEditor(container, option);
+                schedulePreviewUpdate();
+            });
+
+            row.append(select, removeBtn);
+            typeList.appendChild(row);
+        });
+        container.appendChild(typeList);
+
+        const actions = document.createElement("div");
+        actions.className = "inline-actions";
+
+        const addTypeBtn = document.createElement("button");
+        addTypeBtn.type = "button";
+        addTypeBtn.className = "button-subtle";
+        addTypeBtn.textContent = "Add allocation point type";
+        addTypeBtn.disabled = !pointTypes.some(pointType => !allocation.types.includes(pointType));
+        addTypeBtn.addEventListener("click", () => {
+            const nextType = pointTypes.find(pointType => !allocation.types.includes(pointType));
+            if (!nextType) {
+                showEditorMessage("All configured point types are already included.", "warning", 4000);
+                return;
+            }
+            allocation.types.push(nextType);
+            renderPointAllocationEditor(container, option);
+            schedulePreviewUpdate();
+        });
+
+        const removeAllocationBtn = document.createElement("button");
+        removeAllocationBtn.type = "button";
+        removeAllocationBtn.className = "button-subtle danger";
+        removeAllocationBtn.textContent = "Remove point allocation";
+        removeAllocationBtn.addEventListener("click", () => {
+            delete option.pointAllocation;
+            renderPointAllocationEditor(container, option);
+            schedulePreviewUpdate();
+        });
+
+        actions.append(addTypeBtn, removeAllocationBtn);
+        container.appendChild(actions);
     }
 
     function renderPointMapEditor(container, map, onChange) {

@@ -1,0 +1,26 @@
+# One lowercase word per line.
+# Add CYOA-specific names or terms here when the spellchecker flags valid words.
+cyoa
+cyoas
+boon
+boons
+bane
+banes
+superpowered
+superpowers
+sidekick
+sidekicks
+supericon
+supericons
+technopathy
+telekinetics
+shapeshift
+shapeshifting
+forcefields
+pyrokinesis
+postcognitive
+psychometry
+precognition
+pre-cog
+cybernetics
+psionics
