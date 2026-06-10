@@ -563,7 +563,9 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersEnhancedStrength",
@@ -581,7 +583,9 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersEnhancedDurability",
@@ -599,7 +603,9 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersEnhancedAgility",
@@ -617,7 +623,9 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersRegeneration",
@@ -635,7 +643,9 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersHealing",
@@ -653,7 +663,9 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersShapeshift",
@@ -671,12 +683,16 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               },
               {
                 "cost": {
                   "Boons": -1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersHyperRunning",
@@ -694,12 +710,16 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               },
               {
                 "cost": {
                   "Boons": -1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersInvisibility",
@@ -717,7 +737,9 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersIntangibility",
@@ -735,12 +757,16 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               },
               {
                 "cost": {
                   "Boons": -1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersEnhancedSight",
@@ -758,12 +784,16 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               },
               {
                 "cost": {
                   "Boons": -1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersEnhancedHearing",
@@ -781,12 +811,16 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               },
               {
                 "cost": {
                   "Boons": -1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersEnhancedNose",
@@ -804,12 +838,16 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               },
               {
                 "cost": {
                   "Boons": -1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersThoughtReading",
@@ -827,12 +865,16 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               },
               {
                 "cost": {
                   "Boons": -1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersPsychometry",
@@ -850,12 +892,16 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               },
               {
                 "cost": {
                   "Boons": -1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersDangerSense",
@@ -873,7 +919,9 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersSenseManipulation",
@@ -891,12 +939,16 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               },
               {
                 "cost": {
                   "Boons": -1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersExtraSense",
@@ -914,12 +966,16 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               },
               {
                 "cost": {
                   "Boons": -1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersPrecognition",
@@ -937,7 +993,9 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersTechnopathy",
@@ -955,7 +1013,9 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersEnhancedMind",
@@ -973,7 +1033,9 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersLuck",
@@ -991,12 +1053,16 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               },
               {
                 "cost": {
                   "Boons": -1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersTelekinetics",
@@ -1014,7 +1080,9 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersForceBlast",
@@ -1032,12 +1100,16 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               },
               {
                 "cost": {
                   "Boons": -1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersBarriers",
@@ -1055,7 +1127,9 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersFireControl",
@@ -1073,7 +1147,9 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersWaterControl",
@@ -1091,7 +1167,9 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersEarthControl",
@@ -1109,7 +1187,9 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersAirControl",
@@ -1127,7 +1207,9 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersLightningControl",
@@ -1145,7 +1227,9 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersIceControl",
@@ -1163,7 +1247,9 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersPlantsControl",
@@ -1181,7 +1267,9 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersLightControl",
@@ -1199,7 +1287,9 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersShadowControl",
@@ -1217,12 +1307,16 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               },
               {
                 "cost": {
                   "Boons": -1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersDoppelganger",
@@ -1240,7 +1334,9 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersSummons",
@@ -1258,7 +1354,9 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersAnimation",
@@ -1276,12 +1374,16 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               },
               {
                 "cost": {
                   "Boons": -1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersFlight",
@@ -1299,12 +1401,16 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               },
               {
                 "cost": {
                   "Boons": -1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersTeleportation",
@@ -1322,7 +1428,9 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersPortals",
@@ -1340,12 +1448,16 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               },
               {
                 "cost": {
                   "Boons": -1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersWallWalking",
@@ -1363,7 +1475,9 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersConjuration",
@@ -1381,12 +1495,16 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               },
               {
                 "cost": {
                   "Boons": -1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersDomain",
@@ -1404,12 +1522,16 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               },
               {
                 "cost": {
                   "Boons": -1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersCopy",
@@ -1427,12 +1549,16 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               },
               {
                 "cost": {
                   "Boons": -1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersNull",
@@ -1450,7 +1576,9 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "id": "powersPowersGift",
@@ -1489,7 +1617,9 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "borderColor": "gold"
@@ -1508,7 +1638,9 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "borderColor": "gold"
@@ -1527,7 +1659,9 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "borderColor": "gold"
@@ -1546,7 +1680,9 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "borderColor": "gold"
@@ -1565,7 +1701,9 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "borderColor": "gold"
@@ -1584,7 +1722,9 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "borderColor": "gold"
@@ -1603,7 +1743,9 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "borderColor": "gold"
@@ -1622,7 +1764,9 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "borderColor": "gold"
@@ -1641,7 +1785,9 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "borderColor": "gold"
@@ -1660,7 +1806,9 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "borderColor": "gold"
@@ -1679,7 +1827,9 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "borderColor": "gold"
@@ -1698,7 +1848,9 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "borderColor": "gold"
@@ -1717,7 +1869,9 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "borderColor": "gold"
@@ -1736,7 +1890,9 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ],
             "borderColor": "gold"
@@ -1837,7 +1993,9 @@
               {
                 "cost": {
                   "Boons": 1
-                }
+                },
+                "minSelected": 1,
+                "requiresCostOption": 0
               }
             ]
           },
@@ -1921,7 +2079,8 @@
               {
                 "cost": {
                   "Allies": 1
-                }
+                },
+                "prerequisites": "!originStoryYourTeamLoneWolf"
               },
               {
                 "cost": {
@@ -1938,7 +2097,8 @@
               {
                 "cost": {
                   "Allies": 1
-                }
+                },
+                "prerequisites": "!originStoryYourTeamLoneWolf"
               },
               {
                 "cost": {
@@ -1955,7 +2115,8 @@
               {
                 "cost": {
                   "Allies": 1
-                }
+                },
+                "prerequisites": "!originStoryYourTeamLoneWolf"
               },
               {
                 "cost": {
@@ -1972,7 +2133,8 @@
               {
                 "cost": {
                   "Allies": 1
-                }
+                },
+                "prerequisites": "!originStoryYourTeamLoneWolf"
               },
               {
                 "cost": {
@@ -1989,7 +2151,8 @@
               {
                 "cost": {
                   "Allies": 1
-                }
+                },
+                "prerequisites": "!originStoryYourTeamLoneWolf"
               },
               {
                 "cost": {
@@ -2006,7 +2169,8 @@
               {
                 "cost": {
                   "Allies": 1
-                }
+                },
+                "prerequisites": "!originStoryYourTeamLoneWolf"
               },
               {
                 "cost": {
@@ -2041,7 +2205,8 @@
               {
                 "cost": {
                   "Allies": 1
-                }
+                },
+                "prerequisites": "!originStoryYourTeamLoneWolf"
               },
               {
                 "cost": {
@@ -2058,7 +2223,8 @@
               {
                 "cost": {
                   "Allies": 1
-                }
+                },
+                "prerequisites": "!originStoryYourTeamLoneWolf"
               },
               {
                 "cost": {
@@ -2075,7 +2241,8 @@
               {
                 "cost": {
                   "Allies": 1
-                }
+                },
+                "prerequisites": "!originStoryYourTeamLoneWolf"
               },
               {
                 "cost": {
@@ -2092,7 +2259,8 @@
               {
                 "cost": {
                   "Allies": 1
-                }
+                },
+                "prerequisites": "!originStoryYourTeamLoneWolf"
               },
               {
                 "cost": {
@@ -2109,7 +2277,8 @@
               {
                 "cost": {
                   "Allies": 1
-                }
+                },
+                "prerequisites": "!originStoryYourTeamLoneWolf"
               },
               {
                 "cost": {
@@ -2126,7 +2295,8 @@
               {
                 "cost": {
                   "Allies": 1
-                }
+                },
+                "prerequisites": "!originStoryYourTeamLoneWolf"
               },
               {
                 "cost": {
@@ -2143,7 +2313,8 @@
               {
                 "cost": {
                   "Allies": 1
-                }
+                },
+                "prerequisites": "!originStoryYourTeamLoneWolf"
               },
               {
                 "cost": {
@@ -2160,7 +2331,8 @@
               {
                 "cost": {
                   "Allies": 1
-                }
+                },
+                "prerequisites": "!originStoryYourTeamLoneWolf"
               },
               {
                 "cost": {
@@ -2177,7 +2349,8 @@
               {
                 "cost": {
                   "Allies": 1
-                }
+                },
+                "prerequisites": "!originStoryYourTeamLoneWolf"
               },
               {
                 "cost": {
@@ -2194,7 +2367,8 @@
               {
                 "cost": {
                   "Allies": 1
-                }
+                },
+                "prerequisites": "!originStoryYourTeamLoneWolf"
               },
               {
                 "cost": {
@@ -2211,7 +2385,8 @@
               {
                 "cost": {
                   "Allies": 1
-                }
+                },
+                "prerequisites": "!originStoryYourTeamLoneWolf"
               },
               {
                 "cost": {
@@ -2228,7 +2403,8 @@
               {
                 "cost": {
                   "Allies": 1
-                }
+                },
+                "prerequisites": "!originStoryYourTeamLoneWolf"
               },
               {
                 "cost": {
@@ -2245,7 +2421,8 @@
               {
                 "cost": {
                   "Allies": 1
-                }
+                },
+                "prerequisites": "!originStoryYourTeamLoneWolf"
               },
               {
                 "cost": {
@@ -2262,7 +2439,8 @@
               {
                 "cost": {
                   "Allies": 1
-                }
+                },
+                "prerequisites": "!originStoryYourTeamLoneWolf"
               },
               {
                 "cost": {
@@ -2279,7 +2457,8 @@
               {
                 "cost": {
                   "Allies": 1
-                }
+                },
+                "prerequisites": "!originStoryYourTeamLoneWolf"
               },
               {
                 "cost": {
@@ -2316,7 +2495,8 @@
                 "cost": {
                   "Boons": 1,
                   "Allies": 1
-                }
+                },
+                "prerequisites": "!originStoryYourTeamLoneWolf"
               },
               {
                 "cost": {
@@ -2335,7 +2515,8 @@
                 "cost": {
                   "Boons": 1,
                   "Allies": 1
-                }
+                },
+                "prerequisites": "!originStoryYourTeamLoneWolf"
               },
               {
                 "cost": {
@@ -2354,7 +2535,8 @@
                 "cost": {
                   "Boons": 1,
                   "Allies": 1
-                }
+                },
+                "prerequisites": "!originStoryYourTeamLoneWolf"
               },
               {
                 "cost": {
@@ -2373,7 +2555,8 @@
                 "cost": {
                   "Boons": 1,
                   "Allies": 1
-                }
+                },
+                "prerequisites": "!originStoryYourTeamLoneWolf"
               },
               {
                 "cost": {
@@ -2392,7 +2575,8 @@
                 "cost": {
                   "Boons": 1,
                   "Allies": 1
-                }
+                },
+                "prerequisites": "!originStoryYourTeamLoneWolf"
               },
               {
                 "cost": {
@@ -2411,7 +2595,8 @@
                 "cost": {
                   "Boons": 1,
                   "Allies": 1
-                }
+                },
+                "prerequisites": "!originStoryYourTeamLoneWolf"
               },
               {
                 "cost": {
@@ -2449,7 +2634,8 @@
                 "cost": {
                   "Boons": 2,
                   "Allies": 1
-                }
+                },
+                "prerequisites": "!originStoryYourTeamLoneWolf"
               },
               {
                 "cost": {
@@ -2468,7 +2654,8 @@
                 "cost": {
                   "Boons": 2,
                   "Allies": 1
-                }
+                },
+                "prerequisites": "!originStoryYourTeamLoneWolf"
               },
               {
                 "cost": {
@@ -2487,7 +2674,8 @@
                 "cost": {
                   "Boons": 2,
                   "Allies": 1
-                }
+                },
+                "prerequisites": "!originStoryYourTeamLoneWolf"
               },
               {
                 "cost": {
