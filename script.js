@@ -391,7 +391,32 @@ function getEffectiveCostOptionSelectionCount(optionId, costOptionIndex) {
     return selectedOptions[optionId] || 0;
 }
 
-function costOptionAvailabilityMet(option, entry, index, totalCostOptions = 1) {
+function hasExplicitCostOptionAvailability(entry) {
+    return Object.prototype.hasOwnProperty.call(entry, "prerequisites")
+        || Object.prototype.hasOwnProperty.call(entry, "minSelected")
+        || Object.prototype.hasOwnProperty.call(entry, "requiresCostOption");
+}
+
+function shouldAutoRequireBaseCostOption(option, entry, index, costOptions = []) {
+    if (!option?.id || !entry || typeof entry !== "object") return false;
+    if (index <= 0 || !Array.isArray(costOptions) || costOptions.length <= 1) return false;
+    const optionMaxSelections = Number(option.maxSelections);
+    if (!Number.isFinite(optionMaxSelections) || optionMaxSelections <= 1) return false;
+    if (hasExplicitCostOptionAvailability(entry)) return false;
+    if (costOptions.some(costOption => Array.isArray(costOption?.costBySelection) && costOption.costBySelection.length > 0)) return false;
+
+    const baseCost = costOptions[0]?.cost;
+    const modifierCost = entry.cost;
+    if (!baseCost || !modifierCost || typeof baseCost !== "object" || typeof modifierCost !== "object") return false;
+    const baseTypes = Object.keys(baseCost);
+    const modifierTypes = Object.keys(modifierCost);
+    return baseTypes.length === 1
+        && ["Powers", "Skills", "Equipment"].includes(baseTypes[0])
+        && modifierTypes.length > 0
+        && modifierTypes.every(type => type === "Boons");
+}
+
+function costOptionAvailabilityMet(option, entry, index, costOptions = []) {
     if (!option?.id || !entry || typeof entry !== "object") return true;
     if (!requirementMet(entry.prerequisites)) return false;
     const currentOptionCount = selectedOptions[option.id] || 0;
@@ -403,7 +428,11 @@ function costOptionAvailabilityMet(option, entry, index, totalCostOptions = 1) {
             return false;
         }
     }
+    if (shouldAutoRequireBaseCostOption(option, entry, index, costOptions) && getEffectiveCostOptionSelectionCount(option.id, 0) <= 0) {
+        return false;
+    }
     const hasSelectionTiers = Array.isArray(entry.costBySelection) && entry.costBySelection.length > 0;
+    const totalCostOptions = Array.isArray(costOptions) ? costOptions.length : 1;
     const maxSelections = entry.maxSelections === undefined && totalCostOptions > 1 && !hasSelectionTiers
         ? 1
         : Number(entry.maxSelections);
@@ -438,6 +467,7 @@ function selectedCostOptionStillValid(option, costOptionIndex) {
         const requiredIndex = Number(entry.requiresCostOption);
         if (!Number.isInteger(requiredIndex) || getEffectiveCostOptionSelectionCount(option.id, requiredIndex) <= 0) return false;
     }
+    if (shouldAutoRequireBaseCostOption(option, entry, Number(costOptionIndex), options) && getEffectiveCostOptionSelectionCount(option.id, 0) <= 0) return false;
     return true;
 }
 
@@ -451,7 +481,7 @@ function normalizeOptionCostOptions(option, { selectionNumber = null } = {}) {
     const effectiveSelectionNumber = selectionNumber || getNextSelectionNumber(option);
     return options
         .map((entry, index) => {
-            if (!costOptionAvailabilityMet(option, entry, index, options.length)) return null;
+            if (!costOptionAvailabilityMet(option, entry, index, options)) return null;
             const rawCost = getCostOptionCostForSelection(entry, effectiveSelectionNumber)
                 || (entry?.cost && typeof entry.cost === "object"
                     ? entry.cost

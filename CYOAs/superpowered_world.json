@@ -129,22 +129,26 @@
           {
             "label": "Random Portal",
             "description": "You just got dumped through a portal into a different world. This can either be an established setting or a new one. You appear with no identity, but you will be able to locate help in getting yourself settled fairly easily. ",
-            "id": "worldHowDidThisHappenRandomPortal"
+            "id": "worldHowDidThisHappenRandomPortal",
+            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fpreview.redd.it%2Fspiderman-across-the-spider-verse-portal-design-v0-h3nvs4hsaqrb1.jpg%3Fwidth%3D1785%26format%3Dpjpg%26auto%3Dwebp%26s%3Da61ef06de0f2d344b1dd60aed6eea51ed456b370&f=1&nofb=1&ipt=9c829bddeb3e02fd087b6720f14423c87dcd51aff2b42b96f9685b24be93245d"
           },
           {
             "label": "Cosmic Event",
             "description": "Sometime in the last month, an event happened, and superpowers are now a thing. It could have been just a second ago if you want. Whatever the case, you are one of the first with powers, though not necessarily the most powerful. ",
-            "id": "worldHowDidThisHappenCosmicEvent"
+            "id": "worldHowDidThisHappenCosmicEvent",
+            "image": "https://static.wikia.nocookie.net/marvel_dc/images/3/32/Big_Bang.jpg"
           },
           {
             "label": "Crossover!",
             "description": "A combination of Random Portal and Cosmic Event. Your world, and a world from a supernatural setting are now colliding. This can take the form of random portals connecting the two worlds, or maybe your two planets actually being combined in one big mosaic. ",
-            "id": "worldHowDidThisHappenCrossover"
+            "id": "worldHowDidThisHappenCrossover",
+            "image": "https://images5.alphacoders.com/664/thumb-1920-664273.jpg"
           },
           {
             "label": "Living under a rock",
             "description": "So... it turns out that superpowers have always been a thing, you have just been really, really oblivious about it up until now.. Surprise? ",
-            "id": "worldHowDidThisHappenLivingUnderARock"
+            "id": "worldHowDidThisHappenLivingUnderARock",
+            "image": "https://images6.alphacoders.com/139/thumb-1920-1393565.png"
           }
         ],
         "subcategories": [],
@@ -161,27 +165,32 @@
           {
             "label": "Everyone",
             "description": "Every person on the planet has at least some superpower, even if it is a somewhat weak one. People who are basically ordinary humans are extremely rare. ",
-            "id": "worldHowCommonAreSuperpowersEveryone"
+            "id": "worldHowCommonAreSuperpowersEveryone",
+            "image": "https://i.quotev.com/img/q/u/18/6/22/vphesdwtck.jpg"
           },
           {
             "label": "Numerous",
             "description": "At least one out of every three people has a superpower, possibly more, and even those that do not are at least in excellent physical shape. ",
-            "id": "worldHowCommonAreSuperpowersNumerous"
+            "id": "worldHowCommonAreSuperpowersNumerous",
+            "image": "https://i.pinimg.com/736x/23/95/9a/23959aaa56226102e659c8ea65e3b2b2.jpg"
           },
           {
             "label": "Fairly Common",
             "description": "Between one in ten to one hundred people has a power, and artificial powers can be created successfully more often than not. ",
-            "id": "worldHowCommonAreSuperpowersFairlyCommon"
+            "id": "worldHowCommonAreSuperpowersFairlyCommon",
+            "image": "https://images.squarespace-cdn.com/content/v1/51b3dc8ee4b051b96ceb10de/df2dd0e7-c7c6-4955-be6f-e2bbddf63c26/x-men-97-is-getting-a-limited-series-prequel-from-marvel-comics.jpg"
           },
           {
             "label": "Scattered",
             "description": "Only around one person in ten thousand will have a superpower, though they will likely be strong if they do. ",
-            "id": "worldHowCommonAreSuperpowersScattered"
+            "id": "worldHowCommonAreSuperpowersScattered",
+            "image": "https://wallpaperaccess.com/full/328909.jpg"
           },
           {
             "label": "Rare",
             "description": "Superpowers are one in a million, or possibly even a bit less, and will be considered to be a very valuable commodity. ",
-            "id": "worldHowCommonAreSuperpowersRare"
+            "id": "worldHowCommonAreSuperpowersRare",
+            "image": "https://images.squarespace-cdn.com/content/v1/51b3dc8ee4b051b96ceb10de/693265e9-a601-488a-bb8d-d186d49d4432/wild-cards-now-then.jpg?format=2500w"
           },
           {
             "label": "Unique",
@@ -195,7 +204,8 @@
             ],
             "id": "worldHowCommonAreSuperpowersUnique",
             "borderColor": "gold",
-            "prerequisites": "originStoryYourTeamLoneWolf && (boonsAndBanesBanesAllergy || boonsAndBanesBanesBadRep || boonsAndBanesBanesConspiracy || boonsAndBanesBanesCycle || boonsAndBanesBanesPlotMagnet)"
+            "prerequisites": "originStoryYourTeamLoneWolf && (boonsAndBanesBanesAllergy || boonsAndBanesBanesBadRep || boonsAndBanesBanesConspiracy || boonsAndBanesBanesCycle || boonsAndBanesBanesPlotMagnet)",
+            "image": "https://wallpapercave.com/wp/wp7238487.jpg"
           }
         ],
         "subcategories": [],
@@ -224,22 +234,26 @@
                 }
               }
             ],
-            "id": "worldWhatIsTheBalanceOfTheWorldEvilRules"
+            "id": "worldWhatIsTheBalanceOfTheWorldEvilRules",
+            "image": "https://static1.cbrimages.com/wordpress/wp-content/uploads/2023/03/dark-knights.jpg"
           },
           {
             "label": "Many Evil, Few Good",
             "description": "Villains outnumber the heroes, but all hope is not lost. The heroes are still putting up a fight and the balance could possibly shift more in their favor if you decided to help them.",
-            "id": "worldWhatIsTheBalanceOfTheWorldManyEvilFewGood"
+            "id": "worldWhatIsTheBalanceOfTheWorldManyEvilFewGood",
+            "image": "https://static1.srcdn.com/wordpress/wp-content/uploads/2021/01/Crime-Syndicate-earth-3-comic-book-art-cropped.jpg"
           },
           {
             "label": "Even Fight",
             "description": "Things are more or less even. The heroes and villains both win and lose fairly regularly and things have settled into a semi-comfortable status quo.",
-            "id": "worldWhatIsTheBalanceOfTheWorldEvenFight"
+            "id": "worldWhatIsTheBalanceOfTheWorldEvenFight",
+            "image": "https://www.fortressofsolitude.co.za/wp-content/uploads/2017/02/Marvel-Comics-15-Things-You-Probably-Didnt-Know.jpeg"
           },
           {
             "label": "Many Good, Few Evil",
             "description": "The side of angels is definitely winning this fight, with any villains out there having to keep their heads down for the most part. They may get in a few good hits, but the heroes will come down on them more often than not. ",
-            "id": "worldWhatIsTheBalanceOfTheWorldManyGoodFewEvil"
+            "id": "worldWhatIsTheBalanceOfTheWorldManyGoodFewEvil",
+            "image": "https://www.cosmicteams.com/legion/img/gallery/hires/posterLegion50_1024.jpg"
           },
           {
             "label": "Good Rules",
@@ -256,7 +270,8 @@
                 }
               }
             ],
-            "id": "worldWhatIsTheBalanceOfTheWorldGoodRules"
+            "id": "worldWhatIsTheBalanceOfTheWorldGoodRules",
+            "image": "https://3.bp.blogspot.com/-AG5WpbCmeSg/WZSnUs2XxOI/AAAAAAABjME/bjYHVtbBhEQhf1FxQ_tGRDJXtWuHF5k_QCLcBGAs/s1600/tom-strong-alan-moore.jpg"
           }
         ],
         "subcategories": [],
@@ -273,7 +288,8 @@
           {
             "label": "Other",
             "description": "Maybe you dislike the whole good/evil dichotomy? Then you can define some other balance between two forces, such as science and mysticism or comedy and tragedy, but the rules about Rules still apply. \n\nIf the side you favor completely dominates, it will count as a [color=gold]Boon[/color] for you, while if the side you oppose dominates, it will be a [color=red]Bane[/color].",
-            "id": "worldBalanceOfTheWorldMiscOther"
+            "id": "worldBalanceOfTheWorldMiscOther",
+            "image": "https://static1.srcdn.com/wordpress/wp-content/uploads/2023/11/the-boys-supe-homelander-respects-comic-1.jpg"
           }
         ],
         "subcategories": [],
@@ -293,22 +309,26 @@
           {
             "label": "Genetics",
             "description": "The origin of your powers lie within your DNA. Some quirk or mutation has caused your boy to alter itself, granting your many and varied abilities. This has the benefit of making your powers harder to take away from you, but it also means that they are more closely tied to your health and physical condition, and will likely strain your body to use.",
-            "id": "originStoryOriginStoryGenetics"
+            "id": "originStoryOriginStoryGenetics",
+            "image": "https://images4.alphacoders.com/107/1078644.jpg"
           },
           {
             "label": "Psionics",
             "description": "Your powers are a function of your mind, reaching out to alter the world around you with your mere thoughts. Your powers will generally be easier for you to control, but will be dependent on your mental state and focus, and backlash from them could end up harming your mind. ",
-            "id": "originStoryOriginStoryPsionics"
+            "id": "originStoryOriginStoryPsionics",
+            "image": "https://cdn.marvel.com/content/2x/188pcx_com_mas_mob_01.jpg"
           },
           {
             "label": "Magic",
             "description": "Your powers come from a mystic source. Whether it is spells you have discovered in an ancient tomb, sorcery tied to your bloodline, or perhaps a gift with alchemy, your powers come from magic, and are tied to your creativity. This means that they could grow in unexpected ways, but also that they may have symbolic weaknesses or other disadvantages that other practitioners could exploit. ",
-            "id": "originStoryOriginStoryMagic"
+            "id": "originStoryOriginStoryMagic",
+            "image": "https://static1.srcdn.com/wordpress/wp-content/uploads/2024/01/zatanna-performing-magic-in-dc-comics.jpg"
           },
           {
             "label": "Tech",
             "description": "Your powers come from technology. This could be inventions that you wield, or cybernetics that are implanted within you. While their technological basis means that it is easier for you to find ways to upgrade them, it also means that they are vulnerable to being reverse-engineered or disabled by others with the knowledge to learn how they work. ",
-            "id": "originStoryOriginStoryTech"
+            "id": "originStoryOriginStoryTech",
+            "image": "https://wallpapercave.com/wp/wp2538842.jpg"
           },
           {
             "label": "Cosmic",
@@ -321,7 +341,8 @@
               }
             ],
             "id": "originStoryOriginStoryCosmic",
-            "borderColor": "gold"
+            "borderColor": "gold",
+            "image": "https://cdn.marvel.com/content/1x/deathsilsur2025001008s400.jpg"
           },
           {
             "label": "Training",
@@ -334,12 +355,14 @@
               }
             ],
             "id": "originStoryOriginStoryTraining",
-            "borderColor": "red"
+            "borderColor": "red",
+            "image": "https://wallpapercave.com/wp/uApalXS.jpg"
           },
           {
             "label": "None",
             "description": "Your powers do not have any identifiable origin, they just are. This means that, while they are not exactly outstanding in any given area, they will not have any particular weaknesses either. ",
-            "id": "originStoryOriginStoryNone"
+            "id": "originStoryOriginStoryNone",
+            "image": "https://comicbook.com/wp-content/uploads/sites/4/2025/07/Franklin-Richards-3.jpg"
           }
         ],
         "subcategories": [],
@@ -356,12 +379,14 @@
           {
             "label": "Accident",
             "description": "Your powers were bestowed on you by accident, and you are not entirely sure how to replicate the accident. Whether some chemicals spilling in a lab, or being caught up in some ritual, you probably should have died, but you got powers instead. ",
-            "id": "originStoryOriginModifiersAccident"
+            "id": "originStoryOriginModifiersAccident",
+            "image": "https://static1.cbrimages.com/wordpress/wp-content/uploads/2023/06/barry-allen-struck-by-lightning-in-the-flash-year-one-from-dc-comics.jpg"
           },
           {
             "label": "Symbiotic",
             "description": "Your powers do not actually exist in you, but actually come from someone or something that is bound to you, such as an alien parasite, possessing spirit, AI in your cybernetics, or something else. ",
-            "id": "originStoryOriginModifiersSymbiotic"
+            "id": "originStoryOriginModifiersSymbiotic",
+            "image": "https://images7.alphacoders.com/511/511872.jpg"
           },
           {
             "label": "Temporary",
@@ -374,7 +399,8 @@
               }
             ],
             "id": "originStoryOriginModifiersTemporary",
-            "borderColor": "red"
+            "borderColor": "red",
+            "image": "https://images.alphacoders.com/809/thumb-1920-809334.png"
           }
         ],
         "subcategories": [],
@@ -405,7 +431,8 @@
                 }
               }
             ],
-            "borderColor": "red"
+            "borderColor": "red",
+            "image": "https://images2.alphacoders.com/608/60890.jpg"
           },
           {
             "label": "Fighting Family",
@@ -424,7 +451,8 @@
                 "Skills",
                 "Equipment"
               ]
-            }
+            },
+            "image": "https://wallpaperbat.com/img/9879414-fantastic-four-wallpaper-i-drew.jpg"
           },
           {
             "label": "Local Team",
@@ -443,7 +471,8 @@
                 "Skills",
                 "Equipment"
               ]
-            }
+            },
+            "image": "https://imgix.bustle.com/uploads/image/2018/7/31/fd19c031-6ae4-4746-a6f1-8f1744f5cdd8-teen_titans_original.jpg?w=1020&h=574&fit=crop&crop=faces&auto=format%2Ccompress&q=50&dpr=2"
           },
           {
             "label": "National Franchise",
@@ -462,7 +491,8 @@
                 "Skills",
                 "Equipment"
               ]
-            }
+            },
+            "image": "https://images.squarespace-cdn.com/content/v1/52c9d908e4b0e87887310693/1565921971168-ER3B60Q13AD9D44Z9MDF/Boys_04_05.jpg?format=2500w"
           },
           {
             "label": "World-Wide Organization",
@@ -481,7 +511,8 @@
                 "Skills",
                 "Equipment"
               ]
-            }
+            },
+            "image": "https://wallpapercave.com/wp/wp9477144.jpg"
           }
         ],
         "subcategories": [],
@@ -513,7 +544,8 @@
                 }
               }
             ],
-            "borderColor": "red"
+            "borderColor": "red",
+            "image": "https://static0.cbrimages.com/wordpress/wp-content/uploads/2017/08/wally-west-kid-flash.jpg?q=50&fit=crop&w=825&dpr=1.5"
           },
           {
             "label": "Average Joe",
@@ -525,7 +557,8 @@
                   "Powers": -5
                 }
               }
-            ]
+            ],
+            "image": "https://images.alphacoders.com/171/171183.jpg"
           },
           {
             "label": "Icon",
@@ -539,7 +572,8 @@
                 }
               }
             ],
-            "borderColor": "gold"
+            "borderColor": "gold",
+            "image": "https://images.alphacoders.com/871/871999.jpg"
           }
         ],
         "subcategories": [],
@@ -563,13 +597,12 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersEnhancedStrength",
-            "maxSelections": 2
+            "maxSelections": 2,
+            "image": "https://images.alphacoders.com/548/548500.jpg"
           },
           {
             "label": "Enhanced Durability",
@@ -583,13 +616,12 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersEnhancedDurability",
-            "maxSelections": 2
+            "maxSelections": 2,
+            "image": "https://static1.cbrimages.com/wordpress/wp-content/uploads/2021/11/luke-cage-city-of-fire-header.jpg"
           },
           {
             "label": "Enhanced Agility",
@@ -603,13 +635,12 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersEnhancedAgility",
-            "maxSelections": 2
+            "maxSelections": 2,
+            "image": "https://wallpapercave.com/wp/wp6822623.jpg"
           },
           {
             "label": "Regeneration",
@@ -623,13 +654,12 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersRegeneration",
-            "maxSelections": 2
+            "maxSelections": 2,
+            "image": "https://images.alphacoders.com/820/thumb-1920-820543.jpg"
           },
           {
             "label": "Healing",
@@ -643,13 +673,12 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersHealing",
-            "maxSelections": 2
+            "maxSelections": 2,
+            "image": "https://static0.cbrimages.com/wordpress/wp-content/uploads/2019/01/X-FORCE-RANKED-13-ELIXIR.jpg?q=50&fit=crop&w=825&dpr=1.5"
           },
           {
             "label": "Shapeshift",
@@ -663,13 +692,12 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersShapeshift",
-            "maxSelections": 3
+            "maxSelections": 3,
+            "image": "https://static0.cbrimages.com/wordpress/wp-content/uploads/2022/04/Entry-1---Miss-Martian-S2-S3-S4.jpg?q=50&fit=crop&w=825&dpr=1.5"
           },
           {
             "label": "Hyper Running",
@@ -683,20 +711,17 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               },
               {
                 "cost": {
                   "Boons": -1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersHyperRunning",
-            "maxSelections": 3
+            "maxSelections": 3,
+            "image": "https://static1.srcdn.com/wordpress/wp-content/uploads/Jesse-Quick-in-DC-Comics.jpg"
           },
           {
             "label": "Invisibility",
@@ -710,20 +735,17 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               },
               {
                 "cost": {
                   "Boons": -1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersInvisibility",
-            "maxSelections": 4
+            "maxSelections": 4,
+            "image": "https://images.hdqwalls.com/wallpapers/vanessa-kirby-as-invisible-woman-in-the-fantastic-four-first-steps-zz.jpg"
           },
           {
             "label": "Intangibility",
@@ -737,13 +759,12 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersIntangibility",
-            "maxSelections": 2
+            "maxSelections": 2,
+            "image": "https://static1.cbrimages.com/wordpress/wp-content/uploads/2023/04/shadowcat-1.jpg"
           },
           {
             "label": "Enhanced Sight",
@@ -757,20 +778,17 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               },
               {
                 "cost": {
                   "Boons": -1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersEnhancedSight",
-            "maxSelections": 3
+            "maxSelections": 3,
+            "image": "https://static1.srcdn.com/wordpress/wp-content/uploads/2020/09/Marvel-Hyperion-Comic-Art.jpg"
           },
           {
             "label": "Enhanced Hearing",
@@ -784,20 +802,17 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               },
               {
                 "cost": {
                   "Boons": -1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersEnhancedHearing",
-            "maxSelections": 3
+            "maxSelections": 3,
+            "image": "https://static.wikia.nocookie.net/marvel_dc/images/c/c1/Bernhard_Baker_Animal_Man_Shorts_001.jpg"
           },
           {
             "label": "Enhanced Nose",
@@ -811,20 +826,17 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               },
               {
                 "cost": {
                   "Boons": -1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersEnhancedNose",
-            "maxSelections": 3
+            "maxSelections": 3,
+            "image": "https://comicvine.gamespot.com/a/uploads/original/1/15776/8679336-tigra2840.jpg"
           },
           {
             "label": "Thought-Reading",
@@ -838,20 +850,17 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               },
               {
                 "cost": {
                   "Boons": -1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersThoughtReading",
-            "maxSelections": 3
+            "maxSelections": 3,
+            "image": "https://static1.cbrimages.com/wordpress/wp-content/uploads/2019/07/emma-frost-feature.jpg"
           },
           {
             "label": "Psychometry",
@@ -865,20 +874,17 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               },
               {
                 "cost": {
                   "Boons": -1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersPsychometry",
-            "maxSelections": 3
+            "maxSelections": 3,
+            "image": "https://www.comicbookherald.com/wp-content/uploads/2019/01/X-Man-alan-davis.jpg"
           },
           {
             "label": "Danger Sense",
@@ -892,20 +898,17 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               },
               {
                 "cost": {
                   "Boons": -1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersDangerSense",
-            "maxSelections": 6
+            "maxSelections": 6,
+            "image": "https://www.liveabout.com/thmb/V8NIV66aZL0hcmGJr4xSv3TU0KE=/768x0/filters:no_upscale():max_bytes(150000):strip_icc()/comic-spiderman-614363-5c618d1546e0fb0001849f16.jpg"
           },
           {
             "label": "Sense Manipulation",
@@ -919,13 +922,12 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersSenseManipulation",
-            "maxSelections": 3
+            "maxSelections": 3,
+            "image": "https://i.pinimg.com/736x/34/3e/1c/343e1c25a141a6285941a20577ebe4f7.jpg"
           },
           {
             "label": "Extra Sense",
@@ -939,20 +941,17 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               },
               {
                 "cost": {
                   "Boons": -1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersExtraSense",
-            "maxSelections": 15
+            "maxSelections": 15,
+            "image": "https://comicbook.com/wp-content/uploads/sites/4/2026/01/Karate-Kid-DC-Comics.png?w=1024"
           },
           {
             "label": "Precognition",
@@ -966,20 +965,17 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               },
               {
                 "cost": {
                   "Boons": -1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersPrecognition",
-            "maxSelections": 3
+            "maxSelections": 3,
+            "image": "https://p4.wallpaperbetter.com/wallpaper/485/169/68/comics-legion-of-super-heroes-brainiac-5-dc-comics-wallpaper-preview.jpg"
           },
           {
             "label": "Technopathy",
@@ -993,13 +989,12 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersTechnopathy",
-            "maxSelections": 2
+            "maxSelections": 2,
+            "image": "https://cdn.wallpapersafari.com/76/15/p5MAHb.jpg"
           },
           {
             "label": "Enhanced Mind",
@@ -1013,13 +1008,12 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersEnhancedMind",
-            "maxSelections": 2
+            "maxSelections": 2,
+            "image": "https://static1.colliderimages.com/wordpress/wp-content/uploads/2022/11/GalleryChar_1920x1080_3_MrTerrific01_2-3_col_58462682d6ea4515156419.jpg"
           },
           {
             "label": "Luck",
@@ -1033,13 +1027,12 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersLuck",
-            "maxSelections": 2
+            "maxSelections": 2,
+            "image": "https://static1.cbrimages.com/wordpress/wp-content/uploads/2018/12/domino-6-marvel-cover-art.jpg"
           },
           {
             "label": "Telekinetics",
@@ -1053,20 +1046,17 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               },
               {
                 "cost": {
                   "Boons": -1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersTelekinetics",
-            "maxSelections": 3
+            "maxSelections": 3,
+            "image": "https://www.comicbasics.com/wp-content/uploads/2022/10/scarlet-witch.webp"
           },
           {
             "label": "Force Blast",
@@ -1080,13 +1070,12 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersForceBlast",
-            "maxSelections": 2
+            "maxSelections": 2,
+            "image": "https://comicbook.com/wp-content/uploads/sites/4/2025/08/Havok-in-Marvel-Comics.jpg"
           },
           {
             "label": "Barriers",
@@ -1100,20 +1089,17 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               },
               {
                 "cost": {
                   "Boons": -1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersBarriers",
-            "maxSelections": 3
+            "maxSelections": 3,
+            "image": "https://comicvine.gamespot.com/a/uploads/scale_super/11139/111391579/8743282-rco016_1468674301.jpg"
           },
           {
             "label": "Fire Control",
@@ -1127,13 +1113,12 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersFireControl",
-            "maxSelections": 2
+            "maxSelections": 2,
+            "image": "https://wallpaperaccess.com/full/9758067.png"
           },
           {
             "label": "Water Control",
@@ -1147,13 +1132,12 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersWaterControl",
-            "maxSelections": 2
+            "maxSelections": 2,
+            "image": "https://images4.alphacoders.com/161/161548.jpg"
           },
           {
             "label": "Earth Control",
@@ -1167,13 +1151,12 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersEarthControl",
-            "maxSelections": 2
+            "maxSelections": 2,
+            "image": "https://cdn.mos.cms.futurecdn.net/h9nU2v5w9L5KvDBH763rwn.jpeg"
           },
           {
             "label": "Air Control",
@@ -1187,13 +1170,12 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersAirControl",
-            "maxSelections": 2
+            "maxSelections": 2,
+            "image": "https://www.looper.com/img/gallery/the-untold-truth-of-dc-comics-cyclone/shes-a-lighthearted-character-in-a-grimdark-universe-1608757115.jpg"
           },
           {
             "label": "Lightning Control",
@@ -1207,13 +1189,12 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersLightningControl",
-            "maxSelections": 2
+            "maxSelections": 2,
+            "image": "https://static1.srcdn.com/wordpress/wp-content/uploads/2020/09/Black-Lightning-Comic-Art-Batman-Outsiders.jpg"
           },
           {
             "label": "Ice Control",
@@ -1227,13 +1208,12 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersIceControl",
-            "maxSelections": 2
+            "maxSelections": 2,
+            "image": "https://wallpaperaccess.com/full/6758690.jpg"
           },
           {
             "label": "Plants Control",
@@ -1247,13 +1227,12 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersPlantsControl",
-            "maxSelections": 2
+            "maxSelections": 2,
+            "image": "https://static1.srcdn.com/wordpress/wp-content/uploads/2021/10/poison-ivy-queen-ivy-dc-comics-art.jpg"
           },
           {
             "label": "Light Control",
@@ -1267,13 +1246,12 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersLightControl",
-            "maxSelections": 3
+            "maxSelections": 3,
+            "image": "https://static.wikia.nocookie.net/fictional-powers-abilities/images/d/d7/Light_generation.webp"
           },
           {
             "label": "Shadow Control",
@@ -1287,13 +1265,12 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersShadowControl",
-            "maxSelections": 3
+            "maxSelections": 3,
+            "image": "https://wallpaperaccess.com/full/5762784.jpg"
           },
           {
             "label": "Doppelganger",
@@ -1307,20 +1284,17 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               },
               {
                 "cost": {
                   "Boons": -1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersDoppelganger",
-            "maxSelections": 3
+            "maxSelections": 3,
+            "image": "https://www.escapistmagazine.com/wp-content/uploads/2025/02/Invincible_Season_2_Dupli-Kate_and_two_of_her_duplicates.jpg?fit=1200%2C675"
           },
           {
             "label": "Summons",
@@ -1334,13 +1308,12 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersSummons",
-            "maxSelections": 8
+            "maxSelections": 8,
+            "image": "https://static1.srcdn.com/wordpress/wp-content/uploads/John-Constantine1.jpg"
           },
           {
             "label": "Animation",
@@ -1354,13 +1327,12 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersAnimation",
-            "maxSelections": 2
+            "maxSelections": 2,
+            "image": "https://comicbook.com/wp-content/uploads/sites/4/2025/09/doctor-fate-dc-comics.png"
           },
           {
             "label": "Flight",
@@ -1374,20 +1346,17 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               },
               {
                 "cost": {
                   "Boons": -1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersFlight",
-            "maxSelections": 3
+            "maxSelections": 3,
+            "image": "https://w0.peakpx.com/wallpaper/152/404/HD-wallpaper-sentry-marvel-comics-superheroes.jpg"
           },
           {
             "label": "Teleportation",
@@ -1401,20 +1370,17 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               },
               {
                 "cost": {
                   "Boons": -1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersTeleportation",
-            "maxSelections": 4
+            "maxSelections": 4,
+            "image": "https://images8.alphacoders.com/608/thumb-1920-608060.jpg"
           },
           {
             "label": "Portals",
@@ -1428,13 +1394,12 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersPortals",
-            "maxSelections": 2
+            "maxSelections": 2,
+            "image": "https://cdn.marvel.com/u/prod/marvel/i/mg/7/00/627ea65e84b66.jpg"
           },
           {
             "label": "Wall Walking",
@@ -1448,20 +1413,17 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               },
               {
                 "cost": {
                   "Boons": -1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersWallWalking",
-            "maxSelections": 2
+            "maxSelections": 2,
+            "image": "https://moewalls.com/wp-content/uploads/2025/10/miles-morales-walking-skyscraper-spiderman-thumb.jpg"
           },
           {
             "label": "Conjuration",
@@ -1475,13 +1437,12 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersConjuration",
-            "maxSelections": 2
+            "maxSelections": 2,
+            "image": "https://wallpapercave.com/wp/wp5612739.jpg"
           },
           {
             "label": "Domain",
@@ -1495,20 +1456,17 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               },
               {
                 "cost": {
                   "Boons": -1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersDomain",
-            "maxSelections": 4
+            "maxSelections": 4,
+            "image": "https://images3.alphacoders.com/105/thumb-1920-1056297.jpg"
           },
           {
             "label": "Copy",
@@ -1522,20 +1480,17 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               },
               {
                 "cost": {
                   "Boons": -1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersCopy",
-            "maxSelections": 3
+            "maxSelections": 3,
+            "image": "https://getwallpapers.com/wallpaper/full/f/d/d/349565.jpg"
           },
           {
             "label": "Null",
@@ -1549,20 +1504,17 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               },
               {
                 "cost": {
                   "Boons": -1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersNull",
-            "maxSelections": 3
+            "maxSelections": 3,
+            "image": "https://wallup.net/wp-content/uploads/2016/01/44351-comics-Captain_America-Wolverine-Marvel_Comics-Hope_Summers.jpg"
           },
           {
             "label": "Gift",
@@ -1576,13 +1528,12 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
             "id": "powersPowersGift",
-            "maxSelections": 2
+            "maxSelections": 2,
+            "image": "https://static1.srcdn.com/wordpress/wp-content/uploads/2021/08/Mimic-using-all-the-X-Men-powers-at-once.jpg"
           }
         ],
         "subcategories": [],
@@ -1617,12 +1568,11 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
-            "borderColor": "gold"
+            "borderColor": "gold",
+            "image": "https://images2.alphacoders.com/787/thumb-1920-787573.jpg"
           },
           {
             "label": "Martial Arts",
@@ -1638,12 +1588,11 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
-            "borderColor": "gold"
+            "borderColor": "gold",
+            "image": "https://wallpapercave.com/wp/wp7325571.jpg"
           },
           {
             "label": "Parkour",
@@ -1659,12 +1608,11 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
-            "borderColor": "gold"
+            "borderColor": "gold",
+            "image": "https://wallpapercave.com/wp/wp11025312.jpg"
           },
           {
             "label": "Investigation",
@@ -1680,12 +1628,11 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
-            "borderColor": "gold"
+            "borderColor": "gold",
+            "image": "https://static1.cbrimages.com/wordpress/wp-content/uploads/2019/10/jeff-lemire-the-question-deaths-of-vic-sage-variant-header.jpg"
           },
           {
             "label": "Stealth",
@@ -1701,12 +1648,11 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
-            "borderColor": "gold"
+            "borderColor": "gold",
+            "image": "https://images6.alphacoders.com/608/608017.jpg"
           },
           {
             "label": "Diguise",
@@ -1722,12 +1668,11 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
-            "borderColor": "gold"
+            "borderColor": "gold",
+            "image": "https://wallpapers.com/images/hd/black-widow-marvel-comic-ibm80udz4b522sd4.jpg"
           },
           {
             "label": "Firearms",
@@ -1743,12 +1688,11 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
-            "borderColor": "gold"
+            "borderColor": "gold",
+            "image": "https://raregallery.art/uploads/posts/959486-comic-books-comic-art-Marvel-Comics-The-Punisher.jpg"
           },
           {
             "label": "Tactics",
@@ -1764,12 +1708,11 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
-            "borderColor": "gold"
+            "borderColor": "gold",
+            "image": "https://images3.alphacoders.com/110/thumb-1920-1104265.jpg"
           },
           {
             "label": "Hacker",
@@ -1785,12 +1728,11 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
-            "borderColor": "gold"
+            "borderColor": "gold",
+            "image": "https://ilarge.lisimg.com/image/24380093/800full-oracle-(barbara-gordon).jpg"
           },
           {
             "label": "First Aid",
@@ -1806,12 +1748,11 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
-            "borderColor": "gold"
+            "borderColor": "gold",
+            "image": "https://cdn.marvel.com/content/1x/078nnl_com_cut_dsk_01_0.jpg"
           },
           {
             "label": "Arcana",
@@ -1827,12 +1768,11 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
-            "borderColor": "gold"
+            "borderColor": "gold",
+            "image": "https://cdn.marvel.com/content/1x/magik2025001_card_0.jpg"
           },
           {
             "label": "Willpower",
@@ -1848,12 +1788,11 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
-            "borderColor": "gold"
+            "borderColor": "gold",
+            "image": "https://wallpapers-clan.com/wp-content/uploads/2024/12/marvel-moon-knight-hooded-hero-desktop-wallpaper-preview.jpg"
           },
           {
             "label": "Glibness",
@@ -1869,12 +1808,11 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
-            "borderColor": "gold"
+            "borderColor": "gold",
+            "image": "https://images4.alphacoders.com/165/165908.jpg"
           },
           {
             "label": "Business",
@@ -1890,12 +1828,11 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
             ],
-            "borderColor": "gold"
+            "borderColor": "gold",
+            "image": "https://i.pinimg.com/736x/fa/ce/3c/face3cbb2eb8808072afcda766d6f4a8.jpg"
           },
           {
             "label": "Ph.D",
@@ -1909,7 +1846,8 @@
                 }
               }
             ],
-            "borderColor": "gold"
+            "borderColor": "gold",
+            "image": "https://static0.gamerantimages.com/wordpress/wp-content/uploads/2023/02/giant-man-hank-pym.jpg"
           }
         ],
         "subcategories": [],
@@ -1932,52 +1870,62 @@
           {
             "label": "Costume",
             "description": "A personally designed costume that offers a decent level of protection, equivalent to bullet-proof decent levels of protection in the areas it covers. Comes with several copies, including more formal versions or other variants, if desired. ",
-            "id": "skillsAndEquipmentEquipmentCostume"
+            "id": "skillsAndEquipmentEquipmentCostume",
+            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fa-static.besthdwallpaper.com%2Fsilk-marvel-superhero-comics-wallpaper-2048x1152-104359_49.jpg&f=1&nofb=1&ipt=cab889f9be424ffa60284b29d0d7b82c7422498a6353926e7bb85e637aa4a0b3"
           },
           {
             "label": "Glider Cape",
             "description": "A large cape that is designed to flow out of your way, preventing you from getting tangled or tripped up in it. Can extend out to a set of gliding wings to allow for limited aerial movement. ",
-            "id": "skillsAndEquipmentEquipmentGliderCape"
+            "id": "skillsAndEquipmentEquipmentGliderCape",
+            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fcdn.marvel.com%2Fcontent%2F2x%2F099clk_com_mas_mob_01_1.jpg&f=1&nofb=1&ipt=f95d043e25443321f7f530c12d8fb5ceb33cc9e9d0fb09711354dc8dfdfe7000"
           },
           {
             "label": "Grappling Hook",
             "description": "A hand-held device that can fire a 'hook' that can latch onto most surfaces without damaging them, and that has a special winch that can lift the weight of a couple of humans easily if needed. Comes with several dozen feet of reusable cable. ",
-            "id": "skillsAndEquipmentEquipmentGrapplingHook"
+            "id": "skillsAndEquipmentEquipmentGrapplingHook",
+            "image": "https://static0.gamerantimages.com/wordpress/wp-content/uploads/2022/06/gotham-knights-batgirl-grappling-hook-key-art.jpg"
           },
           {
             "label": "Collapsible Weapon",
             "description": "A basic, but indestructible melee weapon, such a a blade or staff which can be collapsed down for easy transport. Has a heating, an electrifying, a vibration, and a gas dispensing attachment. Can hold one of these attachments at a time. ",
-            "id": "skillsAndEquipmentEquipmentCollapsibleWeapon"
+            "id": "skillsAndEquipmentEquipmentCollapsibleWeapon",
+            "image": "https://static1.srcdn.com/wordpress/wp-content/uploads/2022/11/Batman-Takes-on-Failsafe-New-Gods-Weapon.jpg"
           },
           {
             "label": "Ranged Weapon",
             "description": "A ranged weapon, such as a wireless taser, handgun, or crossbow. Comes with a large supply of ammunition if needed, and a cheap source for getting more. ",
-            "id": "skillsAndEquipmentEquipmentRangedWeapon"
+            "id": "skillsAndEquipmentEquipmentRangedWeapon",
+            "image": "https://wallup.net/wp-content/uploads/2017/11/23/521494-DC_Comics-Red_Hood.jpg"
           },
           {
             "label": "Throwing Item",
             "description": "A very large supply of small boomerangs, throwing knives, or other thrown objects. Comes with a cheap source for getting more. Can come in explosive. taser sticky web, or flashing varieties. ",
-            "id": "skillsAndEquipmentEquipmentThrowingItem"
+            "id": "skillsAndEquipmentEquipmentThrowingItem",
+            "image": "https://static1.srcdn.com/wordpress/wp-content/uploads/2024/01/green-arrow-firing-his-bow.jpg"
           },
           {
             "label": "Smoke Bombs",
             "description": "A large supply of small spheres that can release a large amount of harmless smoke to obscure vision. Comes with a special visor that can see through the smoke, and a cheap source for getting more bombs. Can come in tear gas, sleeping gas, or stink bombs varieties. ",
-            "id": "skillsAndEquipmentEquipmentSmokeBombs"
+            "id": "skillsAndEquipmentEquipmentSmokeBombs",
+            "image": "https://static1.srcdn.com/wordpress/wp-content/uploads/2023/02/batman-smoke-bomb-dc-comics.jpg"
           },
           {
             "label": "Scanning Goggles",
             "description": "A special set of goggles that can allow for a variety of vision modes, including thermal, night vision, blood trace, telescopic, or microsopic. Can integrate the visor from the smoke bombs if desired. ",
-            "id": "skillsAndEquipmentEquipmentScanningGoggles"
+            "id": "skillsAndEquipmentEquipmentScanningGoggles",
+            "image": "https://wallpapercave.com/wp/wp7271124.jpg"
           },
           {
             "label": "Wrist Computer",
             "description": "A top-of-the-line computer system, contained within a sleek casing on one arm. Can access local networks, and comes with basic \"hacking software\" and alarge amounts of internal memory. Can be taken in the form of a laptop or desktop instead, with identical capabilities. ",
-            "id": "skillsAndEquipmentEquipmentWristComputer"
+            "id": "skillsAndEquipmentEquipmentWristComputer",
+            "image": "https://wallpapercave.com/wp/wp2116477.jpg"
           },
           {
             "label": "Toolkit",
             "description": "A kit of basic tools, that can include some specialty tools such as lock-picks or radiation detectors. ",
-            "id": "skillsAndEquipmentEquipmentToolkit"
+            "id": "skillsAndEquipmentEquipmentToolkit",
+            "image": "https://i.pinimg.com/736x/0b/d6/f9/0bd6f92e59a31fc41c8c8b123bbe3d6c.jpg"
           },
           {
             "label": "Motorbike",
@@ -1993,11 +1941,10 @@
               {
                 "cost": {
                   "Boons": 1
-                },
-                "minSelected": 1,
-                "requiresCostOption": 0
+                }
               }
-            ]
+            ],
+            "image": "https://www.teahub.io/photos/full/253-2531757_ghost-rider-motorcycle-comic.jpg"
           },
           {
             "label": "Plane",
@@ -2011,7 +1958,8 @@
                 }
               }
             ],
-            "borderColor": "gold"
+            "borderColor": "gold",
+            "image": "https://static1.cbrimages.com/wordpress/wp-content/uploads/2019/09/Blackbird-The-Secrets-of-the-X-Mens-Comic-Book-Jet.jpg"
           },
           {
             "label": "Holo-Cloak",
@@ -2025,12 +1973,14 @@
                 }
               }
             ],
-            "borderColor": "gold"
+            "borderColor": "gold",
+            "image": "https://images7.alphacoders.com/105/thumb-1920-1052005.jpg"
           },
           {
             "label": "Hideout",
             "description": "A small storage hideout with a couple of concealed entrances. Contains very basic utilities, but functions more as a storage location than a place to stay. ",
-            "id": "skillsAndEquipmentEquipmentHideout"
+            "id": "skillsAndEquipmentEquipmentHideout",
+            "image": "https://static1.cbrimages.com/wordpress/wp-content/uploads/2022/10/arrowcave.jpg"
           },
           {
             "label": "Lair",
@@ -2044,7 +1994,8 @@
                 }
               }
             ],
-            "borderColor": "gold"
+            "borderColor": "gold",
+            "image": "https://images3.alphacoders.com/160/thumb-1920-160927.jpg"
           }
         ],
         "subcategories": [],
@@ -2087,7 +2038,8 @@
                   "Boons": -0.5
                 }
               }
-            ]
+            ],
+            "image": "https://static1.cbrimages.com/wordpress/wp-content/uploads/2017/02/Slingers-group-shot.jpg"
           },
           {
             "label": "D-Feats",
@@ -2105,7 +2057,8 @@
                   "Boons": -0.5
                 }
               }
-            ]
+            ],
+            "image": "https://static1.cbrimages.com/wordpress/wp-content/uploads/2016/10/Inferior-Five.jpg"
           },
           {
             "label": "Verminites",
@@ -2123,7 +2076,8 @@
                   "Boons": -0.5
                 }
               }
-            ]
+            ],
+            "image": "https://cdn.marvel.com/content/1x/mutant_liberation_front_card.jpg"
           },
           {
             "label": "H.A.M",
@@ -2141,7 +2095,8 @@
                   "Boons": -0.5
                 }
               }
-            ]
+            ],
+            "image": "https://vistapointe.net/images/heroes-for-hire-wallpaper-18.jpg"
           },
           {
             "label": "The Clique",
@@ -2159,7 +2114,8 @@
                   "Boons": -0.5
                 }
               }
-            ]
+            ],
+            "image": "https://wallpapercave.com/wp/wp3667640.jpg"
           },
           {
             "label": "Gen Sin",
@@ -2177,7 +2133,8 @@
                   "Boons": -0.5
                 }
               }
-            ]
+            ],
+            "image": "https://static.wikia.nocookie.net/marvel_dc/images/9/93/Terror_Titans_Prime_Earth_002.jpg"
           }
         ],
         "subcategories": [],
@@ -2213,7 +2170,8 @@
                   "Boons": -0.5
                 }
               }
-            ]
+            ],
+            "image": "https://static1.srcdn.com/wordpress/wp-content/uploads/2023/08/mary-elizabeth-bette-kane-flamebird.jpg"
           },
           {
             "label": "Gravistar",
@@ -2231,7 +2189,8 @@
                   "Boons": -0.5
                 }
               }
-            ]
+            ],
+            "image": "https://vignette.wikia.nocookie.net/marveldatabase/images/5/5c/Franklin_Hall_(Earth-616)_from_Uncanny_Avengers_Vol_3_26_001.jpg/revision/latest?cb=20170916235831"
           },
           {
             "label": "Treasure",
@@ -2249,7 +2208,8 @@
                   "Boons": -0.5
                 }
               }
-            ]
+            ],
+            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fcdn.marvel.com%2Fu%2Fprod%2Fmarvel%2Fi%2Fmg%2F6%2Fd0%2F68634bd88f0c2.jpg&f=1&nofb=1&ipt=3363a601656c227fddb269107f7379fc6945fb32f9e6c0e711ebff572df2919c"
           },
           {
             "label": "BladeFall",
@@ -2267,7 +2227,8 @@
                   "Boons": -0.5
                 }
               }
-            ]
+            ],
+            "image": "https://i.pinimg.com/originals/81/34/1d/81341df83b0668efec104ee8e3e1170f.jpg"
           },
           {
             "label": "Chardonnay",
@@ -2285,7 +2246,8 @@
                   "Boons": -0.5
                 }
               }
-            ]
+            ],
+            "image": "https://i.pinimg.com/originals/60/48/35/6048356384e47143a9fe441f342aae41.jpg"
           },
           {
             "label": "Tyranna",
@@ -2303,7 +2265,8 @@
                   "Boons": -0.5
                 }
               }
-            ]
+            ],
+            "image": "https://d2thvodm3xyo6j.cloudfront.net/media/2021/08/927ba39d5f94f5d7-600x338.jpg"
           },
           {
             "label": "Cogwheel",
@@ -2321,7 +2284,8 @@
                   "Boons": -0.5
                 }
               }
-            ]
+            ],
+            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fimages.comicbooktreasury.com%2Fwp-content%2Fuploads%2F2022%2F09%2FCable-Comics-Reading-Guide.jpg&f=1&nofb=1&ipt=c2368b20019b33723baa7fd053eaeb12fa0da1271d6bc23bda04ab95b74f165d"
           },
           {
             "label": "Endgame",
@@ -2339,7 +2303,8 @@
                   "Boons": -0.5
                 }
               }
-            ]
+            ],
+            "image": "https://wallpapercave.com/wp/wp11243017.jpg"
           },
           {
             "label": "Polka Dark",
@@ -2357,7 +2322,8 @@
                   "Boons": -0.5
                 }
               }
-            ]
+            ],
+            "image": "https://legendary-digital-network-assets.s3.amazonaws.com/wp-content/uploads/2021/06/12222140/madame-xanadu-1624654654169.jpg"
           },
           {
             "label": "Roundstep",
@@ -2375,7 +2341,8 @@
                   "Boons": -0.5
                 }
               }
-            ]
+            ],
+            "image": "https://vignette.wikia.nocookie.net/batmantheanimatedseries/images/8/8f/FoC_I_03_-_Lucius_Fox.jpg/revision/latest?cb=20160223172303"
           },
           {
             "label": "Old Man Gnome",
@@ -2393,7 +2360,8 @@
                   "Boons": -0.5
                 }
               }
-            ]
+            ],
+            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fstatic1.cbrimages.com%2Fwordpress%2Fwp-content%2Fuploads%2F2019%2F07%2FGrimjack-feature.jpg&f=1&nofb=1&ipt=e4180c941e85b987eacaff0ab21865631d8704e6b9c3ed163d8aa9d64a09ebdb"
           },
           {
             "label": "Waymotion",
@@ -2411,7 +2379,8 @@
                   "Boons": -0.5
                 }
               }
-            ]
+            ],
+            "image": "https://comicvine.gamespot.com/a/uploads/scale_medium/11/110802/2775038-slipstream1.jpg"
           },
           {
             "label": "Goblinforge",
@@ -2429,7 +2398,8 @@
                   "Boons": -0.5
                 }
               }
-            ]
+            ],
+            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2F1.bp.blogspot.com%2F-GFJz9V5hdwQ%2FVxqMb8s8mcI%2FAAAAAAAAAUk%2FfBhgeHULVKsk1ErKGGlFwIp5Vtk25IUBgCLcB%2Fw1200-h630-p-k-no-nu%2FFIRELORD.jpg&f=1&nofb=1&ipt=23b9a1dc11986171478730bbca4536e942cb7675ca895b2b769769e8086fd83d"
           },
           {
             "label": "Liger",
@@ -2447,7 +2417,8 @@
                   "Boons": -0.5
                 }
               }
-            ]
+            ],
+            "image": "http://www.them6p.com/wp-content/uploads/2016/06/1292032-kraven-989x1024.jpg"
           },
           {
             "label": "Quaestor",
@@ -2465,7 +2436,8 @@
                   "Boons": -0.5
                 }
               }
-            ]
+            ],
+            "image": "https://cdn.marvel.com/content/1x/klrt_card_image.jpg"
           }
         ],
         "subcategories": [],
@@ -2503,7 +2475,8 @@
                   "Boons": -1
                 }
               }
-            ]
+            ],
+            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fcomicbook.com%2Fwp-content%2Fuploads%2Fsites%2F4%2F2025%2F06%2FJack-Staff-Soldiers-int.jpg&f=1&nofb=1&ipt=6667c3a4079cb30c8b03cbc1b3428c8ea7094eeec6a7818a272a812d12978fdf"
           },
           {
             "label": "Blankman",
@@ -2523,7 +2496,8 @@
                   "Boons": -1
                 }
               }
-            ]
+            ],
+            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Falchetron.com%2Fcdn%2Fblackout-comics-a0c5077a-c3b0-44e1-9f41-fdf1ec3cf7b-resize-750.jpg&f=1&nofb=1&ipt=462c1137b299c1fba55f3996ff5b173d016711f35fd25ad229de87efc48cf0d1"
           },
           {
             "label": "Excelius",
@@ -2543,7 +2517,8 @@
                   "Boons": -1
                 }
               }
-            ]
+            ],
+            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fwww.writeups.org%2Fwp-content%2Fuploads%2FProteus-DC-Comics-New-Olympians-Batman-Outsiders.jpg&f=1&nofb=1&ipt=8210f17772b5b73b1e2790e05c3234c177893193c529667eeb9a2a30928007ef"
           },
           {
             "label": "Infinitress",
@@ -2563,7 +2538,8 @@
                   "Boons": -1
                 }
               }
-            ]
+            ],
+            "image": "https://static1.cbrimages.com/wordpress/wp-content/uploads/2016/11/Stepford-Cuckoos.jpg"
           },
           {
             "label": "Evergreen",
@@ -2583,7 +2559,8 @@
                   "Boons": -1
                 }
               }
-            ]
+            ],
+            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fwallpaperaccess.com%2Ffull%2F4772528.jpg&f=1&nofb=1&ipt=ede920d0c45e1751b7fbb1e4ad42e1e3338c3c8612d78e6d94d4a338b42f7ed9"
           },
           {
             "label": "Boilerplate",
@@ -2603,7 +2580,8 @@
                   "Boons": -1
                 }
               }
-            ]
+            ],
+            "image": "https://images6.alphacoders.com/111/thumb-1920-1118325.jpg"
           }
         ],
         "subcategories": [],
@@ -2642,7 +2620,8 @@
                   "Boons": -1
                 }
               }
-            ]
+            ],
+            "image": "https://p4.wallpaperbetter.com/wallpaper/728/809/192/comics-sentry-marvel-comics-robert-reynolds-marvel-wallpaper-preview.jpg"
           },
           {
             "label": "Loco",
@@ -2662,7 +2641,8 @@
                   "Boons": -1
                 }
               }
-            ]
+            ],
+            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fstaticg.sportskeeda.com%2Feditor%2F2022%2F03%2Fd86ca-16478942089758-1920.jpg&f=1&nofb=1&ipt=f03259a37376af23441cdc85b8e27fac9c6bc796126f3abcb816b6168cdbfc21"
           },
           {
             "label": "Nimrod",
@@ -2682,7 +2662,8 @@
                   "Boons": -1
                 }
               }
-            ]
+            ],
+            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fcomicbook.com%2Fwp-content%2Fuploads%2Fsites%2F4%2F2025%2F04%2FMarvels-Ares.jpg%3Fresize%3D1536&f=1&nofb=1&ipt=ef8c6c313318daad7a66af440d8645093e040af1d36e2aae96845642a316ac27"
           }
         ],
         "subcategories": [],
@@ -2707,19 +2688,22 @@
             "label": "Alternate",
             "description": "Do you like one of the listed choices, but want to alter a few details, such as gender or personality. You can do so, with the only limitation being that you cannot make them more dangerous or competent than they currently are, and you cannot make them fall in love with you unless you took **Perfect Match**\n\nIt is up to you whether the unchosen choices will exist in your new world or not. ",
             "id": "alliesOtherAlternate",
-            "prerequisites": "!originStoryYourTeamLoneWolf"
+            "prerequisites": "!originStoryYourTeamLoneWolf",
+            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fstatic1.cbrimages.com%2Fwordpress%2Fwp-content%2Fuploads%2F2021%2F08%2FJustice-Guild.jpg&f=1&nofb=1&ipt=9f590d0de598e88c1ea1ea361a6469a1ab7a9e1c552bec01109ec3b85ba5b7b3"
           },
           {
             "label": "Canon",
             "description": "If you want, and you are merged with / part of an existing franchise, you can gain a canonical character as an ally. This can take the form of a team of young sidekicks / D-list level characters as a single selection, along the lines of the sidekick teams listed above. \n\nIf your character is very well-known throughout the setting (Iron Man or Batman), they would count as an icon and thus a [color=gold]Boon[/color] for you. \n\nIf the character is extraordinarily powerful and can shake the very setting with their actions (such as Silver Surfer or Darkseid), they count as a Supericon and thus require [color=gold]Two Boons[/color] to pay for them.",
             "id": "alliesOtherCanon",
-            "prerequisites": "!originStoryYourTeamLoneWolf"
+            "prerequisites": "!originStoryYourTeamLoneWolf",
+            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fwallpapercave.com%2Fwp%2Fwp10399236.jpg&f=1&nofb=1&ipt=cc324d11d791e114fefae02d4523e5cfc261f3442e84fd53b420f2436e62d3e8"
           },
           {
             "label": "Custom",
             "description": "You can custom-build a character and their powers, but it costs a flat [color=gold]Boon[/color] to do so. You can choose to make three Sidekick-level characters as a team if you want. You will make selections for Power Level, Origin Story, Origin Modifiers, and Powers, paying for any [color=gold]Boons[/color] that you take, and ignoring any [color=red]Banes[/color] that you select \n\nIn other words, you have to pay for your ally's [color=gold]Boons[/color] with your own [color=red]Banes[/color]",
             "id": "alliesOtherCustom",
-            "prerequisites": "!originStoryYourTeamLoneWolf"
+            "prerequisites": "!originStoryYourTeamLoneWolf",
+            "image": "https://worldofblackheroes.com/wp-content/uploads/2020/08/HoodedJustice.jpg"
           }
         ],
         "subcategories": [],
@@ -2744,25 +2728,29 @@
             "label": "Contacts",
             "description": "You have several non-powered contacts, whether in the police, local criminals, politics, or research groups. They can help you out with various logistics or research, but won't be much help if it comes to a fight. ",
             "id": "boonsAndBanesBoonsContacts",
-            "borderColor": "gold"
+            "borderColor": "gold",
+            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fstatic.wikia.nocookie.net%2Fmarvelfanon%2Fimages%2Fb%2Fbd%2FKingpin.jpg%2Frevision%2Flatest%3Fcb%3D20131026030426%26path-prefix%3Des&f=1&nofb=1&ipt=63ff900d53f26c365adecb5928f4b0136e613f04f82453c81f68c54fe55949da"
           },
           {
             "label": "Fan Club",
             "description": "For whatever reason, your superpowered persona will prove toe be fairly popular, and thus, licensed merchandise of you will be fairly profitable. \n\nYou will be able to make quite a bit of money from licensing your image. ",
             "id": "boonsAndBanesBoonsFanClub",
-            "borderColor": "gold"
+            "borderColor": "gold",
+            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fcomicnewbies.com%2Fwp-content%2Fuploads%2F2020%2F07%2Fthe-homelander-the-boys-47.jpg&f=1&nofb=1&ipt=01666d9caee4098c875b20d1bc132a382f1e6cf063aa86bab825f83fef18f32b"
           },
           {
             "label": "Identities",
             "description": "You have been set up with a couple of cover identities that should stand up to all but the tightest scrutiny. This will not protect you from slipping on your own, but as long as you make the effort, you should be able to keep them separate. ",
             "id": "boonsAndBanesBoonsIdentities",
-            "borderColor": "gold"
+            "borderColor": "gold",
+            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fi.pinimg.com%2F736x%2F70%2F41%2Ff5%2F7041f537ff236c414a41dee7a92d278b.jpg&f=1&nofb=1&ipt=4889d7a3b1eb292c47d4a50a4152f1fac46e22e38d64bed1a5fbd7197d7f8bf7"
           },
           {
             "label": "Perfect Match",
             "description": "Simply put, you will find your perfect love. Someone who completes you in every way. It can take the form of one of your allies, or someone else that you will meet, but you are guaranteed to come across them and hit it off. It will be up to you to not neglect them and drive them away from there, however.",
             "id": "boonsAndBanesBoonsPerfectMatch",
-            "borderColor": "gold"
+            "borderColor": "gold",
+            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fstatic1.srcdn.com%2Fwordpress%2Fwp-content%2Fuploads%2F2018%2F10%2FThe-Flash-Barry-Allen-and-Iris-West-from-The-Flash-57.jpg&f=1&nofb=1&ipt=e183f783903c34b9db0b6baaa2dc35c3cf595616fac174ecc307015e12efb678"
           },
           {
             "label": "Wealthy",
@@ -2776,7 +2764,8 @@
                 }
               }
             ],
-            "borderColor": "gold"
+            "borderColor": "gold",
+            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fstatic1.srcdn.com%2Fwordpress%2Fwp-content%2Fuploads%2F2022%2F09%2FBruce-Wayne-Gotham.jpg&f=1&nofb=1&ipt=b335683c6a741442f1e57f8c0d542845868276cf532033772d3cfd75cd2a21bf"
           }
         ],
         "subcategories": [],
@@ -2800,31 +2789,36 @@
             "label": "Allergy",
             "description": "There is some fairly rare substance (like gold or LSD) that, when you come in direct contact with it, blocks your powers and renders you physically weak. If you do not have powers, then it just functions as a really, really bad allergy. You can have this be a semi-common substance (such as lead or gluten) and you will gain a feeling when some of that substance is nearby. ",
             "id": "boonsAndBanesBanesAllergy",
-            "borderColor": "red"
+            "borderColor": "red",
+            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fstatic1.srcdn.com%2Fwordpress%2Fwp-content%2Fuploads%2F2022%2F12%2Fsuperman-crushes-kryptonite.jpg&f=1&nofb=1&ipt=b91ea063eee1ec22af6281faeac7cd26c3645532bb99de8c1f31b09fac298ba6"
           },
           {
             "label": "Bad Rep",
             "description": "People around you simply do not trust you and will be quick to think the worst of you. This primarily affects your personal relationships, meaning that allies that you have will be willing to work with you, but won't like you much on a personal level. Taking this with *Lone Wolf* will lead to a fairly lonely existence. ",
             "id": "boonsAndBanesBanesBadRep",
-            "borderColor": "red"
+            "borderColor": "red",
+            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fimg-s-msn-com.akamaized.net%2Ftenant%2Famp%2Fentityid%2FAA25y6GD.img%3Fw%3D800%26h%3D415%26q%3D60%26m%3D2%26f%3Djpg&f=1&nofb=1&ipt=32a8600b9ab8affb4608fbf80d7dfb88001747d19a0346d2f101010791082fcc"
           },
           {
             "label": "Conspiracy",
             "description": "Whether it's a government black-ops group, a shadowy group of business moguls, a demented cult, or some other group, there is some secret society that wants to use you in some way. Whether it is as a bloody sacrifice or a pawn in their schemes, they absolutely do not have your best interests in mind, and will stop at almost nothing in their attempts to control you.",
             "id": "boonsAndBanesBanesConspiracy",
-            "borderColor": "red"
+            "borderColor": "red",
+            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fdossierinteractivo.com%2Fwp-content%2Fuploads%2F2022%2F01%2FAmanda-Waller-portada-1020x600.jpg&f=1&nofb=1&ipt=ab30bf53a600fa5a8ec2a43bcb0b93c1f971717dfce3bd6f450aa129dbb44d29"
           },
           {
             "label": "Cycle",
             "description": "Your powers and skills operate on a cycle. This cycle can range from a day to a month in length, but your abilities will only be at their peak for a short period during this cycle, before diminishing down to the point of powerlessness for a similar period, and then gaining in strength once again. ",
             "id": "boonsAndBanesBanesCycle",
-            "borderColor": "red"
+            "borderColor": "red",
+            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fcomicbook.com%2Fwp-content%2Fuploads%2Fsites%2F4%2F2026%2F06%2FMixCollage-08-Jun-2026-11-29-AM-8971.jpg%3Fw%3D1024&f=1&nofb=1&ipt=d4be2abccd022ec54e14df54f0c6cfebd9e70af947bc2a426d28eca1c80f31d1"
           },
           {
             "label": "Plot Magnet",
             "description": "Simply put, you will never have a break from the plot. Any attempt to settle down or take a vacation will result in some super-powered shenanigans occurring in your general vicinity which will suck you up in them. These issues will only occasionally actually pose a danger to you, but it will be exhausting to keep bouncing around between them.",
             "id": "boonsAndBanesBanesPlotMagnet",
-            "borderColor": "red"
+            "borderColor": "red",
+            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fwallpapers.com%2Fimages%2Fhd%2Fspider-carnage-1920-x-1080-tvkzc0vkkliopkfk.jpg&f=1&nofb=1&ipt=04a56012c4880fff3f10f52b9f375843daf3a640b0554fff9d90d40ea644153a"
           }
         ],
         "subcategories": [],
