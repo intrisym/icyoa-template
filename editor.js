@@ -1606,6 +1606,7 @@
         })).entry;
         if (!pointsEntry.values) pointsEntry.values = {};
         if (!Array.isArray(pointsEntry.allowNegative)) pointsEntry.allowNegative = [];
+        if (!pointsEntry.pointCategories || typeof pointsEntry.pointCategories !== "object" || Array.isArray(pointsEntry.pointCategories)) pointsEntry.pointCategories = {};
         if (!pointsEntry.attributeRanges) pointsEntry.attributeRanges = {};
         fragment.appendChild(renderPointsSection(pointsEntry));
 
@@ -1650,6 +1651,8 @@
             container,
             body
         } = createSectionContainer("Point Pools");
+        const pointCategories = normalizePointCategories(pointsEntry);
+        const categoryNames = Object.keys(pointCategories);
 
         const valuesContainer = document.createElement("div");
         valuesContainer.className = "list-stack";
@@ -1666,6 +1669,19 @@
             const valueInput = document.createElement("input");
             valueInput.type = "number";
             valueInput.value = typeof amount === "number" ? amount : 0;
+
+            const categorySelect = document.createElement("select");
+            const noneOpt = document.createElement("option");
+            noneOpt.value = "";
+            noneOpt.textContent = "Uncategorized";
+            categorySelect.appendChild(noneOpt);
+            categoryNames.forEach(category => {
+                const opt = document.createElement("option");
+                opt.value = category;
+                opt.textContent = category;
+                categorySelect.appendChild(opt);
+            });
+            categorySelect.value = getAssignedPointCategory(pointsEntry, currency);
 
             const removeBtn = document.createElement("button");
             removeBtn.type = "button";
@@ -1693,6 +1709,10 @@
                 delete pointsEntry.values[currency];
                 pointsEntry.values[newName] = existingValue;
                 renamePointTypeReferences(currency, newName);
+                Object.values(pointCategories).forEach(types => {
+                    const idx = types.indexOf(currency);
+                    if (idx !== -1) types[idx] = newName;
+                });
 
                 const allowIdx = pointsEntry.allowNegative.indexOf(currency);
                 if (allowIdx !== -1) {
@@ -1706,13 +1726,33 @@
             removeBtn.addEventListener("click", () => {
                 delete pointsEntry.values[currency];
                 pointsEntry.allowNegative = pointsEntry.allowNegative.filter(t => t !== currency);
+                Object.values(pointCategories).forEach(types => {
+                    const idx = types.indexOf(currency);
+                    if (idx !== -1) types.splice(idx, 1);
+                });
+                normalizePointCategories(pointsEntry);
                 renderGlobalSettings();
                 renderCategories();
                 schedulePreviewUpdate();
             });
 
+            categorySelect.addEventListener("change", () => {
+                Object.values(pointCategories).forEach(types => {
+                    const idx = types.indexOf(currency);
+                    if (idx !== -1) types.splice(idx, 1);
+                });
+                if (categorySelect.value) {
+                    if (!Array.isArray(pointCategories[categorySelect.value])) pointCategories[categorySelect.value] = [];
+                    pointCategories[categorySelect.value].push(currency);
+                }
+                normalizePointCategories(pointsEntry);
+                renderGlobalSettings();
+                schedulePreviewUpdate();
+            });
+
             row.appendChild(nameInput);
             row.appendChild(valueInput);
+            row.appendChild(categorySelect);
             row.appendChild(removeBtn);
             valuesContainer.appendChild(row);
         });
@@ -1737,6 +1777,81 @@
 
         body.appendChild(valuesContainer);
         body.appendChild(addCurrencyBtn);
+
+        const categoryHeading = document.createElement("div");
+        categoryHeading.className = "subheading";
+        categoryHeading.textContent = "Point categories";
+        body.appendChild(categoryHeading);
+
+        const categoriesContainer = document.createElement("div");
+        categoriesContainer.className = "list-stack";
+        categoryNames.forEach(category => {
+            const row = document.createElement("div");
+            row.className = "list-row";
+
+            const nameInput = document.createElement("input");
+            nameInput.type = "text";
+            nameInput.value = category;
+            nameInput.placeholder = "Category name";
+
+            const count = document.createElement("span");
+            count.className = "muted-inline";
+            count.textContent = `${pointCategories[category].length} point type${pointCategories[category].length === 1 ? "" : "s"}`;
+
+            const removeBtn = document.createElement("button");
+            removeBtn.type = "button";
+            removeBtn.className = "button-icon danger";
+            removeBtn.title = "Remove point category";
+            removeBtn.textContent = "✕";
+
+            nameInput.addEventListener("blur", () => {
+                const newName = nameInput.value.trim();
+                if (!newName || newName === category) {
+                    nameInput.value = category;
+                    return;
+                }
+                if (pointCategories.hasOwnProperty(newName)) {
+                    showEditorMessage(`Point category "${newName}" already exists.`, "warning");
+                    nameInput.value = category;
+                    return;
+                }
+                pointCategories[newName] = pointCategories[category];
+                delete pointCategories[category];
+                renderGlobalSettings();
+                schedulePreviewUpdate();
+            });
+
+            removeBtn.addEventListener("click", () => {
+                delete pointCategories[category];
+                renderGlobalSettings();
+                schedulePreviewUpdate();
+            });
+
+            row.appendChild(nameInput);
+            row.appendChild(count);
+            row.appendChild(removeBtn);
+            categoriesContainer.appendChild(row);
+        });
+
+        const addCategoryBtn = document.createElement("button");
+        addCategoryBtn.type = "button";
+        addCategoryBtn.className = "button-subtle";
+        addCategoryBtn.textContent = "Add point category";
+        addCategoryBtn.addEventListener("click", () => {
+            let base = "New Category";
+            let suffix = 1;
+            let candidate = base;
+            while (pointCategories.hasOwnProperty(candidate)) {
+                suffix += 1;
+                candidate = `${base} ${suffix}`;
+            }
+            pointCategories[candidate] = [];
+            renderGlobalSettings();
+            schedulePreviewUpdate();
+        });
+
+        body.appendChild(categoriesContainer);
+        body.appendChild(addCategoryBtn);
 
         const negHeading = document.createElement("div");
         negHeading.className = "subheading";
@@ -2304,6 +2419,29 @@
         const pointsEntry = state.data.find(entry => entry.type === "points");
         const names = Object.keys(pointsEntry?.values || {});
         return names.length ? names : ["Points"];
+    }
+
+    function normalizePointCategories(pointsEntry) {
+        if (!pointsEntry.pointCategories || typeof pointsEntry.pointCategories !== "object" || Array.isArray(pointsEntry.pointCategories)) {
+            pointsEntry.pointCategories = {};
+        }
+        const validTypes = new Set(Object.keys(pointsEntry.values || {}));
+        Object.keys(pointsEntry.pointCategories).forEach(category => {
+            const cleanTypes = Array.isArray(pointsEntry.pointCategories[category])
+                ? [...new Set(pointsEntry.pointCategories[category].filter(type => validTypes.has(type)))]
+                : [];
+            if (!String(category || "").trim()) {
+                delete pointsEntry.pointCategories[category];
+            } else {
+                pointsEntry.pointCategories[category] = cleanTypes;
+            }
+        });
+        return pointsEntry.pointCategories;
+    }
+
+    function getAssignedPointCategory(pointsEntry, pointType) {
+        return Object.entries(normalizePointCategories(pointsEntry))
+            .find(([, types]) => types.includes(pointType))?.[0] || "";
     }
 
     function stripFormattingMarkup(text = "") {
@@ -3039,14 +3177,30 @@
                 subCostOptionsLabel.textContent = "Default payment options";
                 const subCostOptionsHint = document.createElement("div");
                 subCostOptionsHint.className = "field-help";
-                subCostOptionsHint.textContent = "Options in this subcategory inherit these payment choices unless they define their own payment options.";
+                subCostOptionsHint.textContent = "Options in this subcategory inherit these payment choices unless they define their own payment options. Enable merging to add these default costs into every option-specific payment choice.";
                 const subCostOptionsContainer = document.createElement("div");
                 subCostOptionsContainer.className = "list-stack";
                 renderCostOptionsEditor(subCostOptionsContainer, subcat, {
                     allowEmpty: true,
                     emptyText: "No default payment options. Options use their own payment options."
                 });
-                subCostOptionsSection.append(subCostOptionsLabel, subCostOptionsHint, subCostOptionsContainer);
+                const mergeDefaultLabel = document.createElement("label");
+                mergeDefaultLabel.className = "checkbox-option";
+                const mergeDefaultCheckbox = document.createElement("input");
+                mergeDefaultCheckbox.type = "checkbox";
+                mergeDefaultCheckbox.checked = subcat.mergeDefaultCostOptions === true;
+                mergeDefaultCheckbox.addEventListener("change", () => {
+                    if (mergeDefaultCheckbox.checked) {
+                        subcat.mergeDefaultCostOptions = true;
+                    } else {
+                        delete subcat.mergeDefaultCostOptions;
+                    }
+                    schedulePreviewUpdate();
+                });
+                const mergeDefaultText = document.createElement("span");
+                mergeDefaultText.textContent = "Add these default costs into each option-specific payment choice";
+                mergeDefaultLabel.append(mergeDefaultCheckbox, mergeDefaultText);
+                subCostOptionsSection.append(subCostOptionsLabel, subCostOptionsHint, mergeDefaultLabel, subCostOptionsContainer);
                 subBody.appendChild(subCostOptionsSection);
 
                 const subModifiedCostSection = document.createElement("div");

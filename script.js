@@ -16,6 +16,8 @@ const subcategoriesToAnimate = new Set();
 const attributeSliderValues = {};
 let originalPoints = {};
 let allowNegativeTypes = new Set();
+let pointCategories = {};
+let visiblePointCategories = new Set();
 const dynamicSelections = {};
 const pointAllocationSelections = {};
 let attributeRanges = {}; // Will be updated by dynamic effects
@@ -346,6 +348,8 @@ function resetGlobalState() {
     attributeRanges = {};
     originalAttributeRanges = {};
     allowNegativeTypes = new Set();
+    pointCategories = {};
+    visiblePointCategories = new Set();
 }
 
 function meetsCountRequirement(rawId) {
@@ -442,15 +446,44 @@ function costOptionAvailabilityMet(option, entry, index, costOptions = []) {
     return true;
 }
 
+function costOptionsHaveMeaningfulCost(costOptions = []) {
+    return costOptions.some(entry =>
+        entry?.cost && typeof entry.cost === "object" && Object.keys(entry.cost).length
+        || Array.isArray(entry?.costBySelection) && entry.costBySelection.some(cost => cost && typeof cost === "object" && Object.keys(cost).length)
+    );
+}
+
+function addPointCostMaps(...maps) {
+    const merged = {};
+    maps.forEach(map => {
+        if (!map || typeof map !== "object" || Array.isArray(map)) return;
+        Object.entries(map).forEach(([type, value]) => {
+            merged[type] = (Number(merged[type]) || 0) + (Number(value) || 0);
+        });
+    });
+    return merged;
+}
+
+function getMergedDefaultCostForSelection(costOptions = [], selectionNumber = 1) {
+    return costOptions.reduce((merged, entry) => {
+        const rawCost = getCostOptionCostForSelection(entry, selectionNumber);
+        return addPointCostMaps(merged, rawCost);
+    }, {});
+}
+
+function getMergedDefaultCostForOption(option, selectionNumber = null) {
+    const info = option?.id ? findSubcategoryInfo(option.id) : {};
+    const subcategoryOptions = Array.isArray(info.subcat?.costOptions) ? info.subcat.costOptions : [];
+    if (info.subcat?.mergeDefaultCostOptions !== true || !subcategoryOptions.length) return {};
+    return getMergedDefaultCostForSelection(subcategoryOptions, selectionNumber || getNextSelectionNumber(option));
+}
+
 function getConfiguredCostOptions(option) {
     const info = option?.id ? findSubcategoryInfo(option.id) : {};
     const ownOptions = Array.isArray(option?.costOptions) ? option.costOptions : [];
     const subcategoryOptions = Array.isArray(info.subcat?.costOptions) ? info.subcat.costOptions : [];
     const hasDirectOptionCost = option?.cost && typeof option.cost === "object" && Object.keys(option.cost).length > 0;
-    const hasOwnCostOptions = ownOptions.some(entry =>
-        entry?.cost && typeof entry.cost === "object" && Object.keys(entry.cost).length
-        || Array.isArray(entry?.costBySelection) && entry.costBySelection.some(cost => cost && typeof cost === "object" && Object.keys(cost).length)
-    );
+    const hasOwnCostOptions = costOptionsHaveMeaningfulCost(ownOptions);
     return hasOwnCostOptions ? ownOptions : (hasDirectOptionCost ? [] : subcategoryOptions);
 }
 
@@ -479,6 +512,15 @@ function selectedCostOptionsStillValid(option) {
 function normalizeOptionCostOptions(option, { selectionNumber = null } = {}) {
     const options = getConfiguredCostOptions(option);
     const effectiveSelectionNumber = selectionNumber || getNextSelectionNumber(option);
+    const info = option?.id ? findSubcategoryInfo(option.id) : {};
+    const ownOptions = Array.isArray(option?.costOptions) ? option.costOptions : [];
+    const subcategoryOptions = Array.isArray(info.subcat?.costOptions) ? info.subcat.costOptions : [];
+    const shouldMergeDefaults = costOptionsHaveMeaningfulCost(ownOptions)
+        && info.subcat?.mergeDefaultCostOptions === true
+        && subcategoryOptions.length > 0;
+    const defaultCost = shouldMergeDefaults
+        ? getMergedDefaultCostForSelection(subcategoryOptions, effectiveSelectionNumber)
+        : {};
     return options
         .map((entry, index) => {
             if (!costOptionAvailabilityMet(option, entry, index, options)) return null;
@@ -489,9 +531,10 @@ function normalizeOptionCostOptions(option, { selectionNumber = null } = {}) {
                     ? entry
                         : null);
             if (!rawCost) return null;
+            const cost = shouldMergeDefaults ? addPointCostMaps(defaultCost, rawCost) : { ...rawCost };
             return {
                 index,
-                cost: { ...rawCost }
+                cost
             };
         })
         .filter(Boolean);
@@ -500,14 +543,16 @@ function normalizeOptionCostOptions(option, { selectionNumber = null } = {}) {
 function getOptionBaseCostByChoice(option, costOptionIndex = null, { selectionNumber = null } = {}) {
     const options = normalizeOptionCostOptions(option, { selectionNumber });
     if (!options.length) {
-        return getOptionBaseCost(option);
+        const directCost = getOptionBaseCost(option);
+        return addPointCostMaps(getMergedDefaultCostForOption(option, selectionNumber), directCost);
     }
     if (costOptionIndex === null || costOptionIndex === undefined) {
         return { ...options[0].cost };
     }
     const selected = options.find(entry => entry.index === Number(costOptionIndex));
     if (!selected || Object.keys(selected.cost || {}).length === 0) {
-        return getOptionBaseCost(option);
+        const directCost = getOptionBaseCost(option);
+        return addPointCostMaps(getMergedDefaultCostForOption(option, selectionNumber), directCost);
     }
     return { ...selected.cost };
 }
@@ -1032,6 +1077,7 @@ const initialDescriptionHTML = document.getElementById("cyoaDescription")?.inner
 const initialHeaderImageHTML = document.getElementById("headerImageContainer")?.innerHTML || "";
 const SHARE_CODE_PREFIX_GZIP = "cyoa1:";
 const SHARE_CODE_PREFIX_RAW = "cyoa0:";
+const UNCATEGORIZED_POINT_CATEGORY = "Uncategorized";
 
 function escapeHtml(text = "") {
     return String(text).replace(/[&<>"']/g, (ch) => ({
@@ -1054,6 +1100,34 @@ function isSafeTextColor(value = "") {
 function isSafeTextSize(value = "") {
     const size = String(value).trim();
     return /^[+-]?(\d+(\.\d+)?)(px|em|rem|%)$/i.test(size);
+}
+
+function normalizePointCategories(rawCategories = {}, pointNames = []) {
+    const validPointNames = new Set(pointNames);
+    const normalized = {};
+    if (!rawCategories || typeof rawCategories !== "object" || Array.isArray(rawCategories)) {
+        return normalized;
+    }
+
+    Object.entries(rawCategories).forEach(([category, types]) => {
+        const cleanCategory = String(category || "").trim();
+        if (!cleanCategory || !Array.isArray(types)) return;
+        const uniqueTypes = [];
+        types.forEach(type => {
+            if (typeof type !== "string" || !validPointNames.has(type) || uniqueTypes.includes(type)) return;
+            uniqueTypes.push(type);
+        });
+        if (uniqueTypes.length) normalized[cleanCategory] = uniqueTypes;
+    });
+    return normalized;
+}
+
+function getPointCategoryForType(type) {
+    return Object.entries(pointCategories).find(([, types]) => types.includes(type))?.[0] || UNCATEGORIZED_POINT_CATEGORY;
+}
+
+function getVisiblePointEntries() {
+    return Object.entries(points).filter(([type]) => visiblePointCategories.has(getPointCategoryForType(type)));
 }
 
 function isSafeTextWeight(value = "") {
@@ -2115,6 +2189,13 @@ function applyCyoaData(rawData, {
         points = {
             ...originalPoints
         };
+        pointCategories = normalizePointCategories(pointsEntry?.pointCategories, Object.keys(originalPoints));
+        const assignedPointTypes = new Set(Object.values(pointCategories).flat());
+        const categoryNames = new Set(Object.keys(pointCategories));
+        if (Object.keys(originalPoints).some(type => !assignedPointTypes.has(type))) {
+            categoryNames.add(UNCATEGORIZED_POINT_CATEGORY);
+        }
+        visiblePointCategories = categoryNames;
 
         categories = data.filter(entry => !entry.type || entry.name);
 
@@ -2678,9 +2759,41 @@ function addSelection(option, options = {}) {
  */
 function updatePointsDisplay() {
     const display = document.getElementById("pointsDisplay");
-    display.innerHTML = Object.entries(points)
-        .map(([type, val]) => `<span><strong>${getPointTypeMarkup(type)}:</strong> ${escapeHtml(String(val))}</span>`)
-        .join("");
+    const tracker = document.getElementById("pointsTracker");
+    if (!display) return;
+
+    tracker?.querySelector(".point-category-toggles")?.remove();
+    const categoryNames = Array.from(new Set(Object.keys(points).map(type => getPointCategoryForType(type))));
+    if (tracker && categoryNames.length > 1) {
+        const toggleWrap = document.createElement("div");
+        toggleWrap.className = "point-category-toggles";
+        toggleWrap.setAttribute("aria-label", "Point category filters");
+        categoryNames.forEach(category => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "point-category-toggle";
+            const isVisible = visiblePointCategories.has(category);
+            button.setAttribute("aria-pressed", String(isVisible));
+            button.textContent = category;
+            button.addEventListener("click", () => {
+                if (visiblePointCategories.has(category)) {
+                    visiblePointCategories.delete(category);
+                } else {
+                    visiblePointCategories.add(category);
+                }
+                updatePointsDisplay();
+            });
+            toggleWrap.appendChild(button);
+        });
+        tracker.insertBefore(toggleWrap, display);
+    }
+
+    const visibleEntries = getVisiblePointEntries();
+    display.innerHTML = visibleEntries.length
+        ? visibleEntries
+            .map(([type, val]) => `<span><strong>${getPointTypeMarkup(type)}:</strong> ${escapeHtml(String(val))}</span>`)
+            .join("")
+        : `<span class="points-empty-state">No point categories selected</span>`;
     syncPointsTrackerHeight();
 }
 

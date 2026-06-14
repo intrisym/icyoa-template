@@ -22,6 +22,7 @@ const FEATURE_COVERAGE = [
     "single-select payment options render explicit selection controls",
     "point type renames cascade through all cost maps",
     "point type edits refresh category-level cost controls",
+    "point tracker categories can be edited and toggled by players",
     "visual editor can add, edit, and remove point allocation configs",
     "visual editor exposes repeat payment option availability limits",
     "visual editor can reorder subcategories from collapsed section headers",
@@ -859,15 +860,44 @@ class CyoaEngine {
         return !(Number.isFinite(maxSelections) && maxSelections >= 0 && this.getEffectiveCostOptionSelectionCount(option.id, index) >= maxSelections);
     }
 
+    costOptionsHaveMeaningfulCost(costOptions = []) {
+        return costOptions.some(entry =>
+            entry?.cost && typeof entry.cost === "object" && Object.keys(entry.cost).length
+            || Array.isArray(entry?.costBySelection) && entry.costBySelection.some(cost => cost && typeof cost === "object" && Object.keys(cost).length)
+        );
+    }
+
+    addPointCostMaps(...maps) {
+        const merged = {};
+        maps.forEach(map => {
+            if (!map || typeof map !== "object" || Array.isArray(map)) return;
+            Object.entries(map).forEach(([type, value]) => {
+                merged[type] = (Number(merged[type]) || 0) + (Number(value) || 0);
+            });
+        });
+        return merged;
+    }
+
+    getMergedDefaultCostForSelection(costOptions = [], selectionNumber = 1) {
+        return costOptions.reduce((merged, entry) => {
+            const rawCost = this.getCostOptionCostForSelection(entry, selectionNumber);
+            return this.addPointCostMaps(merged, rawCost);
+        }, {});
+    }
+
+    getMergedDefaultCostForOption(option, selectionNumber = null) {
+        const info = option?.id ? this.findSubcategoryInfo(option.id) : {};
+        const subcategoryOptions = Array.isArray(info.subcat?.costOptions) ? info.subcat.costOptions : [];
+        if (info.subcat?.mergeDefaultCostOptions !== true || !subcategoryOptions.length) return {};
+        return this.getMergedDefaultCostForSelection(subcategoryOptions, selectionNumber || this.getNextSelectionNumber(option));
+    }
+
     configuredCostOptions(option) {
         const info = option?.id ? this.findSubcategoryInfo(option.id) : {};
         const ownOptions = Array.isArray(option?.costOptions) ? option.costOptions : [];
         const subcategoryOptions = Array.isArray(info.subcat?.costOptions) ? info.subcat.costOptions : [];
         const hasDirectOptionCost = option?.cost && typeof option.cost === "object" && Object.keys(option.cost).length > 0;
-        const hasOwnCostOptions = ownOptions.some(entry =>
-            entry?.cost && typeof entry.cost === "object" && Object.keys(entry.cost).length
-            || Array.isArray(entry?.costBySelection) && entry.costBySelection.some(cost => cost && typeof cost === "object" && Object.keys(cost).length)
-        );
+        const hasOwnCostOptions = this.costOptionsHaveMeaningfulCost(ownOptions);
         return hasOwnCostOptions ? ownOptions : (hasDirectOptionCost ? [] : subcategoryOptions);
     }
 
@@ -896,21 +926,34 @@ class CyoaEngine {
     normalizeCostOptions(option, { selectionNumber = null } = {}) {
         const options = this.configuredCostOptions(option);
         const effectiveSelectionNumber = selectionNumber || this.getNextSelectionNumber(option);
+        const info = option?.id ? this.findSubcategoryInfo(option.id) : {};
+        const ownOptions = Array.isArray(option?.costOptions) ? option.costOptions : [];
+        const subcategoryOptions = Array.isArray(info.subcat?.costOptions) ? info.subcat.costOptions : [];
+        const shouldMergeDefaults = this.costOptionsHaveMeaningfulCost(ownOptions)
+            && info.subcat?.mergeDefaultCostOptions === true
+            && subcategoryOptions.length > 0;
+        const defaultCost = shouldMergeDefaults
+            ? this.getMergedDefaultCostForSelection(subcategoryOptions, effectiveSelectionNumber)
+            : {};
         return options
             .map((entry, index) => {
                 if (!this.costOptionAvailabilityMet(option, entry, index, options)) return null;
                 const cost = this.getCostOptionCostForSelection(entry, effectiveSelectionNumber);
-                return cost ? { index, cost: { ...cost } } : null;
+                return cost ? { index, cost: shouldMergeDefaults ? this.addPointCostMaps(defaultCost, cost) : { ...cost } } : null;
             })
             .filter(Boolean);
     }
 
     getBaseCostChoice(option, costOptionIndex = null, { selectionNumber = null } = {}) {
         const choices = this.normalizeCostOptions(option, { selectionNumber });
-        if (!choices.length) return this.getBaseCost(option);
+        if (!choices.length) {
+            return this.addPointCostMaps(this.getMergedDefaultCostForOption(option, selectionNumber), this.getBaseCost(option));
+        }
         if (costOptionIndex === null || costOptionIndex === undefined) return { ...choices[0].cost };
         const selected = choices.find(choice => choice.index === Number(costOptionIndex));
-        if (!selected || Object.keys(selected.cost || {}).length === 0) return this.getBaseCost(option);
+        if (!selected || Object.keys(selected.cost || {}).length === 0) {
+            return this.addPointCostMaps(this.getMergedDefaultCostForOption(option, selectionNumber), this.getBaseCost(option));
+        }
         return { ...selected.cost };
     }
 
@@ -2756,6 +2799,58 @@ test("point type edits should refresh category cost controls", () => {
     });
 });
 
+test("point tracker categories should be editable and player-toggleable", () => {
+    assert(
+        EDITOR_SCRIPT_SOURCE.includes("pointCategories") &&
+            EDITOR_SCRIPT_SOURCE.includes("Add point category") &&
+            EDITOR_SCRIPT_SOURCE.includes("Uncategorized"),
+        "editor should expose point category metadata and assignment controls"
+    );
+    assert(
+        PLAYER_SCRIPT_SOURCE.includes("normalizePointCategories") &&
+            PLAYER_SCRIPT_SOURCE.includes("point-category-toggles") &&
+            PLAYER_SCRIPT_SOURCE.includes("visiblePointCategories") &&
+            PLAYER_SCRIPT_SOURCE.includes('button.setAttribute("aria-pressed"') &&
+            PLAYER_SCRIPT_SOURCE.includes("No point categories selected"),
+        "player should render point category filter buttons backed by category visibility state"
+    );
+
+    const data = [
+        { type: "title", text: "Point Categories" },
+        {
+            type: "points",
+            values: { Points: 10, Tokens: 0, Skills: 0, Equipment: 0 }
+        }
+    ];
+    const pointsEntry = data.find(entry => entry.type === "points");
+    pointsEntry.pointCategories = {
+        Core: ["Points", "Tokens"],
+        Build: ["Skills", "Equipment"]
+    };
+    assert.deepStrictEqual(validateCyoaData("point-categories-valid.json", data).errors, []);
+
+    pointsEntry.pointCategories = {
+        Core: ["Points"],
+        Duplicate: ["Points"]
+    };
+    assert(
+        validateCyoaData("point-categories-duplicate.json", data).errors.some(error =>
+            error.includes('assigns point type "Points" to more than one category')
+        ),
+        "validation should reject assigning one point type to multiple point categories"
+    );
+
+    pointsEntry.pointCategories = {
+        Core: ["Unknown"]
+    };
+    assert(
+        validateCyoaData("point-categories-unknown.json", data).errors.some(error =>
+            error.includes('references unknown point type "Unknown"')
+        ),
+        "validation should reject point categories that reference missing point types"
+    );
+});
+
 test("subcategory inherited cost options should price empty-cost options and repeated picks can count once", () => {
     const engine = CyoaEngine.synthetic();
     assert.deepStrictEqual(engine.effectiveCost("freeDefault"), { Points: 1 });
@@ -2774,6 +2869,7 @@ test("subcategory inherited cost options should price empty-cost options and rep
 
 test("subcategory cost options should be inherited unless an option defines its own choices", () => {
     const engine = CyoaEngine.synthetic();
+    const inheritedCosts = findCategory(engine.data, "Subcategory Controls").subcategories.find(subcat => subcat.name === "Inherited Payment Options");
     assert.deepStrictEqual(engine.effectiveCostChoices("inheritedCostOptions"), [
         { index: 0, cost: { Points: 3 } },
         { index: 1, cost: { Tokens: 2 } }
@@ -2782,6 +2878,25 @@ test("subcategory cost options should be inherited unless an option defines its 
     assert.deepStrictEqual(engine.effectiveCostChoices("overrideCostOptions"), [
         { index: 0, cost: { Points: 5 } }
     ]);
+    const directMergedCost = { id: "directMergedCost", label: "Direct Merged Cost", cost: { Points: 2 } };
+    inheritedCosts.options.push(directMergedCost);
+    inheritedCosts.mergeDefaultCostOptions = true;
+    assertDeepEqual(engine.effectiveCost(directMergedCost), { Points: 5, Tokens: 2 });
+    assert.deepStrictEqual(engine.effectiveCostChoices("overrideCostOptions"), [
+        { index: 0, cost: { Points: 8, Tokens: 2 } }
+    ]);
+    assertDeepEqual(engine.effectiveCost("overrideCostOptions", { costOptionIndex: 0 }), { Points: 8, Tokens: 2 });
+    const overrideOption = engine.option("overrideCostOptions");
+    overrideOption.costOptions.push({ label: "Override Tokens", cost: { Tokens: 1 } });
+    assert.deepStrictEqual(engine.effectiveCostChoices("overrideCostOptions"), [
+        { index: 0, cost: { Points: 8, Tokens: 2 } },
+        { index: 1, cost: { Points: 3, Tokens: 3 } }
+    ]);
+    assert(
+        EDITOR_SCRIPT_SOURCE.includes("mergeDefaultCostOptions") &&
+            EDITOR_SCRIPT_SOURCE.includes("Add these default costs into each option-specific payment choice"),
+        "visual editor should expose a subcategory toggle for adding defaults into option-specific payment choices"
+    );
 
     engine.points.Tokens = 2;
     engine.select("inheritedCostOptions", { costOptionIndex: 1 });
@@ -2840,6 +2955,28 @@ test("Overlord attributes should spend Attribute Points through sliders", () => 
             [attribute]: -1
         });
     });
+});
+
+test("Overlord humanoid race costs should include merged RP default", () => {
+    const data = JSON.parse(fs.readFileSync(path.join(ROOT, "CYOAs", "overlord_cyoa.json"), "utf8"));
+    const engine = new CyoaEngine(data, "overlord_cyoa.json");
+    const race = data.find(entry => entry.name === "Race");
+    const humanoid = race.subcategories.find(subcat => subcat.name === "Humanoid");
+
+    assert.strictEqual(humanoid.mergeDefaultCostOptions, true);
+    assert.deepStrictEqual(engine.effectiveCostChoices("raceHumanoidDeepDwarf"), [
+        {
+            index: 0,
+            cost: {
+                RP: 4,
+                "Martial Level": -5,
+                Vitality: -1,
+                Heat: -50,
+                Cold: 25,
+                Dark: 25
+            }
+        }
+    ]);
 });
 
 test("visual editor should expose add and remove controls for point allocation", () => {

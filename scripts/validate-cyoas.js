@@ -359,6 +359,31 @@ function validateCyoaData(file, data) {
             pushIssue(errors, file, `points.values.${type} must be numeric.`);
         }
     });
+    if (pointsEntry?.pointCategories !== undefined) {
+        if (!pointsEntry.pointCategories || typeof pointsEntry.pointCategories !== "object" || Array.isArray(pointsEntry.pointCategories)) {
+            pushIssue(errors, file, "points.pointCategories must be an object map of category names to point type arrays.");
+        } else {
+            const categorizedPointTypes = new Set();
+            Object.entries(pointsEntry.pointCategories).forEach(([category, types]) => {
+                if (!String(category).trim()) {
+                    pushIssue(errors, file, "points.pointCategories includes an empty category name.");
+                }
+                if (!Array.isArray(types)) {
+                    pushIssue(errors, file, `points.pointCategories.${category} must be an array of point types.`);
+                    return;
+                }
+                types.forEach(type => {
+                    if (typeof type !== "string" || !pointTypes.has(type)) {
+                        pushIssue(errors, file, `points.pointCategories.${category} references unknown point type "${type}".`);
+                    } else if (categorizedPointTypes.has(type)) {
+                        pushIssue(errors, file, `points.pointCategories assigns point type "${type}" to more than one category.`);
+                    } else {
+                        categorizedPointTypes.add(type);
+                    }
+                });
+            });
+        }
+    }
 
     validateThemeSettings(file, data.find(entry => entry.type === "settings"), errors);
 
@@ -411,6 +436,9 @@ function validateCyoaData(file, data) {
     collectSubcategories(data).forEach(({ subcat, path: subcatPath }) => {
         if (subcat.defaultCost !== undefined) {
             pushIssue(errors, file, `${subcatPath}.defaultCost is no longer supported; use costOptions instead.`);
+        }
+        if (subcat.mergeDefaultCostOptions !== undefined && typeof subcat.mergeDefaultCostOptions !== "boolean") {
+            pushIssue(errors, file, `${subcatPath}.mergeDefaultCostOptions must be boolean when present.`);
         }
         validateCostOptions(file, subcatPath, subcat.costOptions, pointTypes, errors, warnings, optionIds);
         validatePointMap(file, `${subcatPath}.discountAmount`, subcat.discountAmount, pointTypes, errors, warnings);
