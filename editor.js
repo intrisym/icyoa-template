@@ -1622,7 +1622,7 @@
 
         const backpackEntry = ensureEntry("backpack", () => ({
             type: "backpack",
-            enabled: false
+            enabled: true
         })).entry;
         fragment.appendChild(renderBackpackSection(backpackEntry));
 
@@ -1867,6 +1867,9 @@
     }
 
     function renderBackpackSection(backpackEntry) {
+        if (backpackEntry.enabled === undefined) {
+            backpackEntry.enabled = true;
+        }
         const {
             container,
             body
@@ -1882,7 +1885,7 @@
 
         const checkbox = document.createElement("input");
         checkbox.type = "checkbox";
-        checkbox.checked = backpackEntry.enabled || false;
+        checkbox.checked = backpackEntry.enabled !== false;
         checkbox.addEventListener("change", () => {
             backpackEntry.enabled = checkbox.checked;
             schedulePreviewUpdate();

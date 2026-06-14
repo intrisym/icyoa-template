@@ -7,6 +7,7 @@ const { validateCyoaData } = require("./validate-cyoas");
 const ROOT = path.join(__dirname, "..");
 const PLAYER_SCRIPT_SOURCE = fs.readFileSync(path.join(ROOT, "script.js"), "utf8");
 const EDITOR_SCRIPT_SOURCE = fs.readFileSync(path.join(ROOT, "editor.js"), "utf8");
+const SERVER_SCRIPT_SOURCE = fs.readFileSync(path.join(ROOT, "server.js"), "utf8");
 
 const FEATURE_COVERAGE = [
     "synthetic CYOA data computes selectable state and effective costs",
@@ -2695,6 +2696,26 @@ test("backpack labels should include repeated selection counts", () => {
     );
 });
 
+test("visual editor should enable backpack by default for new CYOAs", () => {
+    assert(
+        EDITOR_SCRIPT_SOURCE.includes('type: "backpack",\n            enabled: true'),
+        "editor should create missing backpack entries as enabled by default"
+    );
+    assert(
+        EDITOR_SCRIPT_SOURCE.includes("if (backpackEntry.enabled === undefined)") &&
+            EDITOR_SCRIPT_SOURCE.includes("checkbox.checked = backpackEntry.enabled !== false"),
+        "editor should treat missing backpack enabled flags as enabled while preserving explicit false"
+    );
+    assert(
+        SERVER_SCRIPT_SOURCE.includes('{ "type": "backpack", "enabled": true }'),
+        "server-created CYOA templates should include an enabled backpack entry"
+    );
+    assert(
+        PLAYER_SCRIPT_SOURCE.includes("backpackEnabled = backpackEntry ? backpackEntry.enabled !== false : false;"),
+        "player should treat backpack entries without an enabled flag as enabled"
+    );
+});
+
 test("point type renames should update every referenced cost map", () => {
     const data = CyoaEngine.synthetic().data;
     const core = findCategory(data, "Core");
@@ -2796,6 +2817,29 @@ test("point allocation controls should render as sliders instead of number boxes
     assert(source.includes("updateDisplayedAllocation()"), "point allocation sliders should update displayed values in place while dragging");
     assert(!source.includes("renderAccordion();"), "point allocation sliders should not re-render the accordion on each input event");
     assert(!source.includes('input.type = "number"'), "point allocation controls should not render number input boxes");
+});
+
+test("Overlord attributes should spend Attribute Points through sliders", () => {
+    const data = JSON.parse(fs.readFileSync(path.join(ROOT, "CYOAs", "overlord_cyoa.json"), "utf8"));
+    const pointsEntry = data.find(entry => entry.type === "points");
+    const intro = data.find(entry => entry.name === "Intro");
+    const attributes = intro.subcategories.find(subcat => subcat.name === "Attributes");
+    const expectedAttributes = ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"];
+
+    expectedAttributes.forEach(attribute => {
+        assert.deepStrictEqual(pointsEntry.attributeRanges[attribute], { min: 0, max: 40 });
+        assert.strictEqual(pointsEntry.values[attribute], 0);
+
+        const option = attributes.options.find(entry => entry.label === attribute);
+        assert(option, `Overlord should define ${attribute} attribute option`);
+        assert.strictEqual(option.inputType, "slider", `${attribute} should use a slider`);
+        assert.strictEqual(option.min, 0, `${attribute} slider should start at 0`);
+        assert.strictEqual(option.max, 40, `${attribute} slider should cap at 40`);
+        assert.deepStrictEqual(option.costPerPoint, {
+            "Attribute Points": 1,
+            [attribute]: -1
+        });
+    });
 });
 
 test("visual editor should expose add and remove controls for point allocation", () => {

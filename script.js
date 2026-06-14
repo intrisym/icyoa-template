@@ -2124,7 +2124,7 @@ function applyCyoaData(rawData, {
 
         // Handle backpack feature
         const backpackEntry = data.find(entry => entry.type === "backpack");
-        backpackEnabled = backpackEntry?.enabled || false;
+        backpackEnabled = backpackEntry ? backpackEntry.enabled !== false : false;
         const backpackBtn = document.getElementById("backpackBtn");
         if (backpackBtn) {
             backpackBtn.style.display = backpackEnabled ? "inline-block" : "none";

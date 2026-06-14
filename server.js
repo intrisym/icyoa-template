@@ -175,7 +175,9 @@ async function handleCreateCyoa(req, res) {
         const template = [
             { "type": "title", "text": title || "New CYOA" },
             { "type": "description", "text": "A new adventure begins." },
-            { "type": "points", "values": { "Points": 100 }, "allowNegative": [] }
+            { "type": "points", "values": { "Points": 100 }, "allowNegative": [] },
+            { "type": "settings", "themeMode": "toggle" },
+            { "type": "backpack", "enabled": true }
         ];
 
         await fsp.writeFile(filePath, JSON.stringify(template, null, 2), "utf8");
