@@ -18,6 +18,7 @@ const FEATURE_COVERAGE = [
     "Superpowered World allies can be selected as allies or bitter enemies",
     "Superpowered World skill mastery upgrades require base skill purchases",
     "user-controlled fixed point grants split across multiple point types with sliders",
+    "selected options can apply live multipliers to slider-backed attributes",
     "standalone points display is hidden when selectable cost options are shown",
     "single-select payment options render explicit selection controls",
     "point type renames cascade through all cost maps",
@@ -1029,6 +1030,43 @@ class CyoaEngine {
         return result;
     }
 
+    setAttributeSlider(attribute, value) {
+        this.attributeSliderValues[attribute] = Number(value) || 0;
+        this.applyAttributeEffects();
+    }
+
+    getAttributeBaseValue(attribute) {
+        const sliderValue = Number(this.attributeSliderValues[attribute]);
+        if (Number.isFinite(sliderValue)) return sliderValue;
+        return Number(this.pointsEntry.values?.[attribute]) || 0;
+    }
+
+    resetSliderAttributePointValues() {
+        Object.keys(this.pointsEntry.attributeRanges || {}).forEach(attribute => {
+            if (Object.prototype.hasOwnProperty.call(this.points, attribute)) {
+                this.points[attribute] = this.getAttributeBaseValue(attribute);
+            }
+        });
+    }
+
+    applyAttributeEffects() {
+        this.resetSliderAttributePointValues();
+        Object.entries(this.selectedOptions).forEach(([optionId, count]) => {
+            if (!count) return;
+            const option = this.optionMap.get(optionId);
+            const effects = Array.isArray(option?.attributeEffects) ? option.attributeEffects : [];
+            effects.forEach(effect => {
+                if (!effect || effect.type !== "multiply") return;
+                const attribute = String(effect.attribute || "").trim();
+                const multiplier = Number(effect.multiplier);
+                if (!attribute || !Number.isFinite(multiplier)) return;
+                const currentValue = Number(this.points[attribute]);
+                const baseValue = Number.isFinite(currentValue) ? currentValue : this.getAttributeBaseValue(attribute);
+                this.points[attribute] = baseValue * multiplier;
+            });
+        });
+    }
+
     getModifiedCostRules(entity) {
         if (!entity || typeof entity !== "object") return [];
         if (Array.isArray(entity.modifiedCosts)) return entity.modifiedCosts;
@@ -1665,6 +1703,7 @@ class CyoaEngine {
         }
         this.applyAutoGrants(option);
         this.removeOptionsWithUnmetPrerequisites();
+        this.applyAttributeEffects();
         return true;
     }
 
@@ -1694,6 +1733,7 @@ class CyoaEngine {
         if (historyIndex >= 0) this.selectionHistory.splice(historyIndex, 1);
         this.removeAutoGrantsFromSource(option.id);
         this.removeOptionsWithUnmetPrerequisites();
+        this.applyAttributeEffects();
         return true;
     }
 
@@ -2968,7 +3008,7 @@ test("Overlord humanoid race costs should include merged RP default", () => {
         {
             index: 0,
             cost: {
-                RP: 4,
+                RP: 1,
                 "Martial Level": -5,
                 Vitality: -1,
                 Heat: -50,
@@ -2977,6 +3017,30 @@ test("Overlord humanoid race costs should include merged RP default", () => {
             }
         }
     ]);
+});
+
+test("Overlord Giantkin should double live Strength slider value", () => {
+    const data = JSON.parse(fs.readFileSync(path.join(ROOT, "CYOAs", "overlord_cyoa.json"), "utf8"));
+    const engine = new CyoaEngine(data, "overlord_cyoa.json");
+    const giantkin = engine.option("raceDemiHumanoidsGiantkin");
+
+    assert.deepStrictEqual(giantkin.attributeEffects, [
+        { type: "multiply", attribute: "Strength", multiplier: 2 }
+    ]);
+    assert(
+        EDITOR_SCRIPT_SOURCE.includes("renderAttributeEffectsEditor") &&
+            EDITOR_SCRIPT_SOURCE.includes("Add attribute effect"),
+        "visual editor should expose attribute effect controls"
+    );
+
+    engine.setAttributeSlider("Strength", 10);
+    assert.strictEqual(engine.points.Strength, 10);
+    engine.select("raceDemiHumanoidsGiantkin");
+    assert.strictEqual(engine.points.Strength, 20);
+    engine.setAttributeSlider("Strength", 15);
+    assert.strictEqual(engine.points.Strength, 30);
+    engine.remove("raceDemiHumanoidsGiantkin", { skipCostModifierAffectedRemoval: true });
+    assert.strictEqual(engine.points.Strength, 15);
 });
 
 test("visual editor should expose add and remove controls for point allocation", () => {

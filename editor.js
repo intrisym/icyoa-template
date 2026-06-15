@@ -1,6 +1,6 @@
 (function () {
     const CORE_TYPES_ORDER = ["title", "description", "headerImage", "points", "settings"];
-    const BASE_OPTION_KEYS = new Set(["id", "label", "description", "image", "inputType", "inputLabel", "cost", "costOptions", "pointAllocation", "maxSelections", "countsAsOneSelection", "bypassSubcategoryMaxSelections", "prerequisites", "conflictsWith", "autoGrants", "modifiedCosts", "discounts", "discountGrants", "borderColor", "darkBorderColor"]);
+    const BASE_OPTION_KEYS = new Set(["id", "label", "description", "image", "inputType", "inputLabel", "cost", "costOptions", "pointAllocation", "attributeEffects", "maxSelections", "countsAsOneSelection", "bypassSubcategoryMaxSelections", "prerequisites", "conflictsWith", "autoGrants", "modifiedCosts", "discounts", "discountGrants", "borderColor", "darkBorderColor"]);
 
     const state = {
         data: [],
@@ -3738,6 +3738,19 @@
             pointAllocationSection.append(pointAllocationLabel, pointAllocationHint, pointAllocationContainer);
             body.appendChild(pointAllocationSection);
 
+            const attributeEffectsSection = document.createElement("div");
+            attributeEffectsSection.className = "field";
+            const attributeEffectsLabel = document.createElement("label");
+            attributeEffectsLabel.textContent = "Attribute effects";
+            const attributeEffectsHint = document.createElement("div");
+            attributeEffectsHint.className = "field-help";
+            attributeEffectsHint.textContent = "Optional. Apply live effects to slider-backed attributes when this option is selected.";
+            const attributeEffectsContainer = document.createElement("div");
+            attributeEffectsContainer.className = "list-stack";
+            renderAttributeEffectsEditor(attributeEffectsContainer, option);
+            attributeEffectsSection.append(attributeEffectsLabel, attributeEffectsHint, attributeEffectsContainer);
+            body.appendChild(attributeEffectsSection);
+
             const prereqSection = document.createElement("div");
             prereqSection.className = "field";
             const prereqLabel = document.createElement("label");
@@ -4768,6 +4781,108 @@
 
         actions.append(addTypeBtn, removeAllocationBtn);
         container.appendChild(actions);
+    }
+
+    function getAttributeTypeNames() {
+        const pointsEntry = state.data.find(entry => entry.type === "points");
+        const rangeNames = Object.keys(pointsEntry?.attributeRanges || {});
+        return rangeNames.length ? rangeNames : getPointTypeNames();
+    }
+
+    function normalizeAttributeEffects(option) {
+        if (!Array.isArray(option.attributeEffects)) return [];
+        option.attributeEffects = option.attributeEffects
+            .map(effect => ({
+                type: "multiply",
+                attribute: String(effect?.attribute || "").trim(),
+                multiplier: Number(effect?.multiplier)
+            }))
+            .filter(effect => effect.attribute && Number.isFinite(effect.multiplier));
+        if (!option.attributeEffects.length) delete option.attributeEffects;
+        return option.attributeEffects || [];
+    }
+
+    function renderAttributeEffectsEditor(container, option) {
+        container.innerHTML = "";
+        const attributes = getAttributeTypeNames();
+        const effects = normalizeAttributeEffects(option);
+
+        if (!effects.length) {
+            const empty = document.createElement("div");
+            empty.className = "field-note";
+            empty.textContent = "No attribute effects configured.";
+            container.appendChild(empty);
+        }
+
+        effects.forEach((effect, index) => {
+            const row = document.createElement("div");
+            row.className = "cost-row";
+
+            const typeSelect = document.createElement("select");
+            const multiplyOpt = document.createElement("option");
+            multiplyOpt.value = "multiply";
+            multiplyOpt.textContent = "Multiply";
+            typeSelect.appendChild(multiplyOpt);
+            typeSelect.value = "multiply";
+
+            const attributeSelect = document.createElement("select");
+            const availableAttributes = attributes.includes(effect.attribute)
+                ? attributes
+                : [effect.attribute, ...attributes].filter(Boolean);
+            availableAttributes.forEach(attribute => {
+                const opt = document.createElement("option");
+                opt.value = attribute;
+                opt.textContent = getPointTypeDisplayName(attribute);
+                attributeSelect.appendChild(opt);
+            });
+            attributeSelect.value = effect.attribute;
+            attributeSelect.addEventListener("change", () => {
+                effect.attribute = attributeSelect.value;
+                schedulePreviewUpdate();
+            });
+
+            const multiplierInput = document.createElement("input");
+            multiplierInput.type = "number";
+            multiplierInput.min = "0";
+            multiplierInput.step = "0.1";
+            multiplierInput.value = String(effect.multiplier);
+            multiplierInput.addEventListener("input", () => {
+                effect.multiplier = Number(multiplierInput.value) || 1;
+                schedulePreviewUpdate();
+            });
+
+            const removeBtn = document.createElement("button");
+            removeBtn.type = "button";
+            removeBtn.className = "button-icon danger";
+            removeBtn.title = "Remove attribute effect";
+            removeBtn.textContent = "✕";
+            removeBtn.addEventListener("click", () => {
+                option.attributeEffects.splice(index, 1);
+                normalizeAttributeEffects(option);
+                renderAttributeEffectsEditor(container, option);
+                schedulePreviewUpdate();
+            });
+
+            row.append(typeSelect, attributeSelect, multiplierInput, removeBtn);
+            container.appendChild(row);
+        });
+
+        const addBtn = document.createElement("button");
+        addBtn.type = "button";
+        addBtn.className = "button-subtle";
+        addBtn.textContent = "Add attribute effect";
+        addBtn.disabled = attributes.length === 0;
+        addBtn.addEventListener("click", () => {
+            if (!Array.isArray(option.attributeEffects)) option.attributeEffects = [];
+            option.attributeEffects.push({
+                type: "multiply",
+                attribute: attributes[0] || "Strength",
+                multiplier: 2
+            });
+            renderAttributeEffectsEditor(container, option);
+            schedulePreviewUpdate();
+        });
+        container.appendChild(addBtn);
     }
 
     function renderPointMapEditor(container, map, onChange) {

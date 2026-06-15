@@ -616,6 +616,55 @@ function getPointAllocationCost(option) {
     return cost;
 }
 
+function getAllOptions() {
+    const options = [];
+    categories.forEach(cat => {
+        options.push(...(cat.options || []));
+        walkSubcategoryTree(cat.subcategories || [], subcat => {
+            options.push(...(subcat.options || []));
+        });
+    });
+    return options;
+}
+
+function getAttributeBaseValue(attribute) {
+    const directValue = Number(attributeSliderValues[attribute]);
+    if (Number.isFinite(directValue)) return directValue;
+    const sliderOption = getAllOptions().find(option => {
+        if (option?.inputType !== "slider") return false;
+        const { attributeType } = getSliderTypes(option.costPerPoint || {});
+        return attributeType === attribute;
+    });
+    const optionValue = Number(sliderOption ? attributeSliderValues[sliderOption.id] : undefined);
+    if (Number.isFinite(optionValue)) return optionValue;
+    return Number(originalPoints[attribute]) || 0;
+}
+
+function resetSliderAttributePointValues() {
+    Object.keys(originalAttributeRanges || {}).forEach(attribute => {
+        if (points.hasOwnProperty(attribute)) {
+            points[attribute] = getAttributeBaseValue(attribute);
+        }
+    });
+}
+
+function applySelectedAttributeEffects() {
+    Object.entries(selectedOptions).forEach(([optionId, count]) => {
+        if (!count) return;
+        const option = findOptionById(optionId);
+        const effects = Array.isArray(option?.attributeEffects) ? option.attributeEffects : [];
+        effects.forEach(effect => {
+            if (!effect || effect.type !== "multiply") return;
+            const attribute = String(effect.attribute || "").trim();
+            const multiplier = Number(effect.multiplier);
+            if (!attribute || !Number.isFinite(multiplier)) return;
+            const currentValue = Number(points[attribute]);
+            const baseValue = Number.isFinite(currentValue) ? currentValue : getAttributeBaseValue(attribute);
+            points[attribute] = baseValue * multiplier;
+        });
+    });
+}
+
 function mergeCostMaps(...maps) {
     const result = {};
     maps.forEach(map => {
@@ -2549,6 +2598,7 @@ function applyDynamicCosts() {
     // IMPORTANT: Reset attribute ranges to their original defaults first
     // This ensures that previous dynamic caps are removed before new ones are applied.
     attributeRanges = JSON.parse(JSON.stringify(originalAttributeRanges));
+    resetSliderAttributePointValues();
 
     // --- Reset all dynamic resistance/weakness points to their original values before applying new effects ---
     // Find all point types affected by dynamicCost (e.g., Fire, Frost, etc.)
@@ -2667,6 +2717,8 @@ function applyDynamicCosts() {
             }
         });
     });
+
+    applySelectedAttributeEffects();
 }
 
 

@@ -312,6 +312,30 @@ function validatePointAllocation(file, context, allocation, pointTypes, errors) 
     });
 }
 
+function validateAttributeEffects(file, context, effects, pointTypes, errors) {
+    if (effects === undefined) return;
+    if (!Array.isArray(effects)) {
+        pushIssue(errors, file, `${context}.attributeEffects must be an array.`);
+        return;
+    }
+    effects.forEach((effect, index) => {
+        const effectContext = `${context}.attributeEffects[${index}]`;
+        if (!effect || typeof effect !== "object" || Array.isArray(effect)) {
+            pushIssue(errors, file, `${effectContext} must be an object.`);
+            return;
+        }
+        if (effect.type !== "multiply") {
+            pushIssue(errors, file, `${effectContext}.type must be "multiply".`);
+        }
+        if (typeof effect.attribute !== "string" || !pointTypes.has(effect.attribute)) {
+            pushIssue(errors, file, `${effectContext}.attribute references unknown point type "${effect.attribute}".`);
+        }
+        if (!Number.isFinite(Number(effect.multiplier))) {
+            pushIssue(errors, file, `${effectContext}.multiplier must be numeric.`);
+        }
+    });
+}
+
 function validateThemeSettings(file, settings, errors) {
     if (!settings) return;
     const mode = settings.themeMode;
@@ -411,6 +435,7 @@ function validateCyoaData(file, data) {
         validatePointMap(file, `${context}.cost`, option.cost || {}, pointTypes, errors, warnings);
         validateCostOptions(file, context, option.costOptions, pointTypes, errors, warnings, optionIds);
         validatePointAllocation(file, context, option.pointAllocation, pointTypes, errors);
+        validateAttributeEffects(file, context, option.attributeEffects, pointTypes, errors);
         validateOptionalColor(file, `${context}.borderColor`, option.borderColor, errors);
         validateOptionalColor(file, `${context}.darkBorderColor`, option.darkBorderColor, errors);
         validateRequirementExpression(file, `${context}.prerequisites`, option.prerequisites, errors);
