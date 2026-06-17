@@ -18,7 +18,7 @@ const FEATURE_COVERAGE = [
     "Superpowered World allies can be selected as allies or bitter enemies",
     "Superpowered World skill mastery upgrades require base skill purchases",
     "user-controlled fixed point grants split across multiple point types with sliders",
-    "selected options can apply live multipliers to slider-backed attributes",
+    "selected options can apply live caps, bonuses, subtraction, and multipliers to configured point types",
     "standalone points display is hidden when selectable cost options are shown",
     "single-select payment options render explicit selection controls",
     "point type renames cascade through all cost maps",
@@ -171,6 +171,8 @@ function renderBackpackWithPlayerScript(data, selectedOptionsState) {
 
 function runPlayerScriptExportImportHelpers(state) {
     const source = [
+        "function restoreActiveSliderModifierPointValues() {}",
+        "function applyDynamicCosts() {}",
         extractFunctionSource(PLAYER_SCRIPT_SOURCE, "hasOwnEntries"),
         extractFunctionSource(PLAYER_SCRIPT_SOURCE, "buildExportState"),
         extractFunctionSource(PLAYER_SCRIPT_SOURCE, "buildPackedExportState"),
@@ -184,6 +186,7 @@ function runPlayerScriptExportImportHelpers(state) {
         "storyInputs",
         "attributeSliderValues",
         "dynamicSelections",
+        "sliderModifierSelections",
         "pointAllocationSelections",
         "subcategoryDiscountSelections",
         "categoryDiscountSelections",
@@ -199,6 +202,7 @@ function runPlayerScriptExportImportHelpers(state) {
         state.storyInputs || {},
         state.attributeSliderValues || {},
         state.dynamicSelections || {},
+        state.sliderModifierSelections || {},
         state.pointAllocationSelections || {},
         state.subcategoryDiscountSelections || {},
         state.categoryDiscountSelections || {},
@@ -331,6 +335,8 @@ class CyoaEngine {
         this.storyInputs = {};
         this.attributeSliderValues = {};
         this.dynamicSelections = {};
+        this.sliderModifierSelections = {};
+        this.activeSliderModifierPointBaselines = {};
         this.pointAllocationSelections = {};
         this.subcategoryDiscountSelections = {};
         this.categoryDiscountSelections = {};
@@ -1032,38 +1038,120 @@ class CyoaEngine {
 
     setAttributeSlider(attribute, value) {
         this.attributeSliderValues[attribute] = Number(value) || 0;
-        this.applyAttributeEffects();
+        this.applySliderModifiers();
     }
 
-    getAttributeBaseValue(attribute) {
+    getSliderOptionForAttribute(attribute) {
+        for (const option of this.optionMap.values()) {
+            if (option?.inputType !== "slider") continue;
+            const costPerPoint = option.costPerPoint || {};
+            const currencyType = Object.keys(costPerPoint).find(type => Number(costPerPoint[type]) > 0) || "Attribute Points";
+            const attributeType = Object.keys(costPerPoint).find(type => type !== currencyType);
+            if (attributeType === attribute) return option;
+        }
+        return null;
+    }
+
+    getSliderBaseValue(attribute) {
         const sliderValue = Number(this.attributeSliderValues[attribute]);
         if (Number.isFinite(sliderValue)) return sliderValue;
+        const sliderOption = this.getSliderOptionForAttribute(attribute);
+        const optionValue = Number(sliderOption ? this.attributeSliderValues[sliderOption.id] : undefined);
+        if (Number.isFinite(optionValue)) return optionValue;
         return Number(this.pointsEntry.values?.[attribute]) || 0;
     }
 
     resetSliderAttributePointValues() {
         Object.keys(this.pointsEntry.attributeRanges || {}).forEach(attribute => {
             if (Object.prototype.hasOwnProperty.call(this.points, attribute)) {
-                this.points[attribute] = this.getAttributeBaseValue(attribute);
+                this.points[attribute] = this.getSliderBaseValue(attribute);
             }
         });
     }
 
-    applyAttributeEffects() {
+    setSliderBaseValue(attribute, value) {
+        const nextValue = Number(value) || 0;
+        this.attributeSliderValues[attribute] = nextValue;
+        const sliderOption = this.getSliderOptionForAttribute(attribute);
+        if (sliderOption) this.attributeSliderValues[sliderOption.id] = nextValue;
+        if (Object.prototype.hasOwnProperty.call(this.points, attribute)) this.points[attribute] = nextValue;
+    }
+
+    refundSliderDecrease(attribute, oldValue, newValue) {
+        const decrease = Math.max(0, (Number(oldValue) || 0) - (Number(newValue) || 0));
+        if (decrease <= 0) return;
+        const sliderOption = this.getSliderOptionForAttribute(attribute);
+        const costPerPoint = sliderOption?.costPerPoint || {};
+        const currencyType = Object.keys(costPerPoint).find(type => Number(costPerPoint[type]) > 0) || "Attribute Points";
+        const cost = Number(costPerPoint[currencyType]) || 0;
+        if (cost > 0) this.points[currencyType] = (Number(this.points[currencyType]) || 0) + (decrease * cost);
+    }
+
+    normalizeSliderModifiers(option) {
+        const rawEffects = Array.isArray(option?.sliderModifiers)
+            ? option.sliderModifiers
+            : Array.isArray(option?.attributeEffects)
+                ? option.attributeEffects
+                : [];
+        return rawEffects.map(effect => {
+            const type = ["multiply", "cap", "add", "subtract"].includes(effect?.type) ? effect.type : "multiply";
+            return {
+                type,
+                attribute: String(effect?.attribute || "").trim(),
+                selectable: effect?.selectable === true || !String(effect?.attribute || "").trim(),
+                choices: Array.isArray(effect?.choices) ? effect.choices.filter(Boolean) : Object.keys(this.pointsEntry.values || {}),
+                value: type === "multiply" ? Number(effect?.multiplier ?? effect?.value) : Number(effect?.value ?? effect?.multiplier)
+            };
+        }).filter(effect => Number.isFinite(effect.value));
+    }
+
+    restoreActiveSliderModifierPointValues() {
+        Object.entries(this.activeSliderModifierPointBaselines).forEach(([type, baseline]) => {
+            if (baseline?.existed) this.points[type] = baseline.value;
+            else delete this.points[type];
+        });
+        this.activeSliderModifierPointBaselines = {};
+    }
+
+    rememberSliderModifierPointBaseline(type) {
+        if (Object.prototype.hasOwnProperty.call(this.activeSliderModifierPointBaselines, type)) return;
+        this.activeSliderModifierPointBaselines[type] = {
+            existed: Object.prototype.hasOwnProperty.call(this.points, type),
+            value: this.points[type]
+        };
+    }
+
+    applySliderModifiers() {
+        this.restoreActiveSliderModifierPointValues();
         this.resetSliderAttributePointValues();
+        const selectedEffects = [];
         Object.entries(this.selectedOptions).forEach(([optionId, count]) => {
             if (!count) return;
             const option = this.optionMap.get(optionId);
-            const effects = Array.isArray(option?.attributeEffects) ? option.attributeEffects : [];
-            effects.forEach(effect => {
-                if (!effect || effect.type !== "multiply") return;
-                const attribute = String(effect.attribute || "").trim();
-                const multiplier = Number(effect.multiplier);
-                if (!attribute || !Number.isFinite(multiplier)) return;
-                const currentValue = Number(this.points[attribute]);
-                const baseValue = Number.isFinite(currentValue) ? currentValue : this.getAttributeBaseValue(attribute);
-                this.points[attribute] = baseValue * multiplier;
+            this.normalizeSliderModifiers(option).forEach((effect, index) => {
+                const attribute = effect.selectable ? this.sliderModifierSelections[optionId]?.[index] : effect.attribute;
+                if (attribute) selectedEffects.push({ ...effect, attribute });
             });
+        });
+
+        selectedEffects.filter(effect => effect.type === "cap").forEach(effect => {
+            const cap = effect.value;
+            const currentMax = Number(this.pointsEntry.attributeRanges?.[effect.attribute]?.max ?? cap);
+            const nextMax = Number.isFinite(currentMax) ? Math.min(currentMax, cap) : cap;
+            const currentValue = this.getSliderBaseValue(effect.attribute);
+            if (currentValue > nextMax) {
+                this.refundSliderDecrease(effect.attribute, currentValue, nextMax);
+                this.setSliderBaseValue(effect.attribute, nextMax);
+            }
+        });
+
+        this.resetSliderAttributePointValues();
+        selectedEffects.filter(effect => effect.type !== "cap").forEach(effect => {
+            this.rememberSliderModifierPointBaseline(effect.attribute);
+            const currentValue = Number(this.points[effect.attribute]) || 0;
+            if (effect.type === "multiply") this.points[effect.attribute] = currentValue * effect.value;
+            if (effect.type === "add") this.points[effect.attribute] = currentValue + effect.value;
+            if (effect.type === "subtract") this.points[effect.attribute] = currentValue - effect.value;
         });
     }
 
@@ -1663,6 +1751,7 @@ class CyoaEngine {
     select(optionId, { costOptionIndex = null, skipCostModifierAffectedRemoval = false } = {}) {
         const option = this.option(optionId);
         const nextSelectionNumber = (this.selectedOptions[option.id] || 0) + 1;
+        this.restoreActiveSliderModifierPointValues();
         if (!this.pendingAutoGrantSourceId) {
             const confirmed = this.removeSelectionsAffectedByCostModifierChange(option, nextSelectionNumber, {
                 skipCostModifierAffectedRemoval
@@ -1703,13 +1792,14 @@ class CyoaEngine {
         }
         this.applyAutoGrants(option);
         this.removeOptionsWithUnmetPrerequisites();
-        this.applyAttributeEffects();
+        this.applySliderModifiers();
         return true;
     }
 
     remove(optionId, { skipCostModifierAffectedRemoval = false } = {}) {
         const option = this.option(optionId);
         assert(this.selectedOptions[option.id] > 0, `${this.filename}: expected ${optionId} to be selected`);
+        this.restoreActiveSliderModifierPointValues();
         const confirmed = this.removeSelectionsAffectedByCostModifierChange(option, (this.selectedOptions[option.id] || 0) - 1, {
             skipCostModifierAffectedRemoval
         });
@@ -1733,7 +1823,7 @@ class CyoaEngine {
         if (historyIndex >= 0) this.selectionHistory.splice(historyIndex, 1);
         this.removeAutoGrantsFromSource(option.id);
         this.removeOptionsWithUnmetPrerequisites();
-        this.applyAttributeEffects();
+        this.applySliderModifiers();
         return true;
     }
 
@@ -3000,7 +3090,7 @@ test("Overlord attributes should spend Attribute Points through sliders", () => 
 test("Overlord humanoid race costs should include merged RP default", () => {
     const data = JSON.parse(fs.readFileSync(path.join(ROOT, "CYOAs", "overlord_cyoa.json"), "utf8"));
     const engine = new CyoaEngine(data, "overlord_cyoa.json");
-    const race = data.find(entry => entry.name === "Race");
+    const race = engine.data.find(entry => entry.name === "Race");
     const humanoid = race.subcategories.find(subcat => subcat.name === "Humanoid");
 
     assert.strictEqual(humanoid.mergeDefaultCostOptions, true);
@@ -3024,13 +3114,15 @@ test("Overlord Giantkin should double live Strength slider value", () => {
     const engine = new CyoaEngine(data, "overlord_cyoa.json");
     const giantkin = engine.option("raceDemiHumanoidsGiantkin");
 
-    assert.deepStrictEqual(giantkin.attributeEffects, [
-        { type: "multiply", attribute: "Strength", multiplier: 2 }
+    assert.deepStrictEqual(giantkin.sliderModifiers, [
+        { type: "multiply", selectable: false, attribute: "Strength", multiplier: 2 }
     ]);
     assert(
-        EDITOR_SCRIPT_SOURCE.includes("renderAttributeEffectsEditor") &&
-            EDITOR_SCRIPT_SOURCE.includes("Add attribute effect"),
-        "visual editor should expose attribute effect controls"
+        EDITOR_SCRIPT_SOURCE.includes("renderSliderModifiersEditor") &&
+            EDITOR_SCRIPT_SOURCE.includes("Add slider modifier") &&
+            EDITOR_SCRIPT_SOURCE.includes("Set max") &&
+            EDITOR_SCRIPT_SOURCE.includes("Player chooses"),
+        "visual editor should expose generalized slider modifier controls"
     );
 
     engine.setAttributeSlider("Strength", 10);
@@ -3041,6 +3133,68 @@ test("Overlord Giantkin should double live Strength slider value", () => {
     assert.strictEqual(engine.points.Strength, 30);
     engine.remove("raceDemiHumanoidsGiantkin", { skipCostModifierAffectedRemoval: true });
     assert.strictEqual(engine.points.Strength, 15);
+});
+
+test("slider modifiers should cap with refund and add fixed values", () => {
+    const data = JSON.parse(fs.readFileSync(path.join(ROOT, "CYOAs", "overlord_cyoa.json"), "utf8"));
+    const engine = new CyoaEngine(data, "overlord_cyoa.json");
+    const modifierOption = {
+        id: "testSliderModifierOption",
+        label: "Test Slider Modifier Option",
+        sliderModifiers: [
+            { type: "cap", attribute: "Strength", value: 8 },
+            { type: "add", attribute: "Dexterity", value: 8 },
+            { type: "subtract", attribute: "Charisma", value: 3 },
+            { type: "cap", selectable: true, value: 8 },
+            { type: "add", selectable: true, value: 8, choices: ["Wisdom", "Charisma"] },
+            { type: "add", attribute: "RP", value: 5 },
+            { type: "subtract", attribute: "Heat", value: 10 }
+        ]
+    };
+    const race = data.find(entry => entry.name === "Race");
+    race.subcategories[0].options.push(modifierOption);
+    engine.optionMap.set(modifierOption.id, modifierOption);
+    const baseRP = engine.points.RP;
+    const baseHeat = engine.points.Heat;
+
+    engine.points["Attribute Points"] = 8;
+    engine.setAttributeSlider("Strength", 12);
+    engine.setAttributeSlider("Dexterity", 4);
+    engine.setAttributeSlider("Charisma", 7);
+    engine.sliderModifierSelections[modifierOption.id] = [, , , "Constitution", "Wisdom"];
+    engine.setAttributeSlider("Constitution", 10);
+    engine.setAttributeSlider("Wisdom", 3);
+    engine.select(modifierOption.id);
+
+    assert.strictEqual(engine.attributeSliderValues.Strength, 8, "fixed cap should clamp Strength slider");
+    assert.strictEqual(engine.points.Strength, 8, "fixed cap should display capped Strength");
+    assert.strictEqual(engine.points["Attribute Points"], 14, "caps should refund paid points above each cap");
+    assert.strictEqual(engine.points.Dexterity, 12, "fixed add should increase displayed Dexterity");
+    assert.strictEqual(engine.points.Charisma, 4, "fixed subtract should reduce displayed Charisma");
+    assert.strictEqual(engine.attributeSliderValues.Constitution, 8, "selectable cap should clamp chosen Constitution slider");
+    assert.strictEqual(engine.points.Wisdom, 11, "selectable add should increase chosen Wisdom");
+    assert.strictEqual(engine.points.RP, baseRP + 5, "fixed add should increase ordinary point types");
+    assert.strictEqual(engine.points.Heat, baseHeat - 10, "fixed subtract should reduce ordinary point types");
+    engine.remove(modifierOption.id, { skipCostModifierAffectedRemoval: true });
+    assert.strictEqual(engine.points.Dexterity, 4, "removing fixed add should restore modified slider-backed points");
+    assert.strictEqual(engine.points.Charisma, 7, "removing fixed subtract should restore modified slider-backed points");
+    assert.strictEqual(engine.points.Wisdom, 3, "removing selectable add should restore selected point type");
+    assert.strictEqual(engine.points.RP, baseRP, "removing fixed add should restore ordinary point types");
+    assert.strictEqual(engine.points.Heat, baseHeat, "removing fixed subtract should restore ordinary point types");
+    assert.deepStrictEqual(modifierOption.sliderModifiers[4].choices, ["Wisdom", "Charisma"]);
+    assert.deepStrictEqual(
+        engine.normalizeSliderModifiers({ sliderModifiers: [{ type: "add", selectable: true, value: 1 }] })[0].choices,
+        Object.keys(engine.pointsEntry.values),
+        "unrestricted player-choice slider modifiers should default to all configured point types"
+    );
+    assert(
+        EDITOR_SCRIPT_SOURCE.includes("Subtract") &&
+            EDITOR_SCRIPT_SOURCE.includes("effect.choices") &&
+            EDITOR_SCRIPT_SOURCE.includes("return getPointTypeNames();") &&
+            PLAYER_SCRIPT_SOURCE.includes("return Object.keys(originalPoints || {});") &&
+            PLAYER_SCRIPT_SOURCE.includes('effect.type === "subtract"'),
+        "visual editor and player should support subtract modifiers and point-type-based player-choice lists"
+    );
 });
 
 test("visual editor should expose add and remove controls for point allocation", () => {

@@ -1,6 +1,6 @@
 (function () {
     const CORE_TYPES_ORDER = ["title", "description", "headerImage", "points", "settings"];
-    const BASE_OPTION_KEYS = new Set(["id", "label", "description", "image", "inputType", "inputLabel", "cost", "costOptions", "pointAllocation", "attributeEffects", "maxSelections", "countsAsOneSelection", "bypassSubcategoryMaxSelections", "prerequisites", "conflictsWith", "autoGrants", "modifiedCosts", "discounts", "discountGrants", "borderColor", "darkBorderColor"]);
+    const BASE_OPTION_KEYS = new Set(["id", "label", "description", "image", "inputType", "inputLabel", "cost", "costOptions", "pointAllocation", "sliderModifiers", "attributeEffects", "maxSelections", "countsAsOneSelection", "bypassSubcategoryMaxSelections", "prerequisites", "conflictsWith", "autoGrants", "modifiedCosts", "discounts", "discountGrants", "borderColor", "darkBorderColor"]);
 
     const state = {
         data: [],
@@ -3738,18 +3738,18 @@
             pointAllocationSection.append(pointAllocationLabel, pointAllocationHint, pointAllocationContainer);
             body.appendChild(pointAllocationSection);
 
-            const attributeEffectsSection = document.createElement("div");
-            attributeEffectsSection.className = "field";
-            const attributeEffectsLabel = document.createElement("label");
-            attributeEffectsLabel.textContent = "Attribute effects";
-            const attributeEffectsHint = document.createElement("div");
-            attributeEffectsHint.className = "field-help";
-            attributeEffectsHint.textContent = "Optional. Apply live effects to slider-backed attributes when this option is selected.";
-            const attributeEffectsContainer = document.createElement("div");
-            attributeEffectsContainer.className = "list-stack";
-            renderAttributeEffectsEditor(attributeEffectsContainer, option);
-            attributeEffectsSection.append(attributeEffectsLabel, attributeEffectsHint, attributeEffectsContainer);
-            body.appendChild(attributeEffectsSection);
+            const sliderModifiersSection = document.createElement("div");
+            sliderModifiersSection.className = "field";
+            const sliderModifiersLabel = document.createElement("label");
+            sliderModifiersLabel.textContent = "Slider modifiers";
+            const sliderModifiersHint = document.createElement("div");
+            sliderModifiersHint.className = "field-help";
+            sliderModifiersHint.textContent = "Optional. Modify slider-backed values while this option is selected.";
+            const sliderModifiersContainer = document.createElement("div");
+            sliderModifiersContainer.className = "list-stack";
+            renderSliderModifiersEditor(sliderModifiersContainer, option);
+            sliderModifiersSection.append(sliderModifiersLabel, sliderModifiersHint, sliderModifiersContainer);
+            body.appendChild(sliderModifiersSection);
 
             const prereqSection = document.createElement("div");
             prereqSection.className = "field";
@@ -4783,34 +4783,61 @@
         container.appendChild(actions);
     }
 
-    function getAttributeTypeNames() {
-        const pointsEntry = state.data.find(entry => entry.type === "points");
-        const rangeNames = Object.keys(pointsEntry?.attributeRanges || {});
-        return rangeNames.length ? rangeNames : getPointTypeNames();
+    function getSliderModifierTargetNames() {
+        return getPointTypeNames();
     }
 
-    function normalizeAttributeEffects(option) {
-        if (!Array.isArray(option.attributeEffects)) return [];
-        option.attributeEffects = option.attributeEffects
-            .map(effect => ({
-                type: "multiply",
-                attribute: String(effect?.attribute || "").trim(),
-                multiplier: Number(effect?.multiplier)
-            }))
-            .filter(effect => effect.attribute && Number.isFinite(effect.multiplier));
-        if (!option.attributeEffects.length) delete option.attributeEffects;
-        return option.attributeEffects || [];
+    function normalizeSliderModifiersForEditor(option) {
+        const raw = Array.isArray(option.sliderModifiers)
+            ? option.sliderModifiers
+            : Array.isArray(option.attributeEffects)
+                ? option.attributeEffects
+                : [];
+        const normalized = raw
+            .map(effect => {
+                const type = ["multiply", "cap", "add", "subtract"].includes(effect?.type) ? effect.type : "multiply";
+                const value = type === "multiply" ? Number(effect?.multiplier ?? effect?.value) : Number(effect?.value ?? effect?.multiplier);
+                const choices = Array.isArray(effect?.choices)
+                    ? [...new Set(effect.choices.map(choice => String(choice || "").trim()).filter(Boolean))]
+                    : [];
+                return {
+                    type,
+                    attribute: String(effect?.attribute || "").trim(),
+                    selectable: effect?.selectable === true || !String(effect?.attribute || "").trim(),
+                    choices,
+                    value: Number.isFinite(value) ? value : (type === "multiply" ? 2 : 8)
+                };
+            })
+            .filter(effect => effect.attribute || effect.selectable);
+        if (normalized.length) {
+            option.sliderModifiers = normalized.map(effect => {
+                const saved = {
+                    type: effect.type,
+                    selectable: effect.selectable === true
+                };
+                if (!effect.selectable) saved.attribute = effect.attribute;
+                if (effect.selectable && Array.isArray(effect.choices) && effect.choices.length) saved.choices = effect.choices;
+                if (effect.type === "multiply") saved.multiplier = effect.value;
+                else saved.value = effect.value;
+                return saved;
+            });
+            delete option.attributeEffects;
+        } else {
+            delete option.sliderModifiers;
+            delete option.attributeEffects;
+        }
+        return option.sliderModifiers || [];
     }
 
-    function renderAttributeEffectsEditor(container, option) {
+    function renderSliderModifiersEditor(container, option) {
         container.innerHTML = "";
-        const attributes = getAttributeTypeNames();
-        const effects = normalizeAttributeEffects(option);
+        const targets = getSliderModifierTargetNames();
+        const effects = normalizeSliderModifiersForEditor(option);
 
         if (!effects.length) {
             const empty = document.createElement("div");
             empty.className = "field-note";
-            empty.textContent = "No attribute effects configured.";
+            empty.textContent = "No slider modifiers configured.";
             container.appendChild(empty);
         }
 
@@ -4819,67 +4846,134 @@
             row.className = "cost-row";
 
             const typeSelect = document.createElement("select");
-            const multiplyOpt = document.createElement("option");
-            multiplyOpt.value = "multiply";
-            multiplyOpt.textContent = "Multiply";
-            typeSelect.appendChild(multiplyOpt);
-            typeSelect.value = "multiply";
+            [
+                ["multiply", "Multiply"],
+                ["cap", "Set max"],
+                ["add", "Add"],
+                ["subtract", "Subtract"]
+            ].forEach(([value, label]) => {
+                const opt = document.createElement("option");
+                opt.value = value;
+                opt.textContent = label;
+                typeSelect.appendChild(opt);
+            });
+            typeSelect.value = effect.type;
+            typeSelect.addEventListener("change", () => {
+                effect.type = typeSelect.value;
+                if (effect.type === "multiply") effect.multiplier = Number(effect.value ?? effect.multiplier) || 2;
+                else effect.value = Number(effect.value ?? effect.multiplier) || 8;
+                option.sliderModifiers[index] = effect;
+                normalizeSliderModifiersForEditor(option);
+                renderSliderModifiersEditor(container, option);
+                schedulePreviewUpdate();
+            });
 
             const attributeSelect = document.createElement("select");
-            const availableAttributes = attributes.includes(effect.attribute)
-                ? attributes
-                : [effect.attribute, ...attributes].filter(Boolean);
-            availableAttributes.forEach(attribute => {
+            const availableTargets = targets.includes(effect.attribute)
+                ? targets
+                : [effect.attribute, ...targets].filter(Boolean);
+            availableTargets.forEach(attribute => {
                 const opt = document.createElement("option");
                 opt.value = attribute;
                 opt.textContent = getPointTypeDisplayName(attribute);
                 attributeSelect.appendChild(opt);
             });
             attributeSelect.value = effect.attribute;
+            attributeSelect.disabled = effect.selectable === true;
             attributeSelect.addEventListener("change", () => {
                 effect.attribute = attributeSelect.value;
+                option.sliderModifiers[index] = effect;
+                normalizeSliderModifiersForEditor(option);
                 schedulePreviewUpdate();
             });
 
-            const multiplierInput = document.createElement("input");
-            multiplierInput.type = "number";
-            multiplierInput.min = "0";
-            multiplierInput.step = "0.1";
-            multiplierInput.value = String(effect.multiplier);
-            multiplierInput.addEventListener("input", () => {
-                effect.multiplier = Number(multiplierInput.value) || 1;
+            const selectableLabel = document.createElement("label");
+            selectableLabel.className = "checkbox-option compact";
+            const selectableInput = document.createElement("input");
+            selectableInput.type = "checkbox";
+            selectableInput.checked = effect.selectable === true;
+            selectableInput.addEventListener("change", () => {
+                effect.selectable = selectableInput.checked;
+                if (!effect.selectable && !effect.attribute) effect.attribute = targets[0] || "";
+                option.sliderModifiers[index] = effect;
+                normalizeSliderModifiersForEditor(option);
+                renderSliderModifiersEditor(container, option);
+                schedulePreviewUpdate();
+            });
+            const selectableText = document.createElement("span");
+            selectableText.textContent = "Player chooses";
+            selectableLabel.append(selectableInput, selectableText);
+
+            const valueInput = document.createElement("input");
+            valueInput.type = "number";
+            valueInput.min = "0";
+            valueInput.step = effect.type === "multiply" ? "0.1" : "1";
+            valueInput.value = String(effect.multiplier ?? effect.value ?? (effect.type === "multiply" ? 2 : 8));
+            valueInput.addEventListener("input", () => {
+                if (effect.type === "multiply") effect.multiplier = Number(valueInput.value) || 1;
+                else effect.value = Number(valueInput.value) || 0;
+                option.sliderModifiers[index] = effect;
+                normalizeSliderModifiersForEditor(option);
                 schedulePreviewUpdate();
             });
 
             const removeBtn = document.createElement("button");
             removeBtn.type = "button";
             removeBtn.className = "button-icon danger";
-            removeBtn.title = "Remove attribute effect";
+            removeBtn.title = "Remove slider modifier";
             removeBtn.textContent = "✕";
             removeBtn.addEventListener("click", () => {
-                option.attributeEffects.splice(index, 1);
-                normalizeAttributeEffects(option);
-                renderAttributeEffectsEditor(container, option);
+                option.sliderModifiers.splice(index, 1);
+                normalizeSliderModifiersForEditor(option);
+                renderSliderModifiersEditor(container, option);
                 schedulePreviewUpdate();
             });
 
-            row.append(typeSelect, attributeSelect, multiplierInput, removeBtn);
+            row.append(typeSelect, attributeSelect, selectableLabel, valueInput, removeBtn);
             container.appendChild(row);
+
+            if (effect.selectable === true) {
+                const choicesWrap = document.createElement("div");
+                choicesWrap.className = "checkbox-grid";
+                const choiceTargets = [...new Set([...(effect.choices || []), ...targets].filter(Boolean))];
+                choiceTargets.forEach(attribute => {
+                    const choiceLabel = document.createElement("label");
+                    choiceLabel.className = "checkbox-option";
+                    const choiceInput = document.createElement("input");
+                    choiceInput.type = "checkbox";
+                    const hasExplicitChoices = Array.isArray(effect.choices) && effect.choices.length > 0;
+                    choiceInput.checked = !hasExplicitChoices || effect.choices.includes(attribute);
+                    choiceInput.addEventListener("change", () => {
+                        const currentChoices = new Set(Array.isArray(effect.choices) && effect.choices.length ? effect.choices : choiceTargets);
+                        if (choiceInput.checked) currentChoices.add(attribute);
+                        else currentChoices.delete(attribute);
+                        effect.choices = Array.from(currentChoices);
+                        option.sliderModifiers[index] = effect;
+                        normalizeSliderModifiersForEditor(option);
+                        schedulePreviewUpdate();
+                    });
+                    const choiceText = document.createElement("span");
+                    choiceText.textContent = getPointTypeDisplayName(attribute);
+                    choiceLabel.append(choiceInput, choiceText);
+                    choicesWrap.appendChild(choiceLabel);
+                });
+                container.appendChild(choicesWrap);
+            }
         });
 
         const addBtn = document.createElement("button");
         addBtn.type = "button";
         addBtn.className = "button-subtle";
-        addBtn.textContent = "Add attribute effect";
-        addBtn.disabled = attributes.length === 0;
+        addBtn.textContent = "Add slider modifier";
+        addBtn.disabled = targets.length === 0;
         addBtn.addEventListener("click", () => {
-            if (!Array.isArray(option.attributeEffects)) option.attributeEffects = [];
-            option.attributeEffects.push({
+            if (!Array.isArray(option.sliderModifiers)) option.sliderModifiers = [];
+            option.sliderModifiers.push({
                 type: "multiply",
-                attribute: attributes[0] || "Strength",
+                attribute: targets[0] || "Strength",
                 multiplier: 2
             });
-            renderAttributeEffectsEditor(container, option);
+            renderSliderModifiersEditor(container, option);
             schedulePreviewUpdate();
         });
         container.appendChild(addBtn);

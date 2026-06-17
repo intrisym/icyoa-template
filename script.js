@@ -19,6 +19,8 @@ let allowNegativeTypes = new Set();
 let pointCategories = {};
 let visiblePointCategories = new Set();
 const dynamicSelections = {};
+const sliderModifierSelections = {};
+const activeSliderModifierPointBaselines = {};
 const pointAllocationSelections = {};
 let attributeRanges = {}; // Will be updated by dynamic effects
 let originalAttributeRanges = {}; // Stores the initial, base ranges from input.json
@@ -331,6 +333,8 @@ function resetGlobalState() {
     clearObject(storyInputs);
     clearObject(attributeSliderValues);
     clearObject(dynamicSelections);
+    clearObject(sliderModifierSelections);
+    clearObject(activeSliderModifierPointBaselines);
     clearObject(pointAllocationSelections);
     clearObject(subcategoryDiscountSelections);
     clearObject(categoryDiscountSelections);
@@ -627,42 +631,144 @@ function getAllOptions() {
     return options;
 }
 
-function getAttributeBaseValue(attribute) {
-    const directValue = Number(attributeSliderValues[attribute]);
-    if (Number.isFinite(directValue)) return directValue;
-    const sliderOption = getAllOptions().find(option => {
+function getSliderOptionForAttribute(attribute) {
+    return getAllOptions().find(option => {
         if (option?.inputType !== "slider") return false;
         const { attributeType } = getSliderTypes(option.costPerPoint || {});
         return attributeType === attribute;
-    });
+    }) || null;
+}
+
+function getSliderModifierTargetNames() {
+    return Object.keys(originalPoints || {});
+}
+
+function getSliderBaseValue(attribute) {
+    const directValue = Number(attributeSliderValues[attribute]);
+    if (Number.isFinite(directValue)) return directValue;
+    const sliderOption = getSliderOptionForAttribute(attribute);
     const optionValue = Number(sliderOption ? attributeSliderValues[sliderOption.id] : undefined);
     if (Number.isFinite(optionValue)) return optionValue;
     return Number(originalPoints[attribute]) || 0;
 }
 
+function setSliderBaseValue(attribute, value) {
+    const nextValue = Number(value) || 0;
+    attributeSliderValues[attribute] = nextValue;
+    const sliderOption = getSliderOptionForAttribute(attribute);
+    if (sliderOption) attributeSliderValues[sliderOption.id] = nextValue;
+    if (points.hasOwnProperty(attribute)) points[attribute] = nextValue;
+}
+
+function refundSliderDecrease(attribute, oldValue, newValue) {
+    const decrease = Math.max(0, (Number(oldValue) || 0) - (Number(newValue) || 0));
+    if (decrease <= 0) return;
+    const sliderOption = getSliderOptionForAttribute(attribute);
+    const { currencyType } = getSliderTypes(sliderOption?.costPerPoint || {});
+    const costPerPoint = Number(sliderOption?.costPerPoint?.[currencyType]) || 0;
+    if (costPerPoint > 0 && currencyType) {
+        points[currencyType] = (Number(points[currencyType]) || 0) + (costPerPoint * decrease);
+    }
+}
+
 function resetSliderAttributePointValues() {
     Object.keys(originalAttributeRanges || {}).forEach(attribute => {
         if (points.hasOwnProperty(attribute)) {
-            points[attribute] = getAttributeBaseValue(attribute);
+            points[attribute] = getSliderBaseValue(attribute);
         }
     });
 }
 
-function applySelectedAttributeEffects() {
+function restoreActiveSliderModifierPointValues() {
+    Object.entries(activeSliderModifierPointBaselines).forEach(([type, baseline]) => {
+        if (baseline?.existed) {
+            points[type] = baseline.value;
+        } else {
+            delete points[type];
+        }
+    });
+    clearObject(activeSliderModifierPointBaselines);
+}
+
+function rememberSliderModifierPointBaseline(type) {
+    if (Object.prototype.hasOwnProperty.call(activeSliderModifierPointBaselines, type)) return;
+    activeSliderModifierPointBaselines[type] = {
+        existed: Object.prototype.hasOwnProperty.call(points, type),
+        value: points[type]
+    };
+}
+
+function normalizeSliderModifiers(option) {
+    const rawEffects = Array.isArray(option?.sliderModifiers)
+        ? option.sliderModifiers
+        : Array.isArray(option?.attributeEffects)
+            ? option.attributeEffects
+            : [];
+    return rawEffects
+        .map(effect => {
+            if (!effect || typeof effect !== "object") return null;
+            const type = ["multiply", "cap", "add", "subtract"].includes(effect.type) ? effect.type : "multiply";
+            const value = type === "multiply" ? Number(effect.multiplier) : Number(effect.value);
+            return {
+                type,
+                attribute: String(effect.attribute || "").trim(),
+                selectable: effect.selectable === true || !String(effect.attribute || "").trim(),
+                choices: Array.isArray(effect.choices) ? effect.choices.filter(Boolean) : getSliderModifierTargetNames(),
+                value
+            };
+        })
+        .filter(effect => effect && Number.isFinite(effect.value));
+}
+
+function getSelectedSliderModifierAttribute(optionId, effect, index) {
+    if (!effect.selectable) return effect.attribute;
+    return sliderModifierSelections[optionId]?.[index] || "";
+}
+
+function clampSliderAttribute(attribute, cap) {
+    const currentMax = Number(attributeRanges[attribute]?.max ?? originalAttributeRanges[attribute]?.max ?? cap);
+    const nextMax = Number.isFinite(currentMax) ? Math.min(currentMax, cap) : cap;
+    if (!attributeRanges[attribute]) attributeRanges[attribute] = {};
+    attributeRanges[attribute].max = nextMax;
+    const currentValue = getSliderBaseValue(attribute);
+    if (currentValue > nextMax) {
+        refundSliderDecrease(attribute, currentValue, nextMax);
+        setSliderBaseValue(attribute, nextMax);
+    }
+}
+
+function applySelectedSliderModifiers() {
+    const selectedEffects = [];
     Object.entries(selectedOptions).forEach(([optionId, count]) => {
         if (!count) return;
         const option = findOptionById(optionId);
-        const effects = Array.isArray(option?.attributeEffects) ? option.attributeEffects : [];
-        effects.forEach(effect => {
-            if (!effect || effect.type !== "multiply") return;
-            const attribute = String(effect.attribute || "").trim();
-            const multiplier = Number(effect.multiplier);
-            if (!attribute || !Number.isFinite(multiplier)) return;
-            const currentValue = Number(points[attribute]);
-            const baseValue = Number.isFinite(currentValue) ? currentValue : getAttributeBaseValue(attribute);
-            points[attribute] = baseValue * multiplier;
+        normalizeSliderModifiers(option).forEach((effect, index) => {
+            const attribute = getSelectedSliderModifierAttribute(optionId, effect, index);
+            if (!attribute) return;
+            selectedEffects.push({ ...effect, attribute });
         });
     });
+
+    selectedEffects
+        .filter(effect => effect.type === "cap")
+        .forEach(effect => clampSliderAttribute(effect.attribute, effect.value));
+
+    resetSliderAttributePointValues();
+
+    selectedEffects
+        .filter(effect => effect.type !== "cap")
+        .forEach(effect => {
+            rememberSliderModifierPointBaseline(effect.attribute);
+            if (!points.hasOwnProperty(effect.attribute)) points[effect.attribute] = getSliderBaseValue(effect.attribute);
+            const currentValue = Number(points[effect.attribute]) || 0;
+            if (effect.type === "multiply") {
+                points[effect.attribute] = currentValue * effect.value;
+            } else if (effect.type === "add") {
+                points[effect.attribute] = currentValue + effect.value;
+            } else if (effect.type === "subtract") {
+                points[effect.attribute] = currentValue - effect.value;
+            }
+        });
 }
 
 function mergeCostMaps(...maps) {
@@ -1387,20 +1493,24 @@ function getPointAmountMarkup(type, value) {
 }
 
 function buildExportState() {
-    return {
+    restoreActiveSliderModifierPointValues();
+    const state = {
         selectedOptions,
-        points,
+        points: { ...points },
         discountedSelections,
         selectedCostOptionHistory,
         storyInputs,
         attributeSliderValues,
         dynamicSelections,
+        sliderModifierSelections,
         pointAllocationSelections,
         subcategoryDiscountSelections,
         categoryDiscountSelections,
         optionGrantDiscountSelections,
         autoGrantedSelections
     };
+    applyDynamicCosts();
+    return state;
 }
 
 function clonePlayerState() {
@@ -1421,6 +1531,8 @@ function restorePlayerState(state) {
     clearObject(storyInputs);
     clearObject(attributeSliderValues);
     clearObject(dynamicSelections);
+    clearObject(sliderModifierSelections);
+    clearObject(activeSliderModifierPointBaselines);
     clearObject(pointAllocationSelections);
     clearObject(subcategoryDiscountSelections);
     clearObject(categoryDiscountSelections);
@@ -1435,6 +1547,7 @@ function restorePlayerState(state) {
     Object.assign(storyInputs, state.storyInputs || {});
     Object.assign(attributeSliderValues, state.attributeSliderValues || {});
     Object.assign(dynamicSelections, state.dynamicSelections || {});
+    Object.assign(sliderModifierSelections, state.sliderModifierSelections || {});
     Object.assign(pointAllocationSelections, state.pointAllocationSelections || {});
     Object.assign(subcategoryDiscountSelections, state.subcategoryDiscountSelections || {});
     Object.assign(categoryDiscountSelections, state.categoryDiscountSelections || {});
@@ -1461,6 +1574,7 @@ function buildPackedExportState() {
     if (hasOwnEntries(full.storyInputs)) packed.t = full.storyInputs;
     if (hasOwnEntries(full.attributeSliderValues)) packed.a = full.attributeSliderValues;
     if (hasOwnEntries(full.dynamicSelections)) packed.y = full.dynamicSelections;
+    if (hasOwnEntries(full.sliderModifierSelections)) packed.m = full.sliderModifierSelections;
     if (hasOwnEntries(full.pointAllocationSelections)) packed.l = full.pointAllocationSelections;
     if (hasOwnEntries(full.subcategoryDiscountSelections)) packed.u = full.subcategoryDiscountSelections;
     if (hasOwnEntries(full.categoryDiscountSelections)) packed.c = full.categoryDiscountSelections;
@@ -1482,6 +1596,7 @@ function unpackImportedState(importedData) {
         storyInputs: importedData.t || {},
         attributeSliderValues: importedData.a || {},
         dynamicSelections: importedData.y || {},
+        sliderModifierSelections: importedData.m || {},
         pointAllocationSelections: importedData.l || {},
         subcategoryDiscountSelections: importedData.u || {},
         categoryDiscountSelections: importedData.c || {},
@@ -1632,6 +1747,8 @@ document.getElementById("resetBtn").onclick = () => {
     for (let key in storyInputs) delete storyInputs[key];
     for (let key in selectedCostOptionHistory) delete selectedCostOptionHistory[key];
     for (let key in dynamicSelections) delete dynamicSelections[key];
+    for (let key in sliderModifierSelections) delete sliderModifierSelections[key];
+    for (let key in activeSliderModifierPointBaselines) delete activeSliderModifierPointBaselines[key];
     for (let key in pointAllocationSelections) delete pointAllocationSelections[key];
     for (let key in subcategoryDiscountSelections) delete subcategoryDiscountSelections[key];
     for (let key in categoryDiscountSelections) delete categoryDiscountSelections[key];
@@ -1671,6 +1788,8 @@ modalConfirmBtn.onclick = async () => {
         for (let key in selectedCostOptionHistory) delete selectedCostOptionHistory[key];
         for (let key in storyInputs) delete storyInputs[key];
         for (let key in dynamicSelections) delete dynamicSelections[key];
+        for (let key in sliderModifierSelections) delete sliderModifierSelections[key];
+        for (let key in activeSliderModifierPointBaselines) delete activeSliderModifierPointBaselines[key];
         for (let key in pointAllocationSelections) delete pointAllocationSelections[key];
         for (let key in subcategoryDiscountSelections) delete subcategoryDiscountSelections[key];
         for (let key in categoryDiscountSelections) delete categoryDiscountSelections[key];
@@ -1704,6 +1823,9 @@ modalConfirmBtn.onclick = async () => {
         });
         Object.entries(importedData.dynamicSelections || {}).forEach(([key, val]) => {
             dynamicSelections[key] = val
+        });
+        Object.entries(importedData.sliderModifierSelections || {}).forEach(([key, val]) => {
+            sliderModifierSelections[key] = Array.isArray(val) ? val : [];
         });
         Object.entries(importedData.pointAllocationSelections || {}).forEach(([key, val]) => {
             pointAllocationSelections[key] = val
@@ -2499,8 +2621,12 @@ function removeSelection(option, options = {}) {
     const count = typeof selectedOptions[option.id] === 'number' ? selectedOptions[option.id] : 1;
     if (!selectedOptions[option.id]) return; // Option not selected
     if (!options.force && isAutoGrantedLocked(option.id)) return;
+    restoreActiveSliderModifierPointValues();
 
-    if (!removeSelectionsAffectedByCostModifierChange(option, count - 1, options)) return false;
+    if (!removeSelectionsAffectedByCostModifierChange(option, count - 1, options)) {
+        applyDynamicCosts();
+        return false;
+    }
 
     // Update selection history
     const historyIndex = selectionHistory.indexOf(option.id);
@@ -2573,6 +2699,9 @@ function removeSelection(option, options = {}) {
         if (option.pointAllocation) {
             delete pointAllocationSelections[option.id];
         }
+        if (option.sliderModifiers || option.attributeEffects) {
+            delete sliderModifierSelections[option.id];
+        }
         delete selectedCostOptionHistory[option.id];
         removeAutoGrantsFromSource(option.id, {
             skipRender: true,
@@ -2595,6 +2724,7 @@ function removeSelection(option, options = {}) {
  * Evaluates dynamic cost effects like attribute capping and boosting.
  */
 function applyDynamicCosts() {
+    restoreActiveSliderModifierPointValues();
     // IMPORTANT: Reset attribute ranges to their original defaults first
     // This ensures that previous dynamic caps are removed before new ones are applied.
     attributeRanges = JSON.parse(JSON.stringify(originalAttributeRanges));
@@ -2718,7 +2848,7 @@ function applyDynamicCosts() {
         });
     });
 
-    applySelectedAttributeEffects();
+    applySelectedSliderModifiers();
 }
 
 
@@ -2731,9 +2861,13 @@ function addSelection(option, options = {}) {
     const scrollY = window.scrollY; // Preserve scroll position
     const current = selectedOptions[option.id] || 0;
     const isAutoGrant = !!options.autoGrantSourceId;
+    restoreActiveSliderModifierPointValues();
 
     if (!isAutoGrant) {
-        if (!removeSelectionsAffectedByCostModifierChange(option, current + 1, options)) return false;
+        if (!removeSelectionsAffectedByCostModifierChange(option, current + 1, options)) {
+            applyDynamicCosts();
+            return false;
+        }
     }
 
     const subcat = findSubcategoryOfOption(option.id);
@@ -4869,6 +5003,9 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
         if (opt.pointAllocation) {
             renderPointAllocationControl(opt, contentWrapper);
         }
+        if (selectedOptions[opt.id] && normalizeSliderModifiers(opt).some(effect => effect.selectable)) {
+            renderSliderModifierControls(opt, contentWrapper);
+        }
         if (selectedOptions[opt.id] && opt.dynamicCost) {
             renderDynamicCost(opt, contentWrapper);
         }
@@ -4918,6 +5055,7 @@ function renderSliderControl(opt, contentWrapper) {
     slider.id = `${opt.id}-slider`;
 
     slider.oninput = (e) => {
+        restoreActiveSliderModifierPointValues();
         const newVal = parseInt(e.target.value);
         const { currencyType: currentCurrency, attributeType: currentAttribute } = getSliderTypes(opt.costPerPoint || {});
         const costPerPoint = opt.costPerPoint?.[currentCurrency] || 0;
@@ -5224,6 +5362,62 @@ function renderPointAllocationControl(opt, contentWrapper) {
         note.textContent = "Remove and re-select this option to change the allocation.";
         wrapper.appendChild(note);
     }
+
+    contentWrapper.appendChild(wrapper);
+}
+
+function renderSliderModifierControls(opt, contentWrapper) {
+    const effects = normalizeSliderModifiers(opt);
+    const selectableEffects = effects
+        .map((effect, index) => ({ ...effect, index }))
+        .filter(effect => effect.selectable);
+    if (!selectableEffects.length) return;
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "dynamic-choice-wrapper";
+    if (!Array.isArray(sliderModifierSelections[opt.id])) {
+        sliderModifierSelections[opt.id] = [];
+    }
+
+    selectableEffects.forEach(effect => {
+        const row = document.createElement("div");
+        row.className = "field-inline";
+
+        const label = document.createElement("label");
+        const verb = effect.type === "cap"
+            ? `Max ${effect.value}`
+            : effect.type === "add"
+                ? `+${effect.value}`
+                : effect.type === "subtract"
+                    ? `-${effect.value}`
+                    : `x${effect.value}`;
+        label.textContent = `Slider modifier (${verb})`;
+
+        const select = document.createElement("select");
+        select.innerHTML = `<option value="">-- Select --</option>` +
+            effect.choices.map(choice => `<option value="${escapeHtml(choice)}">${getPointTypeMarkup(choice)}</option>`).join("");
+        select.value = sliderModifierSelections[opt.id][effect.index] || "";
+
+        select.addEventListener("change", () => {
+            const previous = sliderModifierSelections[opt.id][effect.index] || "";
+            const next = select.value;
+            const nextSelections = [...sliderModifierSelections[opt.id]];
+            nextSelections[effect.index] = next;
+            const chosen = nextSelections.filter(Boolean);
+            if (new Set(chosen).size !== chosen.length) {
+                alert("Each slider modifier selection must be unique.");
+                select.value = previous;
+                return;
+            }
+            sliderModifierSelections[opt.id] = nextSelections;
+            applyDynamicCosts();
+            updatePointsDisplay();
+            renderAccordion();
+        });
+
+        row.append(label, select);
+        wrapper.appendChild(row);
+    });
 
     contentWrapper.appendChild(wrapper);
 }

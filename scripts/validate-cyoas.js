@@ -312,26 +312,39 @@ function validatePointAllocation(file, context, allocation, pointTypes, errors) 
     });
 }
 
-function validateAttributeEffects(file, context, effects, pointTypes, errors) {
+function validateSliderModifiers(file, context, effects, pointTypes, errors, fieldName = "sliderModifiers") {
     if (effects === undefined) return;
     if (!Array.isArray(effects)) {
-        pushIssue(errors, file, `${context}.attributeEffects must be an array.`);
+        pushIssue(errors, file, `${context}.${fieldName} must be an array.`);
         return;
     }
     effects.forEach((effect, index) => {
-        const effectContext = `${context}.attributeEffects[${index}]`;
+        const effectContext = `${context}.${fieldName}[${index}]`;
         if (!effect || typeof effect !== "object" || Array.isArray(effect)) {
             pushIssue(errors, file, `${effectContext} must be an object.`);
             return;
         }
-        if (effect.type !== "multiply") {
-            pushIssue(errors, file, `${effectContext}.type must be "multiply".`);
+        if (!["multiply", "cap", "add", "subtract"].includes(effect.type)) {
+            pushIssue(errors, file, `${effectContext}.type must be "multiply", "cap", "add", or "subtract".`);
         }
-        if (typeof effect.attribute !== "string" || !pointTypes.has(effect.attribute)) {
+        const selectable = effect.selectable === true || !effect.attribute;
+        if (!selectable && (typeof effect.attribute !== "string" || !pointTypes.has(effect.attribute))) {
             pushIssue(errors, file, `${effectContext}.attribute references unknown point type "${effect.attribute}".`);
         }
-        if (!Number.isFinite(Number(effect.multiplier))) {
-            pushIssue(errors, file, `${effectContext}.multiplier must be numeric.`);
+        const rawValue = effect.type === "multiply" ? effect.multiplier : effect.value;
+        if (!Number.isFinite(Number(rawValue))) {
+            pushIssue(errors, file, `${effectContext}.${effect.type === "multiply" ? "multiplier" : "value"} must be numeric.`);
+        }
+        if (effect.choices !== undefined) {
+            if (!Array.isArray(effect.choices)) {
+                pushIssue(errors, file, `${effectContext}.choices must be an array when present.`);
+            } else {
+                effect.choices.forEach(choice => {
+                    if (typeof choice !== "string" || !pointTypes.has(choice)) {
+                        pushIssue(errors, file, `${effectContext}.choices references unknown point type "${choice}".`);
+                    }
+                });
+            }
         }
     });
 }
@@ -435,7 +448,8 @@ function validateCyoaData(file, data) {
         validatePointMap(file, `${context}.cost`, option.cost || {}, pointTypes, errors, warnings);
         validateCostOptions(file, context, option.costOptions, pointTypes, errors, warnings, optionIds);
         validatePointAllocation(file, context, option.pointAllocation, pointTypes, errors);
-        validateAttributeEffects(file, context, option.attributeEffects, pointTypes, errors);
+        validateSliderModifiers(file, context, option.sliderModifiers, pointTypes, errors);
+        validateSliderModifiers(file, context, option.attributeEffects, pointTypes, errors, "attributeEffects");
         validateOptionalColor(file, `${context}.borderColor`, option.borderColor, errors);
         validateOptionalColor(file, `${context}.darkBorderColor`, option.darkBorderColor, errors);
         validateRequirementExpression(file, `${context}.prerequisites`, option.prerequisites, errors);
