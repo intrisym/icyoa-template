@@ -66,6 +66,7 @@ const DARK_THEME_VARS = {
     "option-meta-points-color": "#fbbf24",
     "option-meta-conditional-color": "#38bdf8",
     "option-meta-auto-grants-color": "#22c55e",
+    "option-meta-slider-modifiers-color": "#a78bfa",
     "option-meta-prerequisites-color": "#f59e0b",
     "option-meta-conflicts-color": "#f87171"
 };
@@ -2292,6 +2293,7 @@ function applyCyoaData(rawData, {
             "option-meta-points-color": "#ffd700",
             "option-meta-conditional-color": "#0ea5e9",
             "option-meta-auto-grants-color": "#16a34a",
+            "option-meta-slider-modifiers-color": "#7c3aed",
             "option-meta-prerequisites-color": "#f59e0b",
             "option-meta-conflicts-color": "#dc2626",
             "font-base": "18px",
@@ -4667,6 +4669,30 @@ function appendOptionMetaSection(container, titleHtml, lines = [], className = "
     container.appendChild(section);
 }
 
+function formatSliderModifierDelta(amount) {
+    const numeric = Number(amount) || 0;
+    return `${numeric >= 0 ? "+" : "-"}${escapeHtml(String(Math.abs(numeric)))}`;
+}
+
+function formatSliderModifierDisplayValue(effect) {
+    if (effect.type === "multiply") return `x${escapeHtml(String(effect.value))}`;
+    if (effect.type === "cap") return `max ${escapeHtml(String(effect.value))}`;
+    if (effect.type === "subtract") return formatSliderModifierDelta(-effect.value);
+    return formatSliderModifierDelta(effect.value);
+}
+
+function getSliderModifierDisplayRows(option) {
+    return normalizeSliderModifiers(option).map((effect, index) => {
+        const selectedTarget = getSelectedSliderModifierAttribute(option.id, effect, index);
+        const target = selectedTarget
+            ? getPointTypeMarkup(selectedTarget)
+            : effect.selectable
+                ? `Player chooses${effect.choices.length ? ` (${effect.choices.map(getPointTypeMarkup).join(", ")})` : ""}`
+                : getPointTypeMarkup(effect.attribute);
+        return `${target}: ${formatSliderModifierDisplayValue(effect)}`;
+    });
+}
+
 function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDiscountUnlocked, catAutoApplyAll, isDiscountableSubcat) {
     const wrapper = document.createElement("div");
     wrapper.className = "option-wrapper";
@@ -4808,6 +4834,11 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
             return `${status} ${row.label}${suffix}`;
         });
         appendOptionMetaSection(requirements, "Automatically Grants", rows, "option-meta-auto-grants");
+    }
+
+    const sliderModifierRows = getSliderModifierDisplayRows(opt);
+    if (sliderModifierRows.length > 0) {
+        appendOptionMetaSection(requirements, "Slider Modifiers", sliderModifierRows, "option-meta-slider-modifiers");
     }
 
     // Indicate modified cost availability/applied for this item.

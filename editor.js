@@ -44,6 +44,7 @@
         "option-meta-points-color": "#cccccc",
         "option-meta-conditional-color": "#0ea5e9",
         "option-meta-auto-grants-color": "#16a34a",
+        "option-meta-slider-modifiers-color": "#7c3aed",
         "option-meta-prerequisites-color": "#f59e0b",
         "option-meta-conflicts-color": "#dc2626",
         "font-base": "20px",
@@ -86,6 +87,7 @@
         "option-meta-points-color": "#fbbf24",
         "option-meta-conditional-color": "#38bdf8",
         "option-meta-auto-grants-color": "#22c55e",
+        "option-meta-slider-modifiers-color": "#a78bfa",
         "option-meta-prerequisites-color": "#f59e0b",
         "option-meta-conflicts-color": "#f87171",
         "font-base": "20px",
@@ -2147,6 +2149,7 @@
             "option-meta-points-color": "Option Detail Points Accent",
             "option-meta-conditional-color": "Option Detail Conditional Accent",
             "option-meta-auto-grants-color": "Option Detail Auto-Grant Accent",
+            "option-meta-slider-modifiers-color": "Option Detail Slider Modifier Accent",
             "option-meta-prerequisites-color": "Option Detail Prerequisite Accent",
             "option-meta-conflicts-color": "Option Detail Conflict Accent"
         };

@@ -82,6 +82,7 @@ const OPTION_META_THEME_KEYS = [
     "option-meta-points-color",
     "option-meta-conditional-color",
     "option-meta-auto-grants-color",
+    "option-meta-slider-modifiers-color",
     "option-meta-prerequisites-color",
     "option-meta-conflicts-color"
 ];
@@ -3261,8 +3262,11 @@ test("slider modifiers should cap with refund and add fixed values", () => {
             EDITOR_SCRIPT_SOURCE.includes("effect.choices") &&
             EDITOR_SCRIPT_SOURCE.includes("return getPointTypeNames();") &&
             PLAYER_SCRIPT_SOURCE.includes("return Object.keys(originalPoints || {});") &&
-            PLAYER_SCRIPT_SOURCE.includes('effect.type === "subtract"'),
-        "visual editor and player should support subtract modifiers and point-type-based player-choice lists"
+            PLAYER_SCRIPT_SOURCE.includes('effect.type === "subtract"') &&
+            PLAYER_SCRIPT_SOURCE.includes("getSliderModifierDisplayRows") &&
+            PLAYER_SCRIPT_SOURCE.includes("Slider Modifiers") &&
+            PLAYER_SCRIPT_SOURCE.includes("option-meta-slider-modifiers"),
+        "visual editor and player should support subtract modifiers, point-type-based player-choice lists, and card display rows"
     );
 });
 
