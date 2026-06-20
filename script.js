@@ -3764,43 +3764,41 @@ function evaluatePrerequisiteNode(node) {
 function buildPrerequisiteDisplayLines(expression = "") {
     const ast = parsePrerequisiteExpression(expression);
     if (!ast) return null;
-    const displayByKey = new Map();
-    const addAtom = (rawId, negated, satisfied) => {
-        const key = `${negated ? "!" : ""}${rawId}`;
-        const existing = displayByKey.get(key);
-        displayByKey.set(key, {
-            id: rawId,
-            negated,
-            satisfied: !!satisfied || !!existing?.satisfied
-        });
+    const atomText = (rawId, negated, inheritedSatisfiedOr = false) => {
+        const atomSatisfied = negated ? !meetsCountRequirement(rawId) : meetsCountRequirement(rawId);
+        const [id, minSuffix] = rawId.split("__");
+        const requiredCount = minSuffix ? Number(minSuffix) : 1;
+        const label = getOptionLabelMarkup(id) + (requiredCount > 1 ? ` (x${requiredCount})` : "");
+        const satisfied = inheritedSatisfiedOr || atomSatisfied;
+        return `${satisfied ? "✅" : "❌"} ${negated ? "NOT " : ""}${label}`;
     };
-    const visit = (node, inheritedSatisfiedOr = false, negated = false) => {
-        if (!node) return;
+    const inline = (node, inheritedSatisfiedOr = false, negated = false) => {
+        if (!node) return "";
         if (node.type === "atom") {
-            const atomSatisfied = negated ? !meetsCountRequirement(node.id) : meetsCountRequirement(node.id);
-            addAtom(node.id, negated, inheritedSatisfiedOr || atomSatisfied);
-            return;
+            return atomText(node.id, negated, inheritedSatisfiedOr);
         }
         if (node.type === "not") {
-            visit(node.child, inheritedSatisfiedOr, !negated);
-            return;
+            if (node.child?.type === "atom") return inline(node.child, inheritedSatisfiedOr, !negated);
+            return `NOT (${inline(node.child, inheritedSatisfiedOr, false)})`;
         }
         if (node.type === "or") {
             const orSatisfied = inheritedSatisfiedOr || evaluatePrerequisiteNode(node);
-            node.children.forEach(child => visit(child, orSatisfied, negated));
-            return;
+            return node.children.map(child => inline(child, orSatisfied, negated)).filter(Boolean).join(" OR ");
         }
         if (node.type === "and") {
-            node.children.forEach(child => visit(child, inheritedSatisfiedOr, negated));
+            const text = node.children.map(child => inline(child, inheritedSatisfiedOr, negated)).filter(Boolean).join(" AND ");
+            return node.children.length > 1 ? `(${text})` : text;
         }
+        return "";
     };
-    visit(ast);
-    return Array.from(displayByKey.values()).map(entry => {
-        const [id, minSuffix] = entry.id.split("__");
-        const requiredCount = minSuffix ? Number(minSuffix) : 1;
-        const label = getOptionLabelMarkup(id) + (requiredCount > 1 ? ` (x${requiredCount})` : "");
-        return `${entry.satisfied ? "✅" : "❌"} ${entry.negated ? "NOT " : ""}${label}`;
-    });
+    const lines = (node, inheritedSatisfiedOr = false, negated = false) => {
+        if (!node) return [];
+        if (node.type === "and") {
+            return node.children.flatMap(child => lines(child, inheritedSatisfiedOr, negated));
+        }
+        return [inline(node, inheritedSatisfiedOr, negated)].filter(Boolean);
+    };
+    return lines(ast);
 }
 
 function buildRequirementDisplayLines(requirement) {
@@ -3856,13 +3854,14 @@ function buildRequirementDisplayLines(requirement) {
             }));
         }
         if (orList.length) {
-            prereqLines.push(...orList.map(rawId => {
+            const orLine = orList.map(rawId => {
                 const [id, minSuffix] = String(rawId).split('__');
                 const requiredCount = minSuffix ? Number(minSuffix) : 1;
                 const label = getOptionLabelMarkup(id) + (requiredCount > 1 ? ` (x${requiredCount})` : "");
                 const symbol = orAccepted ? "✅" : (meetsCountRequirement(String(rawId)) ? "✅" : "❌");
                 return `${symbol} ${label}`;
-            }));
+            }).join(" OR ");
+            prereqLines.push(orLine);
         }
         return prereqLines;
     }

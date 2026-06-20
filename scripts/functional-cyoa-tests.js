@@ -1917,17 +1917,50 @@ class CyoaEngine {
     }
 
     displayRequirementLines(optionOrId, selectionNumber = null) {
+        const atomLine = (rawId, negated = false, inheritedSatisfiedOr = false) => {
+            const [id, minSuffix] = String(rawId).split("__");
+            const label = this.optionMap.get(id)?.label || id;
+            const requiredCount = minSuffix ? Number(minSuffix) || 1 : 1;
+            const countLabel = requiredCount > 1 ? ` (x${requiredCount})` : "";
+            const atomSatisfied = negated ? !this.meetsCountRequirement(rawId) : this.meetsCountRequirement(rawId);
+            return `${inheritedSatisfiedOr || atomSatisfied ? "✅" : "❌"} ${negated ? "NOT " : ""}${label}${countLabel}`;
+        };
+        const inlineNode = (node, inheritedSatisfiedOr = false, negated = false) => {
+            if (node.type === "atom") return atomLine(node.id, negated, inheritedSatisfiedOr);
+            if (node.type === "not") {
+                if (node.child?.type === "atom") return inlineNode(node.child, inheritedSatisfiedOr, !negated);
+                return `NOT (${inlineNode(node.child, inheritedSatisfiedOr, false)})`;
+            }
+            if (node.type === "or") {
+                const orSatisfied = inheritedSatisfiedOr || evaluatePrerequisiteNode(node, id => this.meetsCountRequirement(id));
+                return node.children.map(child => inlineNode(child, orSatisfied, negated)).filter(Boolean).join(" OR ");
+            }
+            if (node.type === "and") {
+                const text = node.children.map(child => inlineNode(child, inheritedSatisfiedOr, negated)).filter(Boolean).join(" AND ");
+                return node.children.length > 1 ? `(${text})` : text;
+            }
+            return "";
+        };
+        const linesForNode = (node, inheritedSatisfiedOr = false, negated = false) => {
+            if (node.type === "and") return node.children.flatMap(child => linesForNode(child, inheritedSatisfiedOr, negated));
+            return [inlineNode(node, inheritedSatisfiedOr, negated)].filter(Boolean);
+        };
         return this.displayRequirements(optionOrId, selectionNumber).flatMap(requirement => {
             if (typeof requirement === "string") {
-                return this.prerequisiteDisplayStatuses(requirement).map(status => {
-                    const [id, minSuffix] = status.id.split("__");
-                    const label = this.optionMap.get(id)?.label || id;
-                    const countLabel = minSuffix ? ` (x${Number(minSuffix) || 1})` : "";
-                    return `${status.satisfied ? "✅" : "❌"} ${status.negated ? "NOT " : ""}${label}${countLabel}`;
-                });
+                return linesForNode(parsePrerequisiteExpression(requirement));
             }
             if (Array.isArray(requirement)) {
                 return requirement.map(id => `${this.meetsCountRequirement(id) ? "✅" : "❌"} ${this.optionMap.get(id)?.label || id}`);
+            }
+            if (requirement && typeof requirement === "object") {
+                const andList = requirement.and || [];
+                const orList = requirement.or || [];
+                const lines = andList.map(id => atomLine(id));
+                if (orList.length) {
+                    const orAccepted = orList.some(id => this.meetsCountRequirement(id));
+                    lines.push(orList.map(id => atomLine(id, false, orAccepted)).join(" OR "));
+                }
+                return lines;
             }
             return [];
         });
@@ -3463,6 +3496,11 @@ test("complex prerequisite displays should mark fulfilled OR branches as satisfi
     const engine = CyoaEngine.synthetic();
     const exoExpression = engine.option("gearGearExoSuit2").prerequisites;
 
+    assert.deepStrictEqual(engine.displayRequirementLines("gearGearExoSuit2"), [
+        "❌ Exo Suit 1",
+        "❌ Alien Tech OR ❌ They Came from Beyond!"
+    ]);
+
     assert.deepStrictEqual(engine.prerequisiteDisplayStatuses(exoExpression), [
         { id: "gearGearExoSuit1", negated: false, satisfied: false },
         { id: "powersScienceAlienTech", negated: false, satisfied: false },
@@ -3470,6 +3508,10 @@ test("complex prerequisite displays should mark fulfilled OR branches as satisfi
     ]);
 
     engine.select("questsQuestsTheyCameFromBeyond");
+    assert.deepStrictEqual(engine.displayRequirementLines("gearGearExoSuit2"), [
+        "❌ Exo Suit 1",
+        "✅ Alien Tech OR ✅ They Came from Beyond!"
+    ]);
     assert.deepStrictEqual(engine.prerequisiteDisplayStatuses(exoExpression), [
         { id: "gearGearExoSuit1", negated: false, satisfied: false },
         { id: "powersScienceAlienTech", negated: false, satisfied: true },
@@ -3481,6 +3523,11 @@ test("complex prerequisite displays should mark fulfilled OR branches as satisfi
     assert.strictEqual(engine.canSelect("gearGearExoSuit2"), true);
 
     const complexExpression = engine.option("requiresComplexOrGroups").prerequisites;
+    assert.deepStrictEqual(engine.displayRequirementLines("requiresComplexOrGroups"), [
+        "❌ Pre A OR ❌ Pre B",
+        "❌ Multi (x2) OR ❌ One-Way A",
+        "✅ NOT Dumb"
+    ]);
     assert.deepStrictEqual(engine.prerequisiteDisplayStatuses(complexExpression), [
         { id: "preA", negated: false, satisfied: false },
         { id: "preB", negated: false, satisfied: false },
@@ -3500,6 +3547,11 @@ test("complex prerequisite displays should mark fulfilled OR branches as satisfi
         { id: "drawbacksDrawbacksDumb", negated: true, satisfied: true }
     ]);
     assert.strictEqual(engine.canSelect("requiresComplexOrGroups"), true);
+
+    assert.deepStrictEqual(engine.displayRequirementLines("requiresObject"), [
+        "❌ Pre A",
+        "✅ Pre B OR ✅ Multi (x2)"
+    ]);
 
     engine.option("powersSuperpowersSmart").conflictsWith = [];
     engine.select("drawbacksDrawbacksDumb");
