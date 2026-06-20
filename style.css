@@ -522,7 +522,7 @@ button:disabled {
 .formatted-text ol {
     margin: 0.4em 0 0.75em 1.4em;
     padding: 0;
-    text-align: left;
+    text-align: inherit;
 }
 
 .formatted-text li {

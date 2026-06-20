@@ -349,11 +349,64 @@ function validateSliderModifiers(file, context, effects, pointTypes, errors, fie
     });
 }
 
+function getSliderTargetTypes(options) {
+    const targets = new Set();
+    options.forEach(({ option }) => {
+        if (option?.inputType !== "slider") return;
+        const costPerPoint = option.costPerPoint || {};
+        let currencyType = null;
+        let targetType = null;
+        Object.entries(costPerPoint).forEach(([type, value]) => {
+            const numeric = Number(value);
+            if (numeric > 0 && !currencyType) currencyType = type;
+            if (numeric < 0 && !targetType) targetType = type;
+        });
+        if (!currencyType) {
+            currencyType = Object.keys(costPerPoint).find(type => type === "Attribute Points")
+                || Object.keys(costPerPoint)[0]
+                || "";
+        }
+        if (!targetType) targetType = Object.keys(costPerPoint).find(type => type !== currencyType) || "";
+        if (targetType) targets.add(targetType);
+    });
+    return targets;
+}
+
+function validateSliderModifierTargets(file, context, effects, sliderTargets, errors, fieldName = "sliderModifiers") {
+    if (!Array.isArray(effects)) return;
+    effects.forEach((effect, index) => {
+        if (!effect || typeof effect !== "object" || Array.isArray(effect)) return;
+        const effectContext = `${context}.${fieldName}[${index}]`;
+        const selectable = effect.selectable === true || !effect.attribute;
+        if (!selectable && typeof effect.attribute === "string" && !sliderTargets.has(effect.attribute)) {
+            pushIssue(errors, file, `${effectContext}.attribute references point type "${effect.attribute}", but slider modifiers can only target slider-backed point types.`);
+        }
+        if (Array.isArray(effect.choices)) {
+            effect.choices.forEach(choice => {
+                if (typeof choice === "string" && !sliderTargets.has(choice)) {
+                    pushIssue(errors, file, `${effectContext}.choices references point type "${choice}", but slider modifiers can only target slider-backed point types.`);
+                }
+            });
+        }
+    });
+}
+
 function validateThemeSettings(file, settings, errors) {
     if (!settings) return;
     const mode = settings.themeMode;
     if (mode !== undefined && !["toggle", "light", "dark"].includes(mode)) {
         pushIssue(errors, file, `settings.themeMode must be "toggle", "light", or "dark".`);
+    }
+    validateAlignmentValue(file, "settings.optionAlignment", settings.optionAlignment, errors);
+    validateAlignmentValue(file, "settings.optionTitleAlignment", settings.optionTitleAlignment, errors);
+    validateAlignmentValue(file, "settings.optionMetaAlignment", settings.optionMetaAlignment, errors);
+    validateAlignmentValue(file, "settings.optionDescriptionAlignment", settings.optionDescriptionAlignment, errors);
+}
+
+function validateAlignmentValue(file, context, value, errors) {
+    if (value === undefined) return;
+    if (typeof value !== "string" || !["left", "center", "right", "justify"].includes(value)) {
+        pushIssue(errors, file, `${context} must be "left", "center", "right", or "justify".`);
     }
 }
 
@@ -425,6 +478,7 @@ function validateCyoaData(file, data) {
     validateThemeSettings(file, data.find(entry => entry.type === "settings"), errors);
 
     const options = collectOptions(data);
+    const sliderTargets = getSliderTargetTypes(options);
     const optionIds = new Set();
     options.forEach(({ option, path: optionPath }) => {
         if (!option || typeof option !== "object") {
@@ -450,6 +504,12 @@ function validateCyoaData(file, data) {
         validatePointAllocation(file, context, option.pointAllocation, pointTypes, errors);
         validateSliderModifiers(file, context, option.sliderModifiers, pointTypes, errors);
         validateSliderModifiers(file, context, option.attributeEffects, pointTypes, errors, "attributeEffects");
+        validateSliderModifierTargets(file, context, option.sliderModifiers, sliderTargets, errors);
+        validateSliderModifierTargets(file, context, option.attributeEffects, sliderTargets, errors, "attributeEffects");
+        validateAlignmentValue(file, `${context}.alignment`, option.alignment, errors);
+        validateAlignmentValue(file, `${context}.titleAlignment`, option.titleAlignment, errors);
+        validateAlignmentValue(file, `${context}.metaAlignment`, option.metaAlignment, errors);
+        validateAlignmentValue(file, `${context}.descriptionAlignment`, option.descriptionAlignment, errors);
         validateOptionalColor(file, `${context}.borderColor`, option.borderColor, errors);
         validateOptionalColor(file, `${context}.darkBorderColor`, option.darkBorderColor, errors);
         validateRequirementExpression(file, `${context}.prerequisites`, option.prerequisites, errors);

@@ -1,6 +1,6 @@
 (function () {
     const CORE_TYPES_ORDER = ["title", "description", "headerImage", "points", "settings"];
-    const BASE_OPTION_KEYS = new Set(["id", "label", "description", "image", "inputType", "inputLabel", "cost", "costOptions", "pointAllocation", "sliderModifiers", "attributeEffects", "maxSelections", "countsAsOneSelection", "bypassSubcategoryMaxSelections", "prerequisites", "conflictsWith", "autoGrants", "modifiedCosts", "discounts", "discountGrants", "borderColor", "darkBorderColor"]);
+    const BASE_OPTION_KEYS = new Set(["id", "label", "description", "image", "inputType", "inputLabel", "cost", "costOptions", "pointAllocation", "sliderModifiers", "attributeEffects", "maxSelections", "countsAsOneSelection", "bypassSubcategoryMaxSelections", "prerequisites", "conflictsWith", "autoGrants", "modifiedCosts", "discounts", "discountGrants", "alignment", "titleAlignment", "metaAlignment", "descriptionAlignment", "borderColor", "darkBorderColor"]);
 
     const state = {
         data: [],
@@ -1617,6 +1617,7 @@
             mergeDefaults: true
         }).entry;
         fragment.appendChild(renderThemeModeSection(settingsEntry));
+        fragment.appendChild(renderOptionAlignmentSection(settingsEntry));
         const currentThemeMode = settingsEntry.themeMode === "light" || settingsEntry.themeMode === "dark" || settingsEntry.themeMode === "toggle"
             ? settingsEntry.themeMode
             : "toggle";
@@ -1978,6 +1979,58 @@
         body.appendChild(rangesContainer);
         body.appendChild(addAttrBtn);
 
+        return container;
+    }
+
+    function renderAlignmentSelect(currentValue, defaultLabel, onChange) {
+        const select = document.createElement("select");
+        [
+            ["", defaultLabel],
+            ["left", "Align left"],
+            ["center", "Align center"],
+            ["right", "Align right"],
+            ["justify", "Justify"]
+        ].forEach(([value, label]) => {
+            const option = document.createElement("option");
+            option.value = value;
+            option.textContent = label;
+            select.appendChild(option);
+        });
+        select.value = ["left", "center", "right", "justify"].includes(currentValue) ? currentValue : "";
+        select.addEventListener("change", () => onChange(select.value));
+        return select;
+    }
+
+    function renderOptionAlignmentSection(settingsEntry) {
+        const {
+            container,
+            body
+        } = createSectionContainer("Option Alignment", {
+            defaultOpen: true
+        });
+
+        const grid = document.createElement("div");
+        grid.className = "field-inline field-inline-three";
+        [
+            ["optionTitleAlignment", "Option title", "Default: center"],
+            ["optionMetaAlignment", "Costs and prerequisites", "Default: center"],
+            ["optionDescriptionAlignment", "Option description", "Default: center"]
+        ].forEach(([key, labelText, defaultLabel]) => {
+            const label = document.createElement("label");
+            label.textContent = labelText;
+            const select = renderAlignmentSelect(settingsEntry[key], defaultLabel, (value) => {
+                if (value) settingsEntry[key] = value;
+                else delete settingsEntry[key];
+                schedulePreviewUpdate();
+            });
+            grid.append(label, select);
+        });
+        const description = document.createElement("p");
+        description.style.fontSize = "12px";
+        description.style.color = "var(--text-muted)";
+        description.textContent = "Controls text alignment across option titles, option detail blocks such as costs and prerequisites, and option descriptions. Leave defaults to preserve legacy centered options.";
+
+        body.append(grid, description);
         return container;
     }
 
@@ -4135,6 +4188,32 @@
             pricingBody.appendChild(grantsSection);
             refreshOptionWarnings();
 
+            const alignmentSection = document.createElement("div");
+            alignmentSection.className = "field";
+            const alignmentLabel = document.createElement("label");
+            alignmentLabel.textContent = "Text alignment";
+            const alignmentHint = document.createElement("div");
+            alignmentHint.className = "field-help";
+            alignmentHint.textContent = "Optional. Overrides the CYOA-wide alignment for this option's title, detail blocks, or description.";
+            const alignmentGrid = document.createElement("div");
+            alignmentGrid.className = "field-inline field-inline-three";
+            [
+                ["titleAlignment", "Title"],
+                ["metaAlignment", "Costs and prerequisites"],
+                ["descriptionAlignment", "Description"]
+            ].forEach(([key, labelText]) => {
+                const label = document.createElement("label");
+                label.textContent = labelText;
+                const select = renderAlignmentSelect(option[key], "Use CYOA default", (value) => {
+                    if (value) option[key] = value;
+                    else delete option[key];
+                    schedulePreviewUpdate();
+                });
+                alignmentGrid.append(label, select);
+            });
+            alignmentSection.append(alignmentLabel, alignmentHint, alignmentGrid);
+            styleBody.appendChild(alignmentSection);
+
             const borderColorSection = document.createElement("div");
             borderColorSection.className = "field";
             const borderColorLabel = document.createElement("label");
@@ -4784,10 +4863,44 @@
     }
 
     function getSliderModifierTargetNames() {
-        return getPointTypeNames();
+        const targets = new Set();
+        const getSliderTypes = (costPerPoint = {}) => {
+            let currencyType = null;
+            let targetType = null;
+            Object.entries(costPerPoint || {}).forEach(([type, value]) => {
+                const numeric = Number(value);
+                if (numeric > 0 && !currencyType) currencyType = type;
+                if (numeric < 0 && !targetType) targetType = type;
+            });
+            if (!currencyType) {
+                currencyType = Object.keys(costPerPoint || {}).find(type => type === "Attribute Points")
+                    || Object.keys(costPerPoint || {})[0]
+                    || "";
+            }
+            if (!targetType) targetType = Object.keys(costPerPoint || {}).find(type => type !== currencyType) || "";
+            return { targetType };
+        };
+
+        const visitOption = option => {
+            if (option?.inputType !== "slider") return;
+            const { targetType } = getSliderTypes(option.costPerPoint || {});
+            if (targetType) targets.add(targetType);
+        };
+
+        state.data.forEach(entry => {
+            if (!entry || typeof entry !== "object") return;
+            (entry.options || []).forEach(visitOption);
+            walkEditorSubcategories(entry.subcategories || [], subcat => {
+                (subcat.options || []).forEach(visitOption);
+            });
+        });
+
+        return Array.from(targets);
     }
 
     function normalizeSliderModifiersForEditor(option) {
+        const targets = getSliderModifierTargetNames();
+        const targetSet = new Set(targets);
         const raw = Array.isArray(option.sliderModifiers)
             ? option.sliderModifiers
             : Array.isArray(option.attributeEffects)
@@ -4798,7 +4911,7 @@
                 const type = ["multiply", "cap", "add", "subtract"].includes(effect?.type) ? effect.type : "multiply";
                 const value = type === "multiply" ? Number(effect?.multiplier ?? effect?.value) : Number(effect?.value ?? effect?.multiplier);
                 const choices = Array.isArray(effect?.choices)
-                    ? [...new Set(effect.choices.map(choice => String(choice || "").trim()).filter(Boolean))]
+                    ? [...new Set(effect.choices.map(choice => String(choice || "").trim()).filter(choice => targetSet.has(choice)))]
                     : [];
                 return {
                     type,
@@ -4808,7 +4921,7 @@
                     value: Number.isFinite(value) ? value : (type === "multiply" ? 2 : 8)
                 };
             })
-            .filter(effect => effect.attribute || effect.selectable);
+            .filter(effect => effect.selectable || targetSet.has(effect.attribute));
         if (normalized.length) {
             option.sliderModifiers = normalized.map(effect => {
                 const saved = {

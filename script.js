@@ -9,6 +9,12 @@ const storyInputs = {};
 let currentTab = null; // Track current active tab
 let backpackEnabled = false; // Track if backpack is enabled
 let themeMode = "toggle";
+let optionTitleAlignment = "center";
+let optionMetaAlignment = "center";
+let optionDescriptionAlignment = "center";
+let optionTitleAlignmentExplicit = false;
+let optionMetaAlignmentExplicit = false;
+let optionDescriptionAlignmentExplicit = false;
 
 const openSubcategories = new Set();
 let animateMainTab = false;
@@ -96,6 +102,24 @@ function normalizeThemeMode(settingsEntry = {}) {
         return "light";
     }
     return "toggle";
+}
+
+function normalizeOptionAlignment(value, fallback = "center") {
+    const alignment = String(value || "").trim().toLowerCase();
+    if (alignment === "left" || alignment === "center" || alignment === "right" || alignment === "justify") {
+        return alignment;
+    }
+    return fallback;
+}
+
+function isOptionAlignmentValue(value) {
+    return value === "left" || value === "center" || value === "right" || value === "justify";
+}
+
+function getOptionComponentAlignment(option, optionKey, globalAlignment, globalExplicit) {
+    if (isOptionAlignmentValue(option?.[optionKey])) return option[optionKey];
+    if (!globalExplicit && isOptionAlignmentValue(option?.alignment)) return option.alignment;
+    return globalAlignment;
 }
 
 function getEffectiveDarkMode() {
@@ -354,6 +378,12 @@ function resetGlobalState() {
     allowNegativeTypes = new Set();
     pointCategories = {};
     visiblePointCategories = new Set();
+    optionTitleAlignment = "center";
+    optionMetaAlignment = "center";
+    optionDescriptionAlignment = "center";
+    optionTitleAlignmentExplicit = false;
+    optionMetaAlignmentExplicit = false;
+    optionDescriptionAlignmentExplicit = false;
 }
 
 function meetsCountRequirement(rawId) {
@@ -640,7 +670,13 @@ function getSliderOptionForAttribute(attribute) {
 }
 
 function getSliderModifierTargetNames() {
-    return Object.keys(originalPoints || {});
+    const targets = new Set();
+    getAllOptions().forEach(option => {
+        if (option?.inputType !== "slider") return;
+        const { attributeType } = getSliderTypes(option.costPerPoint || {});
+        if (attributeType) targets.add(attributeType);
+    });
+    return Array.from(targets);
 }
 
 function getSliderBaseValue(attribute) {
@@ -699,6 +735,8 @@ function rememberSliderModifierPointBaseline(type) {
 }
 
 function normalizeSliderModifiers(option) {
+    const sliderTargets = getSliderModifierTargetNames();
+    const sliderTargetSet = new Set(sliderTargets);
     const rawEffects = Array.isArray(option?.sliderModifiers)
         ? option.sliderModifiers
         : Array.isArray(option?.attributeEffects)
@@ -713,11 +751,13 @@ function normalizeSliderModifiers(option) {
                 type,
                 attribute: String(effect.attribute || "").trim(),
                 selectable: effect.selectable === true || !String(effect.attribute || "").trim(),
-                choices: Array.isArray(effect.choices) ? effect.choices.filter(Boolean) : getSliderModifierTargetNames(),
+                choices: Array.isArray(effect.choices)
+                    ? effect.choices.filter(choice => sliderTargetSet.has(choice))
+                    : sliderTargets,
                 value
             };
         })
-        .filter(effect => effect && Number.isFinite(effect.value));
+        .filter(effect => effect && Number.isFinite(effect.value) && (effect.selectable || sliderTargetSet.has(effect.attribute)));
 }
 
 function getSelectedSliderModifierAttribute(optionId, effect, index) {
@@ -2315,6 +2355,13 @@ function applyCyoaData(rawData, {
         const preservedSubcategoryOpen = new Set(openSubcategories);
 
         resetGlobalState();
+        const legacyOptionAlignment = normalizeOptionAlignment(settingsEntry.optionAlignment);
+        optionTitleAlignmentExplicit = isOptionAlignmentValue(settingsEntry.optionTitleAlignment);
+        optionMetaAlignmentExplicit = isOptionAlignmentValue(settingsEntry.optionMetaAlignment);
+        optionDescriptionAlignmentExplicit = isOptionAlignmentValue(settingsEntry.optionDescriptionAlignment);
+        optionTitleAlignment = normalizeOptionAlignment(settingsEntry.optionTitleAlignment, legacyOptionAlignment);
+        optionMetaAlignment = normalizeOptionAlignment(settingsEntry.optionMetaAlignment, legacyOptionAlignment);
+        optionDescriptionAlignment = normalizeOptionAlignment(settingsEntry.optionDescriptionAlignment, legacyOptionAlignment);
 
         preservedCategoryOpen.forEach(name => openCategories.add(name));
         preservedSubcategoryOpen.forEach(key => openSubcategories.add(key));
@@ -4683,10 +4730,13 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
     contentWrapper.className = "option-content";
 
     const label = document.createElement("strong");
+    label.style.alignSelf = "stretch";
+    label.style.textAlign = getOptionComponentAlignment(opt, "titleAlignment", optionTitleAlignment, optionTitleAlignmentExplicit);
     setMultilineText(label, opt.label || "");
 
     const requirements = document.createElement("div");
     requirements.className = "option-requirements";
+    requirements.style.textAlign = getOptionComponentAlignment(opt, "metaAlignment", optionMetaAlignment, optionMetaAlignmentExplicit);
 
     const showingNextSelection = selectedCount < maxSelections;
     const displaySelectionNumber = showingNextSelection ? selectedCount + 1 : Math.max(selectedCount, 1);
@@ -4821,6 +4871,7 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
 
     const desc = document.createElement("div");
     desc.className = "option-description";
+    desc.style.textAlign = getOptionComponentAlignment(opt, "descriptionAlignment", optionDescriptionAlignment, optionDescriptionAlignmentExplicit);
     setMultilineText(desc, opt.description || "");
 
     const baseCost = getOptionBaseCost(opt);

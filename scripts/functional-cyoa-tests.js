@@ -8,6 +8,7 @@ const ROOT = path.join(__dirname, "..");
 const PLAYER_SCRIPT_SOURCE = fs.readFileSync(path.join(ROOT, "script.js"), "utf8");
 const EDITOR_SCRIPT_SOURCE = fs.readFileSync(path.join(ROOT, "editor.js"), "utf8");
 const SERVER_SCRIPT_SOURCE = fs.readFileSync(path.join(ROOT, "server.js"), "utf8");
+const STYLE_SOURCE = fs.readFileSync(path.join(ROOT, "style.css"), "utf8");
 
 const FEATURE_COVERAGE = [
     "synthetic CYOA data computes selectable state and effective costs",
@@ -359,6 +360,13 @@ class CyoaEngine {
             { type: "title", text: "Synthetic Feature Coverage CYOA" },
             { type: "points", values: { Points: 10, Tokens: 0, Skills: 0, Equipment: 0 }, allowNegative: ["Debt"] },
             {
+                type: "settings",
+                themeMode: "toggle",
+                optionTitleAlignment: "right",
+                optionMetaAlignment: "left",
+                optionDescriptionAlignment: "justify"
+            },
+            {
                 name: "Core",
                 subcategories: [
                     {
@@ -530,6 +538,9 @@ class CyoaEngine {
                                 cost: {},
                                 creatorNotes: "runtime should preserve this",
                                 customMetadata: { tier: 2 },
+                                titleAlignment: "left",
+                                metaAlignment: "right",
+                                descriptionAlignment: "center",
                                 borderColor: "#8886D1",
                                 darkBorderColor: "#C0C0C0"
                             }
@@ -1052,6 +1063,18 @@ class CyoaEngine {
         return null;
     }
 
+    getSliderModifierTargetNames() {
+        const targets = new Set();
+        for (const option of this.optionMap.values()) {
+            if (option?.inputType !== "slider") continue;
+            const costPerPoint = option.costPerPoint || {};
+            const currencyType = Object.keys(costPerPoint).find(type => Number(costPerPoint[type]) > 0) || "Attribute Points";
+            const attributeType = Object.keys(costPerPoint).find(type => type !== currencyType);
+            if (attributeType) targets.add(attributeType);
+        }
+        return Array.from(targets);
+    }
+
     getSliderBaseValue(attribute) {
         const sliderValue = Number(this.attributeSliderValues[attribute]);
         if (Number.isFinite(sliderValue)) return sliderValue;
@@ -1088,6 +1111,8 @@ class CyoaEngine {
     }
 
     normalizeSliderModifiers(option) {
+        const sliderTargets = this.getSliderModifierTargetNames();
+        const sliderTargetSet = new Set(sliderTargets);
         const rawEffects = Array.isArray(option?.sliderModifiers)
             ? option.sliderModifiers
             : Array.isArray(option?.attributeEffects)
@@ -1099,10 +1124,10 @@ class CyoaEngine {
                 type,
                 attribute: String(effect?.attribute || "").trim(),
                 selectable: effect?.selectable === true || !String(effect?.attribute || "").trim(),
-                choices: Array.isArray(effect?.choices) ? effect.choices.filter(Boolean) : Object.keys(this.pointsEntry.values || {}),
+                choices: Array.isArray(effect?.choices) ? effect.choices.filter(choice => sliderTargetSet.has(choice)) : sliderTargets,
                 value: type === "multiply" ? Number(effect?.multiplier ?? effect?.value) : Number(effect?.value ?? effect?.multiplier)
             };
-        }).filter(effect => Number.isFinite(effect.value));
+        }).filter(effect => Number.isFinite(effect.value) && (effect.selectable || sliderTargetSet.has(effect.attribute)));
     }
 
     restoreActiveSliderModifierPointValues() {
@@ -3173,27 +3198,27 @@ test("slider modifiers should cap with refund and add fixed values", () => {
     assert.strictEqual(engine.points.Charisma, 4, "fixed subtract should reduce displayed Charisma");
     assert.strictEqual(engine.attributeSliderValues.Constitution, 8, "selectable cap should clamp chosen Constitution slider");
     assert.strictEqual(engine.points.Wisdom, 11, "selectable add should increase chosen Wisdom");
-    assert.strictEqual(engine.points.RP, baseRP + 5, "fixed add should increase ordinary point types");
-    assert.strictEqual(engine.points.Heat, baseHeat - 10, "fixed subtract should reduce ordinary point types");
+    assert.strictEqual(engine.points.RP, baseRP, "fixed add should ignore ordinary non-slider point types");
+    assert.strictEqual(engine.points.Heat, baseHeat, "fixed subtract should ignore ordinary non-slider point types");
     engine.remove(modifierOption.id, { skipCostModifierAffectedRemoval: true });
     assert.strictEqual(engine.points.Dexterity, 4, "removing fixed add should restore modified slider-backed points");
     assert.strictEqual(engine.points.Charisma, 7, "removing fixed subtract should restore modified slider-backed points");
     assert.strictEqual(engine.points.Wisdom, 3, "removing selectable add should restore selected point type");
-    assert.strictEqual(engine.points.RP, baseRP, "removing fixed add should restore ordinary point types");
-    assert.strictEqual(engine.points.Heat, baseHeat, "removing fixed subtract should restore ordinary point types");
+    assert.strictEqual(engine.points.RP, baseRP, "non-slider add should remain ignored after removal");
+    assert.strictEqual(engine.points.Heat, baseHeat, "non-slider subtract should remain ignored after removal");
     assert.deepStrictEqual(modifierOption.sliderModifiers[4].choices, ["Wisdom", "Charisma"]);
     assert.deepStrictEqual(
         engine.normalizeSliderModifiers({ sliderModifiers: [{ type: "add", selectable: true, value: 1 }] })[0].choices,
-        Object.keys(engine.pointsEntry.values),
-        "unrestricted player-choice slider modifiers should default to all configured point types"
+        ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"],
+        "unrestricted player-choice slider modifiers should default to slider-backed point types"
     );
     assert(
         EDITOR_SCRIPT_SOURCE.includes("Subtract") &&
             EDITOR_SCRIPT_SOURCE.includes("effect.choices") &&
-            EDITOR_SCRIPT_SOURCE.includes("return getPointTypeNames();") &&
-            PLAYER_SCRIPT_SOURCE.includes("return Object.keys(originalPoints || {});") &&
+            EDITOR_SCRIPT_SOURCE.includes('option?.inputType !== "slider"') &&
+            PLAYER_SCRIPT_SOURCE.includes('option?.inputType !== "slider"') &&
             PLAYER_SCRIPT_SOURCE.includes('effect.type === "subtract"'),
-        "visual editor and player should support subtract modifiers and point-type-based player-choice lists"
+        "visual editor and player should support subtract modifiers and slider-backed player-choice lists"
     );
 });
 
@@ -3274,6 +3299,44 @@ test("option border colors should be supported through visual editor style field
             && EDITOR_SCRIPT_SOURCE.includes("Light border color")
             && EDITOR_SCRIPT_SOURCE.includes("Dark border color"),
         "visual editor should expose first-class option border color fields"
+    );
+});
+
+test("option content alignment should support global defaults and option overrides", () => {
+    const engine = CyoaEngine.synthetic();
+    const settings = engine.data.find(entry => entry.type === "settings");
+    const option = engine.option("customFields");
+
+    assert.strictEqual(settings.optionTitleAlignment, "right");
+    assert.strictEqual(settings.optionMetaAlignment, "left");
+    assert.strictEqual(settings.optionDescriptionAlignment, "justify");
+    assert.strictEqual(option.titleAlignment, "left");
+    assert.strictEqual(option.metaAlignment, "right");
+    assert.strictEqual(option.descriptionAlignment, "center");
+    assert(
+        PLAYER_SCRIPT_SOURCE.includes('let optionTitleAlignment = "center"') &&
+            PLAYER_SCRIPT_SOURCE.includes('let optionMetaAlignment = "center"') &&
+            PLAYER_SCRIPT_SOURCE.includes('let optionDescriptionAlignment = "center"') &&
+            PLAYER_SCRIPT_SOURCE.includes("getOptionComponentAlignment(opt, \"titleAlignment\", optionTitleAlignment, optionTitleAlignmentExplicit)") &&
+            PLAYER_SCRIPT_SOURCE.includes("getOptionComponentAlignment(opt, \"metaAlignment\", optionMetaAlignment, optionMetaAlignmentExplicit)") &&
+            PLAYER_SCRIPT_SOURCE.includes("getOptionComponentAlignment(opt, \"descriptionAlignment\", optionDescriptionAlignment, optionDescriptionAlignmentExplicit)") &&
+            PLAYER_SCRIPT_SOURCE.includes("isOptionAlignmentValue(settingsEntry.optionTitleAlignment)") &&
+            PLAYER_SCRIPT_SOURCE.includes("if (!globalExplicit && isOptionAlignmentValue(option?.alignment))") &&
+            PLAYER_SCRIPT_SOURCE.includes("settingsEntry.optionTitleAlignment") &&
+            PLAYER_SCRIPT_SOURCE.includes("settingsEntry.optionMetaAlignment") &&
+            PLAYER_SCRIPT_SOURCE.includes("settingsEntry.optionDescriptionAlignment") &&
+            STYLE_SOURCE.includes("text-align: inherit;"),
+        "player should resolve separate option title, details, and description alignments"
+    );
+    assert(
+        EDITOR_SCRIPT_SOURCE.includes("Option title") &&
+            EDITOR_SCRIPT_SOURCE.includes("Costs and prerequisites") &&
+            EDITOR_SCRIPT_SOURCE.includes("Option description") &&
+            EDITOR_SCRIPT_SOURCE.includes("Text alignment") &&
+            EDITOR_SCRIPT_SOURCE.includes("renderAlignmentSelect(option[key], \"Use CYOA default\"") &&
+            EDITOR_SCRIPT_SOURCE.includes("Use CYOA default") &&
+            EDITOR_SCRIPT_SOURCE.includes("Justify"),
+        "visual editor should expose global and per-option component alignment controls"
     );
 });
 
@@ -3503,6 +3566,45 @@ test("CYOA validation should reject unsafe option border colors", () => {
             error.includes(".borderColor must be a safe CSS color string")
         ),
         "synthetic validation should reject unsafe option border colors"
+    );
+});
+
+test("CYOA validation should reject unsupported option alignment values", () => {
+    const data = CyoaEngine.synthetic().data;
+    const settings = data.find(entry => entry.type === "settings");
+    let customOption = null;
+    walkSubcategories(data.find(entry => entry.name === "Core").subcategories, subcat => {
+        customOption = customOption || (subcat.options || []).find(option => option.id === "customFields");
+    });
+    settings.optionAlignment = "diagonal";
+    settings.optionMetaAlignment = "sideways";
+    customOption.alignment = "middle";
+    customOption.descriptionAlignment = "bottom";
+    const errors = validateCyoaData("synthetic-alignment-validation.json", data).errors;
+    assert(
+        errors.some(error => error.includes('settings.optionAlignment must be "left", "center", "right", or "justify"')) &&
+            errors.some(error => error.includes('settings.optionMetaAlignment must be "left", "center", "right", or "justify"')) &&
+            errors.some(error => error.includes('.alignment must be "left", "center", "right", or "justify"')) &&
+            errors.some(error => error.includes('.descriptionAlignment must be "left", "center", "right", or "justify"')),
+        "synthetic validation should reject unsupported global and option component alignment values"
+    );
+});
+
+test("CYOA validation should reject slider modifiers targeting non-slider point types", () => {
+    const data = CyoaEngine.synthetic().data;
+    let customOption = null;
+    walkSubcategories(data.find(entry => entry.name === "Core").subcategories, subcat => {
+        customOption = customOption || (subcat.options || []).find(option => option.id === "customFields");
+    });
+    customOption.sliderModifiers = [
+        { type: "add", attribute: "Points", value: 1 },
+        { type: "add", selectable: true, choices: ["Tokens"], value: 1 }
+    ];
+    const errors = validateCyoaData("synthetic-slider-modifier-validation.json", data).errors;
+    assert(
+        errors.some(error => error.includes('attribute references point type "Points", but slider modifiers can only target slider-backed point types')) &&
+            errors.some(error => error.includes('choices references point type "Tokens", but slider modifiers can only target slider-backed point types')),
+        "synthetic validation should reject slider modifiers that target point types without slider inputs"
     );
 });
 
