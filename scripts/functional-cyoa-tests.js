@@ -941,7 +941,7 @@ class CyoaEngine {
         return history.every(costOptionIndex => this.selectedCostOptionStillValid(option, costOptionIndex));
     }
 
-    normalizeCostOptions(option, { selectionNumber = null } = {}) {
+    normalizeCostOptions(option, { selectionNumber = null, includeUnavailable = false } = {}) {
         const options = this.configuredCostOptions(option);
         const effectiveSelectionNumber = selectionNumber || this.getNextSelectionNumber(option);
         const info = option?.id ? this.findSubcategoryInfo(option.id) : {};
@@ -955,9 +955,10 @@ class CyoaEngine {
             : {};
         return options
             .map((entry, index) => {
-                if (!this.costOptionAvailabilityMet(option, entry, index, options)) return null;
+                const available = this.costOptionAvailabilityMet(option, entry, index, options);
+                if (!available && !includeUnavailable) return null;
                 const cost = this.getCostOptionCostForSelection(entry, effectiveSelectionNumber);
-                return cost ? { index, cost: shouldMergeDefaults ? this.addPointCostMaps(defaultCost, cost) : { ...cost } } : null;
+                return cost ? { index, available, cost: shouldMergeDefaults ? this.addPointCostMaps(defaultCost, cost) : { ...cost } } : null;
             })
             .filter(Boolean);
     }
@@ -1064,15 +1065,7 @@ class CyoaEngine {
     }
 
     getSliderModifierTargetNames() {
-        const targets = new Set();
-        for (const option of this.optionMap.values()) {
-            if (option?.inputType !== "slider") continue;
-            const costPerPoint = option.costPerPoint || {};
-            const currencyType = Object.keys(costPerPoint).find(type => Number(costPerPoint[type]) > 0) || "Attribute Points";
-            const attributeType = Object.keys(costPerPoint).find(type => type !== currencyType);
-            if (attributeType) targets.add(attributeType);
-        }
-        return Array.from(targets);
+        return Object.keys(this.pointsEntry.values || {});
     }
 
     getSliderBaseValue(attribute) {
@@ -2556,6 +2549,24 @@ test("repeatable cost options should default each payment choice to one use", ()
         { index: 1, cost: { Points: 2 } },
         { index: 2, cost: { Points: -1 } }
     ]);
+    assert.deepStrictEqual(
+        engine.normalizeCostOptions(engine.option("implicitLimitedRepeatCosts"), {
+            selectionNumber: 2,
+            includeUnavailable: true
+        }),
+        [
+            { index: 0, available: false, cost: { Points: 1 } },
+            { index: 1, available: true, cost: { Points: 2 } },
+            { index: 2, available: true, cost: { Points: -1 } }
+        ],
+        "player dropdown should keep payment options in stable configured order while disabling unavailable choices"
+    );
+    assert(
+        PLAYER_SCRIPT_SOURCE.includes("includeUnavailable: true") &&
+            PLAYER_SCRIPT_SOURCE.includes("displayCostOptions.forEach") &&
+            PLAYER_SCRIPT_SOURCE.includes("option.disabled = choice.available === false || !canAffordCost(effectiveCost)"),
+        "player renderer should keep unavailable payment choices in the dropdown instead of reordering by filtering"
+    );
 
     engine.select("implicitLimitedRepeatCosts", { costOptionIndex: 1 });
     assert.deepStrictEqual(engine.selectedCostOptionHistory.implicitLimitedRepeatCosts, [0, 1]);
@@ -3231,27 +3242,27 @@ test("slider modifiers should cap with refund and add fixed values", () => {
     assert.strictEqual(engine.points.Charisma, 4, "fixed subtract should reduce displayed Charisma");
     assert.strictEqual(engine.attributeSliderValues.Constitution, 8, "selectable cap should clamp chosen Constitution slider");
     assert.strictEqual(engine.points.Wisdom, 11, "selectable add should increase chosen Wisdom");
-    assert.strictEqual(engine.points.RP, baseRP, "fixed add should ignore ordinary non-slider point types");
-    assert.strictEqual(engine.points.Heat, baseHeat, "fixed subtract should ignore ordinary non-slider point types");
+    assert.strictEqual(engine.points.RP, baseRP + 5, "fixed add should increase ordinary point types");
+    assert.strictEqual(engine.points.Heat, baseHeat - 10, "fixed subtract should reduce ordinary point types");
     engine.remove(modifierOption.id, { skipCostModifierAffectedRemoval: true });
-    assert.strictEqual(engine.points.Dexterity, 4, "removing fixed add should restore modified slider-backed points");
-    assert.strictEqual(engine.points.Charisma, 7, "removing fixed subtract should restore modified slider-backed points");
+    assert.strictEqual(engine.points.Dexterity, 4, "removing fixed add should restore modified point values");
+    assert.strictEqual(engine.points.Charisma, 7, "removing fixed subtract should restore modified point values");
     assert.strictEqual(engine.points.Wisdom, 3, "removing selectable add should restore selected point type");
-    assert.strictEqual(engine.points.RP, baseRP, "non-slider add should remain ignored after removal");
-    assert.strictEqual(engine.points.Heat, baseHeat, "non-slider subtract should remain ignored after removal");
+    assert.strictEqual(engine.points.RP, baseRP, "removing fixed add should restore ordinary point types");
+    assert.strictEqual(engine.points.Heat, baseHeat, "removing fixed subtract should restore ordinary point types");
     assert.deepStrictEqual(modifierOption.sliderModifiers[4].choices, ["Wisdom", "Charisma"]);
     assert.deepStrictEqual(
         engine.normalizeSliderModifiers({ sliderModifiers: [{ type: "add", selectable: true, value: 1 }] })[0].choices,
-        ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"],
-        "unrestricted player-choice slider modifiers should default to slider-backed point types"
+        Object.keys(engine.pointsEntry.values),
+        "unrestricted player-choice slider modifiers should default to all configured point types"
     );
     assert(
         EDITOR_SCRIPT_SOURCE.includes("Subtract") &&
             EDITOR_SCRIPT_SOURCE.includes("effect.choices") &&
-            EDITOR_SCRIPT_SOURCE.includes('option?.inputType !== "slider"') &&
-            PLAYER_SCRIPT_SOURCE.includes('option?.inputType !== "slider"') &&
+            EDITOR_SCRIPT_SOURCE.includes("return getPointTypeNames();") &&
+            PLAYER_SCRIPT_SOURCE.includes("return Object.keys(originalPoints || {});") &&
             PLAYER_SCRIPT_SOURCE.includes('effect.type === "subtract"'),
-        "visual editor and player should support subtract modifiers and slider-backed player-choice lists"
+        "visual editor and player should support subtract modifiers and point-type-based player-choice lists"
     );
 });
 
@@ -3642,7 +3653,7 @@ test("CYOA validation should reject unsupported option alignment values", () => 
     );
 });
 
-test("CYOA validation should reject slider modifiers targeting non-slider point types", () => {
+test("CYOA validation should accept slider modifiers targeting configured point types", () => {
     const data = CyoaEngine.synthetic().data;
     let customOption = null;
     walkSubcategories(data.find(entry => entry.name === "Core").subcategories, subcat => {
@@ -3653,10 +3664,10 @@ test("CYOA validation should reject slider modifiers targeting non-slider point 
         { type: "add", selectable: true, choices: ["Tokens"], value: 1 }
     ];
     const errors = validateCyoaData("synthetic-slider-modifier-validation.json", data).errors;
-    assert(
-        errors.some(error => error.includes('attribute references point type "Points", but slider modifiers can only target slider-backed point types')) &&
-            errors.some(error => error.includes('choices references point type "Tokens", but slider modifiers can only target slider-backed point types')),
-        "synthetic validation should reject slider modifiers that target point types without slider inputs"
+    assert.strictEqual(
+        errors.filter(error => error.includes("sliderModifiers")).length,
+        0,
+        "synthetic validation should allow slider modifiers to target any configured point type"
     );
 });
 

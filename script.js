@@ -543,7 +543,7 @@ function selectedCostOptionsStillValid(option) {
     return history.every(costOptionIndex => selectedCostOptionStillValid(option, costOptionIndex));
 }
 
-function normalizeOptionCostOptions(option, { selectionNumber = null } = {}) {
+function normalizeOptionCostOptions(option, { selectionNumber = null, includeUnavailable = false } = {}) {
     const options = getConfiguredCostOptions(option);
     const effectiveSelectionNumber = selectionNumber || getNextSelectionNumber(option);
     const info = option?.id ? findSubcategoryInfo(option.id) : {};
@@ -557,7 +557,8 @@ function normalizeOptionCostOptions(option, { selectionNumber = null } = {}) {
         : {};
     return options
         .map((entry, index) => {
-            if (!costOptionAvailabilityMet(option, entry, index, options)) return null;
+            const available = costOptionAvailabilityMet(option, entry, index, options);
+            if (!available && !includeUnavailable) return null;
             const rawCost = getCostOptionCostForSelection(entry, effectiveSelectionNumber)
                 || (entry?.cost && typeof entry.cost === "object"
                     ? entry.cost
@@ -568,6 +569,7 @@ function normalizeOptionCostOptions(option, { selectionNumber = null } = {}) {
             const cost = shouldMergeDefaults ? addPointCostMaps(defaultCost, rawCost) : { ...rawCost };
             return {
                 index,
+                available,
                 cost
             };
         })
@@ -670,13 +672,7 @@ function getSliderOptionForAttribute(attribute) {
 }
 
 function getSliderModifierTargetNames() {
-    const targets = new Set();
-    getAllOptions().forEach(option => {
-        if (option?.inputType !== "slider") return;
-        const { attributeType } = getSliderTypes(option.costPerPoint || {});
-        if (attributeType) targets.add(attributeType);
-    });
-    return Array.from(targets);
+    return Object.keys(originalPoints || {});
 }
 
 function getSliderBaseValue(attribute) {
@@ -735,8 +731,8 @@ function rememberSliderModifierPointBaseline(type) {
 }
 
 function normalizeSliderModifiers(option) {
-    const sliderTargets = getSliderModifierTargetNames();
-    const sliderTargetSet = new Set(sliderTargets);
+    const targets = getSliderModifierTargetNames();
+    const targetSet = new Set(targets);
     const rawEffects = Array.isArray(option?.sliderModifiers)
         ? option.sliderModifiers
         : Array.isArray(option?.attributeEffects)
@@ -752,12 +748,12 @@ function normalizeSliderModifiers(option) {
                 attribute: String(effect.attribute || "").trim(),
                 selectable: effect.selectable === true || !String(effect.attribute || "").trim(),
                 choices: Array.isArray(effect.choices)
-                    ? effect.choices.filter(choice => sliderTargetSet.has(choice))
-                    : sliderTargets,
+                    ? effect.choices.filter(choice => targetSet.has(choice))
+                    : targets,
                 value
             };
         })
-        .filter(effect => effect && Number.isFinite(effect.value) && (effect.selectable || sliderTargetSet.has(effect.attribute)));
+        .filter(effect => effect && Number.isFinite(effect.value) && (effect.selectable || targetSet.has(effect.attribute)));
 }
 
 function getSelectedSliderModifierAttribute(optionId, effect, index) {
@@ -5226,16 +5222,20 @@ function renderSelectionButton(opt, contentWrapper) {
     const max = opt.maxSelections || 1;
     const nextSelectionNumber = count + 1;
     const costOptions = normalizeOptionCostOptions(opt, { selectionNumber: nextSelectionNumber });
+    const displayCostOptions = normalizeOptionCostOptions(opt, {
+        selectionNumber: nextSelectionNumber,
+        includeUnavailable: true
+    });
     const selectedCostOptionIndex = getInitialCostOptionIndex(opt, nextSelectionNumber);
     const canAdd = canSelect(opt);
     const grant = autoGrantedSelections[opt.id];
     const lockedAutoGrant = isAutoGrantedLocked(opt.id);
     const grantSourceLabel = grant?.sourceId ? (getOptionLabel(grant.sourceId) || grant.sourceId) : "";
 
-    if (costOptions.length > 1 && count < max && !grant) {
+    if (displayCostOptions.length > 1 && count < max && !grant) {
         const select = document.createElement("select");
         select.className = "cost-option-select";
-        costOptions.forEach(choice => {
+        displayCostOptions.forEach(choice => {
             const option = document.createElement("option");
             const effectiveCost = getOptionEffectiveCost(opt, {
                 costOptionIndex: choice.index,
@@ -5243,7 +5243,7 @@ function renderSelectionButton(opt, contentWrapper) {
             });
             option.value = String(choice.index);
             option.textContent = formatCostMapPlainText(effectiveCost) || "Free";
-            option.disabled = !canAffordCost(effectiveCost);
+            option.disabled = choice.available === false || !canAffordCost(effectiveCost);
             select.appendChild(option);
         });
         select.value = String(selectedCostOptionIndex);

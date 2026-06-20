@@ -3797,7 +3797,7 @@
             sliderModifiersLabel.textContent = "Slider modifiers";
             const sliderModifiersHint = document.createElement("div");
             sliderModifiersHint.className = "field-help";
-            sliderModifiersHint.textContent = "Optional. Modify slider-backed values while this option is selected.";
+            sliderModifiersHint.textContent = "Optional. Modify point values while this option is selected.";
             const sliderModifiersContainer = document.createElement("div");
             sliderModifiersContainer.className = "list-stack";
             renderSliderModifiersEditor(sliderModifiersContainer, option);
@@ -4863,39 +4863,7 @@
     }
 
     function getSliderModifierTargetNames() {
-        const targets = new Set();
-        const getSliderTypes = (costPerPoint = {}) => {
-            let currencyType = null;
-            let targetType = null;
-            Object.entries(costPerPoint || {}).forEach(([type, value]) => {
-                const numeric = Number(value);
-                if (numeric > 0 && !currencyType) currencyType = type;
-                if (numeric < 0 && !targetType) targetType = type;
-            });
-            if (!currencyType) {
-                currencyType = Object.keys(costPerPoint || {}).find(type => type === "Attribute Points")
-                    || Object.keys(costPerPoint || {})[0]
-                    || "";
-            }
-            if (!targetType) targetType = Object.keys(costPerPoint || {}).find(type => type !== currencyType) || "";
-            return { targetType };
-        };
-
-        const visitOption = option => {
-            if (option?.inputType !== "slider") return;
-            const { targetType } = getSliderTypes(option.costPerPoint || {});
-            if (targetType) targets.add(targetType);
-        };
-
-        state.data.forEach(entry => {
-            if (!entry || typeof entry !== "object") return;
-            (entry.options || []).forEach(visitOption);
-            walkEditorSubcategories(entry.subcategories || [], subcat => {
-                (subcat.options || []).forEach(visitOption);
-            });
-        });
-
-        return Array.from(targets);
+        return getPointTypeNames();
     }
 
     function normalizeSliderModifiersForEditor(option) {
