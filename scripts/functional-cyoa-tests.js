@@ -964,8 +964,8 @@ class CyoaEngine {
             .filter(Boolean);
     }
 
-    getBaseCostChoice(option, costOptionIndex = null, { selectionNumber = null } = {}) {
-        const choices = this.normalizeCostOptions(option, { selectionNumber });
+    getBaseCostChoice(option, costOptionIndex = null, { selectionNumber = null, includeUnavailable = false } = {}) {
+        const choices = this.normalizeCostOptions(option, { selectionNumber, includeUnavailable });
         if (!choices.length) {
             return this.addPointCostMaps(this.getMergedDefaultCostForOption(option, selectionNumber), this.getBaseCost(option));
         }
@@ -1353,11 +1353,11 @@ class CyoaEngine {
         return result;
     }
 
-    effectiveCost(optionOrId, { costOptionIndex = null, selectionNumber = null } = {}) {
+    effectiveCost(optionOrId, { costOptionIndex = null, selectionNumber = null, includeUnavailable = false } = {}) {
         const option = typeof optionOrId === "string" ? this.option(optionOrId) : optionOrId;
         const info = this.findSubcategoryInfo(option.id);
         let cost = this.mergeCostMaps(
-            this.getBaseCostChoice(option, costOptionIndex, { selectionNumber }),
+            this.getBaseCostChoice(option, costOptionIndex, { selectionNumber, includeUnavailable }),
             this.getPointAllocationCost(option)
         );
         const winningRule = this.winningModifiedCostRule(option, info.subcat);
@@ -1507,7 +1507,11 @@ class CyoaEngine {
         }
         return choices.map(choice => ({
             index: choice.index,
-            cost: this.effectiveCost(option, { ...options, costOptionIndex: choice.index })
+            cost: this.effectiveCost(option, {
+                ...options,
+                costOptionIndex: choice.index,
+                includeUnavailable: options.includeUnavailable === true
+            })
         }));
     }
 
@@ -2562,11 +2566,24 @@ test("repeatable cost options should default each payment choice to one use", ()
         ],
         "player dropdown should keep payment options in stable configured order while disabling unavailable choices"
     );
+    assert.deepStrictEqual(
+        engine.effectiveCostChoices("implicitLimitedRepeatCosts", {
+            selectionNumber: 2,
+            includeUnavailable: true
+        }),
+        [
+            { index: 0, cost: { Points: 1 } },
+            { index: 1, cost: { Points: 2 } },
+            { index: 2, cost: { Points: -1 } }
+        ],
+        "player payment option displays should keep unavailable choices in configured order with their own costs"
+    );
     assert(
         PLAYER_SCRIPT_SOURCE.includes("includeUnavailable: true") &&
             PLAYER_SCRIPT_SOURCE.includes("displayCostOptions.forEach") &&
-            PLAYER_SCRIPT_SOURCE.includes("option.disabled = choice.available === false || !canAffordCost(effectiveCost)"),
-        "player renderer should keep unavailable payment choices in the dropdown instead of reordering by filtering"
+            PLAYER_SCRIPT_SOURCE.includes("option.disabled = choice.available === false || !canAffordCost(effectiveCost)") &&
+            PLAYER_SCRIPT_SOURCE.includes("includeUnavailable: options.includeUnavailable === true"),
+        "player renderer should keep unavailable payment choices in configured order instead of reordering by filtering"
     );
 
     engine.select("implicitLimitedRepeatCosts", { costOptionIndex: 1 });
@@ -2997,6 +3014,15 @@ test("point type edits should refresh category cost controls", () => {
             "editor should re-render category controls after point types are added, renamed, or removed"
         );
     });
+    assert(
+        editorSource.includes("renameMapKeyPreservingOrder") &&
+            editorSource.includes("next[key === oldKey ? newKey : key] = value") &&
+            editorSource.includes("container.__pointMapOrder") &&
+            editorSource.includes("orderPointMapByEditorRows") &&
+            editorSource.includes("currentPointType = newName") &&
+            !editorSource.includes("delete valueMap[pointType];\n                valueMap[newName]"),
+        "editor should preserve payment point row order when a selected point type is changed without re-rendering the row"
+    );
 });
 
 test("point tracker categories should be editable and player-toggleable", () => {

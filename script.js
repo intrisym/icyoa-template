@@ -577,8 +577,8 @@ function normalizeOptionCostOptions(option, { selectionNumber = null, includeUna
         .filter(Boolean);
 }
 
-function getOptionBaseCostByChoice(option, costOptionIndex = null, { selectionNumber = null } = {}) {
-    const options = normalizeOptionCostOptions(option, { selectionNumber });
+function getOptionBaseCostByChoice(option, costOptionIndex = null, { selectionNumber = null, includeUnavailable = false } = {}) {
+    const options = normalizeOptionCostOptions(option, { selectionNumber, includeUnavailable });
     if (!options.length) {
         const directCost = getOptionBaseCost(option);
         return addPointCostMaps(getMergedDefaultCostForOption(option, selectionNumber), directCost);
@@ -840,10 +840,11 @@ function getInitialCostOptionIndex(option, selectionNumber = null) {
 function getOptionEffectiveCost(option, {
     includeFirstNPreview = true,
     costOptionIndex = null,
-    selectionNumber = null
+    selectionNumber = null,
+    includeUnavailable = false
 } = {}) {
     const baseCost = mergeCostMaps(
-        getOptionBaseCostByChoice(option, costOptionIndex, { selectionNumber }),
+        getOptionBaseCostByChoice(option, costOptionIndex, { selectionNumber, includeUnavailable }),
         getPointAllocationCost(option)
     );
     const info = findSubcategoryInfo(option.id);
@@ -1213,7 +1214,8 @@ function getOptionEffectiveCostChoices(option, options = {}) {
         index: choice.index,
         cost: getOptionEffectiveCost(option, {
             ...options,
-            costOptionIndex: choice.index
+            costOptionIndex: choice.index,
+            includeUnavailable: options.includeUnavailable === true
         })
     }));
 }
@@ -4762,7 +4764,10 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
     const showingNextSelection = selectedCount < maxSelections;
     const displaySelectionNumber = showingNextSelection ? selectedCount + 1 : Math.max(selectedCount, 1);
     const selectedCostOptionIndex = getInitialCostOptionIndex(opt, displaySelectionNumber);
-    const costChoices = getOptionEffectiveCostChoices(opt, { selectionNumber: displaySelectionNumber });
+    const costChoices = getOptionEffectiveCostChoices(opt, {
+        selectionNumber: displaySelectionNumber,
+        includeUnavailable: true
+    });
     const shouldShowCostOptions = costChoices.length > 1 && selectedCount === 0;
     const displayCost = getOptionEffectiveCost(opt, {
         costOptionIndex: selectedCostOptionIndex,
@@ -5270,7 +5275,8 @@ function renderSelectionButton(opt, contentWrapper) {
             const option = document.createElement("option");
             const effectiveCost = getOptionEffectiveCost(opt, {
                 costOptionIndex: choice.index,
-                selectionNumber: nextSelectionNumber
+                selectionNumber: nextSelectionNumber,
+                includeUnavailable: true
             });
             option.value = String(choice.index);
             option.textContent = formatCostMapPlainText(effectiveCost) || "Free";

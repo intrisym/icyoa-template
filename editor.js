@@ -4385,9 +4385,7 @@
                     nameSelect.value = currency;
                     return;
                 }
-                const existing = option.cost[currency];
-                delete option.cost[currency];
-                option.cost[newName] = existing;
+                option.cost = renameMapKeyPreservingOrder(option.cost, currency, newName);
                 renderCostEditor(container, option);
                 schedulePreviewUpdate();
             });
@@ -5063,26 +5061,56 @@
         container.appendChild(addBtn);
     }
 
+    function renameMapKeyPreservingOrder(map, oldKey, newKey) {
+        const next = {};
+        Object.entries(map || {}).forEach(([key, value]) => {
+            next[key === oldKey ? newKey : key] = value;
+        });
+        return next;
+    }
+
+    function getPointMapEditorOrder(container, valueMap) {
+        const keys = Object.keys(valueMap || {});
+        const existingOrder = Array.isArray(container.__pointMapOrder) ? container.__pointMapOrder : [];
+        const ordered = existingOrder.filter(key => Object.prototype.hasOwnProperty.call(valueMap, key));
+        keys.forEach(key => {
+            if (!ordered.includes(key)) ordered.push(key);
+        });
+        container.__pointMapOrder = ordered;
+        return ordered;
+    }
+
+    function orderPointMapByEditorRows(container, valueMap) {
+        const ordered = {};
+        getPointMapEditorOrder(container, valueMap).forEach(key => {
+            if (Object.prototype.hasOwnProperty.call(valueMap, key)) ordered[key] = valueMap[key];
+        });
+        return ordered;
+    }
+
     function renderPointMapEditor(container, map, onChange) {
         container.innerHTML = "";
         const valueMap = map && typeof map === "object" ? { ...map } : {};
+        const orderedPointTypes = getPointMapEditorOrder(container, valueMap);
 
-        Object.entries(valueMap).forEach(([pointType, amount]) => {
+        orderedPointTypes.forEach(pointType => {
+            let currentPointType = pointType;
+            const amount = valueMap[currentPointType];
             const row = document.createElement("div");
             row.className = "cost-row";
 
             const nameSelect = document.createElement("select");
             const configuredPointTypes = getPointTypeNames();
-            const availablePointTypes = configuredPointTypes.includes(pointType)
+            const availablePointTypes = configuredPointTypes.includes(currentPointType)
                 ? configuredPointTypes
-                : [pointType, ...configuredPointTypes];
+                : [currentPointType, ...configuredPointTypes];
             availablePointTypes.forEach(type => {
                 const option = document.createElement("option");
                 option.value = type;
                 option.textContent = getPointTypeDisplayName(type);
                 nameSelect.appendChild(option);
             });
-            nameSelect.value = pointType;
+            nameSelect.value = currentPointType;
 
             const valueInput = document.createElement("input");
             valueInput.type = "number";
@@ -5095,32 +5123,40 @@
             removeBtn.title = "Remove entry";
 
             valueInput.addEventListener("input", () => {
-                valueMap[pointType] = Number(valueInput.value) || 0;
-                onChange(Object.keys(valueMap).length ? { ...valueMap } : null);
+                valueMap[currentPointType] = Number(valueInput.value) || 0;
+                const orderedMap = orderPointMapByEditorRows(container, valueMap);
+                onChange(Object.keys(orderedMap).length ? orderedMap : null);
             });
 
             nameSelect.addEventListener("change", () => {
                 const newName = nameSelect.value;
-                if (!newName || newName === pointType) {
-                    nameSelect.value = pointType;
+                if (!newName || newName === currentPointType) {
+                    nameSelect.value = currentPointType;
                     return;
                 }
                 if (Object.prototype.hasOwnProperty.call(valueMap, newName)) {
                     showEditorMessage(`Duplicate key "${newName}"`, "warning", 4000);
-                    nameSelect.value = pointType;
+                    nameSelect.value = currentPointType;
                     return;
                 }
-                const existingValue = valueMap[pointType];
-                delete valueMap[pointType];
-                valueMap[newName] = existingValue;
-                onChange(Object.keys(valueMap).length ? { ...valueMap } : null);
-                renderPointMapEditor(container, valueMap, onChange);
+                const oldName = currentPointType;
+                const nextValueMap = renameMapKeyPreservingOrder(valueMap, oldName, newName);
+                container.__pointMapOrder = getPointMapEditorOrder(container, valueMap)
+                    .map(key => key === oldName ? newName : key);
+                const orderedMap = orderPointMapByEditorRows(container, nextValueMap);
+                onChange(Object.keys(orderedMap).length ? orderedMap : null);
+                Object.keys(valueMap).forEach(key => delete valueMap[key]);
+                Object.assign(valueMap, orderedMap);
+                currentPointType = newName;
             });
 
             removeBtn.addEventListener("click", () => {
-                delete valueMap[pointType];
-                onChange(Object.keys(valueMap).length ? { ...valueMap } : null);
-                renderPointMapEditor(container, valueMap, onChange);
+                delete valueMap[currentPointType];
+                container.__pointMapOrder = getPointMapEditorOrder(container, valueMap)
+                    .filter(key => key !== currentPointType);
+                const orderedMap = orderPointMapByEditorRows(container, valueMap);
+                onChange(Object.keys(orderedMap).length ? orderedMap : null);
+                renderPointMapEditor(container, orderedMap, onChange);
             });
 
             row.appendChild(nameSelect);
@@ -5143,8 +5179,10 @@
                 candidate = `${preferredPointType || configuredPointTypes[0] || "Points"} ${suffix}`;
             }
             valueMap[candidate] = 0;
-            onChange({ ...valueMap });
-            renderPointMapEditor(container, valueMap, onChange);
+            container.__pointMapOrder = [...getPointMapEditorOrder(container, valueMap).filter(key => key !== candidate), candidate];
+            const orderedMap = orderPointMapByEditorRows(container, valueMap);
+            onChange(orderedMap);
+            renderPointMapEditor(container, orderedMap, onChange);
         });
         container.appendChild(addBtn);
     }
