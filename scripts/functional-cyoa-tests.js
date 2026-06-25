@@ -215,7 +215,7 @@ function runPlayerScriptExportImportHelpers(state) {
 
 function tokenizePrerequisiteExpression(expression = "") {
     const tokens = [];
-    const tokenPattern = /\s*(&&|\|\||!|\(|\)|[a-zA-Z_][a-zA-Z0-9_]*(?:__\d+)?)\s*/g;
+    const tokenPattern = /\s*(&&|\|\||!|\(|\)|>=|<=|==|=|>|<|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|-?\d+(?:\.\d+)?\+?|[a-zA-Z_][a-zA-Z0-9_]*(?:__\d+)?)\s*/g;
     let match;
     let consumed = 0;
     while ((match = tokenPattern.exec(expression)) !== null) {
@@ -224,6 +224,14 @@ function tokenizePrerequisiteExpression(expression = "") {
         consumed = tokenPattern.lastIndex;
     }
     return expression.slice(consumed).trim() ? [] : tokens;
+}
+
+function unquotePrerequisitePointName(token = "") {
+    const text = String(token).trim();
+    if ((text.startsWith('"') && text.endsWith('"')) || (text.startsWith("'") && text.endsWith("'"))) {
+        return text.slice(1, -1).replace(/\\(["'\\])/g, "$1");
+    }
+    return text;
 }
 
 function parsePrerequisiteExpression(expression = "") {
@@ -246,8 +254,32 @@ function parsePrerequisiteExpression(expression = "") {
             consume(")");
             return node;
         }
-        if (/^[a-zA-Z_][a-zA-Z0-9_]*(?:__\d+)?$/.test(token || "")) {
+        const isIdentifier = /^[a-zA-Z_][a-zA-Z0-9_]*(?:__\d+)?$/.test(token || "");
+        const isQuotedPointType = /^"(?:\\.|[^"\\])*"$|^'(?:\\.|[^'\\])*'$/.test(token || "");
+        if (isIdentifier || isQuotedPointType) {
             consume();
+            const next = peek();
+            if ([">=", "<=", ">", "<", "==", "="].includes(next)) {
+                const operator = consume();
+                const valueToken = consume();
+                if (!/^-?\d+(?:\.\d+)?$/.test(valueToken || "")) throw new Error("Invalid point prerequisite value");
+                return {
+                    type: "point",
+                    pointType: unquotePrerequisitePointName(token),
+                    operator,
+                    value: Number(valueToken)
+                };
+            }
+            if (/^-?\d+(?:\.\d+)?\+$/.test(next || "")) {
+                const valueToken = consume();
+                return {
+                    type: "point",
+                    pointType: unquotePrerequisitePointName(token),
+                    operator: ">=",
+                    value: Number(valueToken.slice(0, -1))
+                };
+            }
+            if (isQuotedPointType) throw new Error("Quoted point prerequisites must include a comparison");
             return { type: "atom", id: token };
         }
         throw new Error("Invalid prerequisite token");
@@ -273,15 +305,23 @@ function parsePrerequisiteExpression(expression = "") {
     return ast;
 }
 
-function evaluatePrerequisiteNode(node, meetsRequirement) {
+function evaluatePrerequisiteNode(node, meetsRequirement, getPointValue = () => 0) {
     if (node.type === "atom") return meetsRequirement(node.id);
-    if (node.type === "not") return !evaluatePrerequisiteNode(node.child, meetsRequirement);
-    if (node.type === "and") return node.children.every(child => evaluatePrerequisiteNode(child, meetsRequirement));
-    if (node.type === "or") return node.children.some(child => evaluatePrerequisiteNode(child, meetsRequirement));
+    if (node.type === "point") {
+        const actual = Number(getPointValue(node.pointType)) || 0;
+        if (node.operator === ">=") return actual >= node.value;
+        if (node.operator === ">") return actual > node.value;
+        if (node.operator === "<=") return actual <= node.value;
+        if (node.operator === "<") return actual < node.value;
+        return actual === node.value;
+    }
+    if (node.type === "not") return !evaluatePrerequisiteNode(node.child, meetsRequirement, getPointValue);
+    if (node.type === "and") return node.children.every(child => evaluatePrerequisiteNode(child, meetsRequirement, getPointValue));
+    if (node.type === "or") return node.children.some(child => evaluatePrerequisiteNode(child, meetsRequirement, getPointValue));
     return false;
 }
 
-function computePrerequisiteDisplayStatuses(expression, meetsRequirement) {
+function computePrerequisiteDisplayStatuses(expression, meetsRequirement, getPointValue = () => 0) {
     const ast = parsePrerequisiteExpression(expression);
     const displayByKey = new Map();
     const addAtom = (rawId, negated, satisfied) => {
@@ -295,12 +335,15 @@ function computePrerequisiteDisplayStatuses(expression, meetsRequirement) {
             addAtom(node.id, negated, inheritedSatisfiedOr || atomSatisfied);
             return;
         }
+        if (node.type === "point") {
+            return;
+        }
         if (node.type === "not") {
             visit(node.child, inheritedSatisfiedOr, !negated);
             return;
         }
         if (node.type === "or") {
-            const orSatisfied = inheritedSatisfiedOr || evaluatePrerequisiteNode(node, meetsRequirement);
+            const orSatisfied = inheritedSatisfiedOr || evaluatePrerequisiteNode(node, meetsRequirement, getPointValue);
             node.children.forEach(child => visit(child, orSatisfied, negated));
             return;
         }
@@ -1638,7 +1681,11 @@ class CyoaEngine {
     prerequisiteMet(requirement) {
         if (!requirement) return true;
         if (typeof requirement === "string") {
-            return !!evaluatePrereqExpr(requirement, id => this.selectedOptions[id] || 0);
+            return !!evaluatePrereqExpr(
+                requirement,
+                id => this.selectedOptions[id] || 0,
+                pointType => Number(this.points[pointType]) || 0
+            );
         }
         if (Array.isArray(requirement)) {
             return requirement.every(id => this.meetsCountRequirement(id));
@@ -1923,14 +1970,30 @@ class CyoaEngine {
             const atomSatisfied = negated ? !this.meetsCountRequirement(rawId) : this.meetsCountRequirement(rawId);
             return `${inheritedSatisfiedOr || atomSatisfied ? "✅" : "❌"} ${negated ? "NOT " : ""}${label}${countLabel}`;
         };
+        const pointLine = (node, negated = false, inheritedSatisfiedOr = false) => {
+            const actual = Number(this.points[node.pointType]) || 0;
+            let pointSatisfied = false;
+            if (node.operator === ">=") pointSatisfied = actual >= node.value;
+            else if (node.operator === ">") pointSatisfied = actual > node.value;
+            else if (node.operator === "<=") pointSatisfied = actual <= node.value;
+            else if (node.operator === "<") pointSatisfied = actual < node.value;
+            else pointSatisfied = actual === node.value;
+            const operator = node.operator === "==" ? "=" : node.operator;
+            return `${inheritedSatisfiedOr || (negated ? !pointSatisfied : pointSatisfied) ? "✅" : "❌"} ${negated ? "NOT " : ""}${node.pointType} ${operator} ${node.value}`;
+        };
         const inlineNode = (node, inheritedSatisfiedOr = false, negated = false) => {
             if (node.type === "atom") return atomLine(node.id, negated, inheritedSatisfiedOr);
+            if (node.type === "point") return pointLine(node, negated, inheritedSatisfiedOr);
             if (node.type === "not") {
-                if (node.child?.type === "atom") return inlineNode(node.child, inheritedSatisfiedOr, !negated);
+                if (node.child?.type === "atom" || node.child?.type === "point") return inlineNode(node.child, inheritedSatisfiedOr, !negated);
                 return `NOT (${inlineNode(node.child, inheritedSatisfiedOr, false)})`;
             }
             if (node.type === "or") {
-                const orSatisfied = inheritedSatisfiedOr || evaluatePrerequisiteNode(node, id => this.meetsCountRequirement(id));
+                const orSatisfied = inheritedSatisfiedOr || evaluatePrerequisiteNode(
+                    node,
+                    id => this.meetsCountRequirement(id),
+                    pointType => Number(this.points[pointType]) || 0
+                );
                 return node.children.map(child => inlineNode(child, orSatisfied, negated)).filter(Boolean).join(" OR ");
             }
             if (node.type === "and") {
@@ -3608,6 +3671,51 @@ test("complex prerequisite displays should mark fulfilled OR branches as satisfi
     );
 });
 
+test("point threshold prerequisites should work for any configured point type", () => {
+    const engine = CyoaEngine.synthetic();
+    engine.points["Attribute Points"] = 0;
+    const option = {
+        id: "requiresPointThreshold",
+        label: "Requires Point Threshold",
+        cost: {},
+        prerequisites: 'Points >= 13 && "Attribute Points" 2+'
+    };
+    engine.optionMap.set(option.id, option);
+
+    assert.strictEqual(engine.canSelect(option.id), false);
+    assert.deepStrictEqual(engine.displayRequirementLines(option), [
+        "❌ Points >= 13",
+        "❌ Attribute Points >= 2"
+    ]);
+
+    engine.points.Points = 13;
+    assert.strictEqual(engine.canSelect(option.id), false);
+    assert.deepStrictEqual(engine.displayRequirementLines(option), [
+        "✅ Points >= 13",
+        "❌ Attribute Points >= 2"
+    ]);
+
+    engine.points["Attribute Points"] = 2;
+    assert.strictEqual(engine.canSelect(option.id), true);
+    assert.deepStrictEqual(engine.displayRequirementLines(option), [
+        "✅ Points >= 13",
+        "✅ Attribute Points >= 2"
+    ]);
+
+    assert(
+        PLAYER_SCRIPT_SOURCE.includes("evaluatePointRequirement") &&
+            PLAYER_SCRIPT_SOURCE.includes("getPointRequirementValue") &&
+            PLAYER_SCRIPT_SOURCE.includes("Quoted point prerequisites must include a comparison"),
+        "player prerequisite parser should support generic point-threshold requirements"
+    );
+    assert(
+        EDITOR_SCRIPT_SOURCE.includes("extractRequirementPointTypes") &&
+            EDITOR_SCRIPT_SOURCE.includes('Prerequisite references unknown point type') &&
+            EDITOR_SCRIPT_SOURCE.includes("withoutPointRequirements"),
+        "visual editor should warn about unknown point types in point-threshold prerequisites"
+    );
+});
+
 test("CYOA validation should accept synthetic count-suffix prerequisites after option merges", () => {
     const data = [
         { type: "title", text: "Synthetic Validation CYOA" },
@@ -3644,6 +3752,29 @@ test("CYOA validation should accept synthetic count-suffix prerequisites after o
             error.includes('references unknown option ID "oldRankedPower1"')
         ),
         "synthetic validation should catch stale prerequisite IDs without depending on existing CYOAs"
+    );
+});
+
+test("CYOA validation should accept and validate point-threshold prerequisites", () => {
+    const data = CyoaEngine.synthetic().data;
+    data[1].values["Attribute Points"] = 0;
+    data[3].subcategories[0].options.push({
+        id: "requiresPointThreshold",
+        label: "Requires Point Threshold",
+        cost: {},
+        prerequisites: 'Points >= 13 && "Attribute Points" 2+'
+    });
+    assert.deepStrictEqual(
+        validateCyoaData("synthetic-point-prerequisites.json", data).errors.filter(error => error.includes("requiresPointThreshold")),
+        []
+    );
+
+    data[3].subcategories[0].options.at(-1).prerequisites = '"Missing Points" >= 1';
+    assert(
+        validateCyoaData("synthetic-point-prerequisites.json", data).errors.some(error =>
+            error.includes('references unknown point type "Missing Points"')
+        ),
+        "validation should reject point-threshold prerequisites that reference missing point types"
     );
 });
 

@@ -2609,7 +2609,7 @@ function removeOptionsFromInactiveCategoriesAndSubcategories() {
     const isRequirementMet = (requirement) => {
         if (typeof requirement === 'string' && /[()!&|\s]/.test(requirement)) {
             try {
-                return !!window.evaluatePrereqExpr(requirement, id => selectedOptions[id] || 0);
+                return !!evaluateRequirementExpression(requirement);
             } catch (e) {
                 return false;
             }
@@ -3091,7 +3091,7 @@ function requirementMet(requirement) {
     if (!requirement) return true;
     if (typeof requirement === 'string') {
         try {
-            return !!window.evaluatePrereqExpr(requirement, id => selectedOptions[id] || 0);
+            return !!evaluateRequirementExpression(requirement);
         } catch (e) {
             console.error('Invalid prerequisite expression:', requirement, e);
             return false;
@@ -3110,6 +3110,19 @@ function requirementMet(requirement) {
         return andMet && orMet && notMet;
     }
     return true;
+}
+
+function getPointRequirementValue(pointType) {
+    if (Object.prototype.hasOwnProperty.call(points, pointType)) return Number(points[pointType]) || 0;
+    return Number(originalPoints?.[pointType]) || 0;
+}
+
+function evaluateRequirementExpression(expression) {
+    return window.evaluatePrereqExpr(
+        expression,
+        id => selectedOptions[id] || 0,
+        pointType => getPointRequirementValue(pointType)
+    );
 }
 
 function optionPrerequisitesMet(option, selectionNumber = null) {
@@ -3690,7 +3703,7 @@ function getModifiedCostRuleConditionKey(rule = {}) {
 
 function tokenizePrerequisiteExpression(expression = "") {
     const tokens = [];
-    const tokenPattern = /\s*(&&|\|\||!|\(|\)|[a-zA-Z_][a-zA-Z0-9_]*(?:__\d+)?)\s*/g;
+    const tokenPattern = /\s*(&&|\|\||!|\(|\)|>=|<=|==|=|>|<|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|-?\d+(?:\.\d+)?\+?|[a-zA-Z_][a-zA-Z0-9_]*(?:__\d+)?)\s*/g;
     let match;
     let consumed = 0;
     while ((match = tokenPattern.exec(expression)) !== null) {
@@ -3699,6 +3712,25 @@ function tokenizePrerequisiteExpression(expression = "") {
         consumed = tokenPattern.lastIndex;
     }
     return expression.slice(consumed).trim() ? [] : tokens;
+}
+
+function unquotePrerequisitePointName(token = "") {
+    const text = String(token).trim();
+    if ((text.startsWith('"') && text.endsWith('"')) || (text.startsWith("'") && text.endsWith("'"))) {
+        return text.slice(1, -1).replace(/\\(["'\\])/g, "$1");
+    }
+    return text;
+}
+
+function evaluatePointRequirement(pointType, operator, requiredValue) {
+    const actual = getPointRequirementValue(pointType);
+    const required = Number(requiredValue);
+    if (!Number.isFinite(required)) return false;
+    if (operator === ">=") return actual >= required;
+    if (operator === ">") return actual > required;
+    if (operator === "<=") return actual <= required;
+    if (operator === "<") return actual < required;
+    return actual === required;
 }
 
 function parsePrerequisiteExpression(expression = "") {
@@ -3721,8 +3753,32 @@ function parsePrerequisiteExpression(expression = "") {
             consume(")");
             return node;
         }
-        if (/^[a-zA-Z_][a-zA-Z0-9_]*(?:__\d+)?$/.test(token || "")) {
+        const isIdentifier = /^[a-zA-Z_][a-zA-Z0-9_]*(?:__\d+)?$/.test(token || "");
+        const isQuotedPointType = /^"(?:\\.|[^"\\])*"$|^'(?:\\.|[^'\\])*'$/.test(token || "");
+        if (isIdentifier || isQuotedPointType) {
             consume();
+            const next = peek();
+            if ([">=", "<=", ">", "<", "==", "="].includes(next)) {
+                const operator = consume();
+                const valueToken = consume();
+                if (!/^-?\d+(?:\.\d+)?$/.test(valueToken || "")) throw new Error("Invalid point prerequisite value");
+                return {
+                    type: "point",
+                    pointType: unquotePrerequisitePointName(token),
+                    operator,
+                    value: Number(valueToken)
+                };
+            }
+            if (/^-?\d+(?:\.\d+)?\+$/.test(next || "")) {
+                const valueToken = consume();
+                return {
+                    type: "point",
+                    pointType: unquotePrerequisitePointName(token),
+                    operator: ">=",
+                    value: Number(valueToken.slice(0, -1))
+                };
+            }
+            if (isQuotedPointType) throw new Error("Quoted point prerequisites must include a comparison");
             return { type: "atom", id: token };
         }
         throw new Error("Invalid prerequisite token");
@@ -3755,6 +3811,7 @@ function parsePrerequisiteExpression(expression = "") {
 function evaluatePrerequisiteNode(node) {
     if (!node) return false;
     if (node.type === "atom") return meetsCountRequirement(node.id);
+    if (node.type === "point") return evaluatePointRequirement(node.pointType, node.operator, node.value);
     if (node.type === "not") return !evaluatePrerequisiteNode(node.child);
     if (node.type === "and") return node.children.every(evaluatePrerequisiteNode);
     if (node.type === "or") return node.children.some(evaluatePrerequisiteNode);
@@ -3772,13 +3829,22 @@ function buildPrerequisiteDisplayLines(expression = "") {
         const satisfied = inheritedSatisfiedOr || atomSatisfied;
         return `${satisfied ? "✅" : "❌"} ${negated ? "NOT " : ""}${label}`;
     };
+    const pointText = (node, negated, inheritedSatisfiedOr = false) => {
+        const pointSatisfied = evaluatePointRequirement(node.pointType, node.operator, node.value);
+        const satisfied = inheritedSatisfiedOr || (negated ? !pointSatisfied : pointSatisfied);
+        const operator = node.operator === "==" ? "=" : node.operator;
+        return `${satisfied ? "✅" : "❌"} ${negated ? "NOT " : ""}${getPointTypeMarkup(node.pointType)} ${escapeHtml(operator)} ${escapeHtml(String(node.value))}`;
+    };
     const inline = (node, inheritedSatisfiedOr = false, negated = false) => {
         if (!node) return "";
         if (node.type === "atom") {
             return atomText(node.id, negated, inheritedSatisfiedOr);
         }
+        if (node.type === "point") {
+            return pointText(node, negated, inheritedSatisfiedOr);
+        }
         if (node.type === "not") {
-            if (node.child?.type === "atom") return inline(node.child, inheritedSatisfiedOr, !negated);
+            if (node.child?.type === "atom" || node.child?.type === "point") return inline(node.child, inheritedSatisfiedOr, !negated);
             return `NOT (${inline(node.child, inheritedSatisfiedOr, false)})`;
         }
         if (node.type === "or") {
@@ -3813,7 +3879,7 @@ function buildRequirementDisplayLines(requirement) {
         const seen = new Set();
         let exprTrue = false;
         try {
-            exprTrue = !!window.evaluatePrereqExpr(requirement, id => selectedOptions[id] || 0);
+            exprTrue = !!evaluateRequirementExpression(requirement);
         } catch (e) {
             exprTrue = false;
         }
@@ -4074,7 +4140,7 @@ function evaluateDiscountRequirementNode(node) {
         const hasLogicalOperators = /[()!&|]/.test(trimmed);
         if (hasLogicalOperators && typeof window !== 'undefined' && typeof window.evaluatePrereqExpr === 'function') {
             try {
-                return window.evaluatePrereqExpr(trimmed, id => selectedOptions[id] || 0);
+                return evaluateRequirementExpression(trimmed);
             } catch (err) {
                 console.warn('Failed to evaluate discount requirement expression:', trimmed, err);
                 return false;
@@ -4249,7 +4315,7 @@ function evaluateRequirementList(requiredItems = []) {
     return requiredItems.every(req => {
         if (typeof req === 'string' && /[()!&|\s]/.test(req)) {
             try {
-                return !!window.evaluatePrereqExpr(req, id => selectedOptions[id] || 0);
+                return !!evaluateRequirementExpression(req);
             } catch (e) {
                 return false;
             }
@@ -4275,7 +4341,7 @@ function buildRequirementsMarkup(requiredItems = []) {
                 human = human.replace(new RegExp('\\b' + esc + '\\b', 'g'), `"${label}"`);
             });
             human = human.replace(/\|\|/g, ' OR ').replace(/&&/g, ' AND ').replace(/!/g, 'NOT ');
-            const satisfied = (() => { try { return !!window.evaluatePrereqExpr(rawExpr, id => selectedOptions[id] || 0); } catch (_) { return false; } })();
+            const satisfied = (() => { try { return !!evaluateRequirementExpression(rawExpr); } catch (_) { return false; } })();
             lines.push(`${satisfied ? '✅' : '❌'} ${human}`);
         } else {
             const id = req;

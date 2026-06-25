@@ -1,13 +1,48 @@
 // Minimal safe logical expression evaluator for prerequisites
-// Supports: &&, ||, parentheses, and variable names (option IDs)
-// Usage: evaluatePrereqExpr(expr, lookupFn)
+// Supports: &&, ||, parentheses, variable names (option IDs), and point thresholds.
+// Point thresholds use point type names directly, e.g. Strength >= 13 or "Caster Level" >= 5.
+// Usage: evaluatePrereqExpr(expr, optionLookupFn, pointLookupFn)
 
-function evaluatePrereqExpr(expr, lookupFn) {
+function unquotePointName(rawName = "") {
+    const text = String(rawName).trim();
+    if ((text.startsWith('"') && text.endsWith('"')) || (text.startsWith("'") && text.endsWith("'"))) {
+        return text.slice(1, -1).replace(/\\(["'\\])/g, "$1");
+    }
+    return text;
+}
+
+function comparePointValue(actualValue, operator, requiredValue) {
+    const actual = Number(actualValue) || 0;
+    const required = Number(requiredValue);
+    if (!Number.isFinite(required)) return false;
+    if (operator === ">=") return actual >= required;
+    if (operator === ">") return actual > required;
+    if (operator === "<=") return actual <= required;
+    if (operator === "<") return actual < required;
+    return actual === required;
+}
+
+function evaluatePrereqExpr(expr, lookupFn, pointLookupFn = () => 0) {
     if (typeof expr !== 'string') {
         throw new Error('Prerequisite expression must be a string');
     }
 
-    const replaced = expr.replace(/!?[a-zA-Z_][a-zA-Z0-9_]*(?:__\d+)?/g, (token) => {
+    const pointNamePattern = String.raw`(?:"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|[a-zA-Z_][a-zA-Z0-9_]*)`;
+    const comparisonPattern = new RegExp(`(${pointNamePattern})\\s*(>=|<=|>|<|==|=)\\s*(-?\\d+(?:\\.\\d+)?)`, "g");
+    const shorthandPattern = new RegExp(`(${pointNamePattern})\\s+(-?\\d+(?:\\.\\d+)?)\\+`, "g");
+
+    const withPointComparisons = expr
+        .replace(comparisonPattern, (_, rawName, operator, rawValue) => {
+            const result = comparePointValue(pointLookupFn(unquotePointName(rawName)), operator, rawValue);
+            return result ? "true" : "false";
+        })
+        .replace(shorthandPattern, (_, rawName, rawValue) => {
+            const result = comparePointValue(pointLookupFn(unquotePointName(rawName)), ">=", rawValue);
+            return result ? "true" : "false";
+        });
+
+    const replaced = withPointComparisons.replace(/!?[a-zA-Z_][a-zA-Z0-9_]*(?:__\d+)?/g, (token) => {
+        if (token === "true" || token === "false") return token;
         const isNegated = token.startsWith('!');
         const core = isNegated ? token.slice(1) : token;
 

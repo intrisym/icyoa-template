@@ -43,10 +43,49 @@ function normalizeIdList(value) {
     return [];
 }
 
+function unquoteRequirementPointName(rawName = "") {
+    const text = String(rawName).trim();
+    if ((text.startsWith('"') && text.endsWith('"')) || (text.startsWith("'") && text.endsWith("'"))) {
+        return text.slice(1, -1).replace(/\\(["'\\])/g, "$1");
+    }
+    return text;
+}
+
+function getPointRequirementPattern() {
+    const pointNamePattern = String.raw`(?:"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|[A-Za-z_][A-Za-z0-9_]*)`;
+    return new RegExp(`(${pointNamePattern})\\s*(?:(?:>=|<=|>|<|==|=)\\s*-?\\d+(?:\\.\\d+)?|-?\\d+(?:\\.\\d+)?\\+)`, "g");
+}
+
+function extractRequirementPointTypes(requirement) {
+    const pointTypes = new Set();
+    const visit = value => {
+        if (!value) return;
+        if (typeof value === "string") {
+            value.replace(getPointRequirementPattern(), (_, rawName) => {
+                pointTypes.add(unquoteRequirementPointName(rawName));
+                return "";
+            });
+            return;
+        }
+        if (Array.isArray(value)) {
+            value.forEach(visit);
+            return;
+        }
+        if (typeof value === "object") {
+            visit(value.and);
+            visit(value.or);
+            visit(value.not);
+        }
+    };
+    visit(requirement);
+    return Array.from(pointTypes);
+}
+
 function extractExpressionIds(expr) {
     if (typeof expr !== "string") return [];
     const ids = new Set();
-    const tokens = expr.match(/!?[A-Za-z_][A-Za-z0-9_]*(?:__\d+)?/g) || [];
+    const expressionWithoutPointRequirements = expr.replace(getPointRequirementPattern(), "");
+    const tokens = expressionWithoutPointRequirements.match(/!?[A-Za-z_][A-Za-z0-9_]*(?:__\d+)?/g) || [];
     tokens.forEach(token => {
         const core = token.startsWith("!") ? token.slice(1) : token;
         const [id] = core.split("__");
@@ -87,10 +126,18 @@ function extractRequirementIds(requirement) {
 function validateRequirementExpression(file, context, requirement, errors) {
     if (typeof requirement !== "string") return;
     try {
-        evaluatePrereqExpr(requirement, () => 0);
+        evaluatePrereqExpr(requirement, () => 0, () => 0);
     } catch (err) {
         pushIssue(errors, file, `${context} has invalid prerequisite expression "${requirement}": ${err.message}`);
     }
+}
+
+function validatePointRequirementRefs(file, context, requirement, pointTypes, errors) {
+    extractRequirementPointTypes(requirement).forEach(pointType => {
+        if (!pointTypes.has(pointType)) {
+            pushIssue(errors, file, `${context} references unknown point type "${pointType}".`);
+        }
+    });
 }
 
 function walkSubcategories(subcategories, visitor, pathParts = []) {
@@ -273,6 +320,7 @@ function validateCostOptions(file, context, costOptions, pointTypes, errors, war
             }
         }
         validateRequirementExpression(file, `${optionContext}.prerequisites`, costOption.prerequisites, errors);
+        validatePointRequirementRefs(file, `${optionContext}.prerequisites`, costOption.prerequisites, pointTypes, errors);
         if (optionIds) {
             validateIdRefs(file, `${optionContext}.prerequisites`, extractRequirementIds(costOption.prerequisites), optionIds, errors);
         }
@@ -468,9 +516,11 @@ function validateCyoaData(file, data) {
         validateOptionalColor(file, `${context}.borderColor`, option.borderColor, errors);
         validateOptionalColor(file, `${context}.darkBorderColor`, option.darkBorderColor, errors);
         validateRequirementExpression(file, `${context}.prerequisites`, option.prerequisites, errors);
+        validatePointRequirementRefs(file, `${context}.prerequisites`, option.prerequisites, pointTypes, errors);
         validateIdRefs(file, `${context}.prerequisites`, extractRequirementIds(option.prerequisites), optionIds, errors);
         (option.prerequisitesBySelection || []).forEach((requirement, index) => {
             validateRequirementExpression(file, `${context}.prerequisitesBySelection[${index}]`, requirement, errors);
+            validatePointRequirementRefs(file, `${context}.prerequisitesBySelection[${index}]`, requirement, pointTypes, errors);
             validateIdRefs(file, `${context}.prerequisitesBySelection[${index}]`, extractRequirementIds(requirement), optionIds, errors);
         });
         validateIdRefs(file, `${context}.conflictsWith`, normalizeIdList(option.conflictsWith), optionIds, errors);

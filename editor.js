@@ -460,12 +460,51 @@
         return { value: ids.length === 1 ? ids[0] : ids, error: null };
     }
 
+    function unquoteRequirementPointName(rawName = "") {
+        const text = String(rawName).trim();
+        if ((text.startsWith('"') && text.endsWith('"')) || (text.startsWith("'") && text.endsWith("'"))) {
+            return text.slice(1, -1).replace(/\\(["'\\])/g, "$1");
+        }
+        return text;
+    }
+
+    function getPointRequirementPattern() {
+        const pointNamePattern = String.raw`(?:"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|[A-Za-z_][A-Za-z0-9_]*)`;
+        return new RegExp(`(${pointNamePattern})\\s*(?:(?:>=|<=|>|<|==|=)\\s*-?\\d+(?:\\.\\d+)?|-?\\d+(?:\\.\\d+)?\\+)`, "g");
+    }
+
+    function extractRequirementPointTypes(value) {
+        const pointTypes = new Set();
+        const visit = requirement => {
+            if (!requirement) return;
+            if (typeof requirement === "string") {
+                requirement.replace(getPointRequirementPattern(), (_, rawName) => {
+                    pointTypes.add(unquoteRequirementPointName(rawName));
+                    return "";
+                });
+                return;
+            }
+            if (Array.isArray(requirement)) {
+                requirement.forEach(visit);
+                return;
+            }
+            if (typeof requirement === "object") {
+                visit(requirement.and);
+                visit(requirement.or);
+                visit(requirement.not);
+            }
+        };
+        visit(value);
+        return pointTypes;
+    }
+
     function extractReferencedIds(value) {
         const ids = new Set();
         if (!value) return ids;
 
         if (typeof value === "string") {
-            const tokens = value.match(/!?[A-Za-z_][A-Za-z0-9_]*(?:__\d+)?/g) || [];
+            const withoutPointRequirements = value.replace(getPointRequirementPattern(), "");
+            const tokens = withoutPointRequirements.match(/!?[A-Za-z_][A-Za-z0-9_]*(?:__\d+)?/g) || [];
             tokens.forEach(token => {
                 const core = token.startsWith("!") ? token.slice(1) : token;
                 const [id] = core.split("__");
@@ -532,6 +571,14 @@
         prereqIds.forEach(id => {
             if (id === selfId && selfId) warnings.push("Prerequisite references this option itself.");
             if (!allIds.has(id)) warnings.push(`Prerequisite references unknown option ID "${id}".`);
+        });
+        Array.from(extractRequirementPointTypes(option?.prerequisites)).forEach(type => {
+            if (!pointTypes.has(type)) warnings.push(`Prerequisite references unknown point type "${type}".`);
+        });
+        (option?.costOptions || []).forEach((costOption, index) => {
+            Array.from(extractRequirementPointTypes(costOption?.prerequisites)).forEach(type => {
+                if (!pointTypes.has(type)) warnings.push(`Payment option ${index + 1} prerequisite references unknown point type "${type}".`);
+            });
         });
 
         const rawConflicts = Array.isArray(option?.conflictsWith) ? option.conflictsWith : [];
