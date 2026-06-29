@@ -259,6 +259,19 @@ function parsePrerequisiteExpression(expression = "") {
         if (isIdentifier || isQuotedPointType) {
             consume();
             const next = peek();
+            if ((token === "category" || token === "subcategory") && next === "(") {
+                consume("(");
+                const nameToken = consume();
+                if (!/^"(?:\\.|[^"\\])*"$|^'(?:\\.|[^'\\])*'$/.test(nameToken || "")) {
+                    throw new Error("Scope prerequisites must use a quoted name");
+                }
+                consume(")");
+                return {
+                    type: "scope",
+                    scopeType: token,
+                    name: unquotePrerequisitePointName(nameToken)
+                };
+            }
             if ([">=", "<=", ">", "<", "==", "="].includes(next)) {
                 const operator = consume();
                 const valueToken = consume();
@@ -305,7 +318,7 @@ function parsePrerequisiteExpression(expression = "") {
     return ast;
 }
 
-function evaluatePrerequisiteNode(node, meetsRequirement, getPointValue = () => 0) {
+function evaluatePrerequisiteNode(node, meetsRequirement, getPointValue = () => 0, scopeLookup = () => false) {
     if (node.type === "atom") return meetsRequirement(node.id);
     if (node.type === "point") {
         const actual = Number(getPointValue(node.pointType)) || 0;
@@ -315,9 +328,10 @@ function evaluatePrerequisiteNode(node, meetsRequirement, getPointValue = () => 
         if (node.operator === "<") return actual < node.value;
         return actual === node.value;
     }
-    if (node.type === "not") return !evaluatePrerequisiteNode(node.child, meetsRequirement, getPointValue);
-    if (node.type === "and") return node.children.every(child => evaluatePrerequisiteNode(child, meetsRequirement, getPointValue));
-    if (node.type === "or") return node.children.some(child => evaluatePrerequisiteNode(child, meetsRequirement, getPointValue));
+    if (node.type === "scope") return !!scopeLookup(node.scopeType, node.name);
+    if (node.type === "not") return !evaluatePrerequisiteNode(node.child, meetsRequirement, getPointValue, scopeLookup);
+    if (node.type === "and") return node.children.every(child => evaluatePrerequisiteNode(child, meetsRequirement, getPointValue, scopeLookup));
+    if (node.type === "or") return node.children.some(child => evaluatePrerequisiteNode(child, meetsRequirement, getPointValue, scopeLookup));
     return false;
 }
 
@@ -848,6 +862,53 @@ class CyoaEngine {
 
     findSubcategoryOfOption(optionId) {
         return this.findSubcategoryInfo(optionId).subcat;
+    }
+
+    categoryHasSelectedOption(category) {
+        if (!category) return false;
+        if ((category.options || []).some(option => (this.selectedOptions[option.id] || 0) > 0)) return true;
+        let found = false;
+        walkSubcategories(category.subcategories, subcat => {
+            if (found) return;
+            found = (subcat.options || []).some(option => (this.selectedOptions[option.id] || 0) > 0);
+        });
+        return found;
+    }
+
+    subcategoryHasSelectedOption(subcat) {
+        if (!subcat) return false;
+        if ((subcat.options || []).some(option => (this.selectedOptions[option.id] || 0) > 0)) return true;
+        let found = false;
+        walkSubcategories(subcat.subcategories, child => {
+            if (found) return;
+            found = (child.options || []).some(option => (this.selectedOptions[option.id] || 0) > 0);
+        });
+        return found;
+    }
+
+    findCategoryByRequirementName(name) {
+        const target = String(name || "").trim();
+        return this.categories.find(category => category?.name === target) || null;
+    }
+
+    findSubcategoryByRequirementName(name) {
+        const target = String(name || "").trim();
+        let found = null;
+        this.categories.some(category => {
+            walkSubcategories(category.subcategories, (subcat, path) => {
+                if (found) return;
+                const pathLabel = [category?.name, ...this.getSubcategoryPath(category, path).map(entry => entry.name)].filter(Boolean).join(" > ");
+                if (subcat?.name === target || pathLabel === target) found = subcat;
+            });
+            return !!found;
+        });
+        return found;
+    }
+
+    scopeRequirementMet(scopeType, scopeName) {
+        if (scopeType === "category") return this.categoryHasSelectedOption(this.findCategoryByRequirementName(scopeName));
+        if (scopeType === "subcategory") return this.subcategoryHasSelectedOption(this.findSubcategoryByRequirementName(scopeName));
+        return false;
     }
 
     getBaseCost(option) {
@@ -1684,7 +1745,8 @@ class CyoaEngine {
             return !!evaluatePrereqExpr(
                 requirement,
                 id => this.selectedOptions[id] || 0,
-                pointType => Number(this.points[pointType]) || 0
+                pointType => Number(this.points[pointType]) || 0,
+                (scopeType, scopeName) => this.scopeRequirementMet(scopeType, scopeName)
             );
         }
         if (Array.isArray(requirement)) {
@@ -1981,18 +2043,25 @@ class CyoaEngine {
             const operator = node.operator === "==" ? "=" : node.operator;
             return `${inheritedSatisfiedOr || (negated ? !pointSatisfied : pointSatisfied) ? "✅" : "❌"} ${negated ? "NOT " : ""}${node.pointType} ${operator} ${node.value}`;
         };
+        const scopeLine = (node, negated = false, inheritedSatisfiedOr = false) => {
+            const scopeSatisfied = this.scopeRequirementMet(node.scopeType, node.name);
+            const label = `${node.scopeType === "category" ? "Category" : "Subcategory"} ${node.name}`;
+            return `${inheritedSatisfiedOr || (negated ? !scopeSatisfied : scopeSatisfied) ? "✅" : "❌"} ${negated ? "NOT " : ""}${label}`;
+        };
         const inlineNode = (node, inheritedSatisfiedOr = false, negated = false) => {
             if (node.type === "atom") return atomLine(node.id, negated, inheritedSatisfiedOr);
             if (node.type === "point") return pointLine(node, negated, inheritedSatisfiedOr);
+            if (node.type === "scope") return scopeLine(node, negated, inheritedSatisfiedOr);
             if (node.type === "not") {
-                if (node.child?.type === "atom" || node.child?.type === "point") return inlineNode(node.child, inheritedSatisfiedOr, !negated);
+                if (node.child?.type === "atom" || node.child?.type === "point" || node.child?.type === "scope") return inlineNode(node.child, inheritedSatisfiedOr, !negated);
                 return `NOT (${inlineNode(node.child, inheritedSatisfiedOr, false)})`;
             }
             if (node.type === "or") {
                 const orSatisfied = inheritedSatisfiedOr || evaluatePrerequisiteNode(
                     node,
                     id => this.meetsCountRequirement(id),
-                    pointType => Number(this.points[pointType]) || 0
+                    pointType => Number(this.points[pointType]) || 0,
+                    (scopeType, scopeName) => this.scopeRequirementMet(scopeType, scopeName)
                 );
                 return node.children.map(child => inlineNode(child, orSatisfied, negated)).filter(Boolean).join(" OR ");
             }
@@ -3716,6 +3785,42 @@ test("point threshold prerequisites should work for any configured point type", 
     );
 });
 
+test("category and subcategory prerequisites should unlock after any scoped selection", () => {
+    const engine = CyoaEngine.synthetic();
+    const categoryOption = {
+        id: "requiresCategorySelection",
+        label: "Requires Category Selection",
+        cost: {},
+        prerequisites: 'category("Core")'
+    };
+    const subcategoryOption = {
+        id: "requiresSubcategorySelection",
+        label: "Requires Subcategory Selection",
+        cost: {},
+        prerequisites: 'subcategory("Core > Choices")'
+    };
+    engine.optionMap.set(categoryOption.id, categoryOption);
+    engine.optionMap.set(subcategoryOption.id, subcategoryOption);
+
+    assert.strictEqual(engine.canSelect(categoryOption.id), false);
+    assert.strictEqual(engine.canSelect(subcategoryOption.id), false);
+    assert.deepStrictEqual(engine.displayRequirementLines(categoryOption), ["❌ Category Core"]);
+    assert.deepStrictEqual(engine.displayRequirementLines(subcategoryOption), ["❌ Subcategory Core > Choices"]);
+
+    engine.select("spendTwo");
+    assert.strictEqual(engine.canSelect(categoryOption.id), true);
+    assert.strictEqual(engine.canSelect(subcategoryOption.id), true);
+    assert.deepStrictEqual(engine.displayRequirementLines(categoryOption), ["✅ Category Core"]);
+    assert.deepStrictEqual(engine.displayRequirementLines(subcategoryOption), ["✅ Subcategory Core > Choices"]);
+
+    assert(
+        PLAYER_SCRIPT_SOURCE.includes("scopeRequirementMet") &&
+            PLAYER_SCRIPT_SOURCE.includes('scopeType === "category"') &&
+            PLAYER_SCRIPT_SOURCE.includes('scopeType === "subcategory"'),
+        "player prerequisite parser should support category and subcategory scope requirements"
+    );
+});
+
 test("CYOA validation should accept synthetic count-suffix prerequisites after option merges", () => {
     const data = [
         { type: "title", text: "Synthetic Validation CYOA" },
@@ -3775,6 +3880,28 @@ test("CYOA validation should accept and validate point-threshold prerequisites",
             error.includes('references unknown point type "Missing Points"')
         ),
         "validation should reject point-threshold prerequisites that reference missing point types"
+    );
+});
+
+test("CYOA validation should accept and validate category-scope prerequisites", () => {
+    const data = CyoaEngine.synthetic().data;
+    data[3].subcategories[0].options.push({
+        id: "requiresScopedSelection",
+        label: "Requires Scoped Selection",
+        cost: {},
+        prerequisites: 'category("Core") && subcategory("Core > Choices")'
+    });
+    assert.deepStrictEqual(
+        validateCyoaData("synthetic-scope-prerequisites.json", data).errors.filter(error => error.includes("requiresScopedSelection")),
+        []
+    );
+
+    data[3].subcategories[0].options.at(-1).prerequisites = 'category("Missing Category") || subcategory("Missing > Subcategory")';
+    const errors = validateCyoaData("synthetic-scope-prerequisites.json", data).errors;
+    assert(
+        errors.some(error => error.includes('references unknown category "Missing Category"')) &&
+            errors.some(error => error.includes('references unknown subcategory "Missing > Subcategory"')),
+        "validation should reject category-scope prerequisites that reference missing scopes"
     );
 });
 

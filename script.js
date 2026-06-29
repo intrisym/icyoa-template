@@ -3117,11 +3117,65 @@ function getPointRequirementValue(pointType) {
     return Number(originalPoints?.[pointType]) || 0;
 }
 
+function categoryHasSelectedOption(category) {
+    if (!category) return false;
+    let found = (category.options || []).some(option => (selectedOptions[option.id] || 0) > 0);
+    if (found) return true;
+    walkSubcategoryTree(category.subcategories || [], subcat => {
+        if (found) return;
+        found = (subcat.options || []).some(option => (selectedOptions[option.id] || 0) > 0);
+    });
+    return found;
+}
+
+function subcategoryHasSelectedOption(subcat) {
+    if (!subcat) return false;
+    if ((subcat.options || []).some(option => (selectedOptions[option.id] || 0) > 0)) return true;
+    let found = false;
+    walkSubcategoryTree(subcat.subcategories || [], child => {
+        if (found) return;
+        found = (child.options || []).some(option => (selectedOptions[option.id] || 0) > 0);
+    });
+    return found;
+}
+
+function getSubcategoryPathLabel(category, path = []) {
+    return [category?.name, ...path.map(part => part.name)].filter(Boolean).join(" > ");
+}
+
+function findCategoryByRequirementName(name) {
+    const target = String(name || "").trim();
+    return categories.find((category, index) =>
+        category?.name === target || buildCategoryKey(index, category?.name) === target
+    ) || null;
+}
+
+function findSubcategoryByRequirementName(name) {
+    const target = String(name || "").trim();
+    let found = null;
+    categories.some((category, categoryIndex) => {
+        return walkSubcategoryTree(category.subcategories || [], (subcat, path) => {
+            if (found) return;
+            const pathLabel = getSubcategoryPathLabel(category, path);
+            const key = buildSubcategoryKey(categoryIndex, category?.name, null, null, path);
+            if (subcat?.name === target || pathLabel === target || key === target) found = subcat;
+        }), !!found;
+    });
+    return found;
+}
+
+function scopeRequirementMet(scopeType, scopeName) {
+    if (scopeType === "category") return categoryHasSelectedOption(findCategoryByRequirementName(scopeName));
+    if (scopeType === "subcategory") return subcategoryHasSelectedOption(findSubcategoryByRequirementName(scopeName));
+    return false;
+}
+
 function evaluateRequirementExpression(expression) {
     return window.evaluatePrereqExpr(
         expression,
         id => selectedOptions[id] || 0,
-        pointType => getPointRequirementValue(pointType)
+        pointType => getPointRequirementValue(pointType),
+        (scopeType, scopeName) => scopeRequirementMet(scopeType, scopeName)
     );
 }
 
@@ -3758,6 +3812,19 @@ function parsePrerequisiteExpression(expression = "") {
         if (isIdentifier || isQuotedPointType) {
             consume();
             const next = peek();
+            if ((token === "category" || token === "subcategory") && next === "(") {
+                consume("(");
+                const nameToken = consume();
+                if (!/^"(?:\\.|[^"\\])*"$|^'(?:\\.|[^'\\])*'$/.test(nameToken || "")) {
+                    throw new Error("Scope prerequisites must use a quoted name");
+                }
+                consume(")");
+                return {
+                    type: "scope",
+                    scopeType: token,
+                    name: unquotePrerequisitePointName(nameToken)
+                };
+            }
             if ([">=", "<=", ">", "<", "==", "="].includes(next)) {
                 const operator = consume();
                 const valueToken = consume();
@@ -3812,6 +3879,7 @@ function evaluatePrerequisiteNode(node) {
     if (!node) return false;
     if (node.type === "atom") return meetsCountRequirement(node.id);
     if (node.type === "point") return evaluatePointRequirement(node.pointType, node.operator, node.value);
+    if (node.type === "scope") return scopeRequirementMet(node.scopeType, node.name);
     if (node.type === "not") return !evaluatePrerequisiteNode(node.child);
     if (node.type === "and") return node.children.every(evaluatePrerequisiteNode);
     if (node.type === "or") return node.children.some(evaluatePrerequisiteNode);
@@ -3835,6 +3903,12 @@ function buildPrerequisiteDisplayLines(expression = "") {
         const operator = node.operator === "==" ? "=" : node.operator;
         return `${satisfied ? "✅" : "❌"} ${negated ? "NOT " : ""}${getPointTypeMarkup(node.pointType)} ${escapeHtml(operator)} ${escapeHtml(String(node.value))}`;
     };
+    const scopeText = (node, negated, inheritedSatisfiedOr = false) => {
+        const scopeSatisfied = scopeRequirementMet(node.scopeType, node.name);
+        const satisfied = inheritedSatisfiedOr || (negated ? !scopeSatisfied : scopeSatisfied);
+        const label = `${node.scopeType === "category" ? "Category" : "Subcategory"} ${node.name}`;
+        return `${satisfied ? "✅" : "❌"} ${negated ? "NOT " : ""}${escapeHtml(label)}`;
+    };
     const inline = (node, inheritedSatisfiedOr = false, negated = false) => {
         if (!node) return "";
         if (node.type === "atom") {
@@ -3843,8 +3917,11 @@ function buildPrerequisiteDisplayLines(expression = "") {
         if (node.type === "point") {
             return pointText(node, negated, inheritedSatisfiedOr);
         }
+        if (node.type === "scope") {
+            return scopeText(node, negated, inheritedSatisfiedOr);
+        }
         if (node.type === "not") {
-            if (node.child?.type === "atom" || node.child?.type === "point") return inline(node.child, inheritedSatisfiedOr, !negated);
+            if (node.child?.type === "atom" || node.child?.type === "point" || node.child?.type === "scope") return inline(node.child, inheritedSatisfiedOr, !negated);
             return `NOT (${inline(node.child, inheritedSatisfiedOr, false)})`;
         }
         if (node.type === "or") {

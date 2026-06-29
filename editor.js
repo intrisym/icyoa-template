@@ -473,6 +473,36 @@
         return new RegExp(`(${pointNamePattern})\\s*(?:(?:>=|<=|>|<|==|=)\\s*-?\\d+(?:\\.\\d+)?|-?\\d+(?:\\.\\d+)?\\+)`, "g");
     }
 
+    function getScopeRequirementPattern() {
+        const quotedNamePattern = String.raw`("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')`;
+        return new RegExp(`\\b(category|subcategory)\\s*\\(\\s*${quotedNamePattern}\\s*\\)`, "g");
+    }
+
+    function extractRequirementScopes(value) {
+        const scopes = [];
+        const visit = requirement => {
+            if (!requirement) return;
+            if (typeof requirement === "string") {
+                requirement.replace(getScopeRequirementPattern(), (_, scopeType, rawName) => {
+                    scopes.push({ type: scopeType, name: unquoteRequirementPointName(rawName) });
+                    return "";
+                });
+                return;
+            }
+            if (Array.isArray(requirement)) {
+                requirement.forEach(visit);
+                return;
+            }
+            if (typeof requirement === "object") {
+                visit(requirement.and);
+                visit(requirement.or);
+                visit(requirement.not);
+            }
+        };
+        visit(value);
+        return scopes;
+    }
+
     function extractRequirementPointTypes(value) {
         const pointTypes = new Set();
         const visit = requirement => {
@@ -503,7 +533,9 @@
         if (!value) return ids;
 
         if (typeof value === "string") {
-            const withoutPointRequirements = value.replace(getPointRequirementPattern(), "");
+            const withoutPointRequirements = value
+                .replace(getPointRequirementPattern(), "")
+                .replace(getScopeRequirementPattern(), "");
             const tokens = withoutPointRequirements.match(/!?[A-Za-z_][A-Za-z0-9_]*(?:__\d+)?/g) || [];
             tokens.forEach(token => {
                 const core = token.startsWith("!") ? token.slice(1) : token;
@@ -579,6 +611,25 @@
             Array.from(extractRequirementPointTypes(costOption?.prerequisites)).forEach(type => {
                 if (!pointTypes.has(type)) warnings.push(`Payment option ${index + 1} prerequisite references unknown point type "${type}".`);
             });
+        });
+        const categoryNames = new Set(state.data.filter(entry => !entry.type || entry.name).map(entry => entry.name).filter(Boolean));
+        const subcategoryNames = new Set();
+        state.data.filter(entry => !entry.type || entry.name).forEach(category => {
+            walkEditorSubcategories(category.subcategories || [], (subcat, path = []) => {
+                if (subcat?.name) subcategoryNames.add(subcat.name);
+                const pathNames = [category.name, ...path.map(entry => entry?.name).filter(Boolean)];
+                if (pathNames.length > 1) subcategoryNames.add(pathNames.join(" > "));
+            });
+        });
+        const warnUnknownScopeRequirements = (requirement, context) => {
+            extractRequirementScopes(requirement).forEach(scope => {
+                if (scope.type === "category" && !categoryNames.has(scope.name)) warnings.push(`${context} references unknown category "${scope.name}".`);
+                if (scope.type === "subcategory" && !subcategoryNames.has(scope.name)) warnings.push(`${context} references unknown subcategory "${scope.name}".`);
+            });
+        };
+        warnUnknownScopeRequirements(option?.prerequisites, "Prerequisite");
+        (option?.costOptions || []).forEach((costOption, index) => {
+            warnUnknownScopeRequirements(costOption?.prerequisites, `Payment option ${index + 1} prerequisite`);
         });
 
         const rawConflicts = Array.isArray(option?.conflictsWith) ? option.conflictsWith : [];

@@ -56,6 +56,36 @@ function getPointRequirementPattern() {
     return new RegExp(`(${pointNamePattern})\\s*(?:(?:>=|<=|>|<|==|=)\\s*-?\\d+(?:\\.\\d+)?|-?\\d+(?:\\.\\d+)?\\+)`, "g");
 }
 
+function getScopeRequirementPattern() {
+    const quotedNamePattern = String.raw`("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')`;
+    return new RegExp(`\\b(category|subcategory)\\s*\\(\\s*${quotedNamePattern}\\s*\\)`, "g");
+}
+
+function extractRequirementScopes(requirement) {
+    const scopes = [];
+    const visit = value => {
+        if (!value) return;
+        if (typeof value === "string") {
+            value.replace(getScopeRequirementPattern(), (_, scopeType, rawName) => {
+                scopes.push({ type: scopeType, name: unquoteRequirementPointName(rawName) });
+                return "";
+            });
+            return;
+        }
+        if (Array.isArray(value)) {
+            value.forEach(visit);
+            return;
+        }
+        if (typeof value === "object") {
+            visit(value.and);
+            visit(value.or);
+            visit(value.not);
+        }
+    };
+    visit(requirement);
+    return scopes;
+}
+
 function extractRequirementPointTypes(requirement) {
     const pointTypes = new Set();
     const visit = value => {
@@ -84,7 +114,9 @@ function extractRequirementPointTypes(requirement) {
 function extractExpressionIds(expr) {
     if (typeof expr !== "string") return [];
     const ids = new Set();
-    const expressionWithoutPointRequirements = expr.replace(getPointRequirementPattern(), "");
+    const expressionWithoutPointRequirements = expr
+        .replace(getPointRequirementPattern(), "")
+        .replace(getScopeRequirementPattern(), "");
     const tokens = expressionWithoutPointRequirements.match(/!?[A-Za-z_][A-Za-z0-9_]*(?:__\d+)?/g) || [];
     tokens.forEach(token => {
         const core = token.startsWith("!") ? token.slice(1) : token;
@@ -126,7 +158,7 @@ function extractRequirementIds(requirement) {
 function validateRequirementExpression(file, context, requirement, errors) {
     if (typeof requirement !== "string") return;
     try {
-        evaluatePrereqExpr(requirement, () => 0, () => 0);
+        evaluatePrereqExpr(requirement, () => 0, () => 0, () => false);
     } catch (err) {
         pushIssue(errors, file, `${context} has invalid prerequisite expression "${requirement}": ${err.message}`);
     }
@@ -136,6 +168,37 @@ function validatePointRequirementRefs(file, context, requirement, pointTypes, er
     extractRequirementPointTypes(requirement).forEach(pointType => {
         if (!pointTypes.has(pointType)) {
             pushIssue(errors, file, `${context} references unknown point type "${pointType}".`);
+        }
+    });
+}
+
+function collectRequirementScopes(data) {
+    const categoryNames = new Set();
+    const subcategoryNames = new Set();
+    const walk = (category, subcategories, path = []) => {
+        if (!Array.isArray(subcategories)) return;
+        subcategories.forEach((subcat, index) => {
+            const nextPath = [...path, subcat?.name || `subcategory[${index}]`];
+            if (subcat?.name) subcategoryNames.add(subcat.name);
+            if (category?.name && nextPath.length) subcategoryNames.add([category.name, ...nextPath].join(" > "));
+            walk(category, subcat?.subcategories, nextPath);
+        });
+    };
+    data.filter(entry => !entry.type || entry.name).forEach((category, index) => {
+        if (category?.name) categoryNames.add(category.name);
+        else categoryNames.add(`category[${index}]`);
+        walk(category, category?.subcategories);
+    });
+    return { categoryNames, subcategoryNames };
+}
+
+function validateScopeRequirementRefs(file, context, requirement, scopes, errors) {
+    extractRequirementScopes(requirement).forEach(scope => {
+        if (scope.type === "category" && !scopes.categoryNames.has(scope.name)) {
+            pushIssue(errors, file, `${context} references unknown category "${scope.name}".`);
+        }
+        if (scope.type === "subcategory" && !scopes.subcategoryNames.has(scope.name)) {
+            pushIssue(errors, file, `${context} references unknown subcategory "${scope.name}".`);
         }
     });
 }
@@ -284,7 +347,7 @@ function validateAutoGrants(file, context, grants, optionIds, errors) {
     });
 }
 
-function validateCostOptions(file, context, costOptions, pointTypes, errors, warnings, optionIds = null) {
+function validateCostOptions(file, context, costOptions, pointTypes, errors, warnings, optionIds = null, scopes = null) {
     if (costOptions === undefined) return;
     if (!Array.isArray(costOptions)) {
         pushIssue(errors, file, `${context}.costOptions must be an array.`);
@@ -321,6 +384,7 @@ function validateCostOptions(file, context, costOptions, pointTypes, errors, war
         }
         validateRequirementExpression(file, `${optionContext}.prerequisites`, costOption.prerequisites, errors);
         validatePointRequirementRefs(file, `${optionContext}.prerequisites`, costOption.prerequisites, pointTypes, errors);
+        if (scopes) validateScopeRequirementRefs(file, `${optionContext}.prerequisites`, costOption.prerequisites, scopes, errors);
         if (optionIds) {
             validateIdRefs(file, `${optionContext}.prerequisites`, extractRequirementIds(costOption.prerequisites), optionIds, errors);
         }
@@ -484,6 +548,7 @@ function validateCyoaData(file, data) {
     validateThemeSettings(file, data.find(entry => entry.type === "settings"), errors);
 
     const options = collectOptions(data);
+    const requirementScopes = collectRequirementScopes(data);
     const optionIds = new Set();
     options.forEach(({ option, path: optionPath }) => {
         if (!option || typeof option !== "object") {
@@ -505,7 +570,7 @@ function validateCyoaData(file, data) {
         const context = `${optionPath} (${option.id})`;
 
         validatePointMap(file, `${context}.cost`, option.cost || {}, pointTypes, errors, warnings);
-        validateCostOptions(file, context, option.costOptions, pointTypes, errors, warnings, optionIds);
+        validateCostOptions(file, context, option.costOptions, pointTypes, errors, warnings, optionIds, requirementScopes);
         validatePointAllocation(file, context, option.pointAllocation, pointTypes, errors);
         validateSliderModifiers(file, context, option.sliderModifiers, pointTypes, errors);
         validateSliderModifiers(file, context, option.attributeEffects, pointTypes, errors, "attributeEffects");
@@ -517,10 +582,12 @@ function validateCyoaData(file, data) {
         validateOptionalColor(file, `${context}.darkBorderColor`, option.darkBorderColor, errors);
         validateRequirementExpression(file, `${context}.prerequisites`, option.prerequisites, errors);
         validatePointRequirementRefs(file, `${context}.prerequisites`, option.prerequisites, pointTypes, errors);
+        validateScopeRequirementRefs(file, `${context}.prerequisites`, option.prerequisites, requirementScopes, errors);
         validateIdRefs(file, `${context}.prerequisites`, extractRequirementIds(option.prerequisites), optionIds, errors);
         (option.prerequisitesBySelection || []).forEach((requirement, index) => {
             validateRequirementExpression(file, `${context}.prerequisitesBySelection[${index}]`, requirement, errors);
             validatePointRequirementRefs(file, `${context}.prerequisitesBySelection[${index}]`, requirement, pointTypes, errors);
+            validateScopeRequirementRefs(file, `${context}.prerequisitesBySelection[${index}]`, requirement, requirementScopes, errors);
             validateIdRefs(file, `${context}.prerequisitesBySelection[${index}]`, extractRequirementIds(requirement), optionIds, errors);
         });
         validateIdRefs(file, `${context}.conflictsWith`, normalizeIdList(option.conflictsWith), optionIds, errors);
@@ -544,9 +611,11 @@ function validateCyoaData(file, data) {
         if (subcat.mergeDefaultCostOptions !== undefined && typeof subcat.mergeDefaultCostOptions !== "boolean") {
             pushIssue(errors, file, `${subcatPath}.mergeDefaultCostOptions must be boolean when present.`);
         }
-        validateCostOptions(file, subcatPath, subcat.costOptions, pointTypes, errors, warnings, optionIds);
+        validateCostOptions(file, subcatPath, subcat.costOptions, pointTypes, errors, warnings, optionIds, requirementScopes);
         validatePointMap(file, `${subcatPath}.discountAmount`, subcat.discountAmount, pointTypes, errors, warnings);
         validateRequirementExpression(file, `${subcatPath}.requiresOption`, subcat.requiresOption, errors);
+        validatePointRequirementRefs(file, `${subcatPath}.requiresOption`, subcat.requiresOption, pointTypes, errors);
+        validateScopeRequirementRefs(file, `${subcatPath}.requiresOption`, subcat.requiresOption, requirementScopes, errors);
         validateIdRefs(file, `${subcatPath}.requiresOption`, extractRequirementIds(subcat.requiresOption), optionIds, errors);
         validateModifiedCostRules(file, `${subcatPath}.modifiedCosts`, subcat.modifiedCosts, optionIds, pointTypes, errors, warnings);
         validateModifiedCostRules(file, `${subcatPath}.discounts`, subcat.discounts, optionIds, pointTypes, errors, warnings);
@@ -559,6 +628,8 @@ function validateCyoaData(file, data) {
     categories.forEach((category, index) => {
         const context = category.name || `category[${index}]`;
         validateRequirementExpression(file, `${context}.requiresOption`, category.requiresOption, errors);
+        validatePointRequirementRefs(file, `${context}.requiresOption`, category.requiresOption, pointTypes, errors);
+        validateScopeRequirementRefs(file, `${context}.requiresOption`, category.requiresOption, requirementScopes, errors);
         validateIdRefs(file, `${context}.requiresOption`, extractRequirementIds(category.requiresOption), optionIds, errors);
         validatePointMap(file, `${context}.discountAmount`, category.discountAmount, pointTypes, errors, warnings);
         if (category.maxSelections !== undefined && Number(category.maxSelections) < 1) {
