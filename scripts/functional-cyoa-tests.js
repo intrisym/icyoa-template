@@ -189,6 +189,7 @@ function runPlayerScriptExportImportHelpers(state) {
         "attributeSliderValues",
         "dynamicSelections",
         "sliderModifierSelections",
+        "derivedPointBaselines",
         "pointAllocationSelections",
         "subcategoryDiscountSelections",
         "categoryDiscountSelections",
@@ -205,6 +206,7 @@ function runPlayerScriptExportImportHelpers(state) {
         state.attributeSliderValues || {},
         state.dynamicSelections || {},
         state.sliderModifierSelections || {},
+        state.derivedPointBaselines || {},
         state.pointAllocationSelections || {},
         state.subcategoryDiscountSelections || {},
         state.categoryDiscountSelections || {},
@@ -335,6 +337,121 @@ function evaluatePrerequisiteNode(node, meetsRequirement, getPointValue = () => 
     return false;
 }
 
+function tokenizeDerivedFormula(formula) {
+    const tokens = [];
+    let index = 0;
+    while (index < formula.length) {
+        const char = formula[index];
+        if (/\s/.test(char)) {
+            index += 1;
+            continue;
+        }
+        if ("+-*/(),".includes(char)) {
+            tokens.push(char);
+            index += 1;
+            continue;
+        }
+        if (char === '"' || char === "'") {
+            const quote = char;
+            let value = "";
+            index += 1;
+            while (index < formula.length) {
+                const current = formula[index];
+                if (current === "\\") {
+                    value += formula[index + 1] || "";
+                    index += 2;
+                    continue;
+                }
+                if (current === quote) break;
+                value += current;
+                index += 1;
+            }
+            if (formula[index] !== quote) throw new Error("Unclosed quoted point type");
+            tokens.push({ type: "name", value });
+            index += 1;
+            continue;
+        }
+        const numberMatch = formula.slice(index).match(/^\d+(?:\.\d+)?/);
+        if (numberMatch) {
+            tokens.push({ type: "number", value: Number(numberMatch[0]) });
+            index += numberMatch[0].length;
+            continue;
+        }
+        const nameMatch = formula.slice(index).match(/^[A-Za-z_][A-Za-z0-9_]*/);
+        if (nameMatch) {
+            tokens.push({ type: "name", value: nameMatch[0] });
+            index += nameMatch[0].length;
+            continue;
+        }
+        throw new Error(`Unexpected character "${char}"`);
+    }
+    return tokens;
+}
+
+function evaluateDerivedFormula(formula, pointLookupFn, selectedLookupFn = () => 0) {
+    const tokens = tokenizeDerivedFormula(formula);
+    let index = 0;
+    const peek = () => tokens[index];
+    const consume = expected => {
+        const token = tokens[index];
+        const value = typeof token === "string" ? token : token?.value;
+        if (expected !== undefined && value !== expected) throw new Error(`Expected "${expected}"`);
+        index += 1;
+        return token;
+    };
+    const parseExpression = () => {
+        let value = parseTerm();
+        while (peek() === "+" || peek() === "-") {
+            const op = consume();
+            const next = parseTerm();
+            value = op === "+" ? value + next : value - next;
+        }
+        return value;
+    };
+    const parseTerm = () => {
+        let value = parseFactor();
+        while (peek() === "*" || peek() === "/") {
+            const op = consume();
+            const next = parseFactor();
+            value = op === "*" ? value * next : value / next;
+        }
+        return value;
+    };
+    const parseFactor = () => {
+        if (peek() === "+") {
+            consume("+");
+            return parseFactor();
+        }
+        if (peek() === "-") {
+            consume("-");
+            return -parseFactor();
+        }
+        if (peek() === "(") {
+            consume("(");
+            const value = parseExpression();
+            consume(")");
+            return value;
+        }
+        const token = consume();
+        if (token?.type === "number") return token.value;
+        if (token?.type === "name") {
+            if (token.value === "selected" && peek() === "(") {
+                consume("(");
+                const optionToken = consume();
+                if (optionToken?.type !== "name") throw new Error("selected() requires a quoted option ID");
+                consume(")");
+                return Number(selectedLookupFn(optionToken.value)) || 0;
+            }
+            return Number(pointLookupFn(token.value)) || 0;
+        }
+        throw new Error("Expected a number, point type, or expression");
+    };
+    const result = parseExpression();
+    if (index < tokens.length) throw new Error("Unexpected token after formula");
+    if (!Number.isFinite(result)) throw new Error("Formula result must be finite");
+    return result;
+}
+
 function computePrerequisiteDisplayStatuses(expression, meetsRequirement, getPointValue = () => 0) {
     const ast = parsePrerequisiteExpression(expression);
     const displayByKey = new Map();
@@ -384,6 +501,8 @@ class CyoaEngine {
         this.data = JSON.parse(JSON.stringify(source));
         this.pointsEntry = this.data.find(entry => entry.type === "points") || { values: {} };
         this.points = { ...(this.pointsEntry.values || {}) };
+        this.derivedValueConfigs = this.normalizeDerivedValues();
+        this.derivedPointBaselines = {};
         this.allowNegativeTypes = new Set(this.pointsEntry.allowNegative || []);
         this.categories = this.data.filter(entry => !entry.type || entry.name);
         this.selectedOptions = {};
@@ -396,6 +515,7 @@ class CyoaEngine {
         this.dynamicSelections = {};
         this.sliderModifierSelections = {};
         this.activeSliderModifierPointBaselines = {};
+        this.derivedPointBaselines = {};
         this.pointAllocationSelections = {};
         this.subcategoryDiscountSelections = {};
         this.categoryDiscountSelections = {};
@@ -411,6 +531,7 @@ class CyoaEngine {
                 (subcat.options || []).forEach(option => this.optionMap.set(option.id, option));
             });
         });
+        this.applySliderModifiers();
     }
 
     static synthetic() {
@@ -1244,6 +1365,54 @@ class CyoaEngine {
         };
     }
 
+    normalizeDerivedValues() {
+        const raw = Array.isArray(this.pointsEntry.derivedValues) ? this.pointsEntry.derivedValues : [];
+        return raw
+            .map(entry => ({
+                pointType: String(entry?.pointType || "").trim(),
+                formula: String(entry?.formula || "").trim(),
+                round: ["none", "floor", "ceil", "round"].includes(entry?.round) ? entry.round : "none",
+                min: Number.isFinite(Number(entry?.min)) ? Number(entry.min) : null,
+                max: Number.isFinite(Number(entry?.max)) ? Number(entry.max) : null
+            }))
+            .filter(entry => entry.pointType && entry.formula);
+    }
+
+    finalizeDerivedValue(value, config) {
+        let result = Number(value) || 0;
+        if (config.round === "floor") result = Math.floor(result);
+        if (config.round === "ceil") result = Math.ceil(result);
+        if (config.round === "round") result = Math.round(result);
+        if (config.min !== null) result = Math.max(config.min, result);
+        if (config.max !== null) result = Math.min(config.max, result);
+        return result;
+    }
+
+    applyDerivedValues() {
+        const activeTypes = new Set();
+        this.derivedValueConfigs.forEach(config => {
+            activeTypes.add(config.pointType);
+            try {
+                const nextBase = this.finalizeDerivedValue(evaluateDerivedFormula(
+                    config.formula,
+                    pointType => Object.prototype.hasOwnProperty.call(this.points, pointType) ? this.points[pointType] : this.pointsEntry.values?.[pointType],
+                    optionId => this.selectedOptions[optionId] || 0
+                ), config);
+                const previousBase = Object.prototype.hasOwnProperty.call(this.derivedPointBaselines, config.pointType)
+                    ? Number(this.derivedPointBaselines[config.pointType]) || 0
+                    : Number(this.points[config.pointType] ?? this.pointsEntry.values?.[config.pointType]) || 0;
+                if (!Object.prototype.hasOwnProperty.call(this.points, config.pointType)) this.points[config.pointType] = previousBase;
+                this.points[config.pointType] += nextBase - previousBase;
+                this.derivedPointBaselines[config.pointType] = nextBase;
+            } catch (_) {
+                // Match player runtime behavior: invalid formulas leave the current point value unchanged.
+            }
+        });
+        Object.keys(this.derivedPointBaselines).forEach(type => {
+            if (!activeTypes.has(type)) delete this.derivedPointBaselines[type];
+        });
+    }
+
     applySliderModifiers() {
         this.restoreActiveSliderModifierPointValues();
         this.resetSliderAttributePointValues();
@@ -1276,6 +1445,7 @@ class CyoaEngine {
             if (effect.type === "add") this.points[effect.attribute] = currentValue + effect.value;
             if (effect.type === "subtract") this.points[effect.attribute] = currentValue - effect.value;
         });
+        this.applyDerivedValues();
     }
 
     getModifiedCostRules(entity) {
@@ -2118,6 +2288,8 @@ class CyoaEngine {
             storyInputs: this.storyInputs,
             attributeSliderValues: this.attributeSliderValues,
             dynamicSelections: this.dynamicSelections,
+            sliderModifierSelections: this.sliderModifierSelections,
+            derivedPointBaselines: this.derivedPointBaselines,
             pointAllocationSelections: this.pointAllocationSelections,
             subcategoryDiscountSelections: this.subcategoryDiscountSelections,
             categoryDiscountSelections: this.categoryDiscountSelections,
@@ -2134,6 +2306,8 @@ class CyoaEngine {
         if (hasOwnEntries(full.storyInputs)) packed.t = full.storyInputs;
         if (hasOwnEntries(full.attributeSliderValues)) packed.a = full.attributeSliderValues;
         if (hasOwnEntries(full.dynamicSelections)) packed.y = full.dynamicSelections;
+        if (hasOwnEntries(full.sliderModifierSelections)) packed.m = full.sliderModifierSelections;
+        if (hasOwnEntries(full.derivedPointBaselines)) packed.b = full.derivedPointBaselines;
         if (hasOwnEntries(full.pointAllocationSelections)) packed.l = full.pointAllocationSelections;
         if (hasOwnEntries(full.subcategoryDiscountSelections)) packed.u = full.subcategoryDiscountSelections;
         if (hasOwnEntries(full.categoryDiscountSelections)) packed.c = full.categoryDiscountSelections;
@@ -2158,6 +2332,8 @@ class CyoaEngine {
         });
         this.attributeSliderValues = { ...(unpacked.attributeSliderValues || {}) };
         this.dynamicSelections = { ...(unpacked.dynamicSelections || {}) };
+        this.sliderModifierSelections = { ...(unpacked.sliderModifierSelections || {}) };
+        this.derivedPointBaselines = { ...(unpacked.derivedPointBaselines || {}) };
         this.pointAllocationSelections = { ...(unpacked.pointAllocationSelections || {}) };
         this.subcategoryDiscountSelections = { ...(unpacked.subcategoryDiscountSelections || {}) };
         this.categoryDiscountSelections = { ...(unpacked.categoryDiscountSelections || {}) };
@@ -2183,6 +2359,8 @@ class CyoaEngine {
         this.storyInputs = { ...(state.storyInputs || {}) };
         this.attributeSliderValues = { ...(state.attributeSliderValues || {}) };
         this.dynamicSelections = { ...(state.dynamicSelections || {}) };
+        this.sliderModifierSelections = { ...(state.sliderModifierSelections || {}) };
+        this.derivedPointBaselines = { ...(state.derivedPointBaselines || {}) };
         this.pointAllocationSelections = { ...(state.pointAllocationSelections || {}) };
         this.subcategoryDiscountSelections = { ...(state.subcategoryDiscountSelections || {}) };
         this.categoryDiscountSelections = { ...(state.categoryDiscountSelections || {}) };
@@ -2197,6 +2375,8 @@ class CyoaEngine {
         this.data = data;
         this.pointsEntry = data.find(entry => entry.type === "points") || { values: {} };
         this.points = { ...(this.pointsEntry.values || {}) };
+        this.derivedValueConfigs = this.normalizeDerivedValues();
+        this.derivedPointBaselines = {};
         this.allowNegativeTypes = new Set(this.pointsEntry.allowNegative || []);
         this.categories = data.filter(entry => !entry.type || entry.name);
         this.selectedOptions = {};
@@ -2207,6 +2387,8 @@ class CyoaEngine {
         this.storyInputs = {};
         this.attributeSliderValues = {};
         this.dynamicSelections = {};
+        this.sliderModifierSelections = {};
+        this.derivedPointBaselines = {};
         this.pointAllocationSelections = {};
         this.subcategoryDiscountSelections = {};
         this.categoryDiscountSelections = {};
@@ -2220,6 +2402,7 @@ class CyoaEngine {
             });
         });
         if (state) this.restorePlayerState(state);
+        this.applySliderModifiers();
     }
 }
 
@@ -2238,6 +2421,8 @@ function unpackImportedState(importedData) {
         storyInputs: importedData.t || {},
         attributeSliderValues: importedData.a || {},
         dynamicSelections: importedData.y || {},
+        sliderModifierSelections: importedData.m || {},
+        derivedPointBaselines: importedData.b || {},
         pointAllocationSelections: importedData.l || {},
         subcategoryDiscountSelections: importedData.u || {},
         categoryDiscountSelections: importedData.c || {},
@@ -3206,6 +3391,90 @@ test("point tracker categories should be editable and player-toggleable", () => 
             error.includes('references unknown point type "Unknown"')
         ),
         "validation should reject point categories that reference missing point types"
+    );
+});
+
+test("derived point values should recompute from formulas while preserving spending", () => {
+    const data = [
+        { type: "title", text: "Derived Skills" },
+        {
+            type: "points",
+            values: {
+                STR: 10,
+                DEX: 10,
+                CON: 10,
+                INT: 10,
+                WIS: 10,
+                CHA: 10,
+                "Free Skill Points": 0
+            },
+            derivedValues: [
+                {
+                    pointType: "Free Skill Points",
+                    formula: "((STR + DEX + CON + INT + WIS + CHA) - 60) * 8 + selected(\"nephilim\") * 128",
+                    round: "floor",
+                    min: 0
+                }
+            ]
+        },
+        {
+            name: "Options",
+            options: [
+                {
+                    id: "skill",
+                    label: "Skill",
+                    cost: { "Free Skill Points": 30 }
+                },
+                {
+                    id: "nephilim",
+                    label: "Nephilim",
+                    cost: {}
+                }
+            ]
+        }
+    ];
+    const engine = new CyoaEngine(data, "derived-values.json");
+    assert.strictEqual(engine.points["Free Skill Points"], 0);
+
+    engine.points.STR = 20;
+    engine.applySliderModifiers();
+    assert.strictEqual(engine.points["Free Skill Points"], 80);
+
+    engine.select("skill");
+    assert.strictEqual(engine.points["Free Skill Points"], 50);
+
+    engine.points.DEX = 20;
+    engine.applySliderModifiers();
+    assert.strictEqual(engine.points["Free Skill Points"], 130, "derived value should apply formula delta without erasing skill spending");
+
+    engine.select("nephilim");
+    assert.strictEqual(engine.points["Free Skill Points"], 258);
+
+    assert.deepStrictEqual(validateCyoaData("derived-values-valid.json", data).errors, []);
+
+    data[1].values = {
+        Strength: 40,
+        Dexterity: 40,
+        Constitution: 30,
+        Intelligence: 0,
+        Wisdom: 0,
+        Charisma: 0,
+        "Skill Points": 0
+    };
+    data[1].derivedValues[0] = {
+        pointType: "Skill Points",
+        formula: "((Strength + Dexterity + Constitution + Intelligence + Wisdom + Charisma) - 60) * 8",
+        round: "floor"
+    };
+    const fullNameEngine = new CyoaEngine(data, "derived-full-name-values.json");
+    assert.strictEqual(fullNameEngine.points["Skill Points"], 400);
+
+    data[1].derivedValues[0].formula = "STR + Missing";
+    assert(
+        validateCyoaData("derived-values-invalid.json", data).errors.some(error =>
+            error.includes("Unknown point type")
+        ),
+        "validation should reject unknown point types in derived formulas"
     );
 });
 
@@ -4467,6 +4736,7 @@ test("packed export state should round-trip selections, points, inputs, and gran
     engine.storyInputs.subcatNote = "Synth";
     engine.attributeSliderValues.Power = 4;
     engine.dynamicSelections.option = ["Power"];
+    engine.derivedPointBaselines.Points = 10;
     engine.pointAllocationSelections.allocatedTeamGrant = { Skills: 2, Equipment: 4 };
     engine.subcategoryDiscountSelections.sub = { option: 1 };
     engine.categoryDiscountSelections.cat = { option: 1 };
@@ -4481,6 +4751,7 @@ test("packed export state should round-trip selections, points, inputs, and gran
     assert.deepStrictEqual(unpacked.storyInputs, engine.storyInputs);
     assert.deepStrictEqual(unpacked.attributeSliderValues, engine.attributeSliderValues);
     assert.deepStrictEqual(unpacked.dynamicSelections, engine.dynamicSelections);
+    assert.deepStrictEqual(unpacked.derivedPointBaselines, engine.derivedPointBaselines);
     assert.deepStrictEqual(unpacked.pointAllocationSelections, engine.pointAllocationSelections);
     assert.deepStrictEqual(unpacked.subcategoryDiscountSelections, engine.subcategoryDiscountSelections);
     assert.deepStrictEqual(unpacked.categoryDiscountSelections, engine.categoryDiscountSelections);
@@ -4495,6 +4766,7 @@ test("packed export state should round-trip selections, points, inputs, and gran
     assert.deepStrictEqual(scriptRoundTrip.unpacked.storyInputs, engine.storyInputs);
     assert.deepStrictEqual(scriptRoundTrip.unpacked.attributeSliderValues, engine.attributeSliderValues);
     assert.deepStrictEqual(scriptRoundTrip.unpacked.dynamicSelections, engine.dynamicSelections);
+    assert.deepStrictEqual(scriptRoundTrip.unpacked.derivedPointBaselines, engine.derivedPointBaselines);
     assert.deepStrictEqual(scriptRoundTrip.unpacked.pointAllocationSelections, engine.pointAllocationSelections);
     assert.deepStrictEqual(scriptRoundTrip.unpacked.subcategoryDiscountSelections, engine.subcategoryDiscountSelections);
     assert.deepStrictEqual(scriptRoundTrip.unpacked.categoryDiscountSelections, engine.categoryDiscountSelections);
@@ -4510,6 +4782,7 @@ test("packed export state should round-trip selections, points, inputs, and gran
     assert.deepStrictEqual(importedEngine.storyInputs, engine.storyInputs);
     assert.deepStrictEqual(importedEngine.attributeSliderValues, engine.attributeSliderValues);
     assert.deepStrictEqual(importedEngine.dynamicSelections, engine.dynamicSelections);
+    assert.deepStrictEqual(importedEngine.derivedPointBaselines, engine.derivedPointBaselines);
     assert.deepStrictEqual(importedEngine.pointAllocationSelections, engine.pointAllocationSelections);
     assert.deepStrictEqual(importedEngine.subcategoryDiscountSelections, engine.subcategoryDiscountSelections);
     assert.deepStrictEqual(importedEngine.categoryDiscountSelections, engine.categoryDiscountSelections);

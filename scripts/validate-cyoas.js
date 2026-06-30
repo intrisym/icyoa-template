@@ -495,6 +495,166 @@ function validateOptionalColor(file, context, value, errors) {
     }
 }
 
+function tokenizeDerivedFormula(formula) {
+    const tokens = [];
+    let index = 0;
+    while (index < formula.length) {
+        const char = formula[index];
+        if (/\s/.test(char)) {
+            index += 1;
+            continue;
+        }
+        if ("+-*/(),".includes(char)) {
+            tokens.push(char);
+            index += 1;
+            continue;
+        }
+        if (char === '"' || char === "'") {
+            const quote = char;
+            let value = "";
+            index += 1;
+            while (index < formula.length) {
+                const current = formula[index];
+                if (current === "\\") {
+                    value += formula[index + 1] || "";
+                    index += 2;
+                    continue;
+                }
+                if (current === quote) break;
+                value += current;
+                index += 1;
+            }
+            if (formula[index] !== quote) throw new Error("Unclosed quoted point type");
+            tokens.push({ type: "name", value });
+            index += 1;
+            continue;
+        }
+        const numberMatch = formula.slice(index).match(/^\d+(?:\.\d+)?/);
+        if (numberMatch) {
+            tokens.push({ type: "number", value: Number(numberMatch[0]) });
+            index += numberMatch[0].length;
+            continue;
+        }
+        const nameMatch = formula.slice(index).match(/^[A-Za-z_][A-Za-z0-9_]*/);
+        if (nameMatch) {
+            tokens.push({ type: "name", value: nameMatch[0] });
+            index += nameMatch[0].length;
+            continue;
+        }
+        throw new Error(`Unexpected character "${char}"`);
+    }
+    return tokens;
+}
+
+function evaluateDerivedFormula(formula, pointLookupFn, selectedLookupFn = () => 0) {
+    const tokens = tokenizeDerivedFormula(formula);
+    let index = 0;
+    const peek = () => tokens[index];
+    const consume = expected => {
+        const token = tokens[index];
+        const value = typeof token === "string" ? token : token?.value;
+        if (expected !== undefined && value !== expected) throw new Error(`Expected "${expected}"`);
+        index += 1;
+        return token;
+    };
+    const parseExpression = () => {
+        let value = parseTerm();
+        while (peek() === "+" || peek() === "-") {
+            const op = consume();
+            const next = parseTerm();
+            value = op === "+" ? value + next : value - next;
+        }
+        return value;
+    };
+    const parseTerm = () => {
+        let value = parseFactor();
+        while (peek() === "*" || peek() === "/") {
+            const op = consume();
+            const next = parseFactor();
+            value = op === "*" ? value * next : value / next;
+        }
+        return value;
+    };
+    const parseFactor = () => {
+        if (peek() === "+") {
+            consume("+");
+            return parseFactor();
+        }
+        if (peek() === "-") {
+            consume("-");
+            return -parseFactor();
+        }
+        if (peek() === "(") {
+            consume("(");
+            const value = parseExpression();
+            consume(")");
+            return value;
+        }
+        const token = consume();
+        if (token?.type === "number") return token.value;
+        if (token?.type === "name") {
+            if (token.value === "selected" && peek() === "(") {
+                consume("(");
+                const optionToken = consume();
+                if (optionToken?.type !== "name") throw new Error("selected() requires a quoted option ID");
+                consume(")");
+                return Number(selectedLookupFn(optionToken.value)) || 0;
+            }
+            return Number(pointLookupFn(token.value)) || 0;
+        }
+        throw new Error("Expected a number, point type, or expression");
+    };
+    const result = parseExpression();
+    if (index < tokens.length) throw new Error("Unexpected token after formula");
+    if (!Number.isFinite(result)) throw new Error("Formula result must be finite");
+    return result;
+}
+
+function validateDerivedValues(file, pointsEntry, pointTypes, optionIds, errors) {
+    if (pointsEntry?.derivedValues === undefined) return;
+    if (!Array.isArray(pointsEntry.derivedValues)) {
+        pushIssue(errors, file, "points.derivedValues must be an array.");
+        return;
+    }
+    pointsEntry.derivedValues.forEach((entry, index) => {
+        const context = `points.derivedValues[${index}]`;
+        if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+            pushIssue(errors, file, `${context} must be an object.`);
+            return;
+        }
+        if (typeof entry.pointType !== "string" || !pointTypes.has(entry.pointType)) {
+            pushIssue(errors, file, `${context}.pointType references unknown point type "${entry.pointType}".`);
+        }
+        if (typeof entry.formula !== "string" || !entry.formula.trim()) {
+            pushIssue(errors, file, `${context}.formula must be a non-empty string.`);
+            return;
+        }
+        if (entry.round !== undefined && !["none", "floor", "ceil", "round"].includes(entry.round)) {
+            pushIssue(errors, file, `${context}.round must be one of none, floor, ceil, or round.`);
+        }
+        ["min", "max"].forEach(key => {
+            if (entry[key] !== undefined && !Number.isFinite(Number(entry[key]))) {
+                pushIssue(errors, file, `${context}.${key} must be numeric when present.`);
+            }
+        });
+        try {
+            evaluateDerivedFormula(
+                entry.formula,
+                pointType => {
+                    if (!pointTypes.has(pointType)) throw new Error(`Unknown point type "${pointType}"`);
+                    return 0;
+                },
+                optionId => {
+                    if (!optionIds.has(optionId)) throw new Error(`Unknown selected option ID "${optionId}"`);
+                    return 0;
+                }
+            );
+        } catch (err) {
+            pushIssue(errors, file, `${context}.formula is invalid: ${err.message}`);
+        }
+    });
+}
+
 function validateCyoaData(file, data) {
     const errors = [];
     const warnings = [];
@@ -564,6 +724,8 @@ function validateCyoaData(file, data) {
         }
         optionIds.add(option.id);
     });
+
+    validateDerivedValues(file, pointsEntry, pointTypes, optionIds, errors);
 
     options.forEach(({ option, path: optionPath }) => {
         if (!option || typeof option !== "object" || !option.id) return;

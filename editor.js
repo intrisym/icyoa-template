@@ -574,6 +574,45 @@
             || /^[a-z]+$/i.test(color);
     }
 
+    function getDerivedFormulaWarnings(entry, index, pointTypes) {
+        const warnings = [];
+        const label = `Derived value ${index + 1}`;
+        const formula = String(entry?.formula || "");
+        if (!String(entry?.pointType || "").trim()) warnings.push(`${label}: choose a point type to update.`);
+        else if (!pointTypes.has(entry.pointType)) warnings.push(`${label}: target point type "${entry.pointType}" is not defined in the CYOA points.`);
+        if (!formula.trim()) {
+            warnings.push(`${label}: formula is required.`);
+            return warnings;
+        }
+        if (/[\[\]]/.test(formula)) {
+            warnings.push(`${label}: formulas do not support square brackets. Use parentheses for grouping instead.`);
+        }
+        const tokens = formula.match(/"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|[A-Za-z_][A-Za-z0-9_]*/g) || [];
+        tokens.forEach((token, tokenIndex) => {
+            const nextToken = tokens[tokenIndex + 1];
+            if (token === "selected") return;
+            if (tokens[tokenIndex - 1] === "selected") return;
+            const name = token.startsWith('"') || token.startsWith("'")
+                ? token.slice(1, -1).replace(/\\(["'\\])/g, "$1")
+                : token;
+            if (name === "selected") return;
+            if (!pointTypes.has(name)) {
+                if (nextToken === "(") return;
+                warnings.push(`${label}: formula references unknown point type "${name}". Point type names must match exactly.`);
+            }
+        });
+        if (/[^A-Za-z0-9_'"+\-*/().,\s\[\]]/.test(formula)) {
+            warnings.push(`${label}: formula contains unsupported characters. Use point types, numbers, selected("optionId"), +, -, *, /, and parentheses.`);
+        }
+        return Array.from(new Set(warnings));
+    }
+
+    function getDerivedValuesWarnings(pointsEntry) {
+        const pointTypes = new Set(Object.keys(pointsEntry?.values || {}));
+        return (Array.isArray(pointsEntry?.derivedValues) ? pointsEntry.derivedValues : [])
+            .flatMap((entry, index) => getDerivedFormulaWarnings(entry, index, pointTypes));
+    }
+
     function getOptionValidationWarnings(option) {
         const warnings = [];
         const allIds = collectOptionIds();
@@ -1707,6 +1746,7 @@
         if (!pointsEntry.values) pointsEntry.values = {};
         if (!Array.isArray(pointsEntry.allowNegative)) pointsEntry.allowNegative = [];
         if (!pointsEntry.pointCategories || typeof pointsEntry.pointCategories !== "object" || Array.isArray(pointsEntry.pointCategories)) pointsEntry.pointCategories = {};
+        if (!Array.isArray(pointsEntry.derivedValues)) pointsEntry.derivedValues = [];
         if (!pointsEntry.attributeRanges) pointsEntry.attributeRanges = {};
         fragment.appendChild(renderPointsSection(pointsEntry));
 
@@ -1809,6 +1849,9 @@
                 const existingValue = pointsEntry.values[currency];
                 delete pointsEntry.values[currency];
                 pointsEntry.values[newName] = existingValue;
+                (pointsEntry.derivedValues || []).forEach(entry => {
+                    if (entry?.pointType === currency) entry.pointType = newName;
+                });
                 renamePointTypeReferences(currency, newName);
                 Object.values(pointCategories).forEach(types => {
                     const idx = types.indexOf(currency);
@@ -1827,6 +1870,7 @@
             removeBtn.addEventListener("click", () => {
                 delete pointsEntry.values[currency];
                 pointsEntry.allowNegative = pointsEntry.allowNegative.filter(t => t !== currency);
+                pointsEntry.derivedValues = (pointsEntry.derivedValues || []).filter(entry => entry?.pointType !== currency);
                 Object.values(pointCategories).forEach(types => {
                     const idx = types.indexOf(currency);
                     if (idx !== -1) types.splice(idx, 1);
@@ -1954,6 +1998,21 @@
         body.appendChild(categoriesContainer);
         body.appendChild(addCategoryBtn);
 
+        const derivedHeading = document.createElement("div");
+        derivedHeading.className = "subheading";
+        derivedHeading.textContent = "Derived values";
+        body.appendChild(derivedHeading);
+
+        const derivedHelp = document.createElement("div");
+        derivedHelp.className = "field-help";
+        derivedHelp.textContent = "Optional formulas that update point totals from other point types.";
+        body.appendChild(derivedHelp);
+
+        const derivedContainer = document.createElement("div");
+        derivedContainer.className = "list-stack";
+        renderDerivedValuesEditor(derivedContainer, pointsEntry);
+        body.appendChild(derivedContainer);
+
         const negHeading = document.createElement("div");
         negHeading.className = "subheading";
         negHeading.textContent = "Allow negative balances";
@@ -2080,6 +2139,156 @@
         body.appendChild(addAttrBtn);
 
         return container;
+    }
+
+    function normalizeDerivedValuesForEditor(pointsEntry) {
+        if (!Array.isArray(pointsEntry.derivedValues)) pointsEntry.derivedValues = [];
+        pointsEntry.derivedValues = pointsEntry.derivedValues
+            .map(entry => ({
+                pointType: String(entry?.pointType || "").trim(),
+                formula: String(entry?.formula || "").trim(),
+                round: ["none", "floor", "ceil", "round"].includes(entry?.round) ? entry.round : "none",
+                min: entry?.min === undefined || entry?.min === null || entry?.min === "" ? undefined : Number(entry.min),
+                max: entry?.max === undefined || entry?.max === null || entry?.max === "" ? undefined : Number(entry.max)
+            }))
+            .filter(entry => entry.pointType || entry.formula);
+        return pointsEntry.derivedValues;
+    }
+
+    function renderDerivedValuesEditor(container, pointsEntry) {
+        container.innerHTML = "";
+        const pointTypes = getPointTypeNames();
+        const derivedValues = normalizeDerivedValuesForEditor(pointsEntry);
+        const validationBox = document.createElement("div");
+        validationBox.className = "inline-warning-list";
+        const updateWarnings = () => {
+            const warnings = getDerivedValuesWarnings(pointsEntry);
+            validationBox.innerHTML = "";
+            validationBox.style.display = warnings.length ? "block" : "none";
+            warnings.forEach(text => {
+                const row = document.createElement("div");
+                row.className = "inline-warning";
+                row.textContent = text;
+                validationBox.appendChild(row);
+            });
+        };
+
+        if (!derivedValues.length) {
+            const empty = document.createElement("div");
+            empty.className = "field-note";
+            empty.textContent = "No derived values configured.";
+            container.appendChild(empty);
+        }
+
+        derivedValues.forEach((entry, index) => {
+            const row = document.createElement("div");
+            row.className = "list-row formula-row";
+
+            const targetSelect = document.createElement("select");
+            const availableTypes = pointTypes.includes(entry.pointType)
+                ? pointTypes
+                : [entry.pointType, ...pointTypes].filter(Boolean);
+            availableTypes.forEach(type => {
+                const opt = document.createElement("option");
+                opt.value = type;
+                opt.textContent = getPointTypeDisplayName(type);
+                targetSelect.appendChild(opt);
+            });
+            targetSelect.value = entry.pointType || pointTypes[0] || "";
+            targetSelect.addEventListener("change", () => {
+                entry.pointType = targetSelect.value;
+                pointsEntry.derivedValues[index] = entry;
+                updateWarnings();
+                schedulePreviewUpdate();
+            });
+
+            const formulaInput = document.createElement("input");
+            formulaInput.type = "text";
+            formulaInput.value = entry.formula;
+            formulaInput.placeholder = "Formula, e.g. (Base + Bonus) * 2";
+            formulaInput.addEventListener("input", () => {
+                entry.formula = formulaInput.value;
+                pointsEntry.derivedValues[index] = entry;
+                updateWarnings();
+                schedulePreviewUpdate();
+            });
+
+            const roundSelect = document.createElement("select");
+            [
+                ["none", "No rounding"],
+                ["floor", "Round down"],
+                ["ceil", "Round up"],
+                ["round", "Nearest"]
+            ].forEach(([value, label]) => {
+                const opt = document.createElement("option");
+                opt.value = value;
+                opt.textContent = label;
+                roundSelect.appendChild(opt);
+            });
+            roundSelect.value = entry.round || "none";
+            roundSelect.addEventListener("change", () => {
+                entry.round = roundSelect.value;
+                pointsEntry.derivedValues[index] = entry;
+                updateWarnings();
+                schedulePreviewUpdate();
+            });
+
+            const minInput = document.createElement("input");
+            minInput.type = "number";
+            minInput.placeholder = "Min";
+            minInput.value = Number.isFinite(Number(entry.min)) ? String(entry.min) : "";
+            minInput.addEventListener("input", () => {
+                if (minInput.value === "") delete entry.min;
+                else entry.min = Number(minInput.value);
+                pointsEntry.derivedValues[index] = entry;
+                updateWarnings();
+                schedulePreviewUpdate();
+            });
+
+            const maxInput = document.createElement("input");
+            maxInput.type = "number";
+            maxInput.placeholder = "Max";
+            maxInput.value = Number.isFinite(Number(entry.max)) ? String(entry.max) : "";
+            maxInput.addEventListener("input", () => {
+                if (maxInput.value === "") delete entry.max;
+                else entry.max = Number(maxInput.value);
+                pointsEntry.derivedValues[index] = entry;
+                updateWarnings();
+                schedulePreviewUpdate();
+            });
+
+            const removeBtn = document.createElement("button");
+            removeBtn.type = "button";
+            removeBtn.className = "button-icon danger";
+            removeBtn.title = "Remove derived value";
+            removeBtn.textContent = "✕";
+            removeBtn.addEventListener("click", () => {
+                pointsEntry.derivedValues.splice(index, 1);
+                renderDerivedValuesEditor(container, pointsEntry);
+                schedulePreviewUpdate();
+            });
+
+            row.append(targetSelect, formulaInput, roundSelect, minInput, maxInput, removeBtn);
+            container.appendChild(row);
+        });
+
+        updateWarnings();
+        container.appendChild(validationBox);
+
+        const addBtn = document.createElement("button");
+        addBtn.type = "button";
+        addBtn.className = "button-subtle";
+        addBtn.textContent = "Add derived value";
+        addBtn.addEventListener("click", () => {
+            pointsEntry.derivedValues.push({
+                pointType: pointTypes[0] || "Points",
+                formula: "0",
+                round: "floor"
+            });
+            renderDerivedValuesEditor(container, pointsEntry);
+            schedulePreviewUpdate();
+        });
+        container.appendChild(addBtn);
     }
 
     function renderAlignmentSelect(currentValue, defaultLabel, onChange) {

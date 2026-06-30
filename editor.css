@@ -512,7 +512,15 @@ textarea {
 }
 
 .formula-row {
-    grid-template-columns: 1fr 1.5fr auto;
+    grid-template-columns: minmax(110px, 0.8fr) minmax(0, 2.2fr) minmax(105px, 0.7fr) 64px 64px 30px;
+}
+
+.formula-row > * {
+    min-width: 0;
+}
+
+.formula-row .button-icon {
+    justify-self: end;
 }
 
 .subheading {

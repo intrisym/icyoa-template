@@ -28,6 +28,8 @@ const dynamicSelections = {};
 const sliderModifierSelections = {};
 const activeSliderModifierPointBaselines = {};
 const pointAllocationSelections = {};
+let derivedValueConfigs = [];
+const derivedPointBaselines = {};
 let attributeRanges = {}; // Will be updated by dynamic effects
 let originalAttributeRanges = {}; // Stores the initial, base ranges from input.json
 const subcategoryDiscountSelections = {};
@@ -361,6 +363,7 @@ function resetGlobalState() {
     clearObject(sliderModifierSelections);
     clearObject(activeSliderModifierPointBaselines);
     clearObject(pointAllocationSelections);
+    clearObject(derivedPointBaselines);
     clearObject(subcategoryDiscountSelections);
     clearObject(categoryDiscountSelections);
     clearObject(optionGrantDiscountSelections);
@@ -374,6 +377,7 @@ function resetGlobalState() {
     selectionHistory.length = 0;
 
     originalPoints = {};
+    derivedValueConfigs = [];
     attributeRanges = {};
     originalAttributeRanges = {};
     allowNegativeTypes = new Set();
@@ -497,6 +501,169 @@ function addPointCostMaps(...maps) {
         });
     });
     return merged;
+}
+
+function normalizeDerivedValues(pointsEntry = {}) {
+    const raw = Array.isArray(pointsEntry.derivedValues) ? pointsEntry.derivedValues : [];
+    return raw
+        .map(entry => ({
+            pointType: String(entry?.pointType || "").trim(),
+            formula: String(entry?.formula || "").trim(),
+            round: ["none", "floor", "ceil", "round"].includes(entry?.round) ? entry.round : "none",
+            min: Number.isFinite(Number(entry?.min)) ? Number(entry.min) : null,
+            max: Number.isFinite(Number(entry?.max)) ? Number(entry.max) : null
+        }))
+        .filter(entry => entry.pointType && entry.formula);
+}
+
+function tokenizeDerivedFormula(formula) {
+    const tokens = [];
+    let index = 0;
+    while (index < formula.length) {
+        const char = formula[index];
+        if (/\s/.test(char)) {
+            index += 1;
+            continue;
+        }
+        if ("+-*/(),".includes(char)) {
+            tokens.push(char);
+            index += 1;
+            continue;
+        }
+        if (char === '"' || char === "'") {
+            const quote = char;
+            let value = "";
+            index += 1;
+            while (index < formula.length) {
+                const current = formula[index];
+                if (current === "\\") {
+                    value += formula[index + 1] || "";
+                    index += 2;
+                    continue;
+                }
+                if (current === quote) break;
+                value += current;
+                index += 1;
+            }
+            if (formula[index] !== quote) throw new Error("Unclosed quoted point type");
+            tokens.push({ type: "name", value });
+            index += 1;
+            continue;
+        }
+        const numberMatch = formula.slice(index).match(/^\d+(?:\.\d+)?/);
+        if (numberMatch) {
+            tokens.push({ type: "number", value: Number(numberMatch[0]) });
+            index += numberMatch[0].length;
+            continue;
+        }
+        const nameMatch = formula.slice(index).match(/^[A-Za-z_][A-Za-z0-9_]*/);
+        if (nameMatch) {
+            tokens.push({ type: "name", value: nameMatch[0] });
+            index += nameMatch[0].length;
+            continue;
+        }
+        throw new Error(`Unexpected character "${char}"`);
+    }
+    return tokens;
+}
+
+function evaluateDerivedFormula(formula, pointLookupFn, selectedLookupFn = () => 0) {
+    const tokens = tokenizeDerivedFormula(formula);
+    let index = 0;
+    const peek = () => tokens[index];
+    const consume = expected => {
+        const token = tokens[index];
+        const value = typeof token === "string" ? token : token?.value;
+        if (expected !== undefined && value !== expected) throw new Error(`Expected "${expected}"`);
+        index += 1;
+        return token;
+    };
+    const parseExpression = () => {
+        let value = parseTerm();
+        while (peek() === "+" || peek() === "-") {
+            const op = consume();
+            const next = parseTerm();
+            value = op === "+" ? value + next : value - next;
+        }
+        return value;
+    };
+    const parseTerm = () => {
+        let value = parseFactor();
+        while (peek() === "*" || peek() === "/") {
+            const op = consume();
+            const next = parseFactor();
+            value = op === "*" ? value * next : value / next;
+        }
+        return value;
+    };
+    const parseFactor = () => {
+        if (peek() === "+") {
+            consume("+");
+            return parseFactor();
+        }
+        if (peek() === "-") {
+            consume("-");
+            return -parseFactor();
+        }
+        if (peek() === "(") {
+            consume("(");
+            const value = parseExpression();
+            consume(")");
+            return value;
+        }
+        const token = consume();
+        if (token?.type === "number") return token.value;
+        if (token?.type === "name") {
+            if (token.value === "selected" && peek() === "(") {
+                consume("(");
+                const optionToken = consume();
+                if (optionToken?.type !== "name") throw new Error("selected() requires a quoted option ID");
+                consume(")");
+                return Number(selectedLookupFn(optionToken.value)) || 0;
+            }
+            return Number(pointLookupFn(token.value)) || 0;
+        }
+        throw new Error("Expected a number, point type, or expression");
+    };
+    const result = parseExpression();
+    if (index < tokens.length) throw new Error("Unexpected token after formula");
+    if (!Number.isFinite(result)) throw new Error("Formula result must be finite");
+    return result;
+}
+
+function finalizeDerivedValue(value, config) {
+    let result = Number(value) || 0;
+    if (config.round === "floor") result = Math.floor(result);
+    if (config.round === "ceil") result = Math.ceil(result);
+    if (config.round === "round") result = Math.round(result);
+    if (config.min !== null) result = Math.max(config.min, result);
+    if (config.max !== null) result = Math.min(config.max, result);
+    return result;
+}
+
+function applyDerivedValues() {
+    const activeTypes = new Set();
+    derivedValueConfigs.forEach(config => {
+        activeTypes.add(config.pointType);
+        try {
+            const nextBase = finalizeDerivedValue(evaluateDerivedFormula(
+                config.formula,
+                pointType => points.hasOwnProperty(pointType) ? points[pointType] : originalPoints[pointType],
+                optionId => selectedOptions[optionId] || 0
+            ), config);
+            const previousBase = Object.prototype.hasOwnProperty.call(derivedPointBaselines, config.pointType)
+                ? Number(derivedPointBaselines[config.pointType]) || 0
+                : Number(points[config.pointType] ?? originalPoints[config.pointType]) || 0;
+            if (!points.hasOwnProperty(config.pointType)) points[config.pointType] = previousBase;
+            points[config.pointType] += nextBase - previousBase;
+            derivedPointBaselines[config.pointType] = nextBase;
+        } catch (err) {
+            console.warn(`Failed to evaluate derived value for ${config.pointType}:`, err);
+        }
+    });
+    Object.keys(derivedPointBaselines).forEach(type => {
+        if (!activeTypes.has(type)) delete derivedPointBaselines[type];
+    });
 }
 
 function getMergedDefaultCostForSelection(costOptions = [], selectionNumber = 1) {
@@ -806,6 +973,8 @@ function applySelectedSliderModifiers() {
                 points[effect.attribute] = currentValue - effect.value;
             }
         });
+
+    applyDerivedValues();
 }
 
 function mergeCostMaps(...maps) {
@@ -1542,6 +1711,7 @@ function buildExportState() {
         attributeSliderValues,
         dynamicSelections,
         sliderModifierSelections,
+        derivedPointBaselines,
         pointAllocationSelections,
         subcategoryDiscountSelections,
         categoryDiscountSelections,
@@ -1587,6 +1757,7 @@ function restorePlayerState(state) {
     Object.assign(attributeSliderValues, state.attributeSliderValues || {});
     Object.assign(dynamicSelections, state.dynamicSelections || {});
     Object.assign(sliderModifierSelections, state.sliderModifierSelections || {});
+    Object.assign(derivedPointBaselines, state.derivedPointBaselines || {});
     Object.assign(pointAllocationSelections, state.pointAllocationSelections || {});
     Object.assign(subcategoryDiscountSelections, state.subcategoryDiscountSelections || {});
     Object.assign(categoryDiscountSelections, state.categoryDiscountSelections || {});
@@ -1614,6 +1785,7 @@ function buildPackedExportState() {
     if (hasOwnEntries(full.attributeSliderValues)) packed.a = full.attributeSliderValues;
     if (hasOwnEntries(full.dynamicSelections)) packed.y = full.dynamicSelections;
     if (hasOwnEntries(full.sliderModifierSelections)) packed.m = full.sliderModifierSelections;
+    if (hasOwnEntries(full.derivedPointBaselines)) packed.b = full.derivedPointBaselines;
     if (hasOwnEntries(full.pointAllocationSelections)) packed.l = full.pointAllocationSelections;
     if (hasOwnEntries(full.subcategoryDiscountSelections)) packed.u = full.subcategoryDiscountSelections;
     if (hasOwnEntries(full.categoryDiscountSelections)) packed.c = full.categoryDiscountSelections;
@@ -1636,6 +1808,7 @@ function unpackImportedState(importedData) {
         attributeSliderValues: importedData.a || {},
         dynamicSelections: importedData.y || {},
         sliderModifierSelections: importedData.m || {},
+        derivedPointBaselines: importedData.b || {},
         pointAllocationSelections: importedData.l || {},
         subcategoryDiscountSelections: importedData.u || {},
         categoryDiscountSelections: importedData.c || {},
@@ -1788,6 +1961,7 @@ document.getElementById("resetBtn").onclick = () => {
     for (let key in dynamicSelections) delete dynamicSelections[key];
     for (let key in sliderModifierSelections) delete sliderModifierSelections[key];
     for (let key in activeSliderModifierPointBaselines) delete activeSliderModifierPointBaselines[key];
+    for (let key in derivedPointBaselines) delete derivedPointBaselines[key];
     for (let key in pointAllocationSelections) delete pointAllocationSelections[key];
     for (let key in subcategoryDiscountSelections) delete subcategoryDiscountSelections[key];
     for (let key in categoryDiscountSelections) delete categoryDiscountSelections[key];
@@ -1829,6 +2003,7 @@ modalConfirmBtn.onclick = async () => {
         for (let key in dynamicSelections) delete dynamicSelections[key];
         for (let key in sliderModifierSelections) delete sliderModifierSelections[key];
         for (let key in activeSliderModifierPointBaselines) delete activeSliderModifierPointBaselines[key];
+        for (let key in derivedPointBaselines) delete derivedPointBaselines[key];
         for (let key in pointAllocationSelections) delete pointAllocationSelections[key];
         for (let key in subcategoryDiscountSelections) delete subcategoryDiscountSelections[key];
         for (let key in categoryDiscountSelections) delete categoryDiscountSelections[key];
@@ -1865,6 +2040,10 @@ modalConfirmBtn.onclick = async () => {
         });
         Object.entries(importedData.sliderModifierSelections || {}).forEach(([key, val]) => {
             sliderModifierSelections[key] = Array.isArray(val) ? val : [];
+        });
+        Object.entries(importedData.derivedPointBaselines || {}).forEach(([key, val]) => {
+            const numeric = Number(val);
+            if (Number.isFinite(numeric)) derivedPointBaselines[key] = numeric;
         });
         Object.entries(importedData.pointAllocationSelections || {}).forEach(([key, val]) => {
             pointAllocationSelections[key] = val
@@ -2404,6 +2583,7 @@ function applyCyoaData(rawData, {
         originalPoints = pointsEntry?.values ? {
             ...pointsEntry.values
         } : {};
+        derivedValueConfigs = normalizeDerivedValues(pointsEntry);
         points = {
             ...originalPoints
         };
