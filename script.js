@@ -23,7 +23,11 @@ const attributeSliderValues = {};
 let originalPoints = {};
 let allowNegativeTypes = new Set();
 let pointCategories = {};
+let pointCategoryDefaultVisibility = {};
 let visiblePointCategories = new Set();
+let pointEnablementSets = [];
+const enabledPointTypeSelections = {};
+const openPointEnablementGroups = new Set();
 const dynamicSelections = {};
 const sliderModifierSelections = {};
 const activeSliderModifierPointBaselines = {};
@@ -363,6 +367,9 @@ function resetGlobalState() {
     clearObject(sliderModifierSelections);
     clearObject(activeSliderModifierPointBaselines);
     clearObject(pointAllocationSelections);
+    clearObject(enabledPointTypeSelections);
+    applyDefaultPointCategoryVisibility();
+    applyDefaultPointEnablementGroups();
     clearObject(derivedPointBaselines);
     clearObject(subcategoryDiscountSelections);
     clearObject(categoryDiscountSelections);
@@ -382,7 +389,9 @@ function resetGlobalState() {
     originalAttributeRanges = {};
     allowNegativeTypes = new Set();
     pointCategories = {};
+    pointCategoryDefaultVisibility = {};
     visiblePointCategories = new Set();
+    pointEnablementSets = [];
     optionTitleAlignment = "center";
     optionMetaAlignment = "center";
     optionDescriptionAlignment = "center";
@@ -510,10 +519,57 @@ function normalizeDerivedValues(pointsEntry = {}) {
             pointType: String(entry?.pointType || "").trim(),
             formula: String(entry?.formula || "").trim(),
             round: ["none", "floor", "ceil", "round"].includes(entry?.round) ? entry.round : "none",
-            min: Number.isFinite(Number(entry?.min)) ? Number(entry.min) : null,
-            max: Number.isFinite(Number(entry?.max)) ? Number(entry.max) : null
+            min: entry?.min === undefined || entry?.min === null || entry?.min === "" ? null : String(entry.min).trim(),
+            max: entry?.max === undefined || entry?.max === null || entry?.max === "" ? null : String(entry.max).trim()
         }))
         .filter(entry => entry.pointType && entry.formula);
+}
+
+function normalizePointEnablementSets(pointsEntry = {}) {
+    const pointTypes = new Set(Object.keys(pointsEntry.values || {}));
+    const seenSubtypes = new Set();
+    const raw = Array.isArray(pointsEntry.enableablePointSets) ? pointsEntry.enableablePointSets : [];
+    return raw
+        .map(entry => {
+            const pointType = String(entry?.pointType || "").trim();
+            const subtypes = Array.isArray(entry?.subtypes)
+                ? [...new Set(entry.subtypes.map(type => String(type || "").trim()).filter(type =>
+                    pointTypes.has(type) && type !== pointType && !seenSubtypes.has(type)
+                ))]
+                : [];
+            subtypes.forEach(type => seenSubtypes.add(type));
+            return {
+                pointType,
+                subtypes,
+                limitFormula: String(entry?.limitFormula ?? entry?.limit ?? "0").trim(),
+                expandedByDefault: entry?.expandedByDefault === true
+            };
+        })
+        .filter(entry => pointTypes.has(entry.pointType) && entry.subtypes.length);
+}
+
+function normalizePointCategoryDefaults(rawDefaults = {}, categoryNames = []) {
+    const validCategories = new Set(categoryNames);
+    const normalized = {};
+    if (!rawDefaults || typeof rawDefaults !== "object" || Array.isArray(rawDefaults)) return normalized;
+    Object.entries(rawDefaults).forEach(([category, isVisible]) => {
+        if (validCategories.has(category)) normalized[category] = isVisible !== false;
+    });
+    return normalized;
+}
+
+function getPointCategoryNamesForCurrentPoints() {
+    const assignedPointTypes = new Set(Object.values(pointCategories).flat());
+    const categoryNames = new Set(Object.keys(pointCategories));
+    if (Object.keys(originalPoints).some(type => !assignedPointTypes.has(type))) {
+        categoryNames.add(UNCATEGORIZED_POINT_CATEGORY);
+    }
+    return categoryNames;
+}
+
+function applyDefaultPointCategoryVisibility() {
+    const categoryNames = getPointCategoryNamesForCurrentPoints();
+    visiblePointCategories = new Set(Array.from(categoryNames).filter(category => pointCategoryDefaultVisibility[category] !== false));
 }
 
 function tokenizeDerivedFormula(formula) {
@@ -631,13 +687,21 @@ function evaluateDerivedFormula(formula, pointLookupFn, selectedLookupFn = () =>
     return result;
 }
 
-function finalizeDerivedValue(value, config) {
+function evaluateDerivedBound(bound, pointLookupFn, selectedLookupFn) {
+    if (bound === null || bound === undefined || bound === "") return null;
+    const value = evaluateDerivedFormula(String(bound), pointLookupFn, selectedLookupFn);
+    return Number.isFinite(value) ? value : null;
+}
+
+function finalizeDerivedValue(value, config, pointLookupFn = () => 0, selectedLookupFn = () => 0) {
     let result = Number(value) || 0;
     if (config.round === "floor") result = Math.floor(result);
     if (config.round === "ceil") result = Math.ceil(result);
     if (config.round === "round") result = Math.round(result);
-    if (config.min !== null) result = Math.max(config.min, result);
-    if (config.max !== null) result = Math.min(config.max, result);
+    const min = evaluateDerivedBound(config.min, pointLookupFn, selectedLookupFn);
+    const max = evaluateDerivedBound(config.max, pointLookupFn, selectedLookupFn);
+    if (min !== null) result = Math.max(min, result);
+    if (max !== null) result = Math.min(max, result);
     return result;
 }
 
@@ -646,11 +710,14 @@ function applyDerivedValues() {
     derivedValueConfigs.forEach(config => {
         activeTypes.add(config.pointType);
         try {
-            const nextBase = finalizeDerivedValue(evaluateDerivedFormula(
-                config.formula,
-                pointType => points.hasOwnProperty(pointType) ? points[pointType] : originalPoints[pointType],
-                optionId => selectedOptions[optionId] || 0
-            ), config);
+            const pointLookupFn = pointType => points.hasOwnProperty(pointType) ? points[pointType] : originalPoints[pointType];
+            const selectedLookupFn = optionId => selectedOptions[optionId] || 0;
+            const nextBase = finalizeDerivedValue(
+                evaluateDerivedFormula(config.formula, pointLookupFn, selectedLookupFn),
+                config,
+                pointLookupFn,
+                selectedLookupFn
+            );
             const previousBase = Object.prototype.hasOwnProperty.call(derivedPointBaselines, config.pointType)
                 ? Number(derivedPointBaselines[config.pointType]) || 0
                 : Number(points[config.pointType] ?? originalPoints[config.pointType]) || 0;
@@ -663,6 +730,62 @@ function applyDerivedValues() {
     });
     Object.keys(derivedPointBaselines).forEach(type => {
         if (!activeTypes.has(type)) delete derivedPointBaselines[type];
+    });
+}
+
+function getPointEnablementSetKey(set) {
+    return set?.pointType || "";
+}
+
+function isPointTypeEnableable(type) {
+    return pointEnablementSets.some(set => set.subtypes.includes(type));
+}
+
+function isPointTypeEnabled(type) {
+    if (!isPointTypeEnableable(type)) return true;
+    return pointEnablementSets.some(set => {
+        const key = getPointEnablementSetKey(set);
+        return (enabledPointTypeSelections[key] || []).includes(type);
+    });
+}
+
+function getPointEnablementLimit(set) {
+    const raw = String(set?.limitFormula || "0").trim();
+    if (!raw) return 0;
+    try {
+        return Math.max(0, Math.floor(evaluateDerivedFormula(
+            raw,
+            pointType => points.hasOwnProperty(pointType) ? points[pointType] : originalPoints[pointType],
+            optionId => selectedOptions[optionId] || 0
+        )));
+    } catch (err) {
+        console.warn(`Failed to evaluate point enablement limit for ${set?.pointType || "point set"}:`, err);
+        return 0;
+    }
+}
+
+function normalizeEnabledPointTypeSelections() {
+    const validSetKeys = new Set(pointEnablementSets.map(getPointEnablementSetKey));
+    Object.keys(enabledPointTypeSelections).forEach(key => {
+        if (!validSetKeys.has(key)) delete enabledPointTypeSelections[key];
+    });
+    Array.from(openPointEnablementGroups).forEach(key => {
+        if (!validSetKeys.has(key)) openPointEnablementGroups.delete(key);
+    });
+    pointEnablementSets.forEach(set => {
+        const key = getPointEnablementSetKey(set);
+        const limit = getPointEnablementLimit(set);
+        const current = Array.isArray(enabledPointTypeSelections[key]) ? enabledPointTypeSelections[key] : [];
+        enabledPointTypeSelections[key] = current
+            .filter(type => set.subtypes.includes(type))
+            .slice(0, limit);
+    });
+}
+
+function applyDefaultPointEnablementGroups() {
+    openPointEnablementGroups.clear();
+    pointEnablementSets.forEach(set => {
+        if (set.expandedByDefault) openPointEnablementGroups.add(getPointEnablementSetKey(set));
     });
 }
 
@@ -1399,7 +1522,9 @@ function shouldRenderSelectionControls(option) {
 function canAffordCost(cost = {}) {
     return Object.entries(cost || {}).every(([type, cost]) => {
         const numeric = Number(cost);
-        if (!Number.isFinite(numeric) || numeric < 0) return true;
+        if (!Number.isFinite(numeric) || numeric === 0) return true;
+        if (!isPointTypeEnabled(type)) return false;
+        if (numeric < 0) return true;
         const current = Number(points[type]);
         const projected = (Number.isFinite(current) ? current : 0) - numeric;
         return projected >= 0 || allowNegativeTypes.has(type);
@@ -1490,7 +1615,9 @@ function getPointCategoryForType(type) {
 }
 
 function getVisiblePointEntries() {
-    return Object.entries(points).filter(([type]) => visiblePointCategories.has(getPointCategoryForType(type)));
+    return Object.entries(points).filter(([type]) =>
+        isPointTypeEnabled(type) && visiblePointCategories.has(getPointCategoryForType(type))
+    );
 }
 
 function isSafeTextWeight(value = "") {
@@ -1712,6 +1839,7 @@ function buildExportState() {
         dynamicSelections,
         sliderModifierSelections,
         derivedPointBaselines,
+        enabledPointTypeSelections,
         pointAllocationSelections,
         subcategoryDiscountSelections,
         categoryDiscountSelections,
@@ -1742,6 +1870,8 @@ function restorePlayerState(state) {
     clearObject(dynamicSelections);
     clearObject(sliderModifierSelections);
     clearObject(activeSliderModifierPointBaselines);
+    clearObject(derivedPointBaselines);
+    clearObject(enabledPointTypeSelections);
     clearObject(pointAllocationSelections);
     clearObject(subcategoryDiscountSelections);
     clearObject(categoryDiscountSelections);
@@ -1758,6 +1888,7 @@ function restorePlayerState(state) {
     Object.assign(dynamicSelections, state.dynamicSelections || {});
     Object.assign(sliderModifierSelections, state.sliderModifierSelections || {});
     Object.assign(derivedPointBaselines, state.derivedPointBaselines || {});
+    Object.assign(enabledPointTypeSelections, state.enabledPointTypeSelections || {});
     Object.assign(pointAllocationSelections, state.pointAllocationSelections || {});
     Object.assign(subcategoryDiscountSelections, state.subcategoryDiscountSelections || {});
     Object.assign(categoryDiscountSelections, state.categoryDiscountSelections || {});
@@ -1786,6 +1917,7 @@ function buildPackedExportState() {
     if (hasOwnEntries(full.dynamicSelections)) packed.y = full.dynamicSelections;
     if (hasOwnEntries(full.sliderModifierSelections)) packed.m = full.sliderModifierSelections;
     if (hasOwnEntries(full.derivedPointBaselines)) packed.b = full.derivedPointBaselines;
+    if (hasOwnEntries(full.enabledPointTypeSelections)) packed.e = full.enabledPointTypeSelections;
     if (hasOwnEntries(full.pointAllocationSelections)) packed.l = full.pointAllocationSelections;
     if (hasOwnEntries(full.subcategoryDiscountSelections)) packed.u = full.subcategoryDiscountSelections;
     if (hasOwnEntries(full.categoryDiscountSelections)) packed.c = full.categoryDiscountSelections;
@@ -1809,6 +1941,7 @@ function unpackImportedState(importedData) {
         dynamicSelections: importedData.y || {},
         sliderModifierSelections: importedData.m || {},
         derivedPointBaselines: importedData.b || {},
+        enabledPointTypeSelections: importedData.e || {},
         pointAllocationSelections: importedData.l || {},
         subcategoryDiscountSelections: importedData.u || {},
         categoryDiscountSelections: importedData.c || {},
@@ -1962,6 +2095,8 @@ document.getElementById("resetBtn").onclick = () => {
     for (let key in sliderModifierSelections) delete sliderModifierSelections[key];
     for (let key in activeSliderModifierPointBaselines) delete activeSliderModifierPointBaselines[key];
     for (let key in derivedPointBaselines) delete derivedPointBaselines[key];
+    for (let key in enabledPointTypeSelections) delete enabledPointTypeSelections[key];
+    openPointEnablementGroups.clear();
     for (let key in pointAllocationSelections) delete pointAllocationSelections[key];
     for (let key in subcategoryDiscountSelections) delete subcategoryDiscountSelections[key];
     for (let key in categoryDiscountSelections) delete categoryDiscountSelections[key];
@@ -2004,6 +2139,9 @@ modalConfirmBtn.onclick = async () => {
         for (let key in sliderModifierSelections) delete sliderModifierSelections[key];
         for (let key in activeSliderModifierPointBaselines) delete activeSliderModifierPointBaselines[key];
         for (let key in derivedPointBaselines) delete derivedPointBaselines[key];
+        for (let key in enabledPointTypeSelections) delete enabledPointTypeSelections[key];
+        applyDefaultPointCategoryVisibility();
+        applyDefaultPointEnablementGroups();
         for (let key in pointAllocationSelections) delete pointAllocationSelections[key];
         for (let key in subcategoryDiscountSelections) delete subcategoryDiscountSelections[key];
         for (let key in categoryDiscountSelections) delete categoryDiscountSelections[key];
@@ -2044,6 +2182,9 @@ modalConfirmBtn.onclick = async () => {
         Object.entries(importedData.derivedPointBaselines || {}).forEach(([key, val]) => {
             const numeric = Number(val);
             if (Number.isFinite(numeric)) derivedPointBaselines[key] = numeric;
+        });
+        Object.entries(importedData.enabledPointTypeSelections || {}).forEach(([key, val]) => {
+            enabledPointTypeSelections[key] = Array.isArray(val) ? val : [];
         });
         Object.entries(importedData.pointAllocationSelections || {}).forEach(([key, val]) => {
             pointAllocationSelections[key] = val
@@ -2584,22 +2725,21 @@ function applyCyoaData(rawData, {
             ...pointsEntry.values
         } : {};
         derivedValueConfigs = normalizeDerivedValues(pointsEntry);
+        pointEnablementSets = normalizePointEnablementSets(pointsEntry);
+        applyDefaultPointEnablementGroups();
         points = {
             ...originalPoints
         };
         pointCategories = normalizePointCategories(pointsEntry?.pointCategories, Object.keys(originalPoints));
-        const assignedPointTypes = new Set(Object.values(pointCategories).flat());
-        const categoryNames = new Set(Object.keys(pointCategories));
-        if (Object.keys(originalPoints).some(type => !assignedPointTypes.has(type))) {
-            categoryNames.add(UNCATEGORIZED_POINT_CATEGORY);
-        }
-        visiblePointCategories = categoryNames;
+        pointCategoryDefaultVisibility = normalizePointCategoryDefaults(pointsEntry?.pointCategoryDefaults, Array.from(getPointCategoryNamesForCurrentPoints()));
+        applyDefaultPointCategoryVisibility();
 
         categories = data.filter(entry => !entry.type || entry.name);
 
         if (preservedPlayerState) {
             restorePlayerState(preservedPlayerState);
         }
+        normalizeEnabledPointTypeSelections();
 
         // Handle backpack feature
         const backpackEntry = data.find(entry => entry.type === "backpack");
@@ -3176,6 +3316,8 @@ function updatePointsDisplay() {
     if (!display) return;
 
     tracker?.querySelector(".point-category-toggles")?.remove();
+    tracker?.querySelector(".point-enablement-controls")?.remove();
+    normalizeEnabledPointTypeSelections();
     const categoryNames = Array.from(new Set(Object.keys(points).map(type => getPointCategoryForType(type))));
     if (tracker && categoryNames.length > 1) {
         const toggleWrap = document.createElement("div");
@@ -3207,6 +3349,62 @@ function updatePointsDisplay() {
             .map(([type, val]) => `<span><strong>${getPointTypeMarkup(type)}:</strong> ${escapeHtml(String(val))}</span>`)
             .join("")
         : `<span class="points-empty-state">No point categories selected</span>`;
+
+    if (tracker && pointEnablementSets.length) {
+        const enableWrap = document.createElement("div");
+        enableWrap.className = "point-enablement-controls";
+        pointEnablementSets.forEach((set, index) => {
+            const key = getPointEnablementSetKey(set);
+            const selected = enabledPointTypeSelections[key] || [];
+            const limit = getPointEnablementLimit(set);
+            const expanded = openPointEnablementGroups.has(key);
+            const group = document.createElement("div");
+            group.className = "point-enablement-group";
+
+            const label = document.createElement("button");
+            label.type = "button";
+            label.className = "point-category-toggle point-enablement-label";
+            label.setAttribute("aria-expanded", String(expanded));
+            label.setAttribute("aria-pressed", String(expanded));
+            const panelId = `point-enablement-${index}`;
+            label.setAttribute("aria-controls", panelId);
+            label.textContent = `${set.pointType}: ${selected.length}/${limit}`;
+            label.addEventListener("click", () => {
+                if (openPointEnablementGroups.has(key)) openPointEnablementGroups.delete(key);
+                else openPointEnablementGroups.add(key);
+                updatePointsDisplay();
+            });
+            group.appendChild(label);
+
+            const buttons = document.createElement("div");
+            buttons.id = panelId;
+            buttons.className = "point-enablement-buttons";
+            buttons.classList.toggle("is-open", expanded);
+            set.subtypes.forEach(type => {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = "point-enablement-toggle";
+                const enabled = selected.includes(type);
+                button.setAttribute("aria-pressed", String(enabled));
+                button.textContent = type;
+                button.disabled = !enabled && selected.length >= limit;
+                button.addEventListener("click", () => {
+                    const current = enabledPointTypeSelections[key] || [];
+                    if (current.includes(type)) {
+                        enabledPointTypeSelections[key] = current.filter(entry => entry !== type);
+                    } else if (current.length < getPointEnablementLimit(set)) {
+                        enabledPointTypeSelections[key] = [...current, type];
+                    }
+                    updatePointsDisplay();
+                    renderAccordion();
+                });
+                buttons.appendChild(button);
+            });
+            group.appendChild(buttons);
+            enableWrap.appendChild(group);
+        });
+        display.insertAdjacentElement("afterend", enableWrap);
+    }
     syncPointsTrackerHeight();
 }
 
@@ -3293,6 +3491,7 @@ function requirementMet(requirement) {
 }
 
 function getPointRequirementValue(pointType) {
+    if (!isPointTypeEnabled(pointType)) return 0;
     if (Object.prototype.hasOwnProperty.call(points, pointType)) return Number(points[pointType]) || 0;
     return Number(originalPoints?.[pointType]) || 0;
 }

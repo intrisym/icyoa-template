@@ -190,6 +190,7 @@ function runPlayerScriptExportImportHelpers(state) {
         "dynamicSelections",
         "sliderModifierSelections",
         "derivedPointBaselines",
+        "enabledPointTypeSelections",
         "pointAllocationSelections",
         "subcategoryDiscountSelections",
         "categoryDiscountSelections",
@@ -207,6 +208,7 @@ function runPlayerScriptExportImportHelpers(state) {
         state.dynamicSelections || {},
         state.sliderModifierSelections || {},
         state.derivedPointBaselines || {},
+        state.enabledPointTypeSelections || {},
         state.pointAllocationSelections || {},
         state.subcategoryDiscountSelections || {},
         state.categoryDiscountSelections || {},
@@ -503,6 +505,8 @@ class CyoaEngine {
         this.points = { ...(this.pointsEntry.values || {}) };
         this.derivedValueConfigs = this.normalizeDerivedValues();
         this.derivedPointBaselines = {};
+        this.pointEnablementSets = this.normalizePointEnablementSets();
+        this.enabledPointTypeSelections = {};
         this.allowNegativeTypes = new Set(this.pointsEntry.allowNegative || []);
         this.categories = this.data.filter(entry => !entry.type || entry.name);
         this.selectedOptions = {};
@@ -516,6 +520,7 @@ class CyoaEngine {
         this.sliderModifierSelections = {};
         this.activeSliderModifierPointBaselines = {};
         this.derivedPointBaselines = {};
+        this.enabledPointTypeSelections = {};
         this.pointAllocationSelections = {};
         this.subcategoryDiscountSelections = {};
         this.categoryDiscountSelections = {};
@@ -1372,19 +1377,92 @@ class CyoaEngine {
                 pointType: String(entry?.pointType || "").trim(),
                 formula: String(entry?.formula || "").trim(),
                 round: ["none", "floor", "ceil", "round"].includes(entry?.round) ? entry.round : "none",
-                min: Number.isFinite(Number(entry?.min)) ? Number(entry.min) : null,
-                max: Number.isFinite(Number(entry?.max)) ? Number(entry.max) : null
+                min: entry?.min === undefined || entry?.min === null || entry?.min === "" ? null : String(entry.min).trim(),
+                max: entry?.max === undefined || entry?.max === null || entry?.max === "" ? null : String(entry.max).trim()
             }))
             .filter(entry => entry.pointType && entry.formula);
     }
 
-    finalizeDerivedValue(value, config) {
+    normalizePointEnablementSets() {
+        const pointTypes = new Set(Object.keys(this.pointsEntry.values || {}));
+        const seenSubtypes = new Set();
+        const raw = Array.isArray(this.pointsEntry.enableablePointSets) ? this.pointsEntry.enableablePointSets : [];
+        return raw
+            .map(entry => {
+                const pointType = String(entry?.pointType || "").trim();
+                const subtypes = Array.isArray(entry?.subtypes)
+                    ? [...new Set(entry.subtypes.map(type => String(type || "").trim()).filter(type =>
+                        pointTypes.has(type) && type !== pointType && !seenSubtypes.has(type)
+                    ))]
+                    : [];
+                subtypes.forEach(type => seenSubtypes.add(type));
+                return {
+                    pointType,
+                    subtypes,
+                    limitFormula: String(entry?.limitFormula ?? entry?.limit ?? "0").trim(),
+                    expandedByDefault: entry?.expandedByDefault === true
+                };
+            })
+            .filter(entry => pointTypes.has(entry.pointType) && entry.subtypes.length);
+    }
+
+    pointEnablementKey(set) {
+        return set?.pointType || "";
+    }
+
+    isPointTypeEnableable(type) {
+        return this.pointEnablementSets.some(set => set.subtypes.includes(type));
+    }
+
+    isPointTypeEnabled(type) {
+        if (!this.isPointTypeEnableable(type)) return true;
+        return this.pointEnablementSets.some(set => {
+            const key = this.pointEnablementKey(set);
+            return (this.enabledPointTypeSelections[key] || []).includes(type);
+        });
+    }
+
+    pointEnablementLimit(set) {
+        try {
+            return Math.max(0, Math.floor(evaluateDerivedFormula(
+                String(set?.limitFormula || "0"),
+                pointType => Object.prototype.hasOwnProperty.call(this.points, pointType) ? this.points[pointType] : this.pointsEntry.values?.[pointType],
+                optionId => this.selectedOptions[optionId] || 0
+            )));
+        } catch (_) {
+            return 0;
+        }
+    }
+
+    normalizeEnabledPointTypeSelections() {
+        this.pointEnablementSets.forEach(set => {
+            const key = this.pointEnablementKey(set);
+            const current = Array.isArray(this.enabledPointTypeSelections[key]) ? this.enabledPointTypeSelections[key] : [];
+            this.enabledPointTypeSelections[key] = current
+                .filter(type => set.subtypes.includes(type))
+                .slice(0, this.pointEnablementLimit(set));
+        });
+    }
+
+    pointRequirementValue(pointType) {
+        return this.isPointTypeEnabled(pointType) ? Number(this.points[pointType]) || 0 : 0;
+    }
+
+    evaluateDerivedBound(bound, pointLookupFn, selectedLookupFn) {
+        if (bound === null || bound === undefined || bound === "") return null;
+        const value = evaluateDerivedFormula(String(bound), pointLookupFn, selectedLookupFn);
+        return Number.isFinite(value) ? value : null;
+    }
+
+    finalizeDerivedValue(value, config, pointLookupFn = () => 0, selectedLookupFn = () => 0) {
         let result = Number(value) || 0;
         if (config.round === "floor") result = Math.floor(result);
         if (config.round === "ceil") result = Math.ceil(result);
         if (config.round === "round") result = Math.round(result);
-        if (config.min !== null) result = Math.max(config.min, result);
-        if (config.max !== null) result = Math.min(config.max, result);
+        const min = this.evaluateDerivedBound(config.min, pointLookupFn, selectedLookupFn);
+        const max = this.evaluateDerivedBound(config.max, pointLookupFn, selectedLookupFn);
+        if (min !== null) result = Math.max(min, result);
+        if (max !== null) result = Math.min(max, result);
         return result;
     }
 
@@ -1393,11 +1471,14 @@ class CyoaEngine {
         this.derivedValueConfigs.forEach(config => {
             activeTypes.add(config.pointType);
             try {
-                const nextBase = this.finalizeDerivedValue(evaluateDerivedFormula(
-                    config.formula,
-                    pointType => Object.prototype.hasOwnProperty.call(this.points, pointType) ? this.points[pointType] : this.pointsEntry.values?.[pointType],
-                    optionId => this.selectedOptions[optionId] || 0
-                ), config);
+                const pointLookupFn = pointType => Object.prototype.hasOwnProperty.call(this.points, pointType) ? this.points[pointType] : this.pointsEntry.values?.[pointType];
+                const selectedLookupFn = optionId => this.selectedOptions[optionId] || 0;
+                const nextBase = this.finalizeDerivedValue(
+                    evaluateDerivedFormula(config.formula, pointLookupFn, selectedLookupFn),
+                    config,
+                    pointLookupFn,
+                    selectedLookupFn
+                );
                 const previousBase = Object.prototype.hasOwnProperty.call(this.derivedPointBaselines, config.pointType)
                     ? Number(this.derivedPointBaselines[config.pointType]) || 0
                     : Number(this.points[config.pointType] ?? this.pointsEntry.values?.[config.pointType]) || 0;
@@ -1915,7 +1996,7 @@ class CyoaEngine {
             return !!evaluatePrereqExpr(
                 requirement,
                 id => this.selectedOptions[id] || 0,
-                pointType => Number(this.points[pointType]) || 0,
+                pointType => this.pointRequirementValue(pointType),
                 (scopeType, scopeName) => this.scopeRequirementMet(scopeType, scopeName)
             );
         }
@@ -2015,7 +2096,10 @@ class CyoaEngine {
         const cost = selectedChoice
             ? this.effectiveCost(option, { costOptionIndex: selectedChoice.index, selectionNumber: nextSelectionNumber })
             : this.effectiveCost(option, { selectionNumber: nextSelectionNumber });
+        this.normalizeEnabledPointTypeSelections();
         const hasPoints = Object.entries(cost).every(([type, cost]) => {
+            if (!Number.isFinite(Number(cost)) || Number(cost) === 0) return true;
+            if (!this.isPointTypeEnabled(type)) return false;
             if (cost < 0) return true;
             const current = Number(this.points[type]);
             const projected = (Number.isFinite(current) ? current : 0) - cost;
@@ -2203,7 +2287,7 @@ class CyoaEngine {
             return `${inheritedSatisfiedOr || atomSatisfied ? "✅" : "❌"} ${negated ? "NOT " : ""}${label}${countLabel}`;
         };
         const pointLine = (node, negated = false, inheritedSatisfiedOr = false) => {
-            const actual = Number(this.points[node.pointType]) || 0;
+            const actual = this.pointRequirementValue(node.pointType);
             let pointSatisfied = false;
             if (node.operator === ">=") pointSatisfied = actual >= node.value;
             else if (node.operator === ">") pointSatisfied = actual > node.value;
@@ -2230,7 +2314,7 @@ class CyoaEngine {
                 const orSatisfied = inheritedSatisfiedOr || evaluatePrerequisiteNode(
                     node,
                     id => this.meetsCountRequirement(id),
-                    pointType => Number(this.points[pointType]) || 0,
+                    pointType => this.pointRequirementValue(pointType),
                     (scopeType, scopeName) => this.scopeRequirementMet(scopeType, scopeName)
                 );
                 return node.children.map(child => inlineNode(child, orSatisfied, negated)).filter(Boolean).join(" OR ");
@@ -2290,6 +2374,7 @@ class CyoaEngine {
             dynamicSelections: this.dynamicSelections,
             sliderModifierSelections: this.sliderModifierSelections,
             derivedPointBaselines: this.derivedPointBaselines,
+            enabledPointTypeSelections: this.enabledPointTypeSelections,
             pointAllocationSelections: this.pointAllocationSelections,
             subcategoryDiscountSelections: this.subcategoryDiscountSelections,
             categoryDiscountSelections: this.categoryDiscountSelections,
@@ -2308,6 +2393,7 @@ class CyoaEngine {
         if (hasOwnEntries(full.dynamicSelections)) packed.y = full.dynamicSelections;
         if (hasOwnEntries(full.sliderModifierSelections)) packed.m = full.sliderModifierSelections;
         if (hasOwnEntries(full.derivedPointBaselines)) packed.b = full.derivedPointBaselines;
+        if (hasOwnEntries(full.enabledPointTypeSelections)) packed.e = full.enabledPointTypeSelections;
         if (hasOwnEntries(full.pointAllocationSelections)) packed.l = full.pointAllocationSelections;
         if (hasOwnEntries(full.subcategoryDiscountSelections)) packed.u = full.subcategoryDiscountSelections;
         if (hasOwnEntries(full.categoryDiscountSelections)) packed.c = full.categoryDiscountSelections;
@@ -2334,6 +2420,7 @@ class CyoaEngine {
         this.dynamicSelections = { ...(unpacked.dynamicSelections || {}) };
         this.sliderModifierSelections = { ...(unpacked.sliderModifierSelections || {}) };
         this.derivedPointBaselines = { ...(unpacked.derivedPointBaselines || {}) };
+        this.enabledPointTypeSelections = { ...(unpacked.enabledPointTypeSelections || {}) };
         this.pointAllocationSelections = { ...(unpacked.pointAllocationSelections || {}) };
         this.subcategoryDiscountSelections = { ...(unpacked.subcategoryDiscountSelections || {}) };
         this.categoryDiscountSelections = { ...(unpacked.categoryDiscountSelections || {}) };
@@ -2361,6 +2448,7 @@ class CyoaEngine {
         this.dynamicSelections = { ...(state.dynamicSelections || {}) };
         this.sliderModifierSelections = { ...(state.sliderModifierSelections || {}) };
         this.derivedPointBaselines = { ...(state.derivedPointBaselines || {}) };
+        this.enabledPointTypeSelections = { ...(state.enabledPointTypeSelections || {}) };
         this.pointAllocationSelections = { ...(state.pointAllocationSelections || {}) };
         this.subcategoryDiscountSelections = { ...(state.subcategoryDiscountSelections || {}) };
         this.categoryDiscountSelections = { ...(state.categoryDiscountSelections || {}) };
@@ -2377,6 +2465,8 @@ class CyoaEngine {
         this.points = { ...(this.pointsEntry.values || {}) };
         this.derivedValueConfigs = this.normalizeDerivedValues();
         this.derivedPointBaselines = {};
+        this.pointEnablementSets = this.normalizePointEnablementSets();
+        this.enabledPointTypeSelections = {};
         this.allowNegativeTypes = new Set(this.pointsEntry.allowNegative || []);
         this.categories = data.filter(entry => !entry.type || entry.name);
         this.selectedOptions = {};
@@ -2389,6 +2479,7 @@ class CyoaEngine {
         this.dynamicSelections = {};
         this.sliderModifierSelections = {};
         this.derivedPointBaselines = {};
+        this.enabledPointTypeSelections = {};
         this.pointAllocationSelections = {};
         this.subcategoryDiscountSelections = {};
         this.categoryDiscountSelections = {};
@@ -2423,6 +2514,7 @@ function unpackImportedState(importedData) {
         dynamicSelections: importedData.y || {},
         sliderModifierSelections: importedData.m || {},
         derivedPointBaselines: importedData.b || {},
+        enabledPointTypeSelections: importedData.e || {},
         pointAllocationSelections: importedData.l || {},
         subcategoryDiscountSelections: importedData.u || {},
         categoryDiscountSelections: importedData.c || {},
@@ -3469,12 +3561,98 @@ test("derived point values should recompute from formulas while preserving spend
     const fullNameEngine = new CyoaEngine(data, "derived-full-name-values.json");
     assert.strictEqual(fullNameEngine.points["Skill Points"], 400);
 
+    data[1].values = {
+        Constitution: 5,
+        "Free Skill Points": 0,
+        "Minimum Skill": 0,
+        "Maximum Skill": 0
+    };
+    data[1].derivedValues = [
+        {
+            pointType: "Minimum Skill",
+            formula: "1",
+            min: "10 + Constitution"
+        },
+        {
+            pointType: "Maximum Skill",
+            formula: "100",
+            max: "10 + Constitution"
+        }
+    ];
+    const boundedEngine = new CyoaEngine(data, "derived-formula-bounds.json");
+    assert.strictEqual(boundedEngine.points["Minimum Skill"], 15);
+    assert.strictEqual(boundedEngine.points["Maximum Skill"], 15);
+    assert.deepStrictEqual(validateCyoaData("derived-formula-bounds-valid.json", data).errors, []);
+
     data[1].derivedValues[0].formula = "STR + Missing";
     assert(
         validateCyoaData("derived-values-invalid.json", data).errors.some(error =>
             error.includes("Unknown point type")
         ),
         "validation should reject unknown point types in derived formulas"
+    );
+});
+
+test("enableable point sets should gate point types behind dynamic limits", () => {
+    const data = [
+        { type: "title", text: "Enableable Skills" },
+        {
+            type: "points",
+            values: {
+                Craft: 0,
+                Intelligence: 1,
+                Alchemy: 10,
+                Artifice: 10,
+                Cooking: 10
+            },
+            pointCategories: {
+                Skills: ["Alchemy", "Artifice", "Cooking"]
+            },
+            pointCategoryDefaults: {
+                Skills: false
+            },
+            enableablePointSets: [
+                {
+                    pointType: "Craft",
+                    subtypes: ["Alchemy", "Artifice", "Cooking"],
+                    limitFormula: "Intelligence + 1",
+                    expandedByDefault: true
+                }
+            ]
+        },
+        {
+            name: "Options",
+            options: [
+                { id: "alchemySpend", label: "Alchemy Spend", cost: { Alchemy: 1 } },
+                { id: "artificeSpend", label: "Artifice Spend", cost: { Artifice: 1 } },
+                { id: "cookingSpend", label: "Cooking Spend", cost: { Cooking: 1 } }
+            ]
+        }
+    ];
+    const engine = new CyoaEngine(data, "enableable-point-sets.json");
+    assert.strictEqual(engine.pointEnablementSets[0].expandedByDefault, true);
+    assert.strictEqual(engine.canSelect("alchemySpend"), false, "disabled point types should block costs");
+    assert.strictEqual(engine.pointEnablementLimit(engine.pointEnablementSets[0]), 2);
+
+    engine.enabledPointTypeSelections.Craft = ["Alchemy", "Artifice", "Cooking"];
+    engine.normalizeEnabledPointTypeSelections();
+    assert.deepStrictEqual(engine.enabledPointTypeSelections.Craft, ["Alchemy", "Artifice"]);
+    assert.strictEqual(engine.canSelect("alchemySpend"), true);
+    assert.strictEqual(engine.canSelect("artificeSpend"), true);
+    assert.strictEqual(engine.canSelect("cookingSpend"), false);
+
+    engine.points.Intelligence = 2;
+    engine.enabledPointTypeSelections.Craft = ["Alchemy", "Artifice", "Cooking"];
+    engine.normalizeEnabledPointTypeSelections();
+    assert.strictEqual(engine.canSelect("cookingSpend"), true);
+    assert.deepStrictEqual(validateCyoaData("enableable-point-sets-valid.json", data).errors, []);
+
+    data[1].enableablePointSets[0].limitFormula = "Missing + 1";
+    assert(
+        validateCyoaData("enableable-point-sets-invalid.json", data).errors.some(error =>
+            error.includes("limitFormula is invalid")
+        ),
+        "validation should reject point set limit formulas that reference unknown point types"
     );
 });
 
@@ -4737,6 +4915,7 @@ test("packed export state should round-trip selections, points, inputs, and gran
     engine.attributeSliderValues.Power = 4;
     engine.dynamicSelections.option = ["Power"];
     engine.derivedPointBaselines.Points = 10;
+    engine.enabledPointTypeSelections.Craft = ["Alchemy"];
     engine.pointAllocationSelections.allocatedTeamGrant = { Skills: 2, Equipment: 4 };
     engine.subcategoryDiscountSelections.sub = { option: 1 };
     engine.categoryDiscountSelections.cat = { option: 1 };
@@ -4752,6 +4931,7 @@ test("packed export state should round-trip selections, points, inputs, and gran
     assert.deepStrictEqual(unpacked.attributeSliderValues, engine.attributeSliderValues);
     assert.deepStrictEqual(unpacked.dynamicSelections, engine.dynamicSelections);
     assert.deepStrictEqual(unpacked.derivedPointBaselines, engine.derivedPointBaselines);
+    assert.deepStrictEqual(unpacked.enabledPointTypeSelections, engine.enabledPointTypeSelections);
     assert.deepStrictEqual(unpacked.pointAllocationSelections, engine.pointAllocationSelections);
     assert.deepStrictEqual(unpacked.subcategoryDiscountSelections, engine.subcategoryDiscountSelections);
     assert.deepStrictEqual(unpacked.categoryDiscountSelections, engine.categoryDiscountSelections);
@@ -4767,6 +4947,7 @@ test("packed export state should round-trip selections, points, inputs, and gran
     assert.deepStrictEqual(scriptRoundTrip.unpacked.attributeSliderValues, engine.attributeSliderValues);
     assert.deepStrictEqual(scriptRoundTrip.unpacked.dynamicSelections, engine.dynamicSelections);
     assert.deepStrictEqual(scriptRoundTrip.unpacked.derivedPointBaselines, engine.derivedPointBaselines);
+    assert.deepStrictEqual(scriptRoundTrip.unpacked.enabledPointTypeSelections, engine.enabledPointTypeSelections);
     assert.deepStrictEqual(scriptRoundTrip.unpacked.pointAllocationSelections, engine.pointAllocationSelections);
     assert.deepStrictEqual(scriptRoundTrip.unpacked.subcategoryDiscountSelections, engine.subcategoryDiscountSelections);
     assert.deepStrictEqual(scriptRoundTrip.unpacked.categoryDiscountSelections, engine.categoryDiscountSelections);
@@ -4783,6 +4964,7 @@ test("packed export state should round-trip selections, points, inputs, and gran
     assert.deepStrictEqual(importedEngine.attributeSliderValues, engine.attributeSliderValues);
     assert.deepStrictEqual(importedEngine.dynamicSelections, engine.dynamicSelections);
     assert.deepStrictEqual(importedEngine.derivedPointBaselines, engine.derivedPointBaselines);
+    assert.deepStrictEqual(importedEngine.enabledPointTypeSelections, engine.enabledPointTypeSelections);
     assert.deepStrictEqual(importedEngine.pointAllocationSelections, engine.pointAllocationSelections);
     assert.deepStrictEqual(importedEngine.subcategoryDiscountSelections, engine.subcategoryDiscountSelections);
     assert.deepStrictEqual(importedEngine.categoryDiscountSelections, engine.categoryDiscountSelections);

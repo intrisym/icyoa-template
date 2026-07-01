@@ -893,6 +893,38 @@ div {
     border-bottom: 1px solid color-mix(in srgb, var(--points-border, #ffd700) 36%, transparent);
 }
 
+.point-enablement-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: min(100%, 980px);
+    max-width: 100%;
+    padding-top: 8px;
+    border-top: 1px solid color-mix(in srgb, var(--points-border, #ffd700) 36%, transparent);
+}
+
+.point-enablement-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.point-enablement-label {
+    font-weight: 800;
+}
+
+.point-enablement-buttons {
+    display: none;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+}
+
+.point-enablement-buttons.is-open {
+    display: flex;
+}
+
 .point-category-toggle {
     display: inline-flex;
     align-items: center;
@@ -911,6 +943,43 @@ div {
     line-height: 1.2;
     opacity: 0.58;
     transition: opacity 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.point-enablement-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 30px;
+    margin: 0;
+    padding: 4px 10px;
+    border: 1px solid color-mix(in srgb, var(--points-border, #ffd700) 70%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--points-bg, rgba(139, 0, 0, 0.9)) 82%, white);
+    color: var(--points-text, #000000);
+    font-family: var(--font-body);
+    font-size: clamp(12px, 0.68em, 15px);
+    font-weight: 700;
+    line-height: 1.2;
+    opacity: 0.58;
+    transition: opacity 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.point-enablement-toggle[aria-pressed="true"] {
+    background: var(--points-border, #ffd700);
+    border-color: var(--points-border, #ffd700);
+    color: #111111;
+    opacity: 1;
+}
+
+.point-enablement-toggle:hover:not(:disabled),
+.point-enablement-toggle:focus-visible {
+    opacity: 1;
+    transform: translateY(-1px);
+}
+
+.point-enablement-toggle:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
 }
 
 .point-category-toggle[aria-pressed="true"] {

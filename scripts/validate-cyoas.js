@@ -616,6 +616,23 @@ function validateDerivedValues(file, pointsEntry, pointTypes, optionIds, errors)
         pushIssue(errors, file, "points.derivedValues must be an array.");
         return;
     }
+    const validateFormula = (context, formula) => {
+        try {
+            evaluateDerivedFormula(
+                formula,
+                pointType => {
+                    if (!pointTypes.has(pointType)) throw new Error(`Unknown point type "${pointType}"`);
+                    return 0;
+                },
+                optionId => {
+                    if (!optionIds.has(optionId)) throw new Error(`Unknown selected option ID "${optionId}"`);
+                    return 0;
+                }
+            );
+        } catch (err) {
+            pushIssue(errors, file, `${context} is invalid: ${err.message}`);
+        }
+    };
     pointsEntry.derivedValues.forEach((entry, index) => {
         const context = `points.derivedValues[${index}]`;
         if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
@@ -633,13 +650,66 @@ function validateDerivedValues(file, pointsEntry, pointTypes, optionIds, errors)
             pushIssue(errors, file, `${context}.round must be one of none, floor, ceil, or round.`);
         }
         ["min", "max"].forEach(key => {
-            if (entry[key] !== undefined && !Number.isFinite(Number(entry[key]))) {
-                pushIssue(errors, file, `${context}.${key} must be numeric when present.`);
+            if (entry[key] !== undefined) {
+                if (typeof entry[key] !== "string" && !Number.isFinite(Number(entry[key]))) {
+                    pushIssue(errors, file, `${context}.${key} must be a number or formula string when present.`);
+                    return;
+                }
+                if (typeof entry[key] === "string" && !entry[key].trim()) {
+                    pushIssue(errors, file, `${context}.${key} must not be blank when present.`);
+                    return;
+                }
+                validateFormula(`${context}.${key}`, String(entry[key]));
             }
         });
+        validateFormula(`${context}.formula`, entry.formula);
+    });
+}
+
+function validateEnableablePointSets(file, pointsEntry, pointTypes, optionIds, errors) {
+    if (pointsEntry?.enableablePointSets === undefined) return;
+    if (!Array.isArray(pointsEntry.enableablePointSets)) {
+        pushIssue(errors, file, "points.enableablePointSets must be an array.");
+        return;
+    }
+    const assignedSubtypes = new Set();
+    pointsEntry.enableablePointSets.forEach((set, index) => {
+        const context = `points.enableablePointSets[${index}]`;
+        if (!set || typeof set !== "object" || Array.isArray(set)) {
+            pushIssue(errors, file, `${context} must be an object.`);
+            return;
+        }
+        if (typeof set.pointType !== "string" || !set.pointType.trim()) {
+            pushIssue(errors, file, `${context}.pointType must be a non-empty parent point type.`);
+        } else if (!pointTypes.has(set.pointType)) {
+            pushIssue(errors, file, `${context}.pointType references unknown point type "${set.pointType}".`);
+        }
+        if (!Array.isArray(set.subtypes) || !set.subtypes.length) {
+            pushIssue(errors, file, `${context}.subtypes must include at least one sub-point type.`);
+        } else {
+            set.subtypes.forEach(type => {
+                if (typeof type !== "string" || !pointTypes.has(type)) {
+                    pushIssue(errors, file, `${context}.subtypes references unknown point type "${type}".`);
+                } else if (type === set.pointType) {
+                    pushIssue(errors, file, `${context}.subtypes cannot include its parent point type "${type}".`);
+                } else if (assignedSubtypes.has(type)) {
+                    pushIssue(errors, file, `${context}.subtypes assigns point type "${type}" to more than one enableable point set.`);
+                } else {
+                    assignedSubtypes.add(type);
+                }
+            });
+        }
+        if (set.expandedByDefault !== undefined && typeof set.expandedByDefault !== "boolean") {
+            pushIssue(errors, file, `${context}.expandedByDefault must be a boolean when present.`);
+        }
+        const limitFormula = String(set.limitFormula ?? set.limit ?? "").trim();
+        if (!limitFormula) {
+            pushIssue(errors, file, `${context}.limitFormula must be a non-empty formula string.`);
+            return;
+        }
         try {
             evaluateDerivedFormula(
-                entry.formula,
+                limitFormula,
                 pointType => {
                     if (!pointTypes.has(pointType)) throw new Error(`Unknown point type "${pointType}"`);
                     return 0;
@@ -650,7 +720,7 @@ function validateDerivedValues(file, pointsEntry, pointTypes, optionIds, errors)
                 }
             );
         } catch (err) {
-            pushIssue(errors, file, `${context}.formula is invalid: ${err.message}`);
+            pushIssue(errors, file, `${context}.limitFormula is invalid: ${err.message}`);
         }
     });
 }
@@ -683,10 +753,13 @@ function validateCyoaData(file, data) {
         if (!pointsEntry.pointCategories || typeof pointsEntry.pointCategories !== "object" || Array.isArray(pointsEntry.pointCategories)) {
             pushIssue(errors, file, "points.pointCategories must be an object map of category names to point type arrays.");
         } else {
+            const categoryNames = new Set();
             const categorizedPointTypes = new Set();
             Object.entries(pointsEntry.pointCategories).forEach(([category, types]) => {
                 if (!String(category).trim()) {
                     pushIssue(errors, file, "points.pointCategories includes an empty category name.");
+                } else {
+                    categoryNames.add(category);
                 }
                 if (!Array.isArray(types)) {
                     pushIssue(errors, file, `points.pointCategories.${category} must be an array of point types.`);
@@ -702,6 +775,20 @@ function validateCyoaData(file, data) {
                     }
                 });
             });
+            if (pointsEntry?.pointCategoryDefaults !== undefined) {
+                if (!pointsEntry.pointCategoryDefaults || typeof pointsEntry.pointCategoryDefaults !== "object" || Array.isArray(pointsEntry.pointCategoryDefaults)) {
+                    pushIssue(errors, file, "points.pointCategoryDefaults must be an object map of category names to booleans.");
+                } else {
+                    Object.entries(pointsEntry.pointCategoryDefaults).forEach(([category, isVisible]) => {
+                        if (!categoryNames.has(category) && category !== "Uncategorized") {
+                            pushIssue(errors, file, `points.pointCategoryDefaults references unknown point category "${category}".`);
+                        }
+                        if (typeof isVisible !== "boolean") {
+                            pushIssue(errors, file, `points.pointCategoryDefaults.${category} must be a boolean.`);
+                        }
+                    });
+                }
+            }
         }
     }
 
@@ -726,6 +813,7 @@ function validateCyoaData(file, data) {
     });
 
     validateDerivedValues(file, pointsEntry, pointTypes, optionIds, errors);
+    validateEnableablePointSets(file, pointsEntry, pointTypes, optionIds, errors);
 
     options.forEach(({ option, path: optionPath }) => {
         if (!option || typeof option !== "object" || !option.id) return;

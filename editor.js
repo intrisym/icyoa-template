@@ -574,36 +574,142 @@
             || /^[a-z]+$/i.test(color);
     }
 
+    function tokenizeDerivedFormulaForEditor(formula) {
+        const tokens = [];
+        let index = 0;
+        while (index < formula.length) {
+            const char = formula[index];
+            if (/\s/.test(char)) {
+                index += 1;
+                continue;
+            }
+            if ("+-*/(),".includes(char)) {
+                tokens.push(char);
+                index += 1;
+                continue;
+            }
+            if (char === '"' || char === "'") {
+                const quote = char;
+                let value = "";
+                index += 1;
+                while (index < formula.length) {
+                    const current = formula[index];
+                    if (current === "\\") {
+                        value += formula[index + 1] || "";
+                        index += 2;
+                        continue;
+                    }
+                    if (current === quote) break;
+                    value += current;
+                    index += 1;
+                }
+                if (formula[index] !== quote) throw new Error("Unclosed quoted point type");
+                tokens.push({ type: "name", value });
+                index += 1;
+                continue;
+            }
+            const numberMatch = formula.slice(index).match(/^\d+(?:\.\d+)?/);
+            if (numberMatch) {
+                tokens.push({ type: "number", value: Number(numberMatch[0]) });
+                index += numberMatch[0].length;
+                continue;
+            }
+            const nameMatch = formula.slice(index).match(/^[A-Za-z_][A-Za-z0-9_]*/);
+            if (nameMatch) {
+                tokens.push({ type: "name", value: nameMatch[0] });
+                index += nameMatch[0].length;
+                continue;
+            }
+            throw new Error(`Unexpected character "${char}"`);
+        }
+        return tokens;
+    }
+
+    function validateDerivedFormulaForEditor(formula, pointTypes, optionIds) {
+        const tokens = tokenizeDerivedFormulaForEditor(formula);
+        let index = 0;
+        const peek = () => tokens[index];
+        const consume = expected => {
+            const token = tokens[index];
+            const value = typeof token === "string" ? token : token?.value;
+            if (expected !== undefined && value !== expected) throw new Error(`Expected "${expected}"`);
+            index += 1;
+            return token;
+        };
+        const parseExpression = () => {
+            let value = parseTerm();
+            while (peek() === "+" || peek() === "-") {
+                consume();
+                parseTerm();
+                value = 0;
+            }
+            return value;
+        };
+        const parseTerm = () => {
+            let value = parseFactor();
+            while (peek() === "*" || peek() === "/") {
+                consume();
+                parseFactor();
+                value = 0;
+            }
+            return value;
+        };
+        const parseFactor = () => {
+            if (peek() === "+") {
+                consume("+");
+                return parseFactor();
+            }
+            if (peek() === "-") {
+                consume("-");
+                return parseFactor();
+            }
+            if (peek() === "(") {
+                consume("(");
+                const value = parseExpression();
+                consume(")");
+                return value;
+            }
+            const token = consume();
+            if (token?.type === "number") return token.value;
+            if (token?.type === "name") {
+                if (token.value === "selected" && peek() === "(") {
+                    consume("(");
+                    const optionToken = consume();
+                    if (optionToken?.type !== "name") throw new Error("selected() requires a quoted option ID");
+                    if (!optionIds.has(optionToken.value)) throw new Error(`Unknown selected option ID "${optionToken.value}"`);
+                    consume(")");
+                    return 0;
+                }
+                if (!pointTypes.has(token.value)) throw new Error(`Unknown point type "${token.value}"`);
+                return 0;
+            }
+            throw new Error("Expected a number, point type, or expression");
+        };
+        parseExpression();
+        if (index < tokens.length) throw new Error("Unexpected token after formula");
+    }
+
     function getDerivedFormulaWarnings(entry, index, pointTypes) {
         const warnings = [];
         const label = `Derived value ${index + 1}`;
-        const formula = String(entry?.formula || "");
+        const optionIds = collectOptionIds();
+        const checkFormula = (formula, context, required = false) => {
+            const text = String(formula || "");
+            if (!text.trim()) {
+                if (required) warnings.push(`${context} is required.`);
+                return;
+            }
+            try {
+                validateDerivedFormulaForEditor(text, pointTypes, optionIds);
+            } catch (err) {
+                warnings.push(`${context} is invalid: ${err.message}`);
+            }
+        };
         if (!String(entry?.pointType || "").trim()) warnings.push(`${label}: choose a point type to update.`);
         else if (!pointTypes.has(entry.pointType)) warnings.push(`${label}: target point type "${entry.pointType}" is not defined in the CYOA points.`);
-        if (!formula.trim()) {
-            warnings.push(`${label}: formula is required.`);
-            return warnings;
-        }
-        if (/[\[\]]/.test(formula)) {
-            warnings.push(`${label}: formulas do not support square brackets. Use parentheses for grouping instead.`);
-        }
-        const tokens = formula.match(/"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|[A-Za-z_][A-Za-z0-9_]*/g) || [];
-        tokens.forEach((token, tokenIndex) => {
-            const nextToken = tokens[tokenIndex + 1];
-            if (token === "selected") return;
-            if (tokens[tokenIndex - 1] === "selected") return;
-            const name = token.startsWith('"') || token.startsWith("'")
-                ? token.slice(1, -1).replace(/\\(["'\\])/g, "$1")
-                : token;
-            if (name === "selected") return;
-            if (!pointTypes.has(name)) {
-                if (nextToken === "(") return;
-                warnings.push(`${label}: formula references unknown point type "${name}". Point type names must match exactly.`);
-            }
-        });
-        if (/[^A-Za-z0-9_'"+\-*/().,\s\[\]]/.test(formula)) {
-            warnings.push(`${label}: formula contains unsupported characters. Use point types, numbers, selected("optionId"), +, -, *, /, and parentheses.`);
-        }
+        checkFormula(entry?.formula, `${label}: formula`, true);
+        checkFormula(entry?.min, `${label}: min formula`);
+        checkFormula(entry?.max, `${label}: max formula`);
         return Array.from(new Set(warnings));
     }
 
@@ -1746,7 +1852,9 @@
         if (!pointsEntry.values) pointsEntry.values = {};
         if (!Array.isArray(pointsEntry.allowNegative)) pointsEntry.allowNegative = [];
         if (!pointsEntry.pointCategories || typeof pointsEntry.pointCategories !== "object" || Array.isArray(pointsEntry.pointCategories)) pointsEntry.pointCategories = {};
+        if (!pointsEntry.pointCategoryDefaults || typeof pointsEntry.pointCategoryDefaults !== "object" || Array.isArray(pointsEntry.pointCategoryDefaults)) pointsEntry.pointCategoryDefaults = {};
         if (!Array.isArray(pointsEntry.derivedValues)) pointsEntry.derivedValues = [];
+        if (!Array.isArray(pointsEntry.enableablePointSets)) pointsEntry.enableablePointSets = [];
         if (!pointsEntry.attributeRanges) pointsEntry.attributeRanges = {};
         fragment.appendChild(renderPointsSection(pointsEntry));
 
@@ -1852,6 +1960,10 @@
                 (pointsEntry.derivedValues || []).forEach(entry => {
                     if (entry?.pointType === currency) entry.pointType = newName;
                 });
+                (pointsEntry.enableablePointSets || []).forEach(set => {
+                    if (set?.pointType === currency) set.pointType = newName;
+                    if (Array.isArray(set?.subtypes)) set.subtypes = set.subtypes.map(type => type === currency ? newName : type);
+                });
                 renamePointTypeReferences(currency, newName);
                 Object.values(pointCategories).forEach(types => {
                     const idx = types.indexOf(currency);
@@ -1871,6 +1983,10 @@
                 delete pointsEntry.values[currency];
                 pointsEntry.allowNegative = pointsEntry.allowNegative.filter(t => t !== currency);
                 pointsEntry.derivedValues = (pointsEntry.derivedValues || []).filter(entry => entry?.pointType !== currency);
+                (pointsEntry.enableablePointSets || []).forEach(set => {
+                    if (Array.isArray(set?.subtypes)) set.subtypes = set.subtypes.filter(type => type !== currency);
+                });
+                pointsEntry.enableablePointSets = (pointsEntry.enableablePointSets || []).filter(set => set?.pointType !== currency);
                 Object.values(pointCategories).forEach(types => {
                     const idx = types.indexOf(currency);
                     if (idx !== -1) types.splice(idx, 1);
@@ -1962,18 +2078,37 @@
                 }
                 pointCategories[newName] = pointCategories[category];
                 delete pointCategories[category];
+                if (Object.prototype.hasOwnProperty.call(pointsEntry.pointCategoryDefaults, category)) {
+                    pointsEntry.pointCategoryDefaults[newName] = pointsEntry.pointCategoryDefaults[category];
+                    delete pointsEntry.pointCategoryDefaults[category];
+                }
                 renderGlobalSettings();
                 schedulePreviewUpdate();
             });
 
             removeBtn.addEventListener("click", () => {
                 delete pointCategories[category];
+                delete pointsEntry.pointCategoryDefaults[category];
                 renderGlobalSettings();
                 schedulePreviewUpdate();
             });
 
+            const defaultLabel = document.createElement("label");
+            defaultLabel.className = "checkbox-option compact";
+            const defaultCheckbox = document.createElement("input");
+            defaultCheckbox.type = "checkbox";
+            defaultCheckbox.checked = pointsEntry.pointCategoryDefaults[category] !== false;
+            defaultCheckbox.addEventListener("change", () => {
+                pointsEntry.pointCategoryDefaults[category] = defaultCheckbox.checked;
+                schedulePreviewUpdate();
+            });
+            const defaultText = document.createElement("span");
+            defaultText.textContent = "Shown by default";
+            defaultLabel.append(defaultCheckbox, defaultText);
+
             row.appendChild(nameInput);
             row.appendChild(count);
+            row.appendChild(defaultLabel);
             row.appendChild(removeBtn);
             categoriesContainer.appendChild(row);
         });
@@ -1991,6 +2126,7 @@
                 candidate = `${base} ${suffix}`;
             }
             pointCategories[candidate] = [];
+            pointsEntry.pointCategoryDefaults[candidate] = true;
             renderGlobalSettings();
             schedulePreviewUpdate();
         });
@@ -2012,6 +2148,21 @@
         derivedContainer.className = "list-stack";
         renderDerivedValuesEditor(derivedContainer, pointsEntry);
         body.appendChild(derivedContainer);
+
+        const enablementHeading = document.createElement("div");
+        enablementHeading.className = "subheading";
+        enablementHeading.textContent = "Enableable sub-point groups";
+        body.appendChild(enablementHeading);
+
+        const enablementHelp = document.createElement("div");
+        enablementHelp.className = "field-help";
+        enablementHelp.textContent = "Optional. Choose a parent point type, then choose sub-point types players can enable up to a fixed or formula-based limit.";
+        body.appendChild(enablementHelp);
+
+        const enablementContainer = document.createElement("div");
+        enablementContainer.className = "list-stack";
+        renderPointEnablementSetsEditor(enablementContainer, pointsEntry);
+        body.appendChild(enablementContainer);
 
         const negHeading = document.createElement("div");
         negHeading.className = "subheading";
@@ -2148,8 +2299,8 @@
                 pointType: String(entry?.pointType || "").trim(),
                 formula: String(entry?.formula || "").trim(),
                 round: ["none", "floor", "ceil", "round"].includes(entry?.round) ? entry.round : "none",
-                min: entry?.min === undefined || entry?.min === null || entry?.min === "" ? undefined : Number(entry.min),
-                max: entry?.max === undefined || entry?.max === null || entry?.max === "" ? undefined : Number(entry.max)
+                min: entry?.min === undefined || entry?.min === null || entry?.min === "" ? undefined : String(entry.min),
+                max: entry?.max === undefined || entry?.max === null || entry?.max === "" ? undefined : String(entry.max)
             }))
             .filter(entry => entry.pointType || entry.formula);
         return pointsEntry.derivedValues;
@@ -2234,24 +2385,24 @@
             });
 
             const minInput = document.createElement("input");
-            minInput.type = "number";
-            minInput.placeholder = "Min";
-            minInput.value = Number.isFinite(Number(entry.min)) ? String(entry.min) : "";
+            minInput.type = "text";
+            minInput.placeholder = "Min formula";
+            minInput.value = entry.min === undefined ? "" : String(entry.min);
             minInput.addEventListener("input", () => {
                 if (minInput.value === "") delete entry.min;
-                else entry.min = Number(minInput.value);
+                else entry.min = minInput.value;
                 pointsEntry.derivedValues[index] = entry;
                 updateWarnings();
                 schedulePreviewUpdate();
             });
 
             const maxInput = document.createElement("input");
-            maxInput.type = "number";
-            maxInput.placeholder = "Max";
-            maxInput.value = Number.isFinite(Number(entry.max)) ? String(entry.max) : "";
+            maxInput.type = "text";
+            maxInput.placeholder = "Max formula";
+            maxInput.value = entry.max === undefined ? "" : String(entry.max);
             maxInput.addEventListener("input", () => {
                 if (maxInput.value === "") delete entry.max;
-                else entry.max = Number(maxInput.value);
+                else entry.max = maxInput.value;
                 pointsEntry.derivedValues[index] = entry;
                 updateWarnings();
                 schedulePreviewUpdate();
@@ -2286,6 +2437,187 @@
                 round: "floor"
             });
             renderDerivedValuesEditor(container, pointsEntry);
+            schedulePreviewUpdate();
+        });
+        container.appendChild(addBtn);
+    }
+
+    function normalizeEnableablePointSetsForEditor(pointsEntry) {
+        if (!Array.isArray(pointsEntry.enableablePointSets)) pointsEntry.enableablePointSets = [];
+        const validTypes = new Set(getPointTypeNames());
+        pointsEntry.enableablePointSets = pointsEntry.enableablePointSets
+            .map(set => {
+                const pointType = String(set?.pointType || "").trim();
+                const subtypes = Array.isArray(set?.subtypes)
+                    ? [...new Set(set.subtypes.map(type => String(type || "").trim()).filter(type =>
+                        validTypes.has(type) && type !== pointType
+                    ))]
+                    : [];
+                const limitFormula = String(set?.limitFormula ?? set?.limit ?? "0").trim();
+                return {
+                    pointType,
+                    subtypes,
+                    limitFormula,
+                    expandedByDefault: set?.expandedByDefault === true
+                };
+            })
+            .filter(set => set.pointType || set.subtypes.length || set.limitFormula);
+        return pointsEntry.enableablePointSets;
+    }
+
+    function getPointEnablementWarnings(set, index, pointTypes) {
+        const warnings = [];
+        const label = `Sub-point group ${index + 1}`;
+        const optionIds = collectOptionIds();
+        if (!String(set?.pointType || "").trim()) warnings.push(`${label}: choose a parent point type.`);
+        else if (!pointTypes.has(set.pointType)) warnings.push(`${label}: parent point type "${set.pointType}" is not defined.`);
+        if (!Array.isArray(set?.subtypes) || !set.subtypes.length) warnings.push(`${label}: choose at least one sub-point type.`);
+        (set?.subtypes || []).forEach(type => {
+            if (!pointTypes.has(type)) warnings.push(`${label}: sub-point type "${type}" is not defined.`);
+            if (type === set.pointType) warnings.push(`${label}: parent point type cannot also be a sub-point type.`);
+        });
+        const formula = String(set?.limitFormula || "");
+        if (!formula.trim()) {
+            warnings.push(`${label}: limit formula is required.`);
+        } else {
+            try {
+                validateDerivedFormulaForEditor(formula, pointTypes, optionIds);
+            } catch (err) {
+                warnings.push(`${label}: limit formula is invalid: ${err.message}`);
+            }
+        }
+        return Array.from(new Set(warnings));
+    }
+
+    function renderPointEnablementSetsEditor(container, pointsEntry) {
+        container.innerHTML = "";
+        const pointTypes = getPointTypeNames();
+        const pointTypeSet = new Set(pointTypes);
+        const sets = normalizeEnableablePointSetsForEditor(pointsEntry);
+
+        if (!sets.length) {
+            const empty = document.createElement("div");
+            empty.className = "field-note";
+            empty.textContent = "No enableable sub-point groups configured.";
+            container.appendChild(empty);
+        }
+
+        sets.forEach((set, index) => {
+            const card = document.createElement("div");
+            card.className = "cost-option-card";
+
+            const header = document.createElement("div");
+            header.className = "cost-option-card-header";
+
+            const title = document.createElement("strong");
+            title.textContent = `Sub-point group ${index + 1}`;
+
+            const removeBtn = document.createElement("button");
+            removeBtn.type = "button";
+            removeBtn.className = "button-icon danger";
+            removeBtn.title = "Remove enableable sub-point group";
+            removeBtn.textContent = "✕";
+            removeBtn.addEventListener("click", () => {
+                pointsEntry.enableablePointSets.splice(index, 1);
+                renderPointEnablementSetsEditor(container, pointsEntry);
+                schedulePreviewUpdate();
+            });
+            header.append(title, removeBtn);
+
+            const nameRow = document.createElement("div");
+            nameRow.className = "list-row";
+            const parentSelect = document.createElement("select");
+            const blankOpt = document.createElement("option");
+            blankOpt.value = "";
+            blankOpt.textContent = "Parent point type";
+            parentSelect.appendChild(blankOpt);
+            pointTypes.forEach(type => {
+                const opt = document.createElement("option");
+                opt.value = type;
+                opt.textContent = type;
+                parentSelect.appendChild(opt);
+            });
+            parentSelect.value = set.pointType;
+            parentSelect.addEventListener("change", () => {
+                set.pointType = parentSelect.value;
+                set.subtypes = (set.subtypes || []).filter(type => type !== set.pointType);
+                pointsEntry.enableablePointSets[index] = set;
+                renderPointEnablementSetsEditor(container, pointsEntry);
+                schedulePreviewUpdate();
+            });
+            const limitInput = document.createElement("input");
+            limitInput.type = "text";
+            limitInput.value = set.limitFormula;
+            limitInput.placeholder = "Enable limit, e.g. 2 or 10 + Constitution";
+            limitInput.addEventListener("input", () => {
+                set.limitFormula = limitInput.value;
+                pointsEntry.enableablePointSets[index] = set;
+                renderPointEnablementWarnings();
+                schedulePreviewUpdate();
+            });
+            const expandedLabel = document.createElement("label");
+            expandedLabel.className = "checkbox-option compact";
+            const expandedCheckbox = document.createElement("input");
+            expandedCheckbox.type = "checkbox";
+            expandedCheckbox.checked = set.expandedByDefault === true;
+            expandedCheckbox.addEventListener("change", () => {
+                set.expandedByDefault = expandedCheckbox.checked;
+                pointsEntry.enableablePointSets[index] = set;
+                schedulePreviewUpdate();
+            });
+            const expandedText = document.createElement("span");
+            expandedText.textContent = "Expanded by default";
+            expandedLabel.append(expandedCheckbox, expandedText);
+            nameRow.append(parentSelect, limitInput, expandedLabel);
+
+            const choices = document.createElement("div");
+            choices.className = "checkbox-grid";
+            pointTypes.filter(type => type !== set.pointType).forEach(type => {
+                const label = document.createElement("label");
+                label.className = "checkbox-option";
+                const checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.checked = set.subtypes.includes(type);
+                checkbox.addEventListener("change", () => {
+                    const current = new Set(set.subtypes || []);
+                    if (checkbox.checked) current.add(type);
+                    else current.delete(type);
+                    set.subtypes = Array.from(current).filter(entry => entry !== set.pointType);
+                    pointsEntry.enableablePointSets[index] = set;
+                    renderPointEnablementWarnings();
+                    schedulePreviewUpdate();
+                });
+                const text = document.createElement("span");
+                text.textContent = type;
+                label.append(checkbox, text);
+                choices.appendChild(label);
+            });
+
+            const warningsEl = document.createElement("div");
+            warningsEl.className = "field-warning";
+            const renderPointEnablementWarnings = () => {
+                const warnings = getPointEnablementWarnings(set, index, pointTypeSet);
+                warningsEl.textContent = warnings.join(" ");
+                warningsEl.hidden = warnings.length === 0;
+            };
+            renderPointEnablementWarnings();
+
+            card.append(header, nameRow, choices, warningsEl);
+            container.appendChild(card);
+        });
+
+        const addBtn = document.createElement("button");
+        addBtn.type = "button";
+        addBtn.className = "button-subtle";
+        addBtn.textContent = "Add enableable sub-point group";
+        addBtn.addEventListener("click", () => {
+            pointsEntry.enableablePointSets.push({
+                pointType: "",
+                subtypes: [],
+                limitFormula: "1",
+                expandedByDefault: false
+            });
+            renderPointEnablementSetsEditor(container, pointsEntry);
             schedulePreviewUpdate();
         });
         container.appendChild(addBtn);
@@ -2788,6 +3120,9 @@
         if (!pointsEntry.pointCategories || typeof pointsEntry.pointCategories !== "object" || Array.isArray(pointsEntry.pointCategories)) {
             pointsEntry.pointCategories = {};
         }
+        if (!pointsEntry.pointCategoryDefaults || typeof pointsEntry.pointCategoryDefaults !== "object" || Array.isArray(pointsEntry.pointCategoryDefaults)) {
+            pointsEntry.pointCategoryDefaults = {};
+        }
         const validTypes = new Set(Object.keys(pointsEntry.values || {}));
         Object.keys(pointsEntry.pointCategories).forEach(category => {
             const cleanTypes = Array.isArray(pointsEntry.pointCategories[category])
@@ -2797,6 +3132,13 @@
                 delete pointsEntry.pointCategories[category];
             } else {
                 pointsEntry.pointCategories[category] = cleanTypes;
+            }
+        });
+        Object.keys(pointsEntry.pointCategoryDefaults).forEach(category => {
+            if (!Object.prototype.hasOwnProperty.call(pointsEntry.pointCategories, category)) {
+                delete pointsEntry.pointCategoryDefaults[category];
+            } else {
+                pointsEntry.pointCategoryDefaults[category] = pointsEntry.pointCategoryDefaults[category] !== false;
             }
         });
         return pointsEntry.pointCategories;
