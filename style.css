@@ -896,6 +896,7 @@ div {
 .point-enablement-controls {
     display: flex;
     flex-direction: column;
+    align-items: center;
     gap: 8px;
     width: min(100%, 980px);
     max-width: 100%;
@@ -903,11 +904,28 @@ div {
     border-top: 1px solid color-mix(in srgb, var(--points-border, #ffd700) 36%, transparent);
 }
 
-.point-enablement-group {
+.point-enablement-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+}
+
+.point-enablement-panels {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 5px;
+    gap: 6px;
+    width: 100%;
+}
+
+.point-enablement-panel {
+    display: flex;
+    justify-content: center;
+    max-width: 100%;
+    width: 100%;
 }
 
 .point-enablement-label {
@@ -919,6 +937,7 @@ div {
     flex-wrap: wrap;
     justify-content: center;
     gap: 6px;
+    max-width: min(100%, 760px);
 }
 
 .point-enablement-buttons.is-open {

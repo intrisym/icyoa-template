@@ -3353,13 +3353,15 @@ function updatePointsDisplay() {
     if (tracker && pointEnablementSets.length) {
         const enableWrap = document.createElement("div");
         enableWrap.className = "point-enablement-controls";
+        const tabsWrap = document.createElement("div");
+        tabsWrap.className = "point-enablement-tabs";
+        const panelsWrap = document.createElement("div");
+        panelsWrap.className = "point-enablement-panels";
         pointEnablementSets.forEach((set, index) => {
             const key = getPointEnablementSetKey(set);
             const selected = enabledPointTypeSelections[key] || [];
             const limit = getPointEnablementLimit(set);
             const expanded = openPointEnablementGroups.has(key);
-            const group = document.createElement("div");
-            group.className = "point-enablement-group";
 
             const label = document.createElement("button");
             label.type = "button";
@@ -3374,7 +3376,7 @@ function updatePointsDisplay() {
                 else openPointEnablementGroups.add(key);
                 updatePointsDisplay();
             });
-            group.appendChild(label);
+            tabsWrap.appendChild(label);
 
             const buttons = document.createElement("div");
             buttons.id = panelId;
@@ -3400,9 +3402,15 @@ function updatePointsDisplay() {
                 });
                 buttons.appendChild(button);
             });
-            group.appendChild(buttons);
-            enableWrap.appendChild(group);
+            if (expanded) {
+                const panel = document.createElement("div");
+                panel.className = "point-enablement-panel";
+                panel.appendChild(buttons);
+                panelsWrap.appendChild(panel);
+            }
         });
+        enableWrap.appendChild(tabsWrap);
+        if (panelsWrap.children.length) enableWrap.appendChild(panelsWrap);
         display.insertAdjacentElement("afterend", enableWrap);
     }
     syncPointsTrackerHeight();

@@ -1907,6 +1907,7 @@
         valuesContainer.className = "list-stack";
 
         Object.entries(pointsEntry.values).forEach(([currency, amount]) => {
+            let pointTypeName = currency;
             const row = document.createElement("div");
             row.className = "list-row";
 
@@ -1939,56 +1940,58 @@
             removeBtn.textContent = "✕";
 
             valueInput.addEventListener("input", () => {
-                pointsEntry.values[currency] = Number(valueInput.value) || 0;
+                pointsEntry.values[pointTypeName] = Number(valueInput.value) || 0;
                 schedulePreviewUpdate();
             });
 
             nameInput.addEventListener("blur", () => {
                 const newName = nameInput.value.trim();
-                if (!newName || newName === currency) {
-                    nameInput.value = currency;
+                const oldName = pointTypeName;
+                if (!newName || newName === oldName) {
+                    nameInput.value = oldName;
                     return;
                 }
                 if (pointsEntry.values.hasOwnProperty(newName)) {
                     showEditorMessage(`Currency "${newName}" already exists.`, "warning");
-                    nameInput.value = currency;
+                    nameInput.value = oldName;
                     return;
                 }
-                const existingValue = pointsEntry.values[currency];
-                delete pointsEntry.values[currency];
+                const existingValue = pointsEntry.values[oldName];
+                delete pointsEntry.values[oldName];
                 pointsEntry.values[newName] = existingValue;
                 (pointsEntry.derivedValues || []).forEach(entry => {
-                    if (entry?.pointType === currency) entry.pointType = newName;
+                    if (entry?.pointType === oldName) entry.pointType = newName;
                 });
                 (pointsEntry.enableablePointSets || []).forEach(set => {
-                    if (set?.pointType === currency) set.pointType = newName;
-                    if (Array.isArray(set?.subtypes)) set.subtypes = set.subtypes.map(type => type === currency ? newName : type);
+                    if (set?.pointType === oldName) set.pointType = newName;
+                    if (Array.isArray(set?.subtypes)) set.subtypes = set.subtypes.map(type => type === oldName ? newName : type);
                 });
-                renamePointTypeReferences(currency, newName);
+                renamePointTypeReferences(oldName, newName);
                 Object.values(pointCategories).forEach(types => {
-                    const idx = types.indexOf(currency);
+                    const idx = types.indexOf(oldName);
                     if (idx !== -1) types[idx] = newName;
                 });
 
-                const allowIdx = pointsEntry.allowNegative.indexOf(currency);
+                const allowIdx = pointsEntry.allowNegative.indexOf(oldName);
                 if (allowIdx !== -1) {
                     pointsEntry.allowNegative[allowIdx] = newName;
                 }
-                renderGlobalSettings();
+                pointTypeName = newName;
+                categorySelect.value = getAssignedPointCategory(pointsEntry, pointTypeName);
                 renderCategories();
                 schedulePreviewUpdate();
             });
 
             removeBtn.addEventListener("click", () => {
-                delete pointsEntry.values[currency];
-                pointsEntry.allowNegative = pointsEntry.allowNegative.filter(t => t !== currency);
-                pointsEntry.derivedValues = (pointsEntry.derivedValues || []).filter(entry => entry?.pointType !== currency);
+                delete pointsEntry.values[pointTypeName];
+                pointsEntry.allowNegative = pointsEntry.allowNegative.filter(t => t !== pointTypeName);
+                pointsEntry.derivedValues = (pointsEntry.derivedValues || []).filter(entry => entry?.pointType !== pointTypeName);
                 (pointsEntry.enableablePointSets || []).forEach(set => {
-                    if (Array.isArray(set?.subtypes)) set.subtypes = set.subtypes.filter(type => type !== currency);
+                    if (Array.isArray(set?.subtypes)) set.subtypes = set.subtypes.filter(type => type !== pointTypeName);
                 });
-                pointsEntry.enableablePointSets = (pointsEntry.enableablePointSets || []).filter(set => set?.pointType !== currency);
+                pointsEntry.enableablePointSets = (pointsEntry.enableablePointSets || []).filter(set => set?.pointType !== pointTypeName);
                 Object.values(pointCategories).forEach(types => {
-                    const idx = types.indexOf(currency);
+                    const idx = types.indexOf(pointTypeName);
                     if (idx !== -1) types.splice(idx, 1);
                 });
                 normalizePointCategories(pointsEntry);
@@ -1999,12 +2002,12 @@
 
             categorySelect.addEventListener("change", () => {
                 Object.values(pointCategories).forEach(types => {
-                    const idx = types.indexOf(currency);
+                    const idx = types.indexOf(pointTypeName);
                     if (idx !== -1) types.splice(idx, 1);
                 });
                 if (categorySelect.value) {
                     if (!Array.isArray(pointCategories[categorySelect.value])) pointCategories[categorySelect.value] = [];
-                    pointCategories[categorySelect.value].push(currency);
+                    pointCategories[categorySelect.value].push(pointTypeName);
                 }
                 normalizePointCategories(pointsEntry);
                 renderGlobalSettings();
