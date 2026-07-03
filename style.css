@@ -872,6 +872,7 @@ div {
 }
 
 #pointsDisplay span {
+    position: relative;
     white-space: nowrap;
     font-family: var(--font-body);
     font-size: var(--font-points-value);
@@ -968,6 +969,7 @@ div {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    position: relative;
     min-height: 30px;
     margin: 0;
     padding: 4px 10px;
@@ -999,6 +1001,40 @@ div {
 .point-enablement-toggle:disabled {
     cursor: not-allowed;
     opacity: 0.4;
+}
+
+#pointsDisplay span[data-tooltip]::after,
+.point-enablement-toggle[data-tooltip]::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 8px);
+    z-index: 50;
+    width: max-content;
+    max-width: min(260px, 80vw);
+    padding: 6px 8px;
+    border: 1px solid color-mix(in srgb, var(--points-border, #ffd700) 70%, transparent);
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--points-bg, rgba(139, 0, 0, 0.94)) 92%, black);
+    color: var(--points-text, #000000);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.25;
+    opacity: 0;
+    pointer-events: none;
+    text-align: center;
+    transform: translateX(-50%) translateY(4px);
+    transition: opacity 0.12s ease, transform 0.12s ease;
+    white-space: normal;
+}
+
+#pointsDisplay span[data-tooltip]:hover::after,
+#pointsDisplay span[data-tooltip]:focus-visible::after,
+.point-enablement-toggle[data-tooltip]:hover::after,
+.point-enablement-toggle[data-tooltip]:focus-visible::after {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
 }
 
 .point-category-toggle[aria-pressed="true"] {

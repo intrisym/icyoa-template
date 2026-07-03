@@ -1071,11 +1071,19 @@ class CyoaEngine {
             || Object.prototype.hasOwnProperty.call(entry, "requiresCostOption");
     }
 
+    optionMaxSelections(option) {
+        const ownMax = Number(option?.maxSelections);
+        if (Number.isFinite(ownMax) && ownMax >= 1) return Math.floor(ownMax);
+        const inheritedMax = Number(this.findSubcategoryInfo(option.id).subcat?.defaultOptionMaxSelections);
+        if (Number.isFinite(inheritedMax) && inheritedMax >= 1) return Math.floor(inheritedMax);
+        return 1;
+    }
+
     shouldAutoRequireBaseCostOption(option, entry, index, costOptions = []) {
         if (!option?.id || !entry || typeof entry !== "object") return false;
         if (index <= 0 || !Array.isArray(costOptions) || costOptions.length <= 1) return false;
-        const optionMaxSelections = Number(option.maxSelections);
-        if (!Number.isFinite(optionMaxSelections) || optionMaxSelections <= 1) return false;
+        const optionMaxSelections = this.optionMaxSelections(option);
+        if (optionMaxSelections <= 1) return false;
         if (this.hasExplicitCostOptionAvailability(entry)) return false;
         if (costOptions.some(costOption => Array.isArray(costOption?.costBySelection) && costOption.costBySelection.length > 0)) return false;
 
@@ -1873,7 +1881,7 @@ class CyoaEngine {
     displayedNextSelectionCost(optionOrId, costOptionIndex = null) {
         const option = typeof optionOrId === "string" ? this.option(optionOrId) : optionOrId;
         const selectedCount = this.selectedOptions[option.id] || 0;
-        const maxSelections = option.maxSelections || 1;
+        const maxSelections = this.optionMaxSelections(option);
         const displaySelectionNumber = selectedCount < maxSelections ? selectedCount + 1 : Math.max(selectedCount, 1);
         const choices = this.normalizeCostOptions(option, { selectionNumber: displaySelectionNumber });
         const resolvedCostOptionIndex = costOptionIndex ?? (choices[0]?.index ?? null);
@@ -2079,7 +2087,7 @@ class CyoaEngine {
         const subcatMax = subcat?.maxSelections || Infinity;
         const subcatCount = this.subcategorySelectionCount(subcat, option.id);
         const underSubcatLimit = (subcatCount <= subcatMax) || (subcatMax !== Infinity && this.hasRemovableSelection(subcat));
-        const maxPerOption = option.maxSelections || 1;
+        const maxPerOption = this.optionMaxSelections(option);
         const underOptionLimit = (this.selectedOptions[option.id] || 0) < maxPerOption;
         const categoryMax = Number(this.findSubcategoryInfo(option.id).category?.maxSelections);
         const underCategoryLimit = !Number.isFinite(categoryMax) || categoryMax <= 0 || this.categorySelectionCount(this.findSubcategoryInfo(option.id).category) < categoryMax;
@@ -3605,6 +3613,9 @@ test("enableable point sets should gate point types behind dynamic limits", () =
                 Artifice: 10,
                 Cooking: 10
             },
+            pointTooltips: {
+                Alchemy: "General alchemy skill."
+            },
             pointCategories: {
                 Skills: ["Alchemy", "Artifice", "Cooking"]
             },
@@ -3670,6 +3681,47 @@ test("subcategory inherited cost options should price empty-cost options and rep
     engine.select("multi");
     assert.strictEqual(engine.selectedOptions.multi, 2);
     assert.strictEqual(engine.subcategorySelectionCount(engine.findSubcategoryOfOption("multi")), 1);
+});
+
+test("subcategory default option max selections should make child options repeatable", () => {
+    const data = [
+        { type: "title", text: "Subcategory Default Repeat" },
+        { type: "points", values: { Points: 20 } },
+        {
+            name: "Shop",
+            subcategories: [
+                {
+                    name: "Cash Shop",
+                    defaultOptionMaxSelections: 3,
+                    costOptions: [{ cost: { Points: 1 }, costBySelection: [{ Points: 1 }, { Points: 2 }] }],
+                    options: [
+                        { id: "cashPotion", label: "Cash Potion" },
+                        { id: "limitedGem", label: "Limited Gem", maxSelections: 1 }
+                    ]
+                }
+            ]
+        }
+    ];
+    const engine = new CyoaEngine(data, "subcategory-default-option-max.json");
+    assert.strictEqual(engine.canSelect("cashPotion"), true);
+    assert.deepStrictEqual(engine.effectiveCost("cashPotion", { selectionNumber: 1 }), { Points: 1 });
+    engine.select("cashPotion");
+    assert.deepStrictEqual(engine.effectiveCost("cashPotion", { selectionNumber: 2 }), { Points: 2 });
+    engine.select("cashPotion");
+    engine.select("cashPotion");
+    assert.strictEqual(engine.selectedOptions.cashPotion, 3);
+    assert.strictEqual(engine.canSelect("cashPotion"), false);
+    engine.select("limitedGem");
+    assert.strictEqual(engine.canSelect("limitedGem"), false, "option-level maxSelections should override the subcategory default");
+    assert.deepStrictEqual(validateCyoaData("subcategory-default-option-max-valid.json", data).errors, []);
+
+    data[2].subcategories[0].defaultOptionMaxSelections = 0;
+    assert(
+        validateCyoaData("subcategory-default-option-max-invalid.json", data).errors.some(error =>
+            error.includes("defaultOptionMaxSelections must be at least 1")
+        ),
+        "validation should reject invalid subcategory default option max selections"
+    );
 });
 
 test("subcategory cost options should be inherited unless an option defines its own choices", () => {

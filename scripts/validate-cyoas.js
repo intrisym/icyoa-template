@@ -687,13 +687,14 @@ function validateEnableablePointSets(file, pointsEntry, pointTypes, optionIds, e
         if (!Array.isArray(set.subtypes) || !set.subtypes.length) {
             pushIssue(errors, file, `${context}.subtypes must include at least one sub-point type.`);
         } else {
-            set.subtypes.forEach(type => {
+            set.subtypes.forEach((type, subtypeIndex) => {
+                const subtypeContext = `${context}.subtypes[${subtypeIndex}]`;
                 if (typeof type !== "string" || !pointTypes.has(type)) {
-                    pushIssue(errors, file, `${context}.subtypes references unknown point type "${type}".`);
+                    pushIssue(errors, file, `${subtypeContext} references unknown point type "${type}".`);
                 } else if (type === set.pointType) {
-                    pushIssue(errors, file, `${context}.subtypes cannot include its parent point type "${type}".`);
+                    pushIssue(errors, file, `${subtypeContext} cannot include its parent point type "${type}".`);
                 } else if (assignedSubtypes.has(type)) {
-                    pushIssue(errors, file, `${context}.subtypes assigns point type "${type}" to more than one enableable point set.`);
+                    pushIssue(errors, file, `${subtypeContext} assigns point type "${type}" to more than one enableable point set.`);
                 } else {
                     assignedSubtypes.add(type);
                 }
@@ -749,6 +750,20 @@ function validateCyoaData(file, data) {
             pushIssue(errors, file, `points.values.${type} must be numeric.`);
         }
     });
+    if (pointsEntry?.pointTooltips !== undefined) {
+        if (!pointsEntry.pointTooltips || typeof pointsEntry.pointTooltips !== "object" || Array.isArray(pointsEntry.pointTooltips)) {
+            pushIssue(errors, file, "points.pointTooltips must be an object map of point type names to tooltip strings.");
+        } else {
+            Object.entries(pointsEntry.pointTooltips).forEach(([type, tooltip]) => {
+                if (!pointTypes.has(type)) {
+                    pushIssue(errors, file, `points.pointTooltips references unknown point type "${type}".`);
+                }
+                if (typeof tooltip !== "string") {
+                    pushIssue(errors, file, `points.pointTooltips.${type} must be a string.`);
+                }
+            });
+        }
+    }
     if (pointsEntry?.pointCategories !== undefined) {
         if (!pointsEntry.pointCategories || typeof pointsEntry.pointCategories !== "object" || Array.isArray(pointsEntry.pointCategories)) {
             pushIssue(errors, file, "points.pointCategories must be an object map of category names to point type arrays.");
@@ -871,6 +886,9 @@ function validateCyoaData(file, data) {
         validateModifiedCostRules(file, `${subcatPath}.discounts`, subcat.discounts, optionIds, pointTypes, errors, warnings);
         if (subcat.maxSelections !== undefined && Number(subcat.maxSelections) < 1) {
             pushIssue(errors, file, `${subcatPath}.maxSelections must be at least 1.`);
+        }
+        if (subcat.defaultOptionMaxSelections !== undefined && Number(subcat.defaultOptionMaxSelections) < 1) {
+            pushIssue(errors, file, `${subcatPath}.defaultOptionMaxSelections must be at least 1.`);
         }
     });
 

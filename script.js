@@ -22,6 +22,7 @@ const subcategoriesToAnimate = new Set();
 const attributeSliderValues = {};
 let originalPoints = {};
 let allowNegativeTypes = new Set();
+let pointTooltips = {};
 let pointCategories = {};
 let pointCategoryDefaultVisibility = {};
 let visiblePointCategories = new Set();
@@ -388,6 +389,7 @@ function resetGlobalState() {
     attributeRanges = {};
     originalAttributeRanges = {};
     allowNegativeTypes = new Set();
+    pointTooltips = {};
     pointCategories = {};
     pointCategoryDefaultVisibility = {};
     visiblePointCategories = new Set();
@@ -452,8 +454,8 @@ function hasExplicitCostOptionAvailability(entry) {
 function shouldAutoRequireBaseCostOption(option, entry, index, costOptions = []) {
     if (!option?.id || !entry || typeof entry !== "object") return false;
     if (index <= 0 || !Array.isArray(costOptions) || costOptions.length <= 1) return false;
-    const optionMaxSelections = Number(option.maxSelections);
-    if (!Number.isFinite(optionMaxSelections) || optionMaxSelections <= 1) return false;
+    const optionMaxSelections = getOptionMaxSelections(option);
+    if (optionMaxSelections <= 1) return false;
     if (hasExplicitCostOptionAvailability(entry)) return false;
     if (costOptions.some(costOption => Array.isArray(costOption?.costBySelection) && costOption.costBySelection.length > 0)) return false;
 
@@ -554,6 +556,17 @@ function normalizePointCategoryDefaults(rawDefaults = {}, categoryNames = []) {
     if (!rawDefaults || typeof rawDefaults !== "object" || Array.isArray(rawDefaults)) return normalized;
     Object.entries(rawDefaults).forEach(([category, isVisible]) => {
         if (validCategories.has(category)) normalized[category] = isVisible !== false;
+    });
+    return normalized;
+}
+
+function normalizePointTooltips(rawTooltips = {}, pointNames = []) {
+    const validPointNames = new Set(pointNames);
+    const normalized = {};
+    if (!rawTooltips || typeof rawTooltips !== "object" || Array.isArray(rawTooltips)) return normalized;
+    Object.entries(rawTooltips).forEach(([type, tooltip]) => {
+        const text = String(tooltip || "").trim();
+        if (validPointNames.has(type) && text) normalized[type] = text;
     });
     return normalized;
 }
@@ -810,6 +823,15 @@ function getConfiguredCostOptions(option) {
     const hasDirectOptionCost = option?.cost && typeof option.cost === "object" && Object.keys(option.cost).length > 0;
     const hasOwnCostOptions = costOptionsHaveMeaningfulCost(ownOptions);
     return hasOwnCostOptions ? ownOptions : (hasDirectOptionCost ? [] : subcategoryOptions);
+}
+
+function getOptionMaxSelections(option) {
+    const ownMax = Number(option?.maxSelections);
+    if (Number.isFinite(ownMax) && ownMax >= 1) return Math.floor(ownMax);
+    const info = option?.id ? findSubcategoryInfo(option.id) : {};
+    const inheritedMax = Number(info.subcat?.defaultOptionMaxSelections);
+    if (Number.isFinite(inheritedMax) && inheritedMax >= 1) return Math.floor(inheritedMax);
+    return 1;
 }
 
 function selectedCostOptionStillValid(option, costOptionIndex) {
@@ -1515,7 +1537,7 @@ function getOptionEffectiveCostChoices(option, options = {}) {
 function shouldRenderSelectionControls(option) {
     if (!option) return false;
     return option.inputType === "text"
-        || (option.maxSelections || 1) !== 1
+        || getOptionMaxSelections(option) !== 1
         || normalizeOptionCostOptions(option).length > 1;
 }
 
@@ -2724,6 +2746,7 @@ function applyCyoaData(rawData, {
         originalPoints = pointsEntry?.values ? {
             ...pointsEntry.values
         } : {};
+        pointTooltips = normalizePointTooltips(pointsEntry?.pointTooltips, Object.keys(originalPoints));
         derivedValueConfigs = normalizeDerivedValues(pointsEntry);
         pointEnablementSets = normalizePointEnablementSets(pointsEntry);
         applyDefaultPointEnablementGroups();
@@ -3054,7 +3077,7 @@ function removeSelection(option, options = {}) {
         points[type] += cost;
     });
 
-    if (option.maxSelections && count > 1) {
+    if (getOptionMaxSelections(option) > 1 && count > 1) {
         selectedOptions[option.id] = count - 1;
     } else {
         delete selectedOptions[option.id];
@@ -3344,11 +3367,23 @@ function updatePointsDisplay() {
     }
 
     const visibleEntries = getVisiblePointEntries();
-    display.innerHTML = visibleEntries.length
-        ? visibleEntries
-            .map(([type, val]) => `<span><strong>${getPointTypeMarkup(type)}:</strong> ${escapeHtml(String(val))}</span>`)
-            .join("")
-        : `<span class="points-empty-state">No point categories selected</span>`;
+    display.innerHTML = "";
+    if (visibleEntries.length) {
+        visibleEntries.forEach(([type, val]) => {
+            const entry = document.createElement("span");
+            const label = document.createElement("strong");
+            label.innerHTML = `${getPointTypeMarkup(type)}:`;
+            entry.append(label, document.createTextNode(` ${String(val)}`));
+            const tooltip = pointTooltips[type] || "";
+            if (tooltip) {
+                entry.title = tooltip;
+                entry.dataset.tooltip = tooltip;
+            }
+            display.appendChild(entry);
+        });
+    } else {
+        display.innerHTML = `<span class="points-empty-state">No point categories selected</span>`;
+    }
 
     if (tracker && pointEnablementSets.length) {
         const enableWrap = document.createElement("div");
@@ -3389,6 +3424,12 @@ function updatePointsDisplay() {
                 const enabled = selected.includes(type);
                 button.setAttribute("aria-pressed", String(enabled));
                 button.textContent = type;
+                const tooltip = pointTooltips[type] || "";
+                if (tooltip) {
+                    button.title = tooltip;
+                    button.setAttribute("aria-label", `${type}: ${tooltip}`);
+                    button.dataset.tooltip = tooltip;
+                }
                 button.disabled = !enabled && selected.length >= limit;
                 button.addEventListener("click", () => {
                     const current = enabledPointTypeSelections[key] || [];
@@ -3443,7 +3484,7 @@ function canSelect(option, { costOptionIndex = null } = {}) {
     const underSubcatLimit = (subcatCount <= subcatMax) || (subcatMax !== Infinity && hasRemovableSelectionInSubcategory(subcat));
 
     // Check option-specific max selections
-    const maxPerOption = option.maxSelections || 1; // Default to 1 selection
+    const maxPerOption = getOptionMaxSelections(option);
     const underOptionLimit = currentOptionCount < maxPerOption;
     const categoryMaxSelections = getCategorySelectionLimit(option.id);
     const categorySelectionCount = getCategorySelectionCount(option.id);
@@ -5230,7 +5271,7 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
     wrapper.className = "option-wrapper";
 
     const selectedCount = selectedOptions[opt.id] || 0;
-    const maxSelections = opt.maxSelections || 1;
+    const maxSelections = getOptionMaxSelections(opt);
     const hasTextInput = opt.inputType === "text";
     const hasMultipleCostOptions = normalizeOptionCostOptions(opt).length > 1;
     const isSingleChoice = maxSelections === 1;
@@ -5785,7 +5826,7 @@ function renderSelectionButton(opt, contentWrapper) {
     controls.className = "option-controls";
 
     const count = selectedOptions[opt.id] || 0;
-    const max = opt.maxSelections || 1;
+    const max = getOptionMaxSelections(opt);
     const nextSelectionNumber = count + 1;
     const costOptions = normalizeOptionCostOptions(opt, { selectionNumber: nextSelectionNumber });
     const displayCostOptions = normalizeOptionCostOptions(opt, {

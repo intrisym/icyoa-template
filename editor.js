@@ -715,8 +715,17 @@
 
     function getDerivedValuesWarnings(pointsEntry) {
         const pointTypes = new Set(Object.keys(pointsEntry?.values || {}));
-        return (Array.isArray(pointsEntry?.derivedValues) ? pointsEntry.derivedValues : [])
-            .flatMap((entry, index) => getDerivedFormulaWarnings(entry, index, pointTypes));
+        const seenTargets = new Set();
+        const warnings = [];
+        (Array.isArray(pointsEntry?.derivedValues) ? pointsEntry.derivedValues : [])
+            .forEach((entry, index) => {
+                warnings.push(...getDerivedFormulaWarnings(entry, index, pointTypes));
+                const target = String(entry?.pointType || "").trim();
+                if (!target) return;
+                if (seenTargets.has(target)) warnings.push(`Derived value ${index + 1}: target point type "${target}" is already used by another derived value.`);
+                seenTargets.add(target);
+            });
+        return warnings;
     }
 
     function getOptionValidationWarnings(option) {
@@ -1850,6 +1859,7 @@
             attributeRanges: {}
         })).entry;
         if (!pointsEntry.values) pointsEntry.values = {};
+        if (!pointsEntry.pointTooltips || typeof pointsEntry.pointTooltips !== "object" || Array.isArray(pointsEntry.pointTooltips)) pointsEntry.pointTooltips = {};
         if (!Array.isArray(pointsEntry.allowNegative)) pointsEntry.allowNegative = [];
         if (!pointsEntry.pointCategories || typeof pointsEntry.pointCategories !== "object" || Array.isArray(pointsEntry.pointCategories)) pointsEntry.pointCategories = {};
         if (!pointsEntry.pointCategoryDefaults || typeof pointsEntry.pointCategoryDefaults !== "object" || Array.isArray(pointsEntry.pointCategoryDefaults)) pointsEntry.pointCategoryDefaults = {};
@@ -1920,6 +1930,11 @@
             valueInput.type = "number";
             valueInput.value = typeof amount === "number" ? amount : 0;
 
+            const tooltipInput = document.createElement("input");
+            tooltipInput.type = "text";
+            tooltipInput.value = pointsEntry.pointTooltips?.[currency] || "";
+            tooltipInput.placeholder = "Optional tooltip";
+
             const categorySelect = document.createElement("select");
             const noneOpt = document.createElement("option");
             noneOpt.value = "";
@@ -1944,6 +1959,13 @@
                 schedulePreviewUpdate();
             });
 
+            tooltipInput.addEventListener("input", () => {
+                const tooltip = tooltipInput.value.trim();
+                if (tooltip) pointsEntry.pointTooltips[pointTypeName] = tooltip;
+                else delete pointsEntry.pointTooltips[pointTypeName];
+                schedulePreviewUpdate();
+            });
+
             nameInput.addEventListener("blur", () => {
                 const newName = nameInput.value.trim();
                 const oldName = pointTypeName;
@@ -1959,6 +1981,10 @@
                 const existingValue = pointsEntry.values[oldName];
                 delete pointsEntry.values[oldName];
                 pointsEntry.values[newName] = existingValue;
+                if (Object.prototype.hasOwnProperty.call(pointsEntry.pointTooltips, oldName)) {
+                    pointsEntry.pointTooltips[newName] = pointsEntry.pointTooltips[oldName];
+                    delete pointsEntry.pointTooltips[oldName];
+                }
                 (pointsEntry.derivedValues || []).forEach(entry => {
                     if (entry?.pointType === oldName) entry.pointType = newName;
                 });
@@ -1984,6 +2010,7 @@
 
             removeBtn.addEventListener("click", () => {
                 delete pointsEntry.values[pointTypeName];
+                delete pointsEntry.pointTooltips[pointTypeName];
                 pointsEntry.allowNegative = pointsEntry.allowNegative.filter(t => t !== pointTypeName);
                 pointsEntry.derivedValues = (pointsEntry.derivedValues || []).filter(entry => entry?.pointType !== pointTypeName);
                 (pointsEntry.enableablePointSets || []).forEach(set => {
@@ -2016,6 +2043,7 @@
 
             row.appendChild(nameInput);
             row.appendChild(valueInput);
+            row.appendChild(tooltipInput);
             row.appendChild(categorySelect);
             row.appendChild(removeBtn);
             valuesContainer.appendChild(row);
@@ -2313,6 +2341,7 @@
         container.innerHTML = "";
         const pointTypes = getPointTypeNames();
         const derivedValues = normalizeDerivedValuesForEditor(pointsEntry);
+        const usedPointTypes = new Set(derivedValues.map(entry => entry.pointType).filter(Boolean));
         const validationBox = document.createElement("div");
         validationBox.className = "inline-warning-list";
         const updateWarnings = () => {
@@ -2339,9 +2368,13 @@
             row.className = "list-row formula-row";
 
             const targetSelect = document.createElement("select");
-            const availableTypes = pointTypes.includes(entry.pointType)
-                ? pointTypes
-                : [entry.pointType, ...pointTypes].filter(Boolean);
+            const usedByOtherRows = new Set(derivedValues
+                .filter((_, otherIndex) => otherIndex !== index)
+                .map(otherEntry => otherEntry.pointType)
+                .filter(Boolean));
+            const availableTypes = pointTypes
+                .filter(type => type === entry.pointType || !usedByOtherRows.has(type));
+            if (entry.pointType && !availableTypes.includes(entry.pointType)) availableTypes.unshift(entry.pointType);
             availableTypes.forEach(type => {
                 const opt = document.createElement("option");
                 opt.value = type;
@@ -2352,7 +2385,7 @@
             targetSelect.addEventListener("change", () => {
                 entry.pointType = targetSelect.value;
                 pointsEntry.derivedValues[index] = entry;
-                updateWarnings();
+                renderDerivedValuesEditor(container, pointsEntry);
                 schedulePreviewUpdate();
             });
 
@@ -2433,9 +2466,13 @@
         addBtn.type = "button";
         addBtn.className = "button-subtle";
         addBtn.textContent = "Add derived value";
+        const nextUnusedPointType = pointTypes.find(type => !usedPointTypes.has(type));
+        addBtn.disabled = !nextUnusedPointType;
+        if (!nextUnusedPointType) addBtn.title = "Every point type already has a derived value.";
         addBtn.addEventListener("click", () => {
+            if (!nextUnusedPointType) return;
             pointsEntry.derivedValues.push({
-                pointType: pointTypes[0] || "Points",
+                pointType: nextUnusedPointType,
                 formula: "0",
                 round: "floor"
             });
@@ -2583,8 +2620,9 @@
                 checkbox.checked = set.subtypes.includes(type);
                 checkbox.addEventListener("change", () => {
                     const current = new Set(set.subtypes || []);
-                    if (checkbox.checked) current.add(type);
-                    else current.delete(type);
+                    if (checkbox.checked) {
+                        current.add(type);
+                    } else current.delete(type);
                     set.subtypes = Array.from(current).filter(entry => entry !== set.pointType);
                     pointsEntry.enableablePointSets[index] = set;
                     renderPointEnablementWarnings();
@@ -3123,10 +3161,18 @@
         if (!pointsEntry.pointCategories || typeof pointsEntry.pointCategories !== "object" || Array.isArray(pointsEntry.pointCategories)) {
             pointsEntry.pointCategories = {};
         }
+        if (!pointsEntry.pointTooltips || typeof pointsEntry.pointTooltips !== "object" || Array.isArray(pointsEntry.pointTooltips)) {
+            pointsEntry.pointTooltips = {};
+        }
         if (!pointsEntry.pointCategoryDefaults || typeof pointsEntry.pointCategoryDefaults !== "object" || Array.isArray(pointsEntry.pointCategoryDefaults)) {
             pointsEntry.pointCategoryDefaults = {};
         }
         const validTypes = new Set(Object.keys(pointsEntry.values || {}));
+        Object.keys(pointsEntry.pointTooltips).forEach(type => {
+            const tooltip = String(pointsEntry.pointTooltips[type] || "").trim();
+            if (!validTypes.has(type) || !tooltip) delete pointsEntry.pointTooltips[type];
+            else pointsEntry.pointTooltips[type] = tooltip;
+        });
         Object.keys(pointsEntry.pointCategories).forEach(category => {
             const cleanTypes = Array.isArray(pointsEntry.pointCategories[category])
                 ? [...new Set(pointsEntry.pointCategories[category].filter(type => validTypes.has(type)))]
@@ -3849,6 +3895,30 @@
                 maxRow.appendChild(minInput);
                 subBody.appendChild(maxRow);
 
+                const defaultOptionMaxRow = document.createElement("div");
+                defaultOptionMaxRow.className = "field-inline";
+                const defaultOptionMaxLabel = document.createElement("label");
+                defaultOptionMaxLabel.textContent = "Default max selections per option";
+                const defaultOptionMaxInput = document.createElement("input");
+                defaultOptionMaxInput.type = "number";
+                defaultOptionMaxInput.min = "1";
+                defaultOptionMaxInput.value = subcat.defaultOptionMaxSelections ?? "";
+                defaultOptionMaxInput.placeholder = "Default: 1";
+                defaultOptionMaxInput.title = "Applies to options in this subcategory that do not define their own max selections.";
+                defaultOptionMaxInput.addEventListener("input", () => {
+                    const value = defaultOptionMaxInput.value.trim();
+                    if (value === "") {
+                        delete subcat.defaultOptionMaxSelections;
+                    } else {
+                        const parsed = Math.max(1, Math.floor(Number(value) || 1));
+                        subcat.defaultOptionMaxSelections = parsed;
+                        defaultOptionMaxInput.value = String(parsed);
+                    }
+                    schedulePreviewUpdate();
+                });
+                defaultOptionMaxRow.append(defaultOptionMaxLabel, defaultOptionMaxInput);
+                subBody.appendChild(defaultOptionMaxRow);
+
                 const discountRow = document.createElement("div");
                 discountRow.className = "field-inline";
                 const discountFirstLabel = document.createElement("label");
@@ -3890,7 +3960,8 @@
                 subCostOptionsContainer.className = "list-stack";
                 renderCostOptionsEditor(subCostOptionsContainer, subcat, {
                     allowEmpty: true,
-                    emptyText: "No default payment options. Options use their own payment options."
+                    emptyText: "No default payment options. Options use their own payment options.",
+                    includeSelectionCosts: true
                 });
                 const mergeDefaultLabel = document.createElement("label");
                 mergeDefaultLabel.className = "checkbox-option";
@@ -5124,7 +5195,8 @@
 
     function renderCostOptionsEditor(container, option, {
         allowEmpty = false,
-        emptyText = "No payment options configured."
+        emptyText = "No payment options configured.",
+        includeSelectionCosts = false
     } = {}) {
         container.innerHTML = "";
         const costOptions = normalizeCostOptionsForEditor(option, { allowEmpty });
@@ -5178,7 +5250,7 @@
                 if (!allowEmpty && option.costOptions.length <= 1) return;
                 option.costOptions.splice(index, 1);
                 if (allowEmpty && option.costOptions.length === 0) delete option.costOptions;
-                renderCostOptionsEditor(container, option, { allowEmpty, emptyText });
+                renderCostOptionsEditor(container, option, { allowEmpty, emptyText, includeSelectionCosts });
                 schedulePreviewUpdate();
             });
 
@@ -5288,7 +5360,7 @@
             const tierFields = [];
             const maxSelections = Math.max(1, Math.floor(Number(option.maxSelections) || 1));
             const hasSelectionCosts = Array.isArray(costOption.costBySelection) && costOption.costBySelection.length > 0;
-            if (maxSelections > 1 || hasSelectionCosts) {
+            if (includeSelectionCosts || maxSelections > 1 || hasSelectionCosts) {
                 const selectionCosts = Array.isArray(costOption.costBySelection) ? costOption.costBySelection : [];
                 const tierSection = document.createElement("div");
                 tierSection.className = "field";
@@ -5319,7 +5391,7 @@
                     removeTierBtn.addEventListener("click", () => {
                         costOption.costBySelection.splice(tierIndex, 1);
                         if (costOption.costBySelection.length === 0) delete costOption.costBySelection;
-                        renderCostOptionsEditor(container, option, { allowEmpty, emptyText });
+                        renderCostOptionsEditor(container, option, { allowEmpty, emptyText, includeSelectionCosts });
                         schedulePreviewUpdate();
                     });
                     tierHeader.append(tierTitle, removeTierBtn);
@@ -5339,7 +5411,7 @@
                 addTierBtn.addEventListener("click", () => {
                     if (!Array.isArray(costOption.costBySelection)) costOption.costBySelection = [];
                     costOption.costBySelection.push({ ...costOption.cost });
-                    renderCostOptionsEditor(container, option, { allowEmpty, emptyText });
+                    renderCostOptionsEditor(container, option, { allowEmpty, emptyText, includeSelectionCosts });
                     schedulePreviewUpdate();
                 });
                 tierSection.append(tierLabel, tierHint, tierList, addTierBtn);
@@ -5360,7 +5432,7 @@
             option.costOptions.push({
                 cost: { [candidateType]: 0 }
             });
-            renderCostOptionsEditor(container, option, { allowEmpty, emptyText });
+            renderCostOptionsEditor(container, option, { allowEmpty, emptyText, includeSelectionCosts });
             schedulePreviewUpdate();
         });
         container.appendChild(addBtn);
