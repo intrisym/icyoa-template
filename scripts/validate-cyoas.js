@@ -347,6 +347,57 @@ function validateAutoGrants(file, context, grants, optionIds, errors) {
     });
 }
 
+function validateRandomTable(file, context, table, errors) {
+    if (!table || typeof table !== "object" || Array.isArray(table)) {
+        pushIssue(errors, file, `${context} must be an object.`);
+        return;
+    }
+    if (table.label !== undefined && typeof table.label !== "string") {
+        pushIssue(errors, file, `${context}.label must be a string.`);
+    }
+    const die = Number(table.die);
+    if (!Number.isInteger(die) || die < 1) {
+        pushIssue(errors, file, `${context}.die must be a positive integer.`);
+    }
+    if (!Array.isArray(table.outcomes) || !table.outcomes.length) {
+        pushIssue(errors, file, `${context}.outcomes must be a non-empty array.`);
+        return;
+    }
+    table.outcomes.forEach((outcome, index) => {
+        const outcomeContext = `${context}.outcomes[${index}]`;
+        if (!outcome || typeof outcome !== "object" || Array.isArray(outcome)) {
+            pushIssue(errors, file, `${outcomeContext} must be an object.`);
+            return;
+        }
+        const min = Number(outcome.min);
+        const max = Number(outcome.max);
+        if (!Number.isInteger(min)) {
+            pushIssue(errors, file, `${outcomeContext}.min must be an integer.`);
+        }
+        if (!Number.isInteger(max)) {
+            pushIssue(errors, file, `${outcomeContext}.max must be an integer.`);
+        }
+        if (Number.isInteger(min) && Number.isInteger(max) && min > max) {
+            pushIssue(errors, file, `${outcomeContext}.min must be less than or equal to max.`);
+        }
+        if (typeof outcome.label !== "string" || !outcome.label.trim()) {
+            pushIssue(errors, file, `${outcomeContext}.label must be a non-empty string.`);
+        }
+        if (outcome.table !== undefined) {
+            validateRandomTable(file, `${outcomeContext}.table`, outcome.table, errors);
+        }
+    });
+}
+
+function validateRandomTables(file, context, tables, errors) {
+    if (tables === undefined) return;
+    if (!Array.isArray(tables)) {
+        pushIssue(errors, file, `${context}.randomTables must be an array.`);
+        return;
+    }
+    tables.forEach((table, index) => validateRandomTable(file, `${context}.randomTables[${index}]`, table, errors));
+}
+
 function validateCostOptions(file, context, costOptions, pointTypes, errors, warnings, optionIds = null, scopes = null) {
     if (costOptions === undefined) return;
     if (!Array.isArray(costOptions)) {
@@ -839,6 +890,7 @@ function validateCyoaData(file, data) {
         validatePointAllocation(file, context, option.pointAllocation, pointTypes, errors);
         validateSliderModifiers(file, context, option.sliderModifiers, pointTypes, errors);
         validateSliderModifiers(file, context, option.attributeEffects, pointTypes, errors, "attributeEffects");
+        validateRandomTables(file, context, option.randomTables, errors);
         validateAlignmentValue(file, `${context}.alignment`, option.alignment, errors);
         validateAlignmentValue(file, `${context}.titleAlignment`, option.titleAlignment, errors);
         validateAlignmentValue(file, `${context}.metaAlignment`, option.metaAlignment, errors);
@@ -866,6 +918,12 @@ function validateCyoaData(file, data) {
         }
         if (option.bypassSubcategoryMaxSelections !== undefined && typeof option.bypassSubcategoryMaxSelections !== "boolean") {
             pushIssue(errors, file, `${context}.bypassSubcategoryMaxSelections must be a boolean.`);
+        }
+        if (option.lockSelection !== undefined && typeof option.lockSelection !== "boolean") {
+            pushIssue(errors, file, `${context}.lockSelection must be a boolean.`);
+        }
+        if (option.cannotDeselect !== undefined && typeof option.cannotDeselect !== "boolean") {
+            pushIssue(errors, file, `${context}.cannotDeselect must be a boolean.`);
         }
     });
 

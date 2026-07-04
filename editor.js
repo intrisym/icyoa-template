@@ -1,6 +1,6 @@
 (function () {
     const CORE_TYPES_ORDER = ["title", "description", "headerImage", "points", "settings"];
-    const BASE_OPTION_KEYS = new Set(["id", "label", "description", "image", "inputType", "inputLabel", "cost", "costOptions", "pointAllocation", "sliderModifiers", "attributeEffects", "maxSelections", "countsAsOneSelection", "bypassSubcategoryMaxSelections", "prerequisites", "conflictsWith", "autoGrants", "modifiedCosts", "discounts", "discountGrants", "alignment", "titleAlignment", "metaAlignment", "descriptionAlignment", "borderColor", "darkBorderColor"]);
+    const BASE_OPTION_KEYS = new Set(["id", "label", "description", "image", "inputType", "inputLabel", "cost", "costOptions", "pointAllocation", "sliderModifiers", "attributeEffects", "maxSelections", "countsAsOneSelection", "bypassSubcategoryMaxSelections", "lockSelection", "cannotDeselect", "randomTables", "prerequisites", "conflictsWith", "autoGrants", "modifiedCosts", "discounts", "discountGrants", "alignment", "titleAlignment", "metaAlignment", "descriptionAlignment", "borderColor", "darkBorderColor"]);
 
     const state = {
         data: [],
@@ -45,6 +45,7 @@
         "option-meta-conditional-color": "#0ea5e9",
         "option-meta-auto-grants-color": "#16a34a",
         "option-meta-slider-modifiers-color": "#7c3aed",
+        "option-meta-random-results-color": "#db2777",
         "option-meta-prerequisites-color": "#f59e0b",
         "option-meta-conflicts-color": "#dc2626",
         "font-base": "20px",
@@ -88,6 +89,7 @@
         "option-meta-conditional-color": "#38bdf8",
         "option-meta-auto-grants-color": "#22c55e",
         "option-meta-slider-modifiers-color": "#a78bfa",
+        "option-meta-random-results-color": "#f472b6",
         "option-meta-prerequisites-color": "#f59e0b",
         "option-meta-conflicts-color": "#f87171",
         "font-base": "20px",
@@ -2830,6 +2832,7 @@
             "option-meta-conditional-color": "Option Detail Conditional Accent",
             "option-meta-auto-grants-color": "Option Detail Auto-Grant Accent",
             "option-meta-slider-modifiers-color": "Option Detail Slider Modifier Accent",
+            "option-meta-random-results-color": "Option Detail Random Results Accent",
             "option-meta-prerequisites-color": "Option Detail Prerequisite Accent",
             "option-meta-conflicts-color": "Option Detail Conflict Accent"
         };
@@ -4264,6 +4267,13 @@
                 defaultOpen: false
             });
             const {
+                container: randomSection,
+                body: randomBody
+            } = createSectionContainer("Random Results", {
+                storageKey: `${optionSectionKeyBase}-advanced-random-results`,
+                defaultOpen: false
+            });
+            const {
                 container: pricingSection,
                 body: pricingBody
             } = createSectionContainer("Conditional Pricing", {
@@ -4284,7 +4294,7 @@
                 storageKey: `${optionSectionKeyBase}-advanced-custom-json`,
                 defaultOpen: false
             });
-            optionAdvancedBody.append(inputSelectionSection, dependenciesSection, automationSection, pricingSection, styleSection, customJsonSection);
+            optionAdvancedBody.append(inputSelectionSection, dependenciesSection, automationSection, randomSection, pricingSection, styleSection, customJsonSection);
 
             const validationBox = document.createElement("div");
             validationBox.className = "inline-warning-list";
@@ -4488,6 +4498,32 @@
             bypassSubcatLimitField.appendChild(bypassSubcatLimitToggle);
             inputSelectionBody.appendChild(bypassSubcatLimitField);
 
+            const lockSelectionField = document.createElement("div");
+            lockSelectionField.className = "field";
+            const lockSelectionToggle = document.createElement("label");
+            lockSelectionToggle.className = "checkbox-option";
+            const lockSelectionInput = document.createElement("input");
+            lockSelectionInput.type = "checkbox";
+            lockSelectionInput.checked = option.lockSelection === true || option.cannotDeselect === true;
+            const lockSelectionText = document.createElement("span");
+            lockSelectionText.textContent = "Lock after selection";
+            lockSelectionInput.addEventListener("change", () => {
+                if (lockSelectionInput.checked) {
+                    option.lockSelection = true;
+                    delete option.cannotDeselect;
+                } else {
+                    delete option.lockSelection;
+                    delete option.cannotDeselect;
+                }
+                schedulePreviewUpdate();
+            });
+            const lockSelectionHint = document.createElement("div");
+            lockSelectionHint.className = "field-help";
+            lockSelectionHint.textContent = "Players can select this option, but cannot remove it manually afterward.";
+            lockSelectionToggle.append(lockSelectionInput, lockSelectionText);
+            lockSelectionField.append(lockSelectionToggle, lockSelectionHint);
+            inputSelectionBody.appendChild(lockSelectionField);
+
             const costOptionsSection = document.createElement("div");
             costOptionsSection.className = "field";
             const costOptionsLabel = document.createElement("label");
@@ -4529,6 +4565,8 @@
             renderSliderModifiersEditor(sliderModifiersContainer, option);
             sliderModifiersSection.append(sliderModifiersLabel, sliderModifiersHint, sliderModifiersContainer);
             body.appendChild(sliderModifiersSection);
+
+            renderRandomTablesEditor(randomBody, option);
 
             const prereqSection = document.createElement("div");
             prereqSection.className = "field";
@@ -5450,6 +5488,265 @@
             : [];
         allocation.types = [...new Set(types)];
         return allocation;
+    }
+
+    function normalizeRandomTablesForEditor(option) {
+        if (!Array.isArray(option.randomTables)) option.randomTables = [];
+        option.randomTables = option.randomTables.filter(table => table && typeof table === "object");
+        return option.randomTables;
+    }
+
+    function createRandomOutcomeEditor(outcomes, outcome, outcomeIndex, render, { allowNested = true } = {}) {
+        const card = document.createElement("div");
+        card.className = "cost-option-card";
+
+        const header = document.createElement("div");
+        header.className = "cost-option-card-header";
+        const title = document.createElement("strong");
+        title.textContent = `Outcome ${outcomeIndex + 1}`;
+        const removeBtn = document.createElement("button");
+        removeBtn.type = "button";
+        removeBtn.className = "button-icon danger";
+        removeBtn.title = "Remove outcome";
+        removeBtn.textContent = "✕";
+        removeBtn.addEventListener("click", () => {
+            outcomes.splice(outcomeIndex, 1);
+            render();
+            schedulePreviewUpdate();
+        });
+        header.append(title, removeBtn);
+        card.appendChild(header);
+
+        const row = document.createElement("div");
+        row.className = "field-inline";
+
+        const minLabel = document.createElement("label");
+        minLabel.textContent = "Min";
+        const minInput = document.createElement("input");
+        minInput.type = "number";
+        minInput.step = "1";
+        minInput.value = outcome.min ?? "";
+        minInput.addEventListener("input", () => {
+            const raw = minInput.value.trim();
+            if (!raw) {
+                delete outcome.min;
+            } else {
+                outcome.min = Math.floor(Number(raw) || 0);
+                minInput.value = String(outcome.min);
+            }
+            schedulePreviewUpdate();
+        });
+
+        const maxLabel = document.createElement("label");
+        maxLabel.textContent = "Max";
+        const maxInput = document.createElement("input");
+        maxInput.type = "number";
+        maxInput.step = "1";
+        maxInput.value = outcome.max ?? "";
+        maxInput.addEventListener("input", () => {
+            const raw = maxInput.value.trim();
+            if (!raw) {
+                delete outcome.max;
+            } else {
+                outcome.max = Math.floor(Number(raw) || 0);
+                maxInput.value = String(outcome.max);
+            }
+            schedulePreviewUpdate();
+        });
+
+        const labelLabel = document.createElement("label");
+        labelLabel.textContent = "Result";
+        const labelInput = document.createElement("input");
+        labelInput.type = "text";
+        labelInput.value = outcome.label || "";
+        labelInput.placeholder = "Result label";
+        labelInput.addEventListener("input", () => {
+            outcome.label = labelInput.value;
+            schedulePreviewUpdate();
+        });
+
+        row.append(minLabel, minInput, maxLabel, maxInput, labelLabel, labelInput);
+        card.appendChild(row);
+
+        if (allowNested) {
+            const nestedWrap = document.createElement("div");
+            nestedWrap.className = "field";
+            const nestedToggle = document.createElement("label");
+            nestedToggle.className = "checkbox-option";
+            const nestedInput = document.createElement("input");
+            nestedInput.type = "checkbox";
+            nestedInput.checked = !!outcome.table;
+            const nestedText = document.createElement("span");
+            nestedText.textContent = "Roll nested table when this outcome is hit";
+            nestedInput.addEventListener("change", () => {
+                if (nestedInput.checked) {
+                    outcome.table = outcome.table || { label: "Subtable", die: 10, outcomes: [] };
+                } else {
+                    delete outcome.table;
+                }
+                render();
+                schedulePreviewUpdate();
+            });
+            nestedToggle.append(nestedInput, nestedText);
+            nestedWrap.appendChild(nestedToggle);
+
+            if (outcome.table) {
+                const nestedTable = outcome.table;
+                if (!Array.isArray(nestedTable.outcomes)) nestedTable.outcomes = [];
+
+                const nestedRow = document.createElement("div");
+                nestedRow.className = "field-inline";
+                const nestedLabelLabel = document.createElement("label");
+                nestedLabelLabel.textContent = "Subtable label";
+                const nestedLabelInput = document.createElement("input");
+                nestedLabelInput.type = "text";
+                nestedLabelInput.value = nestedTable.label || "";
+                nestedLabelInput.placeholder = "Exceedingly Rare Special Item";
+                nestedLabelInput.addEventListener("input", () => {
+                    nestedTable.label = nestedLabelInput.value;
+                    schedulePreviewUpdate();
+                });
+                const nestedDieLabel = document.createElement("label");
+                nestedDieLabel.textContent = "Die";
+                const nestedDieInput = document.createElement("input");
+                nestedDieInput.type = "number";
+                nestedDieInput.min = "1";
+                nestedDieInput.step = "1";
+                nestedDieInput.value = nestedTable.die ?? 10;
+                nestedDieInput.addEventListener("input", () => {
+                    nestedTable.die = Math.max(1, Math.floor(Number(nestedDieInput.value) || 1));
+                    nestedDieInput.value = String(nestedTable.die);
+                    schedulePreviewUpdate();
+                });
+                nestedRow.append(nestedLabelLabel, nestedLabelInput, nestedDieLabel, nestedDieInput);
+                nestedWrap.appendChild(nestedRow);
+
+                nestedTable.outcomes.forEach((nestedOutcome, nestedIndex) => {
+                    nestedWrap.appendChild(createRandomOutcomeEditor(nestedTable.outcomes, nestedOutcome, nestedIndex, render, { allowNested: false }));
+                });
+
+                const addNestedBtn = document.createElement("button");
+                addNestedBtn.type = "button";
+                addNestedBtn.className = "button-subtle";
+                addNestedBtn.textContent = "Add nested outcome";
+                addNestedBtn.addEventListener("click", () => {
+                    nestedTable.outcomes.push({ min: 1, max: 1, label: "New result" });
+                    render();
+                    schedulePreviewUpdate();
+                });
+                nestedWrap.appendChild(addNestedBtn);
+            }
+            card.appendChild(nestedWrap);
+        }
+
+        return card;
+    }
+
+    function renderRandomTablesEditor(container, option) {
+        container.innerHTML = "";
+        const section = document.createElement("div");
+        section.className = "field";
+        const label = document.createElement("label");
+        label.textContent = "Random result tables";
+        const hint = document.createElement("div");
+        hint.className = "field-help";
+        hint.textContent = "Optional. Each time this option is selected, the player rolls the configured table and sees the result on the option card.";
+        const list = document.createElement("div");
+        list.className = "list-stack";
+
+        const render = () => renderRandomTablesEditor(container, option);
+        const tables = Array.isArray(option.randomTables) ? option.randomTables : [];
+        if (!tables.length) {
+            const empty = document.createElement("div");
+            empty.className = "empty-state";
+            empty.textContent = "No random result tables configured.";
+            list.appendChild(empty);
+        }
+
+        tables.forEach((table, tableIndex) => {
+            if (!table || typeof table !== "object") return;
+            if (!Array.isArray(table.outcomes)) table.outcomes = [];
+            const card = document.createElement("div");
+            card.className = "cost-option-card";
+
+            const header = document.createElement("div");
+            header.className = "cost-option-card-header";
+            const title = document.createElement("strong");
+            title.textContent = `Random table ${tableIndex + 1}`;
+            const removeBtn = document.createElement("button");
+            removeBtn.type = "button";
+            removeBtn.className = "button-icon danger";
+            removeBtn.title = "Remove random table";
+            removeBtn.textContent = "✕";
+            removeBtn.addEventListener("click", () => {
+                option.randomTables.splice(tableIndex, 1);
+                if (!option.randomTables.length) delete option.randomTables;
+                render();
+                schedulePreviewUpdate();
+            });
+            header.append(title, removeBtn);
+            card.appendChild(header);
+
+            const row = document.createElement("div");
+            row.className = "field-inline";
+            const nameLabel = document.createElement("label");
+            nameLabel.textContent = "Label";
+            const nameInput = document.createElement("input");
+            nameInput.type = "text";
+            nameInput.value = table.label || "";
+            nameInput.placeholder = "D100 Results";
+            nameInput.addEventListener("input", () => {
+                table.label = nameInput.value;
+                schedulePreviewUpdate();
+            });
+            const dieLabel = document.createElement("label");
+            dieLabel.textContent = "Die";
+            const dieInput = document.createElement("input");
+            dieInput.type = "number";
+            dieInput.min = "1";
+            dieInput.step = "1";
+            dieInput.value = table.die ?? 100;
+            dieInput.addEventListener("input", () => {
+                table.die = Math.max(1, Math.floor(Number(dieInput.value) || 1));
+                dieInput.value = String(table.die);
+                schedulePreviewUpdate();
+            });
+            row.append(nameLabel, nameInput, dieLabel, dieInput);
+            card.appendChild(row);
+
+            table.outcomes.forEach((outcome, outcomeIndex) => {
+                card.appendChild(createRandomOutcomeEditor(table.outcomes, outcome, outcomeIndex, render));
+            });
+
+            const addOutcomeBtn = document.createElement("button");
+            addOutcomeBtn.type = "button";
+            addOutcomeBtn.className = "button-subtle";
+            addOutcomeBtn.textContent = "Add outcome";
+            addOutcomeBtn.addEventListener("click", () => {
+                table.outcomes.push({ min: 1, max: 1, label: "New result" });
+                render();
+                schedulePreviewUpdate();
+            });
+            card.appendChild(addOutcomeBtn);
+            list.appendChild(card);
+        });
+
+        const addTableBtn = document.createElement("button");
+        addTableBtn.type = "button";
+        addTableBtn.className = "button-subtle";
+        addTableBtn.textContent = "Add random table";
+        addTableBtn.addEventListener("click", () => {
+            normalizeRandomTablesForEditor(option).push({
+                label: "Roll",
+                die: 100,
+                outcomes: []
+            });
+            render();
+            schedulePreviewUpdate();
+        });
+
+        section.append(label, hint, list, addTableBtn);
+        container.appendChild(section);
     }
 
     function renderPointAllocationEditor(container, option) {

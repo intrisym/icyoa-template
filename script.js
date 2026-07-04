@@ -41,6 +41,7 @@ const subcategoryDiscountSelections = {};
 const categoryDiscountSelections = {};
 const optionGrantDiscountSelections = {};
 const autoGrantedSelections = {};
+const randomRollResults = {};
 const selectionHistory = [];
 const optionGridLayouts = new Set();
 const OPTION_CARD_MIN_WIDTH = 280;
@@ -74,6 +75,7 @@ const DARK_THEME_VARS = {
     "option-meta-conditional-color": "#38bdf8",
     "option-meta-auto-grants-color": "#22c55e",
     "option-meta-slider-modifiers-color": "#a78bfa",
+    "option-meta-random-results-color": "#f472b6",
     "option-meta-prerequisites-color": "#f59e0b",
     "option-meta-conflicts-color": "#f87171"
 };
@@ -376,6 +378,7 @@ function resetGlobalState() {
     clearObject(categoryDiscountSelections);
     clearObject(optionGrantDiscountSelections);
     clearObject(autoGrantedSelections);
+    clearObject(randomRollResults);
     openCategories.clear();
     openSubcategories.clear();
     animateMainTab = false;
@@ -1866,7 +1869,8 @@ function buildExportState() {
         subcategoryDiscountSelections,
         categoryDiscountSelections,
         optionGrantDiscountSelections,
-        autoGrantedSelections
+        autoGrantedSelections,
+        randomRollResults
     };
     applyDynamicCosts();
     return state;
@@ -1899,6 +1903,7 @@ function restorePlayerState(state) {
     clearObject(categoryDiscountSelections);
     clearObject(optionGrantDiscountSelections);
     clearObject(autoGrantedSelections);
+    clearObject(randomRollResults);
 
     points = { ...(state.points || {}) };
     Object.assign(selectedOptions, state.selectedOptions || {});
@@ -1916,6 +1921,7 @@ function restorePlayerState(state) {
     Object.assign(categoryDiscountSelections, state.categoryDiscountSelections || {});
     Object.assign(optionGrantDiscountSelections, state.optionGrantDiscountSelections || {});
     Object.assign(autoGrantedSelections, state.autoGrantedSelections || {});
+    Object.assign(randomRollResults, state.randomRollResults || {});
     selectionHistory.length = 0;
     (state.selectionHistory || []).forEach(id => selectionHistory.push(id));
 }
@@ -1945,6 +1951,7 @@ function buildPackedExportState() {
     if (hasOwnEntries(full.categoryDiscountSelections)) packed.c = full.categoryDiscountSelections;
     if (hasOwnEntries(full.optionGrantDiscountSelections)) packed.g = full.optionGrantDiscountSelections;
     if (hasOwnEntries(full.autoGrantedSelections)) packed.r = full.autoGrantedSelections;
+    if (hasOwnEntries(full.randomRollResults)) packed.o = full.randomRollResults;
 
     return packed;
 }
@@ -1968,7 +1975,8 @@ function unpackImportedState(importedData) {
         subcategoryDiscountSelections: importedData.u || {},
         categoryDiscountSelections: importedData.c || {},
         optionGrantDiscountSelections: importedData.g || {},
-        autoGrantedSelections: importedData.r || {}
+        autoGrantedSelections: importedData.r || {},
+        randomRollResults: importedData.o || {}
     };
 }
 
@@ -2124,6 +2132,7 @@ document.getElementById("resetBtn").onclick = () => {
     for (let key in categoryDiscountSelections) delete categoryDiscountSelections[key];
     for (let key in optionGrantDiscountSelections) delete optionGrantDiscountSelections[key];
     for (let key in autoGrantedSelections) delete autoGrantedSelections[key];
+    for (let key in randomRollResults) delete randomRollResults[key];
 
 
     // Reset points and attribute ranges to their original states from input.json
@@ -2169,6 +2178,7 @@ modalConfirmBtn.onclick = async () => {
         for (let key in categoryDiscountSelections) delete categoryDiscountSelections[key];
         for (let key in optionGrantDiscountSelections) delete optionGrantDiscountSelections[key];
         for (let key in autoGrantedSelections) delete autoGrantedSelections[key];
+        for (let key in randomRollResults) delete randomRollResults[key];
 
         // Apply imported states
         points = {
@@ -2259,6 +2269,11 @@ modalConfirmBtn.onclick = async () => {
                     sourceId: val.sourceId,
                     canDeselect: val.canDeselect === true
                 };
+            }
+        });
+        Object.entries(importedData.randomRollResults || {}).forEach(([key, val]) => {
+            if (Array.isArray(val)) {
+                randomRollResults[key] = val.filter(entry => entry && typeof entry === "object");
             }
         });
 
@@ -3000,6 +3015,87 @@ function removeOptionsFromInactiveCategoriesAndSubcategories() {
     }
 }
 
+function isOptionSelectionLocked(option) {
+    return option?.lockSelection === true || option?.cannotDeselect === true;
+}
+
+function normalizeRandomTables(option) {
+    const tables = Array.isArray(option?.randomTables) ? option.randomTables : [];
+    return tables
+        .map(table => ({
+            label: String(table?.label || "Roll").trim() || "Roll",
+            die: Math.max(1, Math.floor(Number(table?.die) || 100)),
+            outcomes: Array.isArray(table?.outcomes) ? table.outcomes
+                .map(outcome => ({
+                    min: Math.floor(Number(outcome?.min)),
+                    max: Math.floor(Number(outcome?.max)),
+                    label: String(outcome?.label || "").trim(),
+                    table: outcome?.table && typeof outcome.table === "object" ? outcome.table : null
+                }))
+                .filter(outcome => Number.isFinite(outcome.min) && Number.isFinite(outcome.max) && outcome.min <= outcome.max && outcome.label)
+                : []
+        }))
+        .filter(table => table.outcomes.length > 0);
+}
+
+function rollDie(sides) {
+    const die = Math.max(1, Math.floor(Number(sides) || 1));
+    return Math.floor(Math.random() * die) + 1;
+}
+
+function rollRandomTable(table) {
+    const normalizedTable = {
+        label: String(table?.label || "Roll").trim() || "Roll",
+        die: Math.max(1, Math.floor(Number(table?.die) || 100)),
+        outcomes: Array.isArray(table?.outcomes) ? table.outcomes : []
+    };
+    const roll = rollDie(normalizedTable.die);
+    const outcome = normalizedTable.outcomes.find(entry => {
+        const min = Math.floor(Number(entry?.min));
+        const max = Math.floor(Number(entry?.max));
+        return Number.isFinite(min) && Number.isFinite(max) && roll >= min && roll <= max;
+    }) || null;
+    const result = {
+        table: normalizedTable.label,
+        die: normalizedTable.die,
+        roll,
+        outcome: outcome?.label || "No matching outcome"
+    };
+    if (outcome?.table && typeof outcome.table === "object") {
+        result.subroll = rollRandomTable(outcome.table);
+    }
+    return result;
+}
+
+function rollOptionRandomTables(option) {
+    const tables = normalizeRandomTables(option);
+    if (!tables.length || !option?.id) return;
+    if (!Array.isArray(randomRollResults[option.id])) randomRollResults[option.id] = [];
+    randomRollResults[option.id].push({
+        selection: selectedOptions[option.id] || 1,
+        results: tables.map(rollRandomTable)
+    });
+}
+
+function formatRandomRollResult(result) {
+    if (!result || typeof result !== "object") return "";
+    let line = `${escapeHtml(result.table || "Roll")}: d${escapeHtml(String(result.die || ""))} = ${escapeHtml(String(result.roll || ""))} -> ${escapeHtml(result.outcome || "")}`;
+    if (result.subroll) {
+        line += `; ${formatRandomRollResult(result.subroll)}`;
+    }
+    return line;
+}
+
+function getRandomRollDisplayRows(option) {
+    const entries = Array.isArray(randomRollResults[option?.id]) ? randomRollResults[option.id] : [];
+    return entries.map((entry, index) => {
+        const selection = Number(entry?.selection) || index + 1;
+        const results = Array.isArray(entry?.results) ? entry.results : [];
+        const text = results.map(formatRandomRollResult).filter(Boolean).join(" | ");
+        return `Roll ${selection}: ${text || "No result"}`;
+    });
+}
+
 
 /**
  * Removes an option from selectedOptions and refunds its cost.
@@ -3011,6 +3107,7 @@ function removeSelection(option, options = {}) {
     const count = typeof selectedOptions[option.id] === 'number' ? selectedOptions[option.id] : 1;
     if (!selectedOptions[option.id]) return; // Option not selected
     if (!options.force && isAutoGrantedLocked(option.id)) return;
+    if (!options.force && isOptionSelectionLocked(option)) return;
     restoreActiveSliderModifierPointValues();
 
     if (!removeSelectionsAffectedByCostModifierChange(option, count - 1, options)) {
@@ -3079,10 +3176,15 @@ function removeSelection(option, options = {}) {
 
     if (getOptionMaxSelections(option) > 1 && count > 1) {
         selectedOptions[option.id] = count - 1;
+        if (Array.isArray(randomRollResults[option.id])) {
+            randomRollResults[option.id].pop();
+            if (randomRollResults[option.id].length === 0) delete randomRollResults[option.id];
+        }
     } else {
         delete selectedOptions[option.id];
         delete discountedSelections[option.id]; // Clear all recorded discounts for this option
         delete autoGrantedSelections[option.id];
+        delete randomRollResults[option.id];
         if (option.inputType === "text") {
             delete storyInputs[option.id];
         }
@@ -3311,6 +3413,9 @@ function addSelection(option, options = {}) {
 
     selectedOptions[option.id] = current + 1;
     selectionHistory.push(option.id);
+    if (!isAutoGrant) {
+        rollOptionRandomTables(option);
+    }
     if (isAutoGrant) {
         autoGrantedSelections[option.id] = {
             sourceId: options.autoGrantSourceId,
@@ -5275,6 +5380,7 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
     const hasTextInput = opt.inputType === "text";
     const hasMultipleCostOptions = normalizeOptionCostOptions(opt).length > 1;
     const isSingleChoice = maxSelections === 1;
+    const lockedSelection = isOptionSelectionLocked(opt);
 
     if (isSingleChoice && !hasTextInput && !hasMultipleCostOptions) {
         wrapper.classList.add("is-clickable");
@@ -5296,7 +5402,7 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
                 return;
             }
             if (selectedCount > 0) {
-                removeSelection(opt);
+                if (!lockedSelection) removeSelection(opt);
             } else {
                 ensureSubcategoryLimit(opt);
                 if (canSelect(opt)) {
@@ -5415,6 +5521,11 @@ function renderOption(opt, grid, subcat, subcatKey, cat, catIndex, catKey, catDi
     const sliderModifierRows = getSliderModifierDisplayRows(opt);
     if (sliderModifierRows.length > 0) {
         appendOptionMetaSection(requirements, "Slider Modifiers", sliderModifierRows, "option-meta-slider-modifiers");
+    }
+
+    const randomRollRows = getRandomRollDisplayRows(opt);
+    if (randomRollRows.length > 0) {
+        appendOptionMetaSection(requirements, "Roll Results", randomRollRows, "option-meta-random-results");
     }
 
     // Indicate modified cost availability/applied for this item.
@@ -5837,6 +5948,7 @@ function renderSelectionButton(opt, contentWrapper) {
     const canAdd = canSelect(opt);
     const grant = autoGrantedSelections[opt.id];
     const lockedAutoGrant = isAutoGrantedLocked(opt.id);
+    const lockedSelection = isOptionSelectionLocked(opt);
     const grantSourceLabel = grant?.sourceId ? (getOptionLabel(grant.sourceId) || grant.sourceId) : "";
 
     if (displayCostOptions.length > 1 && count < max && !grant) {
@@ -5889,11 +6001,13 @@ function renderSelectionButton(opt, contentWrapper) {
         decrementBtn.type = "button";
         decrementBtn.className = "stepper-btn remove-btn";
         decrementBtn.textContent = "-";
-        decrementBtn.disabled = count <= 0 || lockedAutoGrant;
+        decrementBtn.disabled = count <= 0 || lockedAutoGrant || lockedSelection;
         if (lockedAutoGrant) {
             decrementBtn.title = grantSourceLabel
                 ? `Granted by ${grantSourceLabel} and cannot be removed directly.`
                 : "This granted option cannot be removed directly.";
+        } else if (lockedSelection) {
+            decrementBtn.title = "This option is locked after selection.";
         }
         decrementBtn.onclick = (e) => {
             e.stopPropagation();
@@ -5907,11 +6021,13 @@ function renderSelectionButton(opt, contentWrapper) {
     } else {
         const btn = document.createElement("button");
         btn.textContent = count > 0 ? (grant ? "✓ Granted" : "✓ Selected") : "Select";
-        btn.disabled = (!canAdd && count === 0) || lockedAutoGrant;
+        btn.disabled = (!canAdd && count === 0) || lockedAutoGrant || (count > 0 && lockedSelection);
         if (lockedAutoGrant) {
             btn.title = grantSourceLabel
                 ? `Granted by ${grantSourceLabel} and cannot be removed directly.`
                 : "This granted option cannot be removed directly.";
+        } else if (count > 0 && lockedSelection) {
+            btn.title = "This option is locked after selection.";
         }
         btn.onclick = () => {
             if (count > 0) {

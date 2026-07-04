@@ -66,6 +66,7 @@ const FEATURE_COVERAGE = [
     "Lantern Colorless Rings grant forced zero-point Emotional Instability and Characteristic Power discounts",
     "automatic option grants, locked grants, and free granted selections",
     "option-granted discount slots across target options",
+    "locked option selections and visible random result tables",
     "theme settings include option metadata section colors",
     "custom JSON option fields are preserved and ignored by runtime logic",
     "packed export/import state round trips through player script helpers",
@@ -83,6 +84,7 @@ const OPTION_META_THEME_KEYS = [
     "option-meta-conditional-color",
     "option-meta-auto-grants-color",
     "option-meta-slider-modifiers-color",
+    "option-meta-random-results-color",
     "option-meta-prerequisites-color",
     "option-meta-conflicts-color"
 ];
@@ -196,6 +198,7 @@ function runPlayerScriptExportImportHelpers(state) {
         "categoryDiscountSelections",
         "optionGrantDiscountSelections",
         "autoGrantedSelections",
+        "randomRollResults",
         `${source}; const packed = buildPackedExportState(); return { packed, unpacked: unpackImportedState(JSON.parse(JSON.stringify(packed))) };`
     );
     return execute(
@@ -213,7 +216,8 @@ function runPlayerScriptExportImportHelpers(state) {
         state.subcategoryDiscountSelections || {},
         state.categoryDiscountSelections || {},
         state.optionGrantDiscountSelections || {},
-        state.autoGrantedSelections || {}
+        state.autoGrantedSelections || {},
+        state.randomRollResults || {}
     );
 }
 
@@ -526,6 +530,8 @@ class CyoaEngine {
         this.categoryDiscountSelections = {};
         this.optionGrantDiscountSelections = {};
         this.autoGrantedSelections = {};
+        this.randomRollResults = {};
+        this.randomRollQueue = [];
         this.removedByCostModifier = [];
         this.costModifierChangeConfirmed = true;
         this.optionMap = new Map();
@@ -624,6 +630,35 @@ class CyoaEngine {
                                 ]
                             },
                             { id: "multi", label: "Multi", cost: { Points: 1 }, maxSelections: 3, countsAsOneSelection: true },
+                            {
+                                id: "lockedRandom",
+                                label: "Locked Random",
+                                cost: { Points: 1 },
+                                maxSelections: 2,
+                                lockSelection: true,
+                                randomTables: [
+                                    {
+                                        label: "Prize",
+                                        die: 100,
+                                        outcomes: [
+                                            { min: 1, max: 99, label: "Common Prize" },
+                                            {
+                                                min: 100,
+                                                max: 100,
+                                                label: "Rare Prize",
+                                                table: {
+                                                    label: "Rare Detail",
+                                                    die: 10,
+                                                    outcomes: [
+                                                        { min: 1, max: 5, label: "Rare A" },
+                                                        { min: 6, max: 10, label: "Rare B" }
+                                                    ]
+                                                }
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
                             { id: "limitBypass", label: "Limit Bypass", cost: {}, bypassSubcategoryMaxSelections: true },
                             { id: "discountTrigger", label: "Discount Trigger", cost: {} },
                             { id: "surchargeTrigger", label: "Surcharge Trigger", cost: {} },
@@ -2178,6 +2213,9 @@ class CyoaEngine {
         }
         this.selectedOptions[option.id] = (this.selectedOptions[option.id] || 0) + 1;
         this.selectionHistory.push(option.id);
+        if (!isAutoGrant) {
+            this.rollOptionRandomTables(option);
+        }
         if (isAutoGrant) {
             this.autoGrantedSelections[option.id] = {
                 sourceId: this.pendingAutoGrantSourceId,
@@ -2190,9 +2228,10 @@ class CyoaEngine {
         return true;
     }
 
-    remove(optionId, { skipCostModifierAffectedRemoval = false } = {}) {
+    remove(optionId, { skipCostModifierAffectedRemoval = false, force = false } = {}) {
         const option = this.option(optionId);
         assert(this.selectedOptions[option.id] > 0, `${this.filename}: expected ${optionId} to be selected`);
+        if (!force && this.isOptionSelectionLocked(option)) return false;
         this.restoreActiveSliderModifierPointValues();
         const confirmed = this.removeSelectionsAffectedByCostModifierChange(option, (this.selectedOptions[option.id] || 0) - 1, {
             skipCostModifierAffectedRemoval
@@ -2211,6 +2250,10 @@ class CyoaEngine {
         if (this.selectedOptions[option.id] <= 0) {
             delete this.selectedOptions[option.id];
             if (option.pointAllocation) delete this.pointAllocationSelections[option.id];
+            delete this.randomRollResults[option.id];
+        } else if (Array.isArray(this.randomRollResults[option.id])) {
+            this.randomRollResults[option.id].pop();
+            if (this.randomRollResults[option.id].length === 0) delete this.randomRollResults[option.id];
         }
         if (!this.selectedOptions[option.id] && option.inputType === "text") delete this.storyInputs[option.id];
         const historyIndex = this.selectionHistory.indexOf(option.id);
@@ -2365,6 +2408,68 @@ class CyoaEngine {
         this.storyInputs[option.id] = sanitizeStoryInputValue(value, option.maxLength || 200);
     }
 
+    isOptionSelectionLocked(option) {
+        return option?.lockSelection === true || option?.cannotDeselect === true;
+    }
+
+    normalizeRandomTables(option) {
+        const tables = Array.isArray(option?.randomTables) ? option.randomTables : [];
+        return tables
+            .map(table => ({
+                label: String(table?.label || "Roll").trim() || "Roll",
+                die: Math.max(1, Math.floor(Number(table?.die) || 100)),
+                outcomes: Array.isArray(table?.outcomes) ? table.outcomes
+                    .map(outcome => ({
+                        min: Math.floor(Number(outcome?.min)),
+                        max: Math.floor(Number(outcome?.max)),
+                        label: String(outcome?.label || "").trim(),
+                        table: outcome?.table && typeof outcome.table === "object" ? outcome.table : null
+                    }))
+                    .filter(outcome => Number.isFinite(outcome.min) && Number.isFinite(outcome.max) && outcome.min <= outcome.max && outcome.label)
+                    : []
+            }))
+            .filter(table => table.outcomes.length > 0);
+    }
+
+    rollDie(sides) {
+        if (this.randomRollQueue.length) return this.randomRollQueue.shift();
+        return Math.max(1, Math.floor(Number(sides) || 1));
+    }
+
+    rollRandomTable(table) {
+        const normalizedTable = {
+            label: String(table?.label || "Roll").trim() || "Roll",
+            die: Math.max(1, Math.floor(Number(table?.die) || 100)),
+            outcomes: Array.isArray(table?.outcomes) ? table.outcomes : []
+        };
+        const roll = this.rollDie(normalizedTable.die);
+        const outcome = normalizedTable.outcomes.find(entry => {
+            const min = Math.floor(Number(entry?.min));
+            const max = Math.floor(Number(entry?.max));
+            return Number.isFinite(min) && Number.isFinite(max) && roll >= min && roll <= max;
+        }) || null;
+        const result = {
+            table: normalizedTable.label,
+            die: normalizedTable.die,
+            roll,
+            outcome: outcome?.label || "No matching outcome"
+        };
+        if (outcome?.table && typeof outcome.table === "object") {
+            result.subroll = this.rollRandomTable(outcome.table);
+        }
+        return result;
+    }
+
+    rollOptionRandomTables(option) {
+        const tables = this.normalizeRandomTables(option);
+        if (!tables.length) return;
+        if (!Array.isArray(this.randomRollResults[option.id])) this.randomRollResults[option.id] = [];
+        this.randomRollResults[option.id].push({
+            selection: this.selectedOptions[option.id] || 1,
+            results: tables.map(table => this.rollRandomTable(table))
+        });
+    }
+
     assertFinitePoints() {
         Object.entries(this.points).forEach(([type, value]) => {
             assert(Number.isFinite(Number(value)), `${this.filename}: point type ${type} became non-finite`);
@@ -2387,7 +2492,8 @@ class CyoaEngine {
             subcategoryDiscountSelections: this.subcategoryDiscountSelections,
             categoryDiscountSelections: this.categoryDiscountSelections,
             optionGrantDiscountSelections: this.optionGrantDiscountSelections,
-            autoGrantedSelections: this.autoGrantedSelections
+            autoGrantedSelections: this.autoGrantedSelections,
+            randomRollResults: this.randomRollResults
         };
     }
 
@@ -2407,6 +2513,7 @@ class CyoaEngine {
         if (hasOwnEntries(full.categoryDiscountSelections)) packed.c = full.categoryDiscountSelections;
         if (hasOwnEntries(full.optionGrantDiscountSelections)) packed.g = full.optionGrantDiscountSelections;
         if (hasOwnEntries(full.autoGrantedSelections)) packed.r = full.autoGrantedSelections;
+        if (hasOwnEntries(full.randomRollResults)) packed.o = full.randomRollResults;
         return packed;
     }
 
@@ -2434,6 +2541,7 @@ class CyoaEngine {
         this.categoryDiscountSelections = { ...(unpacked.categoryDiscountSelections || {}) };
         this.optionGrantDiscountSelections = { ...(unpacked.optionGrantDiscountSelections || {}) };
         this.autoGrantedSelections = { ...(unpacked.autoGrantedSelections || {}) };
+        this.randomRollResults = { ...(unpacked.randomRollResults || {}) };
     }
 
     clonePlayerState() {
@@ -2462,6 +2570,7 @@ class CyoaEngine {
         this.categoryDiscountSelections = { ...(state.categoryDiscountSelections || {}) };
         this.optionGrantDiscountSelections = { ...(state.optionGrantDiscountSelections || {}) };
         this.autoGrantedSelections = { ...(state.autoGrantedSelections || {}) };
+        this.randomRollResults = { ...(state.randomRollResults || {}) };
         this.selectionHistory = [...(state.selectionHistory || [])];
     }
 
@@ -2493,6 +2602,8 @@ class CyoaEngine {
         this.categoryDiscountSelections = {};
         this.optionGrantDiscountSelections = {};
         this.autoGrantedSelections = {};
+        this.randomRollResults = {};
+        this.randomRollResults = {};
         this.optionMap = new Map();
         this.categories.forEach(category => {
             (category.options || []).forEach(option => this.optionMap.set(option.id, option));
@@ -2527,7 +2638,8 @@ function unpackImportedState(importedData) {
         subcategoryDiscountSelections: importedData.u || {},
         categoryDiscountSelections: importedData.c || {},
         optionGrantDiscountSelections: importedData.g || {},
-        autoGrantedSelections: importedData.r || {}
+        autoGrantedSelections: importedData.r || {},
+        randomRollResults: importedData.o || {}
     };
 }
 
@@ -4948,6 +5060,44 @@ test("option-granted discount slots should apply only to assigned target selecti
     assertDeepEqual(engine.effectiveCost("discountGrantTargetB"), { Points: 5 }, "A one-slot grant should not discount a second target");
 });
 
+test("locked random result options should record visible roll history and block manual removal", () => {
+    const engine = CyoaEngine.synthetic();
+    engine.randomRollQueue = [100, 7, 12];
+
+    engine.select("lockedRandom");
+    assert.strictEqual(engine.selectedOptions.lockedRandom, 1);
+    assert.strictEqual(engine.points.Points, 9);
+    assert.deepStrictEqual(engine.randomRollResults.lockedRandom, [
+        {
+            selection: 1,
+            results: [
+                {
+                    table: "Prize",
+                    die: 100,
+                    roll: 100,
+                    outcome: "Rare Prize",
+                    subroll: {
+                        table: "Rare Detail",
+                        die: 10,
+                        roll: 7,
+                        outcome: "Rare B"
+                    }
+                }
+            ]
+        }
+    ]);
+
+    assert.strictEqual(engine.remove("lockedRandom"), false);
+    assert.strictEqual(engine.selectedOptions.lockedRandom, 1);
+    assert.strictEqual(engine.points.Points, 9);
+    assert.strictEqual(engine.randomRollResults.lockedRandom.length, 1);
+
+    engine.select("lockedRandom");
+    assert.strictEqual(engine.selectedOptions.lockedRandom, 2);
+    assert.strictEqual(engine.randomRollResults.lockedRandom.length, 2);
+    assert.strictEqual(engine.randomRollResults.lockedRandom[1].results[0].outcome, "Common Prize");
+});
+
 test("unknown option fields should be preserved without affecting runtime logic", () => {
     const engine = CyoaEngine.synthetic();
     const option = engine.option("customFields");
@@ -4972,6 +5122,7 @@ test("packed export state should round-trip selections, points, inputs, and gran
     engine.subcategoryDiscountSelections.sub = { option: 1 };
     engine.categoryDiscountSelections.cat = { option: 1 };
     engine.optionGrantDiscountSelections.grant = { option: 1 };
+    engine.randomRollResults.lockedRandom = [{ selection: 1, results: [{ table: "Prize", die: 100, roll: 42, outcome: "Common Prize" }] }];
     engine.select("grantSource");
 
     const packed = engine.buildPackedExportState();
@@ -4989,6 +5140,7 @@ test("packed export state should round-trip selections, points, inputs, and gran
     assert.deepStrictEqual(unpacked.categoryDiscountSelections, engine.categoryDiscountSelections);
     assert.deepStrictEqual(unpacked.optionGrantDiscountSelections, engine.optionGrantDiscountSelections);
     assert.deepStrictEqual(unpacked.autoGrantedSelections, engine.autoGrantedSelections);
+    assert.deepStrictEqual(unpacked.randomRollResults, engine.randomRollResults);
 
     const scriptRoundTrip = runPlayerScriptExportImportHelpers(engine.buildExportState());
     assert.deepStrictEqual(scriptRoundTrip.unpacked.selectedOptions, engine.selectedOptions);
@@ -5005,6 +5157,7 @@ test("packed export state should round-trip selections, points, inputs, and gran
     assert.deepStrictEqual(scriptRoundTrip.unpacked.categoryDiscountSelections, engine.categoryDiscountSelections);
     assert.deepStrictEqual(scriptRoundTrip.unpacked.optionGrantDiscountSelections, engine.optionGrantDiscountSelections);
     assert.deepStrictEqual(scriptRoundTrip.unpacked.autoGrantedSelections, engine.autoGrantedSelections);
+    assert.deepStrictEqual(scriptRoundTrip.unpacked.randomRollResults, engine.randomRollResults);
 
     const importedEngine = CyoaEngine.synthetic();
     importedEngine.importState(scriptRoundTrip.packed);
@@ -5022,6 +5175,7 @@ test("packed export state should round-trip selections, points, inputs, and gran
     assert.deepStrictEqual(importedEngine.categoryDiscountSelections, engine.categoryDiscountSelections);
     assert.deepStrictEqual(importedEngine.optionGrantDiscountSelections, engine.optionGrantDiscountSelections);
     assert.deepStrictEqual(importedEngine.autoGrantedSelections, engine.autoGrantedSelections);
+    assert.deepStrictEqual(importedEngine.randomRollResults, engine.randomRollResults);
 });
 
 test("theme settings should define colors for every option metadata section", () => {

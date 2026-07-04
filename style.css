@@ -36,6 +36,7 @@
     --option-meta-conditional-color: #0ea5e9;
     --option-meta-auto-grants-color: #16a34a;
     --option-meta-slider-modifiers-color: #7c3aed;
+    --option-meta-random-results-color: #db2777;
     --option-meta-prerequisites-color: #f59e0b;
     --option-meta-conflicts-color: #dc2626;
 
@@ -495,6 +496,10 @@ button:disabled {
 
 .option-meta-slider-modifiers {
     border-left-color: var(--option-meta-slider-modifiers-color);
+}
+
+.option-meta-random-results {
+    border-left-color: var(--option-meta-random-results-color);
 }
 
 .option-meta-prerequisites {
