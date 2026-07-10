@@ -20,6 +20,7 @@ const FEATURE_COVERAGE = [
     "Superpowered World skill mastery upgrades require base skill purchases",
     "user-controlled fixed point grants split across multiple point types with sliders",
     "selected options can apply live caps, bonuses, subtraction, and multipliers to configured point types",
+    "repeatable slider modifiers keep player-chosen targets per selection",
     "standalone points display is hidden when selectable cost options are shown",
     "single-select payment options render explicit selection controls",
     "point type renames cascade through all cost maps",
@@ -1397,6 +1398,21 @@ class CyoaEngine {
         }).filter(effect => Number.isFinite(effect.value) && (effect.selectable || sliderTargetSet.has(effect.attribute)));
     }
 
+    getSliderModifierSelectionRows(optionId) {
+        const raw = this.sliderModifierSelections[optionId];
+        if (!Array.isArray(raw)) return [];
+        if (raw.every(entry => Array.isArray(entry))) return raw.map(row => [...row]);
+        return [raw];
+    }
+
+    setSliderModifierSelectionRows(optionId, rows) {
+        const normalized = Array.isArray(rows)
+            ? rows.map(row => Array.isArray(row) ? [...row] : []).filter(row => row.some(Boolean))
+            : [];
+        if (normalized.length) this.sliderModifierSelections[optionId] = normalized;
+        else delete this.sliderModifierSelections[optionId];
+    }
+
     restoreActiveSliderModifierPointValues() {
         Object.entries(this.activeSliderModifierPointBaselines).forEach(([type, baseline]) => {
             if (baseline?.existed) this.points[type] = baseline.value;
@@ -1544,10 +1560,15 @@ class CyoaEngine {
         Object.entries(this.selectedOptions).forEach(([optionId, count]) => {
             if (!count) return;
             const option = this.optionMap.get(optionId);
-            this.normalizeSliderModifiers(option).forEach((effect, index) => {
-                const attribute = effect.selectable ? this.sliderModifierSelections[optionId]?.[index] : effect.attribute;
-                if (attribute) selectedEffects.push({ ...effect, attribute });
-            });
+            const effects = this.normalizeSliderModifiers(option);
+            const selectionCount = Math.max(1, Number(count) || 1);
+            for (let selectionIndex = 0; selectionIndex < selectionCount; selectionIndex += 1) {
+                effects.forEach((effect, index) => {
+                    const rows = this.getSliderModifierSelectionRows(optionId);
+                    const attribute = effect.selectable ? rows[selectionIndex]?.[index] : effect.attribute;
+                    if (attribute) selectedEffects.push({ ...effect, attribute });
+                });
+            }
         });
 
         selectedEffects.filter(effect => effect.type === "cap").forEach(effect => {
@@ -2251,9 +2272,15 @@ class CyoaEngine {
             delete this.selectedOptions[option.id];
             if (option.pointAllocation) delete this.pointAllocationSelections[option.id];
             delete this.randomRollResults[option.id];
+            delete this.sliderModifierSelections[option.id];
         } else if (Array.isArray(this.randomRollResults[option.id])) {
             this.randomRollResults[option.id].pop();
             if (this.randomRollResults[option.id].length === 0) delete this.randomRollResults[option.id];
+        }
+        if (this.selectedOptions[option.id] && Array.isArray(this.sliderModifierSelections[option.id])) {
+            const rows = this.getSliderModifierSelectionRows(option.id);
+            rows.splice(this.selectedOptions[option.id], 1);
+            this.setSliderModifierSelectionRows(option.id, rows);
         }
         if (!this.selectedOptions[option.id] && option.inputType === "text") delete this.storyInputs[option.id];
         const historyIndex = this.selectionHistory.indexOf(option.id);
@@ -4029,6 +4056,8 @@ test("slider modifiers should cap with refund and add fixed values", () => {
     assert(
         EDITOR_SCRIPT_SOURCE.includes("Subtract") &&
             EDITOR_SCRIPT_SOURCE.includes("effect.choices") &&
+            PLAYER_SCRIPT_SOURCE.includes("Clear all") &&
+            PLAYER_SCRIPT_SOURCE.includes("getSliderModifierSelectionRows") &&
             EDITOR_SCRIPT_SOURCE.includes("return getPointTypeNames();") &&
             PLAYER_SCRIPT_SOURCE.includes("return Object.keys(originalPoints || {});") &&
             PLAYER_SCRIPT_SOURCE.includes('effect.type === "subtract"') &&
@@ -4037,6 +4066,36 @@ test("slider modifiers should cap with refund and add fixed values", () => {
             PLAYER_SCRIPT_SOURCE.includes("option-meta-slider-modifiers"),
         "visual editor and player should support subtract modifiers, point-type-based player-choice lists, and card display rows"
     );
+});
+
+test("repeatable slider modifiers should track player choices per selection", () => {
+    const engine = CyoaEngine.synthetic();
+    const repeatableModifier = {
+        id: "repeatableSliderModifier",
+        label: "Repeatable Slider Modifier",
+        costOptions: [{ cost: {} }],
+        maxSelections: 2,
+        bypassSubcategoryMaxSelections: true,
+        sliderModifiers: [
+            { type: "add", selectable: true, value: 2, choices: ["Skills", "Equipment"] }
+        ]
+    };
+    findCategory(engine.data, "Core").subcategories[0].options.push(repeatableModifier);
+    engine.optionMap.set(repeatableModifier.id, repeatableModifier);
+    engine.sliderModifierSelections[repeatableModifier.id] = [["Skills"], ["Equipment"]];
+
+    engine.select(repeatableModifier.id);
+    assert.strictEqual(engine.points.Skills, 2);
+    assert.strictEqual(engine.points.Equipment, 0);
+    engine.select(repeatableModifier.id);
+    assert.strictEqual(engine.points.Skills, 2);
+    assert.strictEqual(engine.points.Equipment, 2);
+
+    engine.remove(repeatableModifier.id);
+    assert.strictEqual(engine.selectedOptions.repeatableSliderModifier, 1);
+    assert.deepStrictEqual(engine.sliderModifierSelections.repeatableSliderModifier, [["Skills"]]);
+    assert.strictEqual(engine.points.Skills, 2);
+    assert.strictEqual(engine.points.Equipment, 0);
 });
 
 test("visual editor should expose add and remove controls for point allocation", () => {

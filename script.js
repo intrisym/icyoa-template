@@ -1072,9 +1072,27 @@ function normalizeSliderModifiers(option) {
         .filter(effect => effect && Number.isFinite(effect.value) && (effect.selectable || targetSet.has(effect.attribute)));
 }
 
-function getSelectedSliderModifierAttribute(optionId, effect, index) {
+function getSliderModifierSelectionRows(optionId) {
+    const raw = sliderModifierSelections[optionId];
+    if (!Array.isArray(raw)) return [];
+    if (raw.every(entry => Array.isArray(entry))) return raw.map(row => [...row]);
+    return [raw];
+}
+
+function setSliderModifierSelectionRows(optionId, rows) {
+    const normalized = Array.isArray(rows)
+        ? rows.map(row => Array.isArray(row) ? [...row] : []).filter(row => row.some(Boolean))
+        : [];
+    if (normalized.length) {
+        sliderModifierSelections[optionId] = normalized;
+    } else {
+        delete sliderModifierSelections[optionId];
+    }
+}
+
+function getSelectedSliderModifierAttribute(optionId, effect, index, selectionIndex = 0) {
     if (!effect.selectable) return effect.attribute;
-    return sliderModifierSelections[optionId]?.[index] || "";
+    return getSliderModifierSelectionRows(optionId)[selectionIndex]?.[index] || "";
 }
 
 function clampSliderAttribute(attribute, cap) {
@@ -1094,11 +1112,15 @@ function applySelectedSliderModifiers() {
     Object.entries(selectedOptions).forEach(([optionId, count]) => {
         if (!count) return;
         const option = findOptionById(optionId);
-        normalizeSliderModifiers(option).forEach((effect, index) => {
-            const attribute = getSelectedSliderModifierAttribute(optionId, effect, index);
-            if (!attribute) return;
-            selectedEffects.push({ ...effect, attribute });
-        });
+        const effects = normalizeSliderModifiers(option);
+        const selectionCount = Math.max(1, Number(count) || 1);
+        for (let selectionIndex = 0; selectionIndex < selectionCount; selectionIndex += 1) {
+            effects.forEach((effect, index) => {
+                const attribute = getSelectedSliderModifierAttribute(optionId, effect, index, selectionIndex);
+                if (!attribute) return;
+                selectedEffects.push({ ...effect, attribute });
+            });
+        }
     });
 
     selectedEffects
@@ -3176,6 +3198,11 @@ function removeSelection(option, options = {}) {
 
     if (getOptionMaxSelections(option) > 1 && count > 1) {
         selectedOptions[option.id] = count - 1;
+        if (Array.isArray(sliderModifierSelections[option.id])) {
+            const rows = getSliderModifierSelectionRows(option.id);
+            rows.splice(count - 1, 1);
+            setSliderModifierSelectionRows(option.id, rows);
+        }
         if (Array.isArray(randomRollResults[option.id])) {
             randomRollResults[option.id].pop();
             if (randomRollResults[option.id].length === 0) delete randomRollResults[option.id];
@@ -5361,9 +5388,13 @@ function formatSliderModifierDisplayValue(effect) {
 
 function getSliderModifierDisplayRows(option) {
     return normalizeSliderModifiers(option).map((effect, index) => {
-        const selectedTarget = getSelectedSliderModifierAttribute(option.id, effect, index);
+        const selectedRows = getSliderModifierSelectionRows(option.id);
+        const selectedTargets = effect.selectable
+            ? selectedRows.map(row => row[index]).filter(Boolean)
+            : [];
+        const selectedTarget = selectedTargets.length ? selectedTargets.map(getPointTypeMarkup).join(", ") : "";
         const target = selectedTarget
-            ? getPointTypeMarkup(selectedTarget)
+            ? selectedTarget
             : effect.selectable
                 ? `Player chooses${effect.choices.length ? ` (${effect.choices.map(getPointTypeMarkup).join(", ")})` : ""}`
                 : getPointTypeMarkup(effect.attribute);
@@ -6149,49 +6180,83 @@ function renderSliderModifierControls(opt, contentWrapper) {
 
     const wrapper = document.createElement("div");
     wrapper.className = "dynamic-choice-wrapper";
-    if (!Array.isArray(sliderModifierSelections[opt.id])) {
-        sliderModifierSelections[opt.id] = [];
-    }
+    const selectedCount = Math.max(1, selectedOptions[opt.id] || 1);
+    let selectionRows = getSliderModifierSelectionRows(opt.id);
+    while (selectionRows.length < selectedCount) selectionRows.push([]);
+    if (selectionRows.length > selectedCount) selectionRows = selectionRows.slice(0, selectedCount);
 
-    selectableEffects.forEach(effect => {
-        const row = document.createElement("div");
-        row.className = "field-inline";
+    const header = document.createElement("div");
+    header.className = "field-inline";
+    const headerLabel = document.createElement("label");
+    headerLabel.textContent = "Player-chosen slider modifiers";
+    const clearBtn = document.createElement("button");
+    clearBtn.type = "button";
+    clearBtn.className = "button-subtle";
+    clearBtn.textContent = "Clear all";
+    clearBtn.disabled = !selectionRows.some(row => row.some(Boolean));
+    clearBtn.addEventListener("click", () => {
+        delete sliderModifierSelections[opt.id];
+        applyDynamicCosts();
+        updatePointsDisplay();
+        renderAccordion();
+    });
+    header.append(headerLabel, clearBtn);
+    wrapper.appendChild(header);
 
-        const label = document.createElement("label");
-        const verb = effect.type === "cap"
-            ? `Max ${effect.value}`
-            : effect.type === "add"
-                ? `+${effect.value}`
-                : effect.type === "subtract"
-                    ? `-${effect.value}`
-                    : `x${effect.value}`;
-        label.textContent = `Slider modifier (${verb})`;
+    for (let selectionIndex = 0; selectionIndex < selectedCount; selectionIndex += 1) {
+        const selectionGroup = document.createElement("div");
+        selectionGroup.className = "dynamic-choice-group";
+        if (selectedCount > 1) {
+            const selectionTitle = document.createElement("div");
+            selectionTitle.className = "field-help";
+            selectionTitle.textContent = `Selection ${selectionIndex + 1}`;
+            selectionGroup.appendChild(selectionTitle);
+        }
 
-        const select = document.createElement("select");
-        select.innerHTML = `<option value="">-- Select --</option>` +
-            effect.choices.map(choice => `<option value="${escapeHtml(choice)}">${getPointTypeMarkup(choice)}</option>`).join("");
-        select.value = sliderModifierSelections[opt.id][effect.index] || "";
+        selectableEffects.forEach(effect => {
+            const row = document.createElement("div");
+            row.className = "field-inline";
 
-        select.addEventListener("change", () => {
-            const previous = sliderModifierSelections[opt.id][effect.index] || "";
-            const next = select.value;
-            const nextSelections = [...sliderModifierSelections[opt.id]];
-            nextSelections[effect.index] = next;
-            const chosen = nextSelections.filter(Boolean);
-            if (new Set(chosen).size !== chosen.length) {
-                alert("Each slider modifier selection must be unique.");
-                select.value = previous;
-                return;
-            }
-            sliderModifierSelections[opt.id] = nextSelections;
-            applyDynamicCosts();
-            updatePointsDisplay();
-            renderAccordion();
+            const label = document.createElement("label");
+            const verb = effect.type === "cap"
+                ? `Max ${effect.value}`
+                : effect.type === "add"
+                    ? `+${effect.value}`
+                    : effect.type === "subtract"
+                        ? `-${effect.value}`
+                        : `x${effect.value}`;
+            label.textContent = `Slider modifier (${verb})`;
+
+            const select = document.createElement("select");
+            select.innerHTML = `<option value="">-- Select --</option>` +
+                effect.choices.map(choice => `<option value="${escapeHtml(choice)}">${getPointTypeMarkup(choice)}</option>`).join("");
+            select.value = selectionRows[selectionIndex]?.[effect.index] || "";
+
+            select.addEventListener("change", () => {
+                const rows = getSliderModifierSelectionRows(opt.id);
+                while (rows.length < selectedCount) rows.push([]);
+                const previous = rows[selectionIndex]?.[effect.index] || "";
+                const next = select.value;
+                rows[selectionIndex] = [...(rows[selectionIndex] || [])];
+                rows[selectionIndex][effect.index] = next;
+                const chosen = rows.flat().filter(Boolean);
+                if (new Set(chosen).size !== chosen.length) {
+                    alert("Each slider modifier selection must be unique.");
+                    select.value = previous;
+                    return;
+                }
+                setSliderModifierSelectionRows(opt.id, rows);
+                applyDynamicCosts();
+                updatePointsDisplay();
+                renderAccordion();
+            });
+
+            row.append(label, select);
+            selectionGroup.appendChild(row);
         });
 
-        row.append(label, select);
-        wrapper.appendChild(row);
-    });
+        wrapper.appendChild(selectionGroup);
+    }
 
     contentWrapper.appendChild(wrapper);
 }
