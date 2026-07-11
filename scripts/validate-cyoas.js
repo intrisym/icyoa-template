@@ -498,6 +498,9 @@ function validateSliderModifiers(file, context, effects, pointTypes, errors, fie
         if (!Number.isFinite(Number(rawValue))) {
             pushIssue(errors, file, `${effectContext}.${effect.type === "multiply" ? "multiplier" : "value"} must be numeric.`);
         }
+        if (effect.retroactive !== undefined && typeof effect.retroactive !== "boolean") {
+            pushIssue(errors, file, `${effectContext}.retroactive must be a boolean.`);
+        }
         if (effect.choices !== undefined) {
             if (!Array.isArray(effect.choices)) {
                 pushIssue(errors, file, `${effectContext}.choices must be an array when present.`);

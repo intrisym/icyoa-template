@@ -1063,6 +1063,7 @@ function normalizeSliderModifiers(option) {
                 type,
                 attribute: String(effect.attribute || "").trim(),
                 selectable: effect.selectable === true || !String(effect.attribute || "").trim(),
+                retroactive: effect.retroactive !== false,
                 choices: Array.isArray(effect.choices)
                     ? effect.choices.filter(choice => targetSet.has(choice))
                     : targets,
@@ -1136,7 +1137,12 @@ function applySelectedSliderModifiers() {
             if (!points.hasOwnProperty(effect.attribute)) points[effect.attribute] = getSliderBaseValue(effect.attribute);
             const currentValue = Number(points[effect.attribute]) || 0;
             if (effect.type === "multiply") {
-                points[effect.attribute] = currentValue * effect.value;
+                if (effect.retroactive === false) {
+                    const baseValue = getSliderBaseValue(effect.attribute);
+                    points[effect.attribute] = currentValue + (baseValue * (effect.value - 1));
+                } else {
+                    points[effect.attribute] = currentValue * effect.value;
+                }
             } else if (effect.type === "add") {
                 points[effect.attribute] = currentValue + effect.value;
             } else if (effect.type === "subtract") {

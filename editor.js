@@ -5947,6 +5947,7 @@
                     type,
                     attribute: String(effect?.attribute || "").trim(),
                     selectable: effect?.selectable === true || !String(effect?.attribute || "").trim(),
+                    retroactive: effect?.retroactive !== false,
                     choices,
                     value: Number.isFinite(value) ? value : (type === "multiply" ? 2 : 8)
                 };
@@ -5960,8 +5961,10 @@
                 };
                 if (!effect.selectable) saved.attribute = effect.attribute;
                 if (effect.selectable && Array.isArray(effect.choices) && effect.choices.length) saved.choices = effect.choices;
-                if (effect.type === "multiply") saved.multiplier = effect.value;
-                else saved.value = effect.value;
+                if (effect.type === "multiply") {
+                    saved.multiplier = effect.value;
+                    saved.retroactive = effect.retroactive !== false;
+                } else saved.value = effect.value;
                 return saved;
             });
             delete option.attributeEffects;
@@ -6060,6 +6063,23 @@
                 schedulePreviewUpdate();
             });
 
+            const retroactiveLabel = document.createElement("label");
+            retroactiveLabel.className = "checkbox-option compact";
+            retroactiveLabel.title = "When enabled, this multiplier applies to the current value including previous flat add/subtract modifiers. When disabled, it multiplies only the base value.";
+            const retroactiveInput = document.createElement("input");
+            retroactiveInput.type = "checkbox";
+            retroactiveInput.checked = effect.retroactive !== false;
+            retroactiveInput.disabled = effect.type !== "multiply";
+            retroactiveInput.addEventListener("change", () => {
+                effect.retroactive = retroactiveInput.checked;
+                option.sliderModifiers[index] = effect;
+                normalizeSliderModifiersForEditor(option);
+                schedulePreviewUpdate();
+            });
+            const retroactiveText = document.createElement("span");
+            retroactiveText.textContent = "Multiply flat bonuses";
+            retroactiveLabel.append(retroactiveInput, retroactiveText);
+
             const removeBtn = document.createElement("button");
             removeBtn.type = "button";
             removeBtn.className = "button-icon danger";
@@ -6072,7 +6092,7 @@
                 schedulePreviewUpdate();
             });
 
-            row.append(typeSelect, attributeSelect, selectableLabel, valueInput, removeBtn);
+            row.append(typeSelect, attributeSelect, selectableLabel, valueInput, retroactiveLabel, removeBtn);
             container.appendChild(row);
 
             if (effect.selectable === true) {

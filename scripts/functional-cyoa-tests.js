@@ -20,6 +20,7 @@ const FEATURE_COVERAGE = [
     "Superpowered World skill mastery upgrades require base skill purchases",
     "user-controlled fixed point grants split across multiple point types with sliders",
     "selected options can apply live caps, bonuses, subtraction, and multipliers to configured point types",
+    "slider multipliers can optionally apply retroactively to flat modifiers",
     "repeatable slider modifiers keep player-chosen targets per selection",
     "standalone points display is hidden when selectable cost options are shown",
     "single-select payment options render explicit selection controls",
@@ -1392,6 +1393,7 @@ class CyoaEngine {
                 type,
                 attribute: String(effect?.attribute || "").trim(),
                 selectable: effect?.selectable === true || !String(effect?.attribute || "").trim(),
+                retroactive: effect?.retroactive !== false,
                 choices: Array.isArray(effect?.choices) ? effect.choices.filter(choice => sliderTargetSet.has(choice)) : sliderTargets,
                 value: type === "multiply" ? Number(effect?.multiplier ?? effect?.value) : Number(effect?.value ?? effect?.multiplier)
             };
@@ -1586,7 +1588,14 @@ class CyoaEngine {
         selectedEffects.filter(effect => effect.type !== "cap").forEach(effect => {
             this.rememberSliderModifierPointBaseline(effect.attribute);
             const currentValue = Number(this.points[effect.attribute]) || 0;
-            if (effect.type === "multiply") this.points[effect.attribute] = currentValue * effect.value;
+            if (effect.type === "multiply") {
+                if (effect.retroactive === false) {
+                    const baseValue = this.getSliderBaseValue(effect.attribute);
+                    this.points[effect.attribute] = currentValue + (baseValue * (effect.value - 1));
+                } else {
+                    this.points[effect.attribute] = currentValue * effect.value;
+                }
+            }
             if (effect.type === "add") this.points[effect.attribute] = currentValue + effect.value;
             if (effect.type === "subtract") this.points[effect.attribute] = currentValue - effect.value;
         });
@@ -4055,9 +4064,11 @@ test("slider modifiers should cap with refund and add fixed values", () => {
     );
     assert(
         EDITOR_SCRIPT_SOURCE.includes("Subtract") &&
+            EDITOR_SCRIPT_SOURCE.includes("Multiply flat bonuses") &&
             EDITOR_SCRIPT_SOURCE.includes("effect.choices") &&
             PLAYER_SCRIPT_SOURCE.includes("Clear all") &&
             PLAYER_SCRIPT_SOURCE.includes("getSliderModifierSelectionRows") &&
+            PLAYER_SCRIPT_SOURCE.includes("effect.retroactive === false") &&
             EDITOR_SCRIPT_SOURCE.includes("return getPointTypeNames();") &&
             PLAYER_SCRIPT_SOURCE.includes("return Object.keys(originalPoints || {});") &&
             PLAYER_SCRIPT_SOURCE.includes('effect.type === "subtract"') &&
@@ -4066,6 +4077,44 @@ test("slider modifiers should cap with refund and add fixed values", () => {
             PLAYER_SCRIPT_SOURCE.includes("option-meta-slider-modifiers"),
         "visual editor and player should support subtract modifiers, point-type-based player-choice lists, and card display rows"
     );
+});
+
+test("slider multiplier retroactivity should control whether flat bonuses are doubled", () => {
+    const buildEngine = (option) => {
+        const engine = CyoaEngine.synthetic();
+        engine.pointsEntry.values.Skills = 10;
+        engine.points.Skills = 10;
+        const subcategory = findCategory(engine.data, "Core").subcategories[0];
+        subcategory.options.push(option);
+        engine.optionMap.set(option.id, option);
+        return engine;
+    };
+
+    const retroactiveEngine = buildEngine({
+        id: "retroactiveMultiplier",
+        label: "Retroactive Multiplier",
+        costOptions: [{ cost: {} }],
+        bypassSubcategoryMaxSelections: true,
+        sliderModifiers: [
+            { type: "add", attribute: "Skills", value: 8 },
+            { type: "multiply", attribute: "Skills", multiplier: 2, retroactive: true }
+        ]
+    });
+    retroactiveEngine.select("retroactiveMultiplier");
+    assert.strictEqual(retroactiveEngine.points.Skills, 36, "retroactive multiplier should double base plus flat add");
+
+    const baseOnlyEngine = buildEngine({
+        id: "baseOnlyMultiplier",
+        label: "Base Only Multiplier",
+        costOptions: [{ cost: {} }],
+        bypassSubcategoryMaxSelections: true,
+        sliderModifiers: [
+            { type: "add", attribute: "Skills", value: 8 },
+            { type: "multiply", attribute: "Skills", multiplier: 2, retroactive: false }
+        ]
+    });
+    baseOnlyEngine.select("baseOnlyMultiplier");
+    assert.strictEqual(baseOnlyEngine.points.Skills, 28, "base-only multiplier should leave the flat add at +8");
 });
 
 test("repeatable slider modifiers should track player choices per selection", () => {
