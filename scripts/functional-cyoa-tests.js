@@ -5383,4 +5383,12 @@ function main() {
     console.log(`Passed ${tests.length} functional CYOA test(s).`);
 }
 
-main();
+if (require.main === module) {
+    main();
+}
+
+module.exports = {
+    CyoaEngine,
+    walkSubcategories,
+    unpackImportedState
+};
