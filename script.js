@@ -3058,6 +3058,11 @@ function normalizeRandomTables(option) {
                     min: Math.floor(Number(outcome?.min)),
                     max: Math.floor(Number(outcome?.max)),
                     label: String(outcome?.label || "").trim(),
+                    grants: outcome?.grants && typeof outcome.grants === "object" && !Array.isArray(outcome.grants)
+                        ? Object.fromEntries(Object.entries(outcome.grants)
+                            .map(([type, value]) => [String(type || "").trim(), Number(value) || 0])
+                            .filter(([type, value]) => type && value !== 0))
+                        : {},
                     table: outcome?.table && typeof outcome.table === "object" ? outcome.table : null
                 }))
                 .filter(outcome => Number.isFinite(outcome.min) && Number.isFinite(outcome.max) && outcome.min <= outcome.max && outcome.label)
@@ -3087,7 +3092,10 @@ function rollRandomTable(table) {
         table: normalizedTable.label,
         die: normalizedTable.die,
         roll,
-        outcome: outcome?.label || "No matching outcome"
+        outcome: outcome?.label || "No matching outcome",
+        grants: outcome?.grants && typeof outcome.grants === "object" && !Array.isArray(outcome.grants)
+            ? { ...outcome.grants }
+            : {}
     };
     if (outcome?.table && typeof outcome.table === "object") {
         result.subroll = rollRandomTable(outcome.table);
@@ -3095,19 +3103,43 @@ function rollRandomTable(table) {
     return result;
 }
 
+function applyRandomRollResultGrants(result, direction = 1) {
+    if (!result || typeof result !== "object") return;
+    Object.entries(result.grants || {}).forEach(([type, value]) => {
+        const amount = Number(value) || 0;
+        if (!type || amount === 0) return;
+        if (!Object.prototype.hasOwnProperty.call(points, type)) points[type] = 0;
+        points[type] += amount * direction;
+    });
+    if (result.subroll) applyRandomRollResultGrants(result.subroll, direction);
+}
+
+function applyRandomRollEntryGrants(entry, direction = 1) {
+    (Array.isArray(entry?.results) ? entry.results : []).forEach(result => {
+        applyRandomRollResultGrants(result, direction);
+    });
+}
+
 function rollOptionRandomTables(option) {
     const tables = normalizeRandomTables(option);
     if (!tables.length || !option?.id) return;
     if (!Array.isArray(randomRollResults[option.id])) randomRollResults[option.id] = [];
-    randomRollResults[option.id].push({
+    const entry = {
         selection: selectedOptions[option.id] || 1,
         results: tables.map(rollRandomTable)
-    });
+    };
+    randomRollResults[option.id].push(entry);
+    applyRandomRollEntryGrants(entry, 1);
 }
 
 function formatRandomRollResult(result) {
     if (!result || typeof result !== "object") return "";
     let line = `${escapeHtml(result.table || "Roll")}: d${escapeHtml(String(result.die || ""))} = ${escapeHtml(String(result.roll || ""))} -> ${escapeHtml(result.outcome || "")}`;
+    const grants = Object.entries(result.grants || {})
+        .map(([type, value]) => `${Number(value) > 0 ? "+" : ""}${escapeHtml(String(value))} ${getPointTypeMarkup(type)}`);
+    if (grants.length) {
+        line += ` (${grants.join(", ")})`;
+    }
     if (result.subroll) {
         line += `; ${formatRandomRollResult(result.subroll)}`;
     }
@@ -3210,13 +3242,17 @@ function removeSelection(option, options = {}) {
             setSliderModifierSelectionRows(option.id, rows);
         }
         if (Array.isArray(randomRollResults[option.id])) {
-            randomRollResults[option.id].pop();
+            const removedRoll = randomRollResults[option.id].pop();
+            applyRandomRollEntryGrants(removedRoll, -1);
             if (randomRollResults[option.id].length === 0) delete randomRollResults[option.id];
         }
     } else {
         delete selectedOptions[option.id];
         delete discountedSelections[option.id]; // Clear all recorded discounts for this option
         delete autoGrantedSelections[option.id];
+        if (Array.isArray(randomRollResults[option.id])) {
+            randomRollResults[option.id].forEach(entry => applyRandomRollEntryGrants(entry, -1));
+        }
         delete randomRollResults[option.id];
         if (option.inputType === "text") {
             delete storyInputs[option.id];

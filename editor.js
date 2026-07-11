@@ -763,6 +763,15 @@
         (option?.pointAllocation?.types || []).forEach(type => {
             if (!pointTypes.has(type)) warnings.push(`Point allocation references unknown point type "${type}".`);
         });
+        const warnRandomTableGrantPointTypes = (tables, context) => {
+            (Array.isArray(tables) ? tables : []).forEach((table, tableIndex) => {
+                (Array.isArray(table?.outcomes) ? table.outcomes : []).forEach((outcome, outcomeIndex) => {
+                    warnUnknownPointTypes(outcome?.grants, `${context} table ${tableIndex + 1} outcome ${outcomeIndex + 1} grants`);
+                    if (outcome?.table) warnRandomTableGrantPointTypes([outcome.table], `${context} table ${tableIndex + 1} outcome ${outcomeIndex + 1} nested`);
+                });
+            });
+        };
+        warnRandomTableGrantPointTypes(option?.randomTables, "Random result");
         if (!isSafeCssColorValue(option?.borderColor)) warnings.push("Light border color must be a safe CSS color string.");
         if (!isSafeCssColorValue(option?.darkBorderColor)) warnings.push("Dark border color must be a safe CSS color string.");
 
@@ -3264,6 +3273,15 @@
                 });
             };
 
+            const visitRandomTables = (tables) => {
+                (Array.isArray(tables) ? tables : []).forEach(table => {
+                    (Array.isArray(table?.outcomes) ? table.outcomes : []).forEach(outcome => {
+                        renamePointMapKey(outcome?.grants, oldName, newName);
+                        if (outcome?.table) visitRandomTables([outcome.table]);
+                    });
+                });
+            };
+
             const visitOption = (option) => {
                 renamePointMapKey(option?.cost, oldName, newName);
                 (option?.costOptions || []).forEach(costOption => renamePointMapKey(costOption?.cost, oldName, newName));
@@ -3273,6 +3291,7 @@
                     option.pointAllocation.types = option.pointAllocation.types.map(type => type === oldName ? newName : type);
                 }
                 visitCostRules(option);
+                visitRandomTables(option?.randomTables);
             };
 
             const visitSubcategory = (subcat) => {
@@ -5608,6 +5627,25 @@
         row.append(minLabel, minInput, maxLabel, maxInput, labelLabel, labelInput);
         card.appendChild(row);
 
+        const grantsField = document.createElement("div");
+        grantsField.className = "field";
+        const grantsLabel = document.createElement("label");
+        grantsLabel.textContent = "Outcome point grants";
+        const grantsHint = document.createElement("div");
+        grantsHint.className = "field-help";
+        grantsHint.textContent = "Optional. Add or subtract point pools when this outcome is rolled. These points can be used by costs and prerequisites.";
+        const grantsContainer = document.createElement("div");
+        renderPointMapEditor(grantsContainer, outcome.grants || {}, nextGrants => {
+            if (nextGrants && Object.keys(nextGrants).length) {
+                outcome.grants = nextGrants;
+            } else {
+                delete outcome.grants;
+            }
+            schedulePreviewUpdate();
+        });
+        grantsField.append(grantsLabel, grantsHint, grantsContainer);
+        card.appendChild(grantsField);
+
         if (allowNested) {
             const nestedWrap = document.createElement("div");
             nestedWrap.className = "field";
@@ -5690,7 +5728,7 @@
         label.textContent = "Random result tables";
         const hint = document.createElement("div");
         hint.className = "field-help";
-        hint.textContent = "Optional. Each time this option is selected, the player rolls the configured table and sees the result on the option card.";
+        hint.textContent = "Optional. Each time this option is selected, the player rolls the configured table, sees the result on the option card, and receives any configured outcome point grants.";
         const list = document.createElement("div");
         list.className = "list-stack";
 

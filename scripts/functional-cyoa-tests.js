@@ -550,7 +550,7 @@ class CyoaEngine {
     static synthetic() {
         return new CyoaEngine([
             { type: "title", text: "Synthetic Feature Coverage CYOA" },
-            { type: "points", values: { Points: 10, Tokens: 0, Skills: 0, Equipment: 0 }, allowNegative: ["Debt"] },
+            { type: "points", values: { Points: 10, Tokens: 0, Skills: 0, Equipment: 0, "Rare Prize": 0, "Rare B": 0 }, allowNegative: ["Debt"] },
             {
                 type: "settings",
                 themeMode: "toggle",
@@ -648,12 +648,13 @@ class CyoaEngine {
                                                 min: 100,
                                                 max: 100,
                                                 label: "Rare Prize",
+                                                grants: { "Rare Prize": 1 },
                                                 table: {
                                                     label: "Rare Detail",
                                                     die: 10,
                                                     outcomes: [
                                                         { min: 1, max: 5, label: "Rare A" },
-                                                        { min: 6, max: 10, label: "Rare B" }
+                                                        { min: 6, max: 10, label: "Rare B", grants: { "Rare B": 1 } }
                                                     ]
                                                 }
                                             }
@@ -661,6 +662,7 @@ class CyoaEngine {
                                     }
                                 ]
                             },
+                            { id: "spendRareRollItem", label: "Spend Rare Roll Item", cost: { "Rare Prize": 1 }, prerequisites: "\"Rare B\" 1+", bypassSubcategoryMaxSelections: true },
                             { id: "limitBypass", label: "Limit Bypass", cost: {}, bypassSubcategoryMaxSelections: true },
                             { id: "discountTrigger", label: "Discount Trigger", cost: {} },
                             { id: "surchargeTrigger", label: "Surcharge Trigger", cost: {} },
@@ -2280,10 +2282,14 @@ class CyoaEngine {
         if (this.selectedOptions[option.id] <= 0) {
             delete this.selectedOptions[option.id];
             if (option.pointAllocation) delete this.pointAllocationSelections[option.id];
+            if (Array.isArray(this.randomRollResults[option.id])) {
+                this.randomRollResults[option.id].forEach(entry => this.applyRandomRollEntryGrants(entry, -1));
+            }
             delete this.randomRollResults[option.id];
             delete this.sliderModifierSelections[option.id];
         } else if (Array.isArray(this.randomRollResults[option.id])) {
-            this.randomRollResults[option.id].pop();
+            const removedRoll = this.randomRollResults[option.id].pop();
+            this.applyRandomRollEntryGrants(removedRoll, -1);
             if (this.randomRollResults[option.id].length === 0) delete this.randomRollResults[option.id];
         }
         if (this.selectedOptions[option.id] && Array.isArray(this.sliderModifierSelections[option.id])) {
@@ -2471,6 +2477,11 @@ class CyoaEngine {
                         min: Math.floor(Number(outcome?.min)),
                         max: Math.floor(Number(outcome?.max)),
                         label: String(outcome?.label || "").trim(),
+                        grants: outcome?.grants && typeof outcome.grants === "object" && !Array.isArray(outcome.grants)
+                            ? Object.fromEntries(Object.entries(outcome.grants)
+                                .map(([type, value]) => [String(type || "").trim(), Number(value) || 0])
+                                .filter(([type, value]) => type && value !== 0))
+                            : {},
                         table: outcome?.table && typeof outcome.table === "object" ? outcome.table : null
                     }))
                     .filter(outcome => Number.isFinite(outcome.min) && Number.isFinite(outcome.max) && outcome.min <= outcome.max && outcome.label)
@@ -2500,7 +2511,10 @@ class CyoaEngine {
             table: normalizedTable.label,
             die: normalizedTable.die,
             roll,
-            outcome: outcome?.label || "No matching outcome"
+            outcome: outcome?.label || "No matching outcome",
+            grants: outcome?.grants && typeof outcome.grants === "object" && !Array.isArray(outcome.grants)
+                ? { ...outcome.grants }
+                : {}
         };
         if (outcome?.table && typeof outcome.table === "object") {
             result.subroll = this.rollRandomTable(outcome.table);
@@ -2508,14 +2522,33 @@ class CyoaEngine {
         return result;
     }
 
+    applyRandomRollResultGrants(result, direction = 1) {
+        if (!result || typeof result !== "object") return;
+        Object.entries(result.grants || {}).forEach(([type, value]) => {
+            const amount = Number(value) || 0;
+            if (!type || amount === 0) return;
+            if (!Object.prototype.hasOwnProperty.call(this.points, type)) this.points[type] = 0;
+            this.points[type] += amount * direction;
+        });
+        if (result.subroll) this.applyRandomRollResultGrants(result.subroll, direction);
+    }
+
+    applyRandomRollEntryGrants(entry, direction = 1) {
+        (Array.isArray(entry?.results) ? entry.results : []).forEach(result => {
+            this.applyRandomRollResultGrants(result, direction);
+        });
+    }
+
     rollOptionRandomTables(option) {
         const tables = this.normalizeRandomTables(option);
         if (!tables.length) return;
         if (!Array.isArray(this.randomRollResults[option.id])) this.randomRollResults[option.id] = [];
-        this.randomRollResults[option.id].push({
+        const entry = {
             selection: this.selectedOptions[option.id] || 1,
             results: tables.map(table => this.rollRandomTable(table))
-        });
+        };
+        this.randomRollResults[option.id].push(entry);
+        this.applyRandomRollEntryGrants(entry, 1);
     }
 
     assertFinitePoints() {
@@ -5244,6 +5277,8 @@ test("locked random result options should record visible roll history and block 
     engine.select("lockedRandom");
     assert.strictEqual(engine.selectedOptions.lockedRandom, 1);
     assert.strictEqual(engine.points.Points, 9);
+    assert.strictEqual(engine.points["Rare Prize"], 1);
+    assert.strictEqual(engine.points["Rare B"], 1);
     assert.deepStrictEqual(engine.randomRollResults.lockedRandom, [
         {
             selection: 1,
@@ -5253,11 +5288,13 @@ test("locked random result options should record visible roll history and block 
                     die: 100,
                     roll: 100,
                     outcome: "Rare Prize",
+                    grants: { "Rare Prize": 1 },
                     subroll: {
                         table: "Rare Detail",
                         die: 10,
                         roll: 7,
-                        outcome: "Rare B"
+                        outcome: "Rare B",
+                        grants: { "Rare B": 1 }
                     }
                 }
             ]
@@ -5267,7 +5304,12 @@ test("locked random result options should record visible roll history and block 
     assert.strictEqual(engine.remove("lockedRandom"), false);
     assert.strictEqual(engine.selectedOptions.lockedRandom, 1);
     assert.strictEqual(engine.points.Points, 9);
+    assert.strictEqual(engine.points["Rare Prize"], 1);
+    assert.strictEqual(engine.points["Rare B"], 1);
     assert.strictEqual(engine.randomRollResults.lockedRandom.length, 1);
+    assert.strictEqual(engine.canSelect("spendRareRollItem"), true);
+    engine.select("spendRareRollItem");
+    assert.strictEqual(engine.points["Rare Prize"], 0);
 
     engine.select("lockedRandom");
     assert.strictEqual(engine.selectedOptions.lockedRandom, 2);

@@ -347,7 +347,7 @@ function validateAutoGrants(file, context, grants, optionIds, errors) {
     });
 }
 
-function validateRandomTable(file, context, table, errors) {
+function validateRandomTable(file, context, table, pointTypes, errors, warnings) {
     if (!table || typeof table !== "object" || Array.isArray(table)) {
         pushIssue(errors, file, `${context} must be an object.`);
         return;
@@ -383,19 +383,20 @@ function validateRandomTable(file, context, table, errors) {
         if (typeof outcome.label !== "string" || !outcome.label.trim()) {
             pushIssue(errors, file, `${outcomeContext}.label must be a non-empty string.`);
         }
+        validatePointMap(file, `${outcomeContext}.grants`, outcome.grants, pointTypes, errors, warnings);
         if (outcome.table !== undefined) {
-            validateRandomTable(file, `${outcomeContext}.table`, outcome.table, errors);
+            validateRandomTable(file, `${outcomeContext}.table`, outcome.table, pointTypes, errors, warnings);
         }
     });
 }
 
-function validateRandomTables(file, context, tables, errors) {
+function validateRandomTables(file, context, tables, pointTypes, errors, warnings) {
     if (tables === undefined) return;
     if (!Array.isArray(tables)) {
         pushIssue(errors, file, `${context}.randomTables must be an array.`);
         return;
     }
-    tables.forEach((table, index) => validateRandomTable(file, `${context}.randomTables[${index}]`, table, errors));
+    tables.forEach((table, index) => validateRandomTable(file, `${context}.randomTables[${index}]`, table, pointTypes, errors, warnings));
 }
 
 function validateCostOptions(file, context, costOptions, pointTypes, errors, warnings, optionIds = null, scopes = null) {
@@ -893,7 +894,7 @@ function validateCyoaData(file, data) {
         validatePointAllocation(file, context, option.pointAllocation, pointTypes, errors);
         validateSliderModifiers(file, context, option.sliderModifiers, pointTypes, errors);
         validateSliderModifiers(file, context, option.attributeEffects, pointTypes, errors, "attributeEffects");
-        validateRandomTables(file, context, option.randomTables, errors);
+        validateRandomTables(file, context, option.randomTables, pointTypes, errors, warnings);
         validateAlignmentValue(file, `${context}.alignment`, option.alignment, errors);
         validateAlignmentValue(file, `${context}.titleAlignment`, option.titleAlignment, errors);
         validateAlignmentValue(file, `${context}.metaAlignment`, option.metaAlignment, errors);
