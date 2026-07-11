@@ -2367,6 +2367,7 @@ class CyoaEngine {
     displayRequirementLines(optionOrId, selectionNumber = null) {
         const atomLine = (rawId, negated = false, inheritedSatisfiedOr = false) => {
             const [id, minSuffix] = String(rawId).split("__");
+            if (!this.optionMap.has(id)) return "";
             const label = this.optionMap.get(id)?.label || id;
             const requiredCount = minSuffix ? Number(minSuffix) || 1 : 1;
             const countLabel = requiredCount > 1 ? ` (x${requiredCount})` : "";
@@ -2395,7 +2396,8 @@ class CyoaEngine {
             if (node.type === "scope") return scopeLine(node, negated, inheritedSatisfiedOr);
             if (node.type === "not") {
                 if (node.child?.type === "atom" || node.child?.type === "point" || node.child?.type === "scope") return inlineNode(node.child, inheritedSatisfiedOr, !negated);
-                return `NOT (${inlineNode(node.child, inheritedSatisfiedOr, false)})`;
+                const childText = inlineNode(node.child, inheritedSatisfiedOr, false);
+                return childText ? `NOT (${childText})` : "";
             }
             if (node.type === "or") {
                 const orSatisfied = inheritedSatisfiedOr || evaluatePrerequisiteNode(
@@ -2407,7 +2409,9 @@ class CyoaEngine {
                 return node.children.map(child => inlineNode(child, orSatisfied, negated)).filter(Boolean).join(" OR ");
             }
             if (node.type === "and") {
-                const text = node.children.map(child => inlineNode(child, inheritedSatisfiedOr, negated)).filter(Boolean).join(" AND ");
+                const parts = node.children.map(child => inlineNode(child, inheritedSatisfiedOr, negated)).filter(Boolean);
+                const text = parts.join(" AND ");
+                if (!text) return "";
                 return node.children.length > 1 ? `(${text})` : text;
             }
             return "";
@@ -2421,15 +2425,22 @@ class CyoaEngine {
                 return linesForNode(parsePrerequisiteExpression(requirement));
             }
             if (Array.isArray(requirement)) {
-                return requirement.map(id => `${this.meetsCountRequirement(id) ? "✅" : "❌"} ${this.optionMap.get(id)?.label || id}`);
+                return requirement.map(rawId => {
+                    const [id, minSuffix] = String(rawId).split("__");
+                    if (!this.optionMap.has(id)) return "";
+                    const requiredCount = minSuffix ? Number(minSuffix) || 1 : 1;
+                    const countLabel = requiredCount > 1 ? ` (x${requiredCount})` : "";
+                    return `${this.meetsCountRequirement(rawId) ? "✅" : "❌"} ${this.optionMap.get(id)?.label || id}${countLabel}`;
+                }).filter(Boolean);
             }
             if (requirement && typeof requirement === "object") {
                 const andList = requirement.and || [];
                 const orList = requirement.or || [];
-                const lines = andList.map(id => atomLine(id));
+                const lines = andList.map(id => atomLine(id)).filter(Boolean);
                 if (orList.length) {
                     const orAccepted = orList.some(id => this.meetsCountRequirement(id));
-                    lines.push(orList.map(id => atomLine(id, false, orAccepted)).join(" OR "));
+                    const orLine = orList.map(id => atomLine(id, false, orAccepted)).filter(Boolean).join(" OR ");
+                    if (orLine) lines.push(orLine);
                 }
                 return lines;
             }
@@ -4456,6 +4467,44 @@ test("complex prerequisite displays should mark fulfilled OR branches as satisfi
     assert(
         PLAYER_SCRIPT_SOURCE.includes("buildPrerequisiteDisplayLines(requirement)"),
         "player prerequisite display should use expression-aware OR group rendering"
+    );
+});
+
+test("invalid option prerequisites should be hidden from display lines", () => {
+    const engine = CyoaEngine.synthetic();
+    const stringOption = {
+        id: "invalidPrereqDisplayString",
+        label: "Invalid Prereq Display String",
+        cost: {},
+        prerequisites: "preA || missingOptionId"
+    };
+    const invalidOnlyOption = {
+        id: "invalidPrereqDisplayOnly",
+        label: "Invalid Prereq Display Only",
+        cost: {},
+        prerequisites: "missingOptionId"
+    };
+    const arrayOption = {
+        id: "invalidPrereqDisplayArray",
+        label: "Invalid Prereq Display Array",
+        cost: {},
+        prerequisites: ["preA", "missingOptionId"]
+    };
+    const objectOption = {
+        id: "invalidPrereqDisplayObject",
+        label: "Invalid Prereq Display Object",
+        cost: {},
+        prerequisites: { and: ["preA", "missingOptionId"], or: ["preB", "missingOtherId"] }
+    };
+    [stringOption, invalidOnlyOption, arrayOption, objectOption].forEach(option => engine.optionMap.set(option.id, option));
+
+    assert.deepStrictEqual(engine.displayRequirementLines(stringOption), ["❌ Pre A"]);
+    assert.deepStrictEqual(engine.displayRequirementLines(invalidOnlyOption), []);
+    assert.deepStrictEqual(engine.displayRequirementLines(arrayOption), ["❌ Pre A"]);
+    assert.deepStrictEqual(engine.displayRequirementLines(objectOption), ["❌ Pre A", "❌ Pre B"]);
+    assert(
+        PLAYER_SCRIPT_SOURCE.includes("if (!findOptionById(id)) return \"\";"),
+        "player prerequisite preview should hide unknown option IDs"
     );
 });
 

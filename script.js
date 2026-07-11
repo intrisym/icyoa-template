@@ -4456,8 +4456,9 @@ function buildPrerequisiteDisplayLines(expression = "") {
     const ast = parsePrerequisiteExpression(expression);
     if (!ast) return null;
     const atomText = (rawId, negated, inheritedSatisfiedOr = false) => {
-        const atomSatisfied = negated ? !meetsCountRequirement(rawId) : meetsCountRequirement(rawId);
         const [id, minSuffix] = rawId.split("__");
+        if (!findOptionById(id)) return "";
+        const atomSatisfied = negated ? !meetsCountRequirement(rawId) : meetsCountRequirement(rawId);
         const requiredCount = minSuffix ? Number(minSuffix) : 1;
         const label = getOptionLabelMarkup(id) + (requiredCount > 1 ? ` (x${requiredCount})` : "");
         const satisfied = inheritedSatisfiedOr || atomSatisfied;
@@ -4488,14 +4489,17 @@ function buildPrerequisiteDisplayLines(expression = "") {
         }
         if (node.type === "not") {
             if (node.child?.type === "atom" || node.child?.type === "point" || node.child?.type === "scope") return inline(node.child, inheritedSatisfiedOr, !negated);
-            return `NOT (${inline(node.child, inheritedSatisfiedOr, false)})`;
+            const childText = inline(node.child, inheritedSatisfiedOr, false);
+            return childText ? `NOT (${childText})` : "";
         }
         if (node.type === "or") {
             const orSatisfied = inheritedSatisfiedOr || evaluatePrerequisiteNode(node);
             return node.children.map(child => inline(child, orSatisfied, negated)).filter(Boolean).join(" OR ");
         }
         if (node.type === "and") {
-            const text = node.children.map(child => inline(child, inheritedSatisfiedOr, negated)).filter(Boolean).join(" AND ");
+            const parts = node.children.map(child => inline(child, inheritedSatisfiedOr, negated)).filter(Boolean);
+            const text = parts.join(" AND ");
+            if (!text) return "";
             return node.children.length > 1 ? `(${text})` : text;
         }
         return "";
@@ -4531,6 +4535,7 @@ function buildRequirementDisplayLines(requirement) {
             const core = negated ? token.slice(1) : token;
             const [id, minSuffix] = core.split('__');
             if (reserved.has(id) || seen.has(core)) return;
+            if (!findOptionById(id)) return;
             seen.add(core);
             const requiredCount = minSuffix ? Number(minSuffix) : 1;
             const actual = selectedOptions[id] || 0;
@@ -4541,12 +4546,15 @@ function buildRequirementDisplayLines(requirement) {
         return prereqLines;
     }
     if (Array.isArray(requirement)) {
-        return requirement.map(id => {
-            const label = getOptionLabelMarkup(id);
-            const isSelected = selectedOptions[id];
+        return requirement.map(rawId => {
+            const [id, minSuffix] = String(rawId).split('__');
+            if (!findOptionById(id)) return "";
+            const requiredCount = minSuffix ? Number(minSuffix) : 1;
+            const label = getOptionLabelMarkup(id) + (requiredCount > 1 ? ` (x${requiredCount})` : "");
+            const isSelected = meetsCountRequirement(String(rawId));
             const symbol = isSelected ? "✅" : "❌";
             return `${symbol} ${label}`;
-        });
+        }).filter(Boolean);
     }
     if (typeof requirement === 'object' && requirement !== null) {
         const prereqLines = [];
@@ -4556,21 +4564,23 @@ function buildRequirementDisplayLines(requirement) {
         if (andList.length) {
             prereqLines.push(...andList.map(rawId => {
                 const [id, minSuffix] = String(rawId).split('__');
+                if (!findOptionById(id)) return "";
                 const requiredCount = minSuffix ? Number(minSuffix) : 1;
                 const label = getOptionLabelMarkup(id) + (requiredCount > 1 ? ` (x${requiredCount})` : "");
                 const isSelected = meetsCountRequirement(String(rawId));
                 return `${isSelected ? "✅" : "❌"} ${label}`;
-            }));
+            }).filter(Boolean));
         }
         if (orList.length) {
             const orLine = orList.map(rawId => {
                 const [id, minSuffix] = String(rawId).split('__');
+                if (!findOptionById(id)) return "";
                 const requiredCount = minSuffix ? Number(minSuffix) : 1;
                 const label = getOptionLabelMarkup(id) + (requiredCount > 1 ? ` (x${requiredCount})` : "");
                 const symbol = orAccepted ? "✅" : (meetsCountRequirement(String(rawId)) ? "✅" : "❌");
                 return `${symbol} ${label}`;
-            }).join(" OR ");
-            prereqLines.push(orLine);
+            }).filter(Boolean).join(" OR ");
+            if (orLine) prereqLines.push(orLine);
         }
         return prereqLines;
     }
