@@ -6205,18 +6205,7 @@ function renderSliderModifierControls(opt, contentWrapper) {
     header.className = "field-inline";
     const headerLabel = document.createElement("label");
     headerLabel.textContent = "Player-chosen slider modifiers";
-    const clearBtn = document.createElement("button");
-    clearBtn.type = "button";
-    clearBtn.className = "button-subtle";
-    clearBtn.textContent = "Clear all";
-    clearBtn.disabled = !selectionRows.some(row => row.some(Boolean));
-    clearBtn.addEventListener("click", () => {
-        delete sliderModifierSelections[opt.id];
-        applyDynamicCosts();
-        updatePointsDisplay();
-        renderAccordion();
-    });
-    header.append(headerLabel, clearBtn);
+    header.appendChild(headerLabel);
     wrapper.appendChild(header);
 
     for (let selectionIndex = 0; selectionIndex < selectedCount; selectionIndex += 1) {

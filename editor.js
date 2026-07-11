@@ -5948,6 +5948,7 @@
                     attribute: String(effect?.attribute || "").trim(),
                     selectable: effect?.selectable === true || !String(effect?.attribute || "").trim(),
                     retroactive: effect?.retroactive !== false,
+                    choicesExplicit: Array.isArray(effect?.choices),
                     choices,
                     value: Number.isFinite(value) ? value : (type === "multiply" ? 2 : 8)
                 };
@@ -5960,7 +5961,7 @@
                     selectable: effect.selectable === true
                 };
                 if (!effect.selectable) saved.attribute = effect.attribute;
-                if (effect.selectable && Array.isArray(effect.choices) && effect.choices.length) saved.choices = effect.choices;
+                if (effect.selectable && effect.choicesExplicit === true) saved.choices = Array.isArray(effect.choices) ? effect.choices : [];
                 if (effect.type === "multiply") {
                     saved.multiplier = effect.value;
                     saved.retroactive = effect.retroactive !== false;
@@ -5972,7 +5973,7 @@
             delete option.sliderModifiers;
             delete option.attributeEffects;
         }
-        return option.sliderModifiers || [];
+        return normalized;
     }
 
     function renderSliderModifiersEditor(container, option) {
@@ -6096,6 +6097,38 @@
             container.appendChild(row);
 
             if (effect.selectable === true) {
+                const choicesHeader = document.createElement("div");
+                choicesHeader.className = "slider-modifier-choice-actions";
+                const choicesLabel = document.createElement("span");
+                choicesLabel.className = "field-help";
+                choicesLabel.textContent = "Allowed player choices";
+                const selectAllBtn = document.createElement("button");
+                selectAllBtn.type = "button";
+                selectAllBtn.className = "button-subtle";
+                selectAllBtn.textContent = "Select all";
+                selectAllBtn.addEventListener("click", () => {
+                    effect.choicesExplicit = true;
+                    effect.choices = [...targets];
+                    option.sliderModifiers[index] = effect;
+                    normalizeSliderModifiersForEditor(option);
+                    renderSliderModifiersEditor(container, option);
+                    schedulePreviewUpdate();
+                });
+                const deselectAllBtn = document.createElement("button");
+                deselectAllBtn.type = "button";
+                deselectAllBtn.className = "button-subtle";
+                deselectAllBtn.textContent = "Deselect all";
+                deselectAllBtn.addEventListener("click", () => {
+                    effect.choicesExplicit = true;
+                    effect.choices = [];
+                    option.sliderModifiers[index] = effect;
+                    normalizeSliderModifiersForEditor(option);
+                    renderSliderModifiersEditor(container, option);
+                    schedulePreviewUpdate();
+                });
+                choicesHeader.append(choicesLabel, selectAllBtn, deselectAllBtn);
+                container.appendChild(choicesHeader);
+
                 const choicesWrap = document.createElement("div");
                 choicesWrap.className = "checkbox-grid";
                 const choiceTargets = [...new Set([...(effect.choices || []), ...targets].filter(Boolean))];
@@ -6104,12 +6137,13 @@
                     choiceLabel.className = "checkbox-option";
                     const choiceInput = document.createElement("input");
                     choiceInput.type = "checkbox";
-                    const hasExplicitChoices = Array.isArray(effect.choices) && effect.choices.length > 0;
+                    const hasExplicitChoices = effect.choicesExplicit === true;
                     choiceInput.checked = !hasExplicitChoices || effect.choices.includes(attribute);
                     choiceInput.addEventListener("change", () => {
-                        const currentChoices = new Set(Array.isArray(effect.choices) && effect.choices.length ? effect.choices : choiceTargets);
+                        const currentChoices = new Set(hasExplicitChoices ? effect.choices : choiceTargets);
                         if (choiceInput.checked) currentChoices.add(attribute);
                         else currentChoices.delete(attribute);
+                        effect.choicesExplicit = true;
                         effect.choices = Array.from(currentChoices);
                         option.sliderModifiers[index] = effect;
                         normalizeSliderModifiersForEditor(option);

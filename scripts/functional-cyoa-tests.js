@@ -4077,7 +4077,10 @@ test("slider modifiers should cap with refund and add fixed values", () => {
         EDITOR_SCRIPT_SOURCE.includes("Subtract") &&
             EDITOR_SCRIPT_SOURCE.includes("Multiply flat bonuses") &&
             EDITOR_SCRIPT_SOURCE.includes("effect.choices") &&
-            PLAYER_SCRIPT_SOURCE.includes("Clear all") &&
+            EDITOR_SCRIPT_SOURCE.includes("choicesExplicit") &&
+            EDITOR_SCRIPT_SOURCE.includes("slider-modifier-choice-actions") &&
+            EDITOR_SCRIPT_SOURCE.includes("Deselect all") &&
+            EDITOR_SCRIPT_SOURCE.includes("return normalized;") &&
             PLAYER_SCRIPT_SOURCE.includes("getSliderModifierSelectionRows") &&
             PLAYER_SCRIPT_SOURCE.includes("effect.retroactive === false") &&
             EDITOR_SCRIPT_SOURCE.includes("return getPointTypeNames();") &&

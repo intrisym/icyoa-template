@@ -537,6 +537,18 @@ textarea {
     margin-top: 8px;
 }
 
+.slider-modifier-choice-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.slider-modifier-choice-actions .field-help {
+    margin-right: auto;
+}
+
 .checkbox-option {
     display: inline-flex;
     align-items: center;
