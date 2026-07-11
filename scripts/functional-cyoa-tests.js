@@ -3562,12 +3562,12 @@ test("point type renames should update every referenced cost map", () => {
 test("point type edits should refresh category cost controls", () => {
     const editorSource = fs.readFileSync(path.join(ROOT, "editor.js"), "utf8");
     [
-        "renderGlobalSettings();\n                renderCategories();\n                schedulePreviewUpdate();",
-        "renderGlobalSettings();\n            renderCategories();\n            schedulePreviewUpdate();"
+        "renderGlobalSettings();\n                scheduleRenderCategories();\n                schedulePreviewUpdate();",
+        "renderGlobalSettings();\n            scheduleRenderCategories();\n            schedulePreviewUpdate();"
     ].forEach(snippet => {
         assert(
             editorSource.includes(snippet),
-            "editor should re-render category controls after point types are added, renamed, or removed"
+            "editor should refresh category controls after point types are added, renamed, or removed"
         );
     });
     assert(

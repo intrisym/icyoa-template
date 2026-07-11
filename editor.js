@@ -177,9 +177,20 @@
     let previewUpdateHandle = null;
     let pendingPreviewData = null;
     let detachedPreviewWindow = null;
+    let previewDataDirty = false;
+    let editorRenderHandle = null;
+    const PREVIEW_UPDATE_DELAY_MS = 650;
 
     function cloneData(data) {
         return JSON.parse(JSON.stringify(data));
+    }
+
+    function runWhenIdle(callback, timeout = 800) {
+        if (typeof window.requestIdleCallback === "function") {
+            window.requestIdleCallback(callback, { timeout });
+            return;
+        }
+        window.setTimeout(callback, 0);
     }
 
     function scrollPreviewToExample(selector) {
@@ -1039,12 +1050,12 @@
     }
 
     function schedulePreviewUpdate() {
-        pendingPreviewData = cloneData(state.data);
+        previewDataDirty = true;
         if (previewUpdateHandle) return;
         previewUpdateHandle = setTimeout(() => {
             previewUpdateHandle = null;
-            flushPreviewUpdate();
-        }, 250);
+            runWhenIdle(flushPreviewUpdate);
+        }, PREVIEW_UPDATE_DELAY_MS);
     }
 
     function postPreviewUpdate(targetWindow, payload) {
@@ -1057,6 +1068,10 @@
     }
 
     function flushPreviewUpdate() {
+        if (previewDataDirty) {
+            pendingPreviewData = cloneData(state.data);
+            previewDataDirty = false;
+        }
         if (!pendingPreviewData) return;
         const hasDetachedPreview = !!(detachedPreviewWindow && !detachedPreviewWindow.closed);
         if (!state.previewReady && !hasDetachedPreview) return;
@@ -1073,6 +1088,14 @@
             postPreviewUpdate(detachedPreviewWindow, payload);
         }
         pendingPreviewData = null;
+    }
+
+    function scheduleRenderCategories() {
+        if (editorRenderHandle) return;
+        editorRenderHandle = window.requestAnimationFrame(() => {
+            editorRenderHandle = null;
+            renderCategories();
+        });
     }
 
     function preventSummaryToggle(element) {
@@ -2006,7 +2029,7 @@
                 }
                 pointTypeName = newName;
                 categorySelect.value = getAssignedPointCategory(pointsEntry, pointTypeName);
-                renderCategories();
+                scheduleRenderCategories();
                 schedulePreviewUpdate();
             });
 
@@ -2025,7 +2048,7 @@
                 });
                 normalizePointCategories(pointsEntry);
                 renderGlobalSettings();
-                renderCategories();
+                scheduleRenderCategories();
                 schedulePreviewUpdate();
             });
 
@@ -2065,7 +2088,7 @@
             }
             pointsEntry.values[candidate] = 0;
             renderGlobalSettings();
-            renderCategories();
+            scheduleRenderCategories();
             schedulePreviewUpdate();
         });
 
@@ -3449,7 +3472,7 @@
                 state.data[currentIndex] = state.data[targetIndex];
                 state.data[targetIndex] = temp;
                 keepPanelOpen(category);
-                renderCategories();
+                scheduleRenderCategories();
                 schedulePreviewUpdate();
             });
 
@@ -3467,7 +3490,7 @@
                 state.data[currentIndex] = state.data[targetIndex];
                 state.data[targetIndex] = temp;
                 keepPanelOpen(category);
-                renderCategories();
+                scheduleRenderCategories();
                 schedulePreviewUpdate();
             });
 
@@ -3480,7 +3503,7 @@
                 event.preventDefault();
                 if (!confirm(`Delete category "${category.name || ""}"?`)) return;
                 state.data.splice(dataIndex, 1);
-                renderCategories();
+                scheduleRenderCategories();
                 schedulePreviewUpdate();
             });
 
@@ -3520,10 +3543,10 @@
                         `${countOptionNodes(category.subcategories || [])} options`
                     ]
                 ));
-
-                // Sync all options in this category
+                schedulePreviewUpdate();
+            });
+            nameInput.addEventListener("blur", () => {
                 syncSubcategoryTreeOptionIds([category.name], category.subcategories || []);
-
                 renderEditorNavigation(getCategorySnapshots());
                 schedulePreviewUpdate();
             });
@@ -3659,7 +3682,7 @@
                     event.preventDefault();
                     if (moveArrayItem(parentArray, subIndex, -1)) {
                         keepPanelOpen(category, subcat);
-                        renderCategories();
+                        scheduleRenderCategories();
                         schedulePreviewUpdate();
                     }
                 });
@@ -3674,7 +3697,7 @@
                     event.preventDefault();
                     if (moveArrayItem(parentArray, subIndex, 1)) {
                         keepPanelOpen(category, subcat);
-                        renderCategories();
+                        scheduleRenderCategories();
                         schedulePreviewUpdate();
                     }
                 });
@@ -3690,7 +3713,7 @@
                     parentArray.splice(subIndex, 1);
                     keepPanelOpen(category);
                     subcategoryOpenState.delete(subcat);
-                    renderCategories();
+                    scheduleRenderCategories();
                     schedulePreviewUpdate();
                 });
 
@@ -3733,6 +3756,9 @@
                             `${countSubcategoryNodes(subcat.subcategories || [])} nested`
                         ]
                     ));
+                    schedulePreviewUpdate();
+                });
+                subNameInput.addEventListener("blur", () => {
                     syncSubcategoryTreeOptionIds([category.name], [subcat]);
                     renderEditorNavigation(getCategorySnapshots());
                     schedulePreviewUpdate();
@@ -4067,7 +4093,7 @@
                     subcat.options = subcat.options || [];
                     subcat.options.push(createDefaultOption([category.name, ...namePath, subcat.name]));
                     keepPanelOpen(category, subcat);
-                    renderCategories();
+                    scheduleRenderCategories();
                     schedulePreviewUpdate();
                 });
                 subBody.appendChild(addOptionBtn);
@@ -4089,7 +4115,7 @@
                     subcat.subcategories.push(newSub);
                     keepPanelOpen(category, subcat);
                     keepPanelOpen(category, newSub);
-                    renderCategories();
+                    scheduleRenderCategories();
                     schedulePreviewUpdate();
                 });
                 subBody.appendChild(addNestedBtn);
@@ -4114,7 +4140,7 @@
                 const newSub = createDefaultSubcategory();
                 category.subcategories.push(newSub);
                 keepPanelOpen(category, newSub);
-                renderCategories();
+                scheduleRenderCategories();
                 schedulePreviewUpdate();
             });
             body.appendChild(addSubBtn);
@@ -4148,6 +4174,9 @@
             }
             details.addEventListener("toggle", () => {
                 optionOpenState.set(option, details.open);
+                if (details.open && !details.querySelector(":scope > .option-body")) {
+                    scheduleRenderCategories();
+                }
             });
 
             const summary = document.createElement("summary");
@@ -4173,7 +4202,7 @@
             upBtn.addEventListener("click", () => {
                 if (moveArrayItem(subcategory.options, optionIndex, -1)) {
                     keepPanelOpen(category, subcategory);
-                    renderCategories();
+                    scheduleRenderCategories();
                     schedulePreviewUpdate();
                 }
             });
@@ -4187,7 +4216,7 @@
             downBtn.addEventListener("click", () => {
                 if (moveArrayItem(subcategory.options, optionIndex, 1)) {
                     keepPanelOpen(category, subcategory);
-                    renderCategories();
+                    scheduleRenderCategories();
                     schedulePreviewUpdate();
                 }
             });
@@ -4206,7 +4235,7 @@
                 optionIdAutoMap.set(copy, true);
                 subcategory.options.splice(optionIndex + 1, 0, copy);
                 keepPanelOpen(category, subcategory);
-                renderCategories();
+                scheduleRenderCategories();
                 schedulePreviewUpdate();
             });
 
@@ -4219,7 +4248,7 @@
                 if (!confirm(`Delete option "${option.label || option.id || ""}"?`)) return;
                 subcategory.options.splice(optionIndex, 1);
                 keepPanelOpen(category, subcategory);
-                renderCategories();
+                scheduleRenderCategories();
                 schedulePreviewUpdate();
             });
 
@@ -4231,6 +4260,7 @@
             preventSummaryToggle(toolbar);
             details.appendChild(summary);
 
+            if (storedOpen) {
             const body = document.createElement("div");
             body.className = "option-body";
             ensurePaymentOptionsForEditor(option);
@@ -4339,6 +4369,15 @@
             labelInput.placeholder = "Displayed choice text. Supports Markdown emphasis and legacy [color=#d32f2f], [weight=600], and [size=120%] tags.";
             labelInput.addEventListener("input", () => {
                 option.label = labelInput.value;
+                summaryLabel.innerHTML = "";
+                summaryLabel.appendChild(createSummaryHeader(
+                    formatOptionSummary(option),
+                    Object.keys(option.cost || {}).length ? [`${Object.keys(option.cost).length} cost type${Object.keys(option.cost).length === 1 ? "" : "s"}`] : []
+                ));
+                refreshOptionWarnings();
+                schedulePreviewUpdate();
+            });
+            labelInput.addEventListener("blur", () => {
                 const newId = generateOptionId(option.label, {
                     path: normalizedPath,
                     skipOption: option
@@ -5095,6 +5134,7 @@
             customJsonBody.appendChild(advancedSection);
 
             details.appendChild(body);
+            }
             container.appendChild(details);
         });
     }
@@ -6231,7 +6271,7 @@
             state.data = parsed;
             regenerateAllOptionIds();
             renderGlobalSettings();
-            renderCategories();
+            scheduleRenderCategories();
             schedulePreviewUpdate();
             showEditorMessage("Imported configuration.", "success");
         } catch (err) {
@@ -6255,7 +6295,7 @@
             state.data = config.data;
             regenerateAllOptionIds();
             renderGlobalSettings();
-            renderCategories();
+            scheduleRenderCategories();
             schedulePreviewUpdate();
             showEditorMessage(`Loaded ${state.selectedFile}`, "success");
             return;
@@ -6383,7 +6423,7 @@
     function setupEventListeners() {
         editorSearchInput?.addEventListener("input", () => {
             state.filterQuery = normalizeFilterText(editorSearchInput.value);
-            renderCategories();
+            scheduleRenderCategories();
         });
 
         editorNavigatorEl?.addEventListener("click", (event) => {
@@ -6452,7 +6492,7 @@
 
         addCategoryBtn?.addEventListener("click", () => {
             state.data.push(createDefaultCategory());
-            renderCategories();
+            scheduleRenderCategories();
             schedulePreviewUpdate();
         });
 
