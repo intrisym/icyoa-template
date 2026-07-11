@@ -2375,6 +2375,7 @@ class CyoaEngine {
             return `${inheritedSatisfiedOr || atomSatisfied ? "✅" : "❌"} ${negated ? "NOT " : ""}${label}${countLabel}`;
         };
         const pointLine = (node, negated = false, inheritedSatisfiedOr = false) => {
+            if (!Object.prototype.hasOwnProperty.call(this.points || {}, node.pointType)) return "";
             const actual = this.pointRequirementValue(node.pointType);
             let pointSatisfied = false;
             if (node.operator === ">=") pointSatisfied = actual >= node.value;
@@ -4499,15 +4500,31 @@ test("invalid option prerequisites should be hidden from display lines", () => {
         cost: {},
         prerequisites: { and: ["preA", "missingOptionId"], or: ["preB", "missingOtherId"] }
     };
-    [stringOption, invalidOnlyOption, arrayOption, objectOption].forEach(option => engine.optionMap.set(option.id, option));
+    const invalidPointOption = {
+        id: "invalidPrereqDisplayPoint",
+        label: "Invalid Prereq Display Point",
+        cost: {},
+        prerequisites: "Sin >= 1"
+    };
+    const mixedPointOption = {
+        id: "invalidPrereqDisplayMixedPoint",
+        label: "Invalid Prereq Display Mixed Point",
+        cost: {},
+        prerequisites: "Points >= 1 && Sin >= 1"
+    };
+    [stringOption, invalidOnlyOption, arrayOption, objectOption, invalidPointOption, mixedPointOption].forEach(option => engine.optionMap.set(option.id, option));
 
     assert.deepStrictEqual(engine.displayRequirementLines(stringOption), ["❌ Pre A"]);
     assert.deepStrictEqual(engine.displayRequirementLines(invalidOnlyOption), []);
     assert.deepStrictEqual(engine.displayRequirementLines(arrayOption), ["❌ Pre A"]);
     assert.deepStrictEqual(engine.displayRequirementLines(objectOption), ["❌ Pre A", "❌ Pre B"]);
+    assert.deepStrictEqual(engine.displayRequirementLines(invalidPointOption), []);
+    assert.deepStrictEqual(engine.displayRequirementLines(mixedPointOption), ["✅ Points >= 1"]);
     assert(
-        PLAYER_SCRIPT_SOURCE.includes("if (!findOptionById(id)) return \"\";"),
-        "player prerequisite preview should hide unknown option IDs"
+        PLAYER_SCRIPT_SOURCE.includes("if (!findOptionById(id)) return \"\";") &&
+            PLAYER_SCRIPT_SOURCE.includes("isKnownPointType") &&
+            PLAYER_SCRIPT_SOURCE.includes("if (!isKnownPointType(node.pointType)) return \"\";"),
+        "player prerequisite preview should hide unknown option IDs and unknown point types"
     );
 });
 

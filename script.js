@@ -3683,6 +3683,11 @@ function getPointRequirementValue(pointType) {
     return Number(originalPoints?.[pointType]) || 0;
 }
 
+function isKnownPointType(pointType) {
+    return Object.prototype.hasOwnProperty.call(originalPoints || {}, pointType)
+        || Object.prototype.hasOwnProperty.call(points || {}, pointType);
+}
+
 function categoryHasSelectedOption(category) {
     if (!category) return false;
     let found = (category.options || []).some(option => (selectedOptions[option.id] || 0) > 0);
@@ -4465,6 +4470,7 @@ function buildPrerequisiteDisplayLines(expression = "") {
         return `${satisfied ? "✅" : "❌"} ${negated ? "NOT " : ""}${label}`;
     };
     const pointText = (node, negated, inheritedSatisfiedOr = false) => {
+        if (!isKnownPointType(node.pointType)) return "";
         const pointSatisfied = evaluatePointRequirement(node.pointType, node.operator, node.value);
         const satisfied = inheritedSatisfiedOr || (negated ? !pointSatisfied : pointSatisfied);
         const operator = node.operator === "==" ? "=" : node.operator;
