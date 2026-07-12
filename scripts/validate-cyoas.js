@@ -61,6 +61,36 @@ function getScopeRequirementPattern() {
     return new RegExp(`\\b(category|subcategory)\\s*\\(\\s*${quotedNamePattern}\\s*\\)`, "g");
 }
 
+function getGroupRequirementPattern() {
+    const quotedNamePattern = String.raw`("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')`;
+    return new RegExp(`\\bgroup\\s*\\(\\s*${quotedNamePattern}\\s*\\)`, "g");
+}
+
+function extractRequirementGroups(requirement) {
+    const groups = new Set();
+    const visit = value => {
+        if (!value) return;
+        if (typeof value === "string") {
+            value.replace(getGroupRequirementPattern(), (_, rawName) => {
+                groups.add(unquoteRequirementPointName(rawName));
+                return "";
+            });
+            return;
+        }
+        if (Array.isArray(value)) {
+            value.forEach(visit);
+            return;
+        }
+        if (typeof value === "object") {
+            visit(value.and);
+            visit(value.or);
+            visit(value.not);
+        }
+    };
+    visit(requirement);
+    return Array.from(groups);
+}
+
 function extractRequirementScopes(requirement) {
     const scopes = [];
     const visit = value => {
@@ -116,7 +146,8 @@ function extractExpressionIds(expr) {
     const ids = new Set();
     const expressionWithoutPointRequirements = expr
         .replace(getPointRequirementPattern(), "")
-        .replace(getScopeRequirementPattern(), "");
+        .replace(getScopeRequirementPattern(), "")
+        .replace(getGroupRequirementPattern(), "");
     const tokens = expressionWithoutPointRequirements.match(/!?[A-Za-z_][A-Za-z0-9_]*(?:__\d+)?/g) || [];
     tokens.forEach(token => {
         const core = token.startsWith("!") ? token.slice(1) : token;
@@ -276,6 +307,50 @@ function validateIdRefs(file, context, ids, optionIds, errors) {
     });
 }
 
+function validateOptionGroups(file, pointsEntry, optionIds, errors) {
+    const groups = pointsEntry?.optionGroups;
+    if (groups === undefined) return new Set();
+    const groupIds = new Set();
+    if (!Array.isArray(groups)) {
+        pushIssue(errors, file, "points.optionGroups must be an array.");
+        return groupIds;
+    }
+    groups.forEach((group, index) => {
+        const context = `points.optionGroups[${index}]`;
+        if (!group || typeof group !== "object" || Array.isArray(group)) {
+            pushIssue(errors, file, `${context} must be an object.`);
+            return;
+        }
+        const id = String(group.id || "").trim();
+        if (!id) {
+            pushIssue(errors, file, `${context}.id must be a non-empty string.`);
+        } else if (groupIds.has(id)) {
+            pushIssue(errors, file, `duplicate option group ID "${id}".`);
+        } else if (optionIds.has(id)) {
+            pushIssue(errors, file, `${context}.id "${id}" conflicts with an option ID.`);
+        } else {
+            groupIds.add(id);
+        }
+        if (group.label !== undefined && typeof group.label !== "string") {
+            pushIssue(errors, file, `${context}.label must be a string.`);
+        }
+        if (!Array.isArray(group.optionIds)) {
+            pushIssue(errors, file, `${context}.optionIds must be an array.`);
+        } else {
+            validateIdRefs(file, `${context}.optionIds`, group.optionIds, optionIds, errors);
+        }
+    });
+    return groupIds;
+}
+
+function validateGroupRequirementRefs(file, context, requirement, groupIds, errors) {
+    extractRequirementGroups(requirement).forEach(groupId => {
+        if (!groupIds.has(groupId)) {
+            pushIssue(errors, file, `${context} references unknown option group "${groupId}".`);
+        }
+    });
+}
+
 function validateModifiedCostRules(file, context, rules, optionIds, pointTypes, errors, warnings) {
     if (rules === undefined) return;
     if (!Array.isArray(rules)) {
@@ -399,7 +474,7 @@ function validateRandomTables(file, context, tables, pointTypes, errors, warning
     tables.forEach((table, index) => validateRandomTable(file, `${context}.randomTables[${index}]`, table, pointTypes, errors, warnings));
 }
 
-function validateCostOptions(file, context, costOptions, pointTypes, errors, warnings, optionIds = null, scopes = null) {
+function validateCostOptions(file, context, costOptions, pointTypes, errors, warnings, optionIds = null, scopes = null, groupIds = null) {
     if (costOptions === undefined) return;
     if (!Array.isArray(costOptions)) {
         pushIssue(errors, file, `${context}.costOptions must be an array.`);
@@ -437,6 +512,7 @@ function validateCostOptions(file, context, costOptions, pointTypes, errors, war
         validateRequirementExpression(file, `${optionContext}.prerequisites`, costOption.prerequisites, errors);
         validatePointRequirementRefs(file, `${optionContext}.prerequisites`, costOption.prerequisites, pointTypes, errors);
         if (scopes) validateScopeRequirementRefs(file, `${optionContext}.prerequisites`, costOption.prerequisites, scopes, errors);
+        if (groupIds) validateGroupRequirementRefs(file, `${optionContext}.prerequisites`, costOption.prerequisites, groupIds, errors);
         if (optionIds) {
             validateIdRefs(file, `${optionContext}.prerequisites`, extractRequirementIds(costOption.prerequisites), optionIds, errors);
         }
@@ -882,6 +958,7 @@ function validateCyoaData(file, data) {
         optionIds.add(option.id);
     });
 
+    const optionGroupIds = validateOptionGroups(file, pointsEntry, optionIds, errors);
     validateDerivedValues(file, pointsEntry, pointTypes, optionIds, errors);
     validateEnableablePointSets(file, pointsEntry, pointTypes, optionIds, errors);
 
@@ -890,7 +967,7 @@ function validateCyoaData(file, data) {
         const context = `${optionPath} (${option.id})`;
 
         validatePointMap(file, `${context}.cost`, option.cost || {}, pointTypes, errors, warnings);
-        validateCostOptions(file, context, option.costOptions, pointTypes, errors, warnings, optionIds, requirementScopes);
+        validateCostOptions(file, context, option.costOptions, pointTypes, errors, warnings, optionIds, requirementScopes, optionGroupIds);
         validatePointAllocation(file, context, option.pointAllocation, pointTypes, errors);
         validateSliderModifiers(file, context, option.sliderModifiers, pointTypes, errors);
         validateSliderModifiers(file, context, option.attributeEffects, pointTypes, errors, "attributeEffects");
@@ -904,11 +981,13 @@ function validateCyoaData(file, data) {
         validateRequirementExpression(file, `${context}.prerequisites`, option.prerequisites, errors);
         validatePointRequirementRefs(file, `${context}.prerequisites`, option.prerequisites, pointTypes, errors);
         validateScopeRequirementRefs(file, `${context}.prerequisites`, option.prerequisites, requirementScopes, errors);
+        validateGroupRequirementRefs(file, `${context}.prerequisites`, option.prerequisites, optionGroupIds, errors);
         validateIdRefs(file, `${context}.prerequisites`, extractRequirementIds(option.prerequisites), optionIds, errors);
         (option.prerequisitesBySelection || []).forEach((requirement, index) => {
             validateRequirementExpression(file, `${context}.prerequisitesBySelection[${index}]`, requirement, errors);
             validatePointRequirementRefs(file, `${context}.prerequisitesBySelection[${index}]`, requirement, pointTypes, errors);
             validateScopeRequirementRefs(file, `${context}.prerequisitesBySelection[${index}]`, requirement, requirementScopes, errors);
+            validateGroupRequirementRefs(file, `${context}.prerequisitesBySelection[${index}]`, requirement, optionGroupIds, errors);
             validateIdRefs(file, `${context}.prerequisitesBySelection[${index}]`, extractRequirementIds(requirement), optionIds, errors);
         });
         validateIdRefs(file, `${context}.conflictsWith`, normalizeIdList(option.conflictsWith), optionIds, errors);
@@ -938,11 +1017,12 @@ function validateCyoaData(file, data) {
         if (subcat.mergeDefaultCostOptions !== undefined && typeof subcat.mergeDefaultCostOptions !== "boolean") {
             pushIssue(errors, file, `${subcatPath}.mergeDefaultCostOptions must be boolean when present.`);
         }
-        validateCostOptions(file, subcatPath, subcat.costOptions, pointTypes, errors, warnings, optionIds, requirementScopes);
+        validateCostOptions(file, subcatPath, subcat.costOptions, pointTypes, errors, warnings, optionIds, requirementScopes, optionGroupIds);
         validatePointMap(file, `${subcatPath}.discountAmount`, subcat.discountAmount, pointTypes, errors, warnings);
         validateRequirementExpression(file, `${subcatPath}.requiresOption`, subcat.requiresOption, errors);
         validatePointRequirementRefs(file, `${subcatPath}.requiresOption`, subcat.requiresOption, pointTypes, errors);
         validateScopeRequirementRefs(file, `${subcatPath}.requiresOption`, subcat.requiresOption, requirementScopes, errors);
+        validateGroupRequirementRefs(file, `${subcatPath}.requiresOption`, subcat.requiresOption, optionGroupIds, errors);
         validateIdRefs(file, `${subcatPath}.requiresOption`, extractRequirementIds(subcat.requiresOption), optionIds, errors);
         validateModifiedCostRules(file, `${subcatPath}.modifiedCosts`, subcat.modifiedCosts, optionIds, pointTypes, errors, warnings);
         validateModifiedCostRules(file, `${subcatPath}.discounts`, subcat.discounts, optionIds, pointTypes, errors, warnings);
@@ -960,6 +1040,7 @@ function validateCyoaData(file, data) {
         validateRequirementExpression(file, `${context}.requiresOption`, category.requiresOption, errors);
         validatePointRequirementRefs(file, `${context}.requiresOption`, category.requiresOption, pointTypes, errors);
         validateScopeRequirementRefs(file, `${context}.requiresOption`, category.requiresOption, requirementScopes, errors);
+        validateGroupRequirementRefs(file, `${context}.requiresOption`, category.requiresOption, optionGroupIds, errors);
         validateIdRefs(file, `${context}.requiresOption`, extractRequirementIds(category.requiresOption), optionIds, errors);
         validatePointMap(file, `${context}.discountAmount`, category.discountAmount, pointTypes, errors, warnings);
         if (category.maxSelections !== undefined && Number(category.maxSelections) < 1) {

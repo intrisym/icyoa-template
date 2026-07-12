@@ -37,6 +37,7 @@ const FEATURE_COVERAGE = [
     "countsAsOneSelection for subcategory limits",
     "bypassSubcategoryMaxSelections options do not consume subcategory limit slots",
     "string, array, object, negated, OR, AND, and count-suffix prerequisites",
+    "option group prerequisites expand to member option labels in preview",
     "dependent selections are removed when prerequisites become false",
     "one-way outgoing and incoming conflicts",
     "category requiresOption and category maxSelections",
@@ -282,6 +283,18 @@ function parsePrerequisiteExpression(expression = "") {
                     name: unquotePrerequisitePointName(nameToken)
                 };
             }
+            if (token === "group" && next === "(") {
+                consume("(");
+                const nameToken = consume();
+                if (!/^"(?:\\.|[^"\\])*"$|^'(?:\\.|[^'\\])*'$/.test(nameToken || "")) {
+                    throw new Error("Group prerequisites must use a quoted group ID");
+                }
+                consume(")");
+                return {
+                    type: "group",
+                    id: unquotePrerequisitePointName(nameToken)
+                };
+            }
             if ([">=", "<=", ">", "<", "==", "="].includes(next)) {
                 const operator = consume();
                 const valueToken = consume();
@@ -328,7 +341,7 @@ function parsePrerequisiteExpression(expression = "") {
     return ast;
 }
 
-function evaluatePrerequisiteNode(node, meetsRequirement, getPointValue = () => 0, scopeLookup = () => false) {
+function evaluatePrerequisiteNode(node, meetsRequirement, getPointValue = () => 0, scopeLookup = () => false, groupLookup = () => 0) {
     if (node.type === "atom") return meetsRequirement(node.id);
     if (node.type === "point") {
         const actual = Number(getPointValue(node.pointType)) || 0;
@@ -339,9 +352,10 @@ function evaluatePrerequisiteNode(node, meetsRequirement, getPointValue = () => 
         return actual === node.value;
     }
     if (node.type === "scope") return !!scopeLookup(node.scopeType, node.name);
-    if (node.type === "not") return !evaluatePrerequisiteNode(node.child, meetsRequirement, getPointValue, scopeLookup);
-    if (node.type === "and") return node.children.every(child => evaluatePrerequisiteNode(child, meetsRequirement, getPointValue, scopeLookup));
-    if (node.type === "or") return node.children.some(child => evaluatePrerequisiteNode(child, meetsRequirement, getPointValue, scopeLookup));
+    if (node.type === "group") return Number(groupLookup(node.id) || 0) > 0;
+    if (node.type === "not") return !evaluatePrerequisiteNode(node.child, meetsRequirement, getPointValue, scopeLookup, groupLookup);
+    if (node.type === "and") return node.children.every(child => evaluatePrerequisiteNode(child, meetsRequirement, getPointValue, scopeLookup, groupLookup));
+    if (node.type === "or") return node.children.some(child => evaluatePrerequisiteNode(child, meetsRequirement, getPointValue, scopeLookup, groupLookup));
     return false;
 }
 
@@ -512,6 +526,7 @@ class CyoaEngine {
         this.derivedValueConfigs = this.normalizeDerivedValues();
         this.derivedPointBaselines = {};
         this.pointEnablementSets = this.normalizePointEnablementSets();
+        this.optionGroups = this.normalizeOptionGroups();
         this.enabledPointTypeSelections = {};
         this.allowNegativeTypes = new Set(this.pointsEntry.allowNegative || []);
         this.categories = this.data.filter(entry => !entry.type || entry.name);
@@ -550,7 +565,14 @@ class CyoaEngine {
     static synthetic() {
         return new CyoaEngine([
             { type: "title", text: "Synthetic Feature Coverage CYOA" },
-            { type: "points", values: { Points: 10, Tokens: 0, Skills: 0, Equipment: 0, "Rare Prize": 0, "Rare B": 0 }, allowNegative: ["Debt"] },
+            {
+                type: "points",
+                values: { Points: 10, Tokens: 0, Skills: 0, Equipment: 0, "Rare Prize": 0, "Rare B": 0 },
+                allowNegative: ["Debt"],
+                optionGroups: [
+                    { id: "starterChoices", label: "Starter Choices", optionIds: ["preA", "preB"] }
+                ]
+            },
             {
                 type: "settings",
                 themeMode: "toggle",
@@ -718,6 +740,7 @@ class CyoaEngine {
                             { id: "questsQuestsTheyCameFromBeyond", label: "They Came from Beyond!", cost: {} },
                             { id: "gearGearExoSuit2", label: "Exo Suit 2", cost: {}, prerequisites: "gearGearExoSuit1 && (powersScienceAlienTech || questsQuestsTheyCameFromBeyond)" },
                             { id: "requiresComplexOrGroups", label: "Requires Complex OR Groups", cost: {}, prerequisites: "(preA || preB) && (multi__2 || oneWayA) && !drawbacksDrawbacksDumb" },
+                            { id: "requiresOptionGroup", label: "Requires Option Group", cost: {}, prerequisites: "group(\"starterChoices\")" },
                             { id: "oneWayA", label: "One-Way A", cost: {}, conflictsWith: ["oneWayB"] },
                             { id: "oneWayB", label: "One-Way B", cost: {} },
                             { id: "youAgeYoungAdult", label: "Young Adult", cost: {} },
@@ -1469,6 +1492,32 @@ class CyoaEngine {
             .filter(entry => pointTypes.has(entry.pointType) && entry.subtypes.length);
     }
 
+    normalizeOptionGroups() {
+        const raw = Array.isArray(this.pointsEntry.optionGroups) ? this.pointsEntry.optionGroups : [];
+        const seen = new Set();
+        return raw
+            .map(group => {
+                const id = String(group?.id || "").trim();
+                const label = String(group?.label || id).trim() || id;
+                const optionIds = Array.isArray(group?.optionIds)
+                    ? Array.from(new Set(group.optionIds.map(optionId => String(optionId || "").trim()).filter(Boolean)))
+                    : [];
+                return { id, label, optionIds };
+            })
+            .filter(group => {
+                if (!group.id || seen.has(group.id) || !group.optionIds.length) return false;
+                seen.add(group.id);
+                return true;
+            });
+    }
+
+    optionGroupSelectionCount(groupId) {
+        const target = String(groupId || "").trim();
+        const group = this.optionGroups.find(group => group.id === target || group.label === target);
+        if (!group) return 0;
+        return group.optionIds.reduce((sum, optionId) => sum + (this.selectedOptions[optionId] || 0), 0);
+    }
+
     pointEnablementKey(set) {
         return set?.pointType || "";
     }
@@ -2072,7 +2121,8 @@ class CyoaEngine {
                 requirement,
                 id => this.selectedOptions[id] || 0,
                 pointType => this.pointRequirementValue(pointType),
-                (scopeType, scopeName) => this.scopeRequirementMet(scopeType, scopeName)
+                (scopeType, scopeName) => this.scopeRequirementMet(scopeType, scopeName),
+                groupId => this.optionGroupSelectionCount(groupId)
             );
         }
         if (Array.isArray(requirement)) {
@@ -2397,12 +2447,25 @@ class CyoaEngine {
             const label = `${node.scopeType === "category" ? "Category" : "Subcategory"} ${node.name}`;
             return `${inheritedSatisfiedOr || (negated ? !scopeSatisfied : scopeSatisfied) ? "✅" : "❌"} ${negated ? "NOT " : ""}${label}`;
         };
+        const groupLine = (node, negated = false, inheritedSatisfiedOr = false) => {
+            const group = this.optionGroups.find(group => group.id === node.id || group.label === node.id);
+            if (!group) return "";
+            const groupSatisfied = this.optionGroupSelectionCount(node.id) > 0;
+            const satisfied = inheritedSatisfiedOr || (negated ? !groupSatisfied : groupSatisfied);
+            return group.optionIds.map(optionId => {
+                if (!this.optionMap.has(optionId)) return "";
+                const optionSelected = this.meetsCountRequirement(optionId);
+                const symbol = satisfied || (negated ? !optionSelected : optionSelected) ? "✅" : "❌";
+                return `${symbol} ${negated ? "NOT " : ""}${this.optionMap.get(optionId)?.label || optionId}`;
+            }).filter(Boolean).join(" OR ");
+        };
         const inlineNode = (node, inheritedSatisfiedOr = false, negated = false) => {
             if (node.type === "atom") return atomLine(node.id, negated, inheritedSatisfiedOr);
             if (node.type === "point") return pointLine(node, negated, inheritedSatisfiedOr);
             if (node.type === "scope") return scopeLine(node, negated, inheritedSatisfiedOr);
+            if (node.type === "group") return groupLine(node, negated, inheritedSatisfiedOr);
             if (node.type === "not") {
-                if (node.child?.type === "atom" || node.child?.type === "point" || node.child?.type === "scope") return inlineNode(node.child, inheritedSatisfiedOr, !negated);
+                if (node.child?.type === "atom" || node.child?.type === "point" || node.child?.type === "scope" || node.child?.type === "group") return inlineNode(node.child, inheritedSatisfiedOr, !negated);
                 const childText = inlineNode(node.child, inheritedSatisfiedOr, false);
                 return childText ? `NOT (${childText})` : "";
             }
@@ -2411,7 +2474,8 @@ class CyoaEngine {
                     node,
                     id => this.meetsCountRequirement(id),
                     pointType => this.pointRequirementValue(pointType),
-                    (scopeType, scopeName) => this.scopeRequirementMet(scopeType, scopeName)
+                    (scopeType, scopeName) => this.scopeRequirementMet(scopeType, scopeName),
+                    groupId => this.optionGroupSelectionCount(groupId)
                 );
                 return node.children.map(child => inlineNode(child, orSatisfied, negated)).filter(Boolean).join(" OR ");
             }
@@ -4034,9 +4098,16 @@ test("Overlord Giantkin should double live Strength slider value", () => {
     const engine = new CyoaEngine(data, "overlord_cyoa.json");
     const giantkin = engine.option("raceDemiHumanoidsGiantkin");
 
-    assert.deepStrictEqual(giantkin.sliderModifiers, [
+    assert.strictEqual(giantkin.sliderModifiers.length, 1);
+    assert.deepStrictEqual(
+        {
+            type: giantkin.sliderModifiers[0].type,
+            selectable: giantkin.sliderModifiers[0].selectable,
+            attribute: giantkin.sliderModifiers[0].attribute,
+            multiplier: giantkin.sliderModifiers[0].multiplier
+        },
         { type: "multiply", selectable: false, attribute: "Strength", multiplier: 2 }
-    ]);
+    );
     assert(
         EDITOR_SCRIPT_SOURCE.includes("renderSliderModifiersEditor") &&
             EDITOR_SCRIPT_SOURCE.includes("Add slider modifier") &&
@@ -4639,6 +4710,34 @@ test("category and subcategory prerequisites should unlock after any scoped sele
             PLAYER_SCRIPT_SOURCE.includes('scopeType === "category"') &&
             PLAYER_SCRIPT_SOURCE.includes('scopeType === "subcategory"'),
         "player prerequisite parser should support category and subcategory scope requirements"
+    );
+});
+
+test("option group prerequisites should unlock from grouped options and render member labels", () => {
+    const engine = CyoaEngine.synthetic();
+
+    assert.strictEqual(engine.canSelect("requiresOptionGroup"), false);
+    assert.deepStrictEqual(engine.displayRequirementLines("requiresOptionGroup"), ["❌ Pre A OR ❌ Pre B"]);
+
+    engine.select("preB");
+    assert.strictEqual(engine.canSelect("requiresOptionGroup"), true);
+    assert.deepStrictEqual(engine.displayRequirementLines("requiresOptionGroup"), ["✅ Pre A OR ✅ Pre B"]);
+
+    assert(
+        PLAYER_SCRIPT_SOURCE.includes("optionGroupSelectionCount") &&
+            PLAYER_SCRIPT_SOURCE.includes("token === \"group\"") &&
+            PLAYER_SCRIPT_SOURCE.includes("findOptionGroup"),
+        "player prerequisites should support option groups while previewing member options"
+    );
+    assert(
+        EDITOR_SCRIPT_SOURCE.includes("Option groups") &&
+            EDITOR_SCRIPT_SOURCE.includes("group(\\\"groupId\\\")") &&
+            EDITOR_SCRIPT_SOURCE.includes("normalizeOptionGroupsForEditor") &&
+            EDITOR_SCRIPT_SOURCE.includes("generateOptionGroupId") &&
+            EDITOR_SCRIPT_SOURCE.includes("slugifyLabel(label)") &&
+            EDITOR_SCRIPT_SOURCE.includes("labelInput.addEventListener(\"blur\"") &&
+            EDITOR_SCRIPT_SOURCE.includes("idInput.readOnly = true"),
+        "visual editor should expose CYOA-wide option groups"
     );
 });
 

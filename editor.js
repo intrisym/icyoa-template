@@ -491,6 +491,36 @@
         return new RegExp(`\\b(category|subcategory)\\s*\\(\\s*${quotedNamePattern}\\s*\\)`, "g");
     }
 
+    function getGroupRequirementPattern() {
+        const quotedNamePattern = String.raw`("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')`;
+        return new RegExp(`\\bgroup\\s*\\(\\s*${quotedNamePattern}\\s*\\)`, "g");
+    }
+
+    function extractRequirementGroups(value) {
+        const groups = new Set();
+        const visit = requirement => {
+            if (!requirement) return;
+            if (typeof requirement === "string") {
+                requirement.replace(getGroupRequirementPattern(), (_, rawName) => {
+                    groups.add(unquoteRequirementPointName(rawName));
+                    return "";
+                });
+                return;
+            }
+            if (Array.isArray(requirement)) {
+                requirement.forEach(visit);
+                return;
+            }
+            if (typeof requirement === "object") {
+                visit(requirement.and);
+                visit(requirement.or);
+                visit(requirement.not);
+            }
+        };
+        visit(value);
+        return groups;
+    }
+
     function extractRequirementScopes(value) {
         const scopes = [];
         const visit = requirement => {
@@ -548,7 +578,8 @@
         if (typeof value === "string") {
             const withoutPointRequirements = value
                 .replace(getPointRequirementPattern(), "")
-                .replace(getScopeRequirementPattern(), "");
+                .replace(getScopeRequirementPattern(), "")
+                .replace(getGroupRequirementPattern(), "");
             const tokens = withoutPointRequirements.match(/!?[A-Za-z_][A-Za-z0-9_]*(?:__\d+)?/g) || [];
             tokens.forEach(token => {
                 const core = token.startsWith("!") ? token.slice(1) : token;
@@ -741,6 +772,70 @@
         return warnings;
     }
 
+    function normalizeOptionGroupsForEditor(pointsEntry) {
+        if (!Array.isArray(pointsEntry.optionGroups)) pointsEntry.optionGroups = [];
+        const used = new Set(collectOptionIds());
+        const makeGroupId = (label = "Option Group") => {
+            const base = normalizeIdBase(slugifyLabel(label) || "optionGroup");
+            let candidate = base;
+            let suffix = 1;
+            while (used.has(candidate)) {
+                candidate = `${base}${suffix}`;
+                suffix += 1;
+            }
+            used.add(candidate);
+            return candidate;
+        };
+        pointsEntry.optionGroups = pointsEntry.optionGroups
+            .map((group, index) => {
+                const label = String(group?.label || group?.id || `Option Group ${index + 1}`).trim();
+                let id = String(group?.id || "").trim();
+                if (!id || used.has(id)) id = makeGroupId(label);
+                else used.add(id);
+                const optionIds = Array.isArray(group?.optionIds)
+                    ? Array.from(new Set(group.optionIds.map(optionId => String(optionId || "").trim()).filter(Boolean)))
+                    : [];
+                return { id, label, optionIds };
+            })
+            .filter(group => group.id);
+        return pointsEntry.optionGroups;
+    }
+
+    function generateOptionGroupId(label = "Option Group", pointsEntry, skipGroup = null) {
+        const used = new Set(collectOptionIds());
+        (pointsEntry?.optionGroups || []).forEach(group => {
+            if (skipGroup && group === skipGroup) return;
+            const id = String(group?.id || "").trim();
+            if (id) used.add(id);
+        });
+        const base = normalizeIdBase(slugifyLabel(label) || "optionGroup");
+        let candidate = base;
+        let suffix = 1;
+        while (used.has(candidate)) {
+            candidate = `${base}${suffix}`;
+            suffix += 1;
+        }
+        return candidate;
+    }
+
+    function generateDefaultOptionGroupLabel(pointsEntry) {
+        let suffix = (pointsEntry?.optionGroups || []).length + 1;
+        let candidate = `Option Group ${suffix}`;
+        const labels = new Set((pointsEntry?.optionGroups || []).map(group => String(group?.label || "").trim()).filter(Boolean));
+        while (labels.has(candidate)) {
+            suffix += 1;
+            candidate = `Option Group ${suffix}`;
+        }
+        return candidate;
+    }
+
+    function getOptionGroupIds() {
+        const pointsEntry = state.data.find(entry => entry?.type === "points");
+        return new Set((pointsEntry?.optionGroups || [])
+            .map(group => String(group?.id || "").trim())
+            .filter(Boolean));
+    }
+
     function getOptionValidationWarnings(option) {
         const warnings = [];
         const allIds = collectOptionIds();
@@ -806,6 +901,15 @@
         warnUnknownScopeRequirements(option?.prerequisites, "Prerequisite");
         (option?.costOptions || []).forEach((costOption, index) => {
             warnUnknownScopeRequirements(costOption?.prerequisites, `Payment option ${index + 1} prerequisite`);
+        });
+        const optionGroupIds = getOptionGroupIds();
+        Array.from(extractRequirementGroups(option?.prerequisites)).forEach(groupId => {
+            if (!optionGroupIds.has(groupId)) warnings.push(`Prerequisite references unknown option group "${groupId}".`);
+        });
+        (option?.costOptions || []).forEach((costOption, index) => {
+            Array.from(extractRequirementGroups(costOption?.prerequisites)).forEach(groupId => {
+                if (!optionGroupIds.has(groupId)) warnings.push(`Payment option ${index + 1} prerequisite references unknown option group "${groupId}".`);
+            });
         });
 
         const rawConflicts = Array.isArray(option?.conflictsWith) ? option.conflictsWith : [];
@@ -1899,6 +2003,7 @@
         if (!pointsEntry.pointCategoryDefaults || typeof pointsEntry.pointCategoryDefaults !== "object" || Array.isArray(pointsEntry.pointCategoryDefaults)) pointsEntry.pointCategoryDefaults = {};
         if (!Array.isArray(pointsEntry.derivedValues)) pointsEntry.derivedValues = [];
         if (!Array.isArray(pointsEntry.enableablePointSets)) pointsEntry.enableablePointSets = [];
+        if (!Array.isArray(pointsEntry.optionGroups)) pointsEntry.optionGroups = [];
         if (!pointsEntry.attributeRanges) pointsEntry.attributeRanges = {};
         fragment.appendChild(renderPointsSection(pointsEntry));
 
@@ -2228,6 +2333,21 @@
         enablementContainer.className = "list-stack";
         renderPointEnablementSetsEditor(enablementContainer, pointsEntry);
         body.appendChild(enablementContainer);
+
+        const optionGroupsHeading = document.createElement("div");
+        optionGroupsHeading.className = "subheading";
+        optionGroupsHeading.textContent = "Option groups";
+        body.appendChild(optionGroupsHeading);
+
+        const optionGroupsHelp = document.createElement("div");
+        optionGroupsHelp.className = "field-help";
+        optionGroupsHelp.textContent = "Optional. Group option IDs once, then reference the group in prerequisites with group(\"groupId\").";
+        body.appendChild(optionGroupsHelp);
+
+        const optionGroupsContainer = document.createElement("div");
+        optionGroupsContainer.className = "list-stack";
+        renderOptionGroupsEditor(optionGroupsContainer, pointsEntry);
+        body.appendChild(optionGroupsContainer);
 
         const negHeading = document.createElement("div");
         negHeading.className = "subheading";
@@ -2693,6 +2813,111 @@
                 expandedByDefault: false
             });
             renderPointEnablementSetsEditor(container, pointsEntry);
+            schedulePreviewUpdate();
+        });
+        container.appendChild(addBtn);
+    }
+
+    function renderOptionGroupsEditor(container, pointsEntry) {
+        container.innerHTML = "";
+        const groups = normalizeOptionGroupsForEditor(pointsEntry);
+        const allOptionIds = collectOptionIds();
+
+        if (!groups.length) {
+            const empty = document.createElement("div");
+            empty.className = "empty-state";
+            empty.textContent = "No option groups configured.";
+            container.appendChild(empty);
+        }
+
+        groups.forEach((group, index) => {
+            const card = document.createElement("div");
+            card.className = "cost-option-card";
+
+            const header = document.createElement("div");
+            header.className = "cost-option-card-header";
+            const title = document.createElement("strong");
+            title.textContent = group.label || group.id || `Option group ${index + 1}`;
+            const removeBtn = document.createElement("button");
+            removeBtn.type = "button";
+            removeBtn.className = "button-icon danger";
+            removeBtn.title = "Remove option group";
+            removeBtn.textContent = "✕";
+            removeBtn.addEventListener("click", () => {
+                pointsEntry.optionGroups.splice(index, 1);
+                renderOptionGroupsEditor(container, pointsEntry);
+                schedulePreviewUpdate();
+            });
+            header.append(title, removeBtn);
+
+            const metaRow = document.createElement("div");
+            metaRow.className = "list-row";
+            const idInput = document.createElement("input");
+            idInput.type = "text";
+            idInput.value = group.id;
+            idInput.readOnly = true;
+            idInput.title = "Generated group ID. Use this in prerequisites, for example group(\"optionGroup1\").";
+
+            const labelInput = document.createElement("input");
+            labelInput.type = "text";
+            labelInput.value = group.label || "";
+            labelInput.placeholder = "Display label";
+            labelInput.addEventListener("input", () => {
+                group.label = labelInput.value;
+                pointsEntry.optionGroups[index] = group;
+                title.textContent = group.label || group.id || `Option group ${index + 1}`;
+                schedulePreviewUpdate();
+            });
+            labelInput.addEventListener("blur", () => {
+                const label = labelInput.value.trim() || `Option Group ${index + 1}`;
+                group.label = label;
+                group.id = generateOptionGroupId(label, pointsEntry, group);
+                pointsEntry.optionGroups[index] = group;
+                renderOptionGroupsEditor(container, pointsEntry);
+                schedulePreviewUpdate();
+            });
+            metaRow.append(idInput, labelInput);
+
+            const idListWrap = document.createElement("div");
+            idListWrap.className = "field";
+            const idListLabel = document.createElement("label");
+            idListLabel.textContent = "Grouped option IDs";
+            const idListHelp = document.createElement("div");
+            idListHelp.className = "field-help";
+            const invalidIds = group.optionIds.filter(id => !allOptionIds.has(id));
+            idListHelp.textContent = invalidIds.length
+                ? `Unknown option IDs: ${invalidIds.join(", ")}`
+                : `Prerequisites can reference this group with group("${group.id}"). The player preview expands the group into these option labels.`;
+            const idListContainer = document.createElement("div");
+            mountIdListEditor(idListContainer, {
+                ids: group.optionIds,
+                emptyText: "No option IDs in this group.",
+                onChange: nextIds => {
+                    group.optionIds = nextIds;
+                    pointsEntry.optionGroups[index] = group;
+                    renderOptionGroupsEditor(container, pointsEntry);
+                    schedulePreviewUpdate();
+                }
+            });
+            idListWrap.append(idListLabel, idListHelp, idListContainer);
+
+            card.append(header, metaRow, idListWrap);
+            container.appendChild(card);
+        });
+
+        const addBtn = document.createElement("button");
+        addBtn.type = "button";
+        addBtn.className = "button-subtle";
+        addBtn.textContent = "Add option group";
+        addBtn.addEventListener("click", () => {
+            const label = generateDefaultOptionGroupLabel(pointsEntry);
+            const candidate = generateOptionGroupId(label, pointsEntry);
+            pointsEntry.optionGroups.push({
+                id: candidate,
+                label,
+                optionIds: []
+            });
+            renderOptionGroupsEditor(container, pointsEntry);
             schedulePreviewUpdate();
         });
         container.appendChild(addBtn);

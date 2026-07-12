@@ -62,29 +62,25 @@
             "id": "startingOptionsBackgroundDropIn",
             "label": "Drop-In",
             "description": "You appear in your designated village with no new memories or relationships to help you. You are provided with a Village ID card and all standard documentation that will prevent you from getting a one-way ticket to Torture and Interrogation. You can optionally choose whether to be enlisted in your village as a ninja or if you enter as a civilian.",
-            "cost": {},
-            "image": "https://external-content.duckduckgo.com/iu/?u=http%3A%2F%2Fimg4.wikia.nocookie.net%2F__cb20140523045537%2Fnaruto%2Fimages%2F3%2F36%2FNaruto_Uzumaki.png&f=1&nofb=1&ipt=f764f91e9f173515001b149dfce5a26447da9327998e1831bf1cffbcb9c958fc"
+            "image": "https://vignette.wikia.nocookie.net/naruto/images/d/dd/Naruto_Uzumaki!!.png"
           },
           {
             "id": "startingOptionsBackgroundGenius",
             "label": "Genius",
             "description": "In a world of child soldiers it didn’t take long for your teachers to realize that you were a prodigy. Perhaps you come from a prestigious clan where you received special training, or you were simply born with talents and intellect that set you apart. Either way, your peers know that you’re something special.",
-            "cost": {},
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse1.mm.bing.net%2Fth%2Fid%2FOIP.IQ-_UhmVxZVFDmqTT5Hg4wHaLH%3Fcb%3D12%26pid%3DApi&f=1&ipt=53d452c2d562dfde6164968b9ae6aac9d401095e3221e26090b696d7c9097480&ipo=images"
+            "image": "https://vignette.wikia.nocookie.net/animated/images/6/68/Sasuke-Uchiha-uchiha-sasuke-17728212-1280-720.jpg"
           },
           {
             "id": "startingOptionsBackgroundMedic",
             "label": "Medic",
             "description": "This world is dangerous, and people are going to get hurt. That’s where you come in. You were enrolled in a medical training course while still in the Academy and you graduated with basic medical knowledge, enough to tend basic wounds, treat common poisons, and diagnose common ailments. Whether you use your medical knowledge to help or to harm is up to you.",
-            "cost": {},
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse3.mm.bing.net%2Fth%2Fid%2FOIP.Xut7uUlDYKQQGYCH4973MQHaNK%3Fcb%3D12%26pid%3DApi&f=1&ipt=7855386aae37887a78253938b66b0735c67a5cbaa40f15ba70a42e2a3c34e697&ipo=images"
+            "image": "https://static.wikia.nocookie.net/shinobi-striker/images/e/e0/Sakura_GNW.jpg"
           },
           {
             "id": "startingOptionsBackgroundVillain",
             "label": "Villain",
             "description": "The path to peace is not always sunshine and rainbows. In a war-torn world such as this, you’ve come to realize that the only true path to peace is through power. Power to manipulate. Power to control. Power to decide your own fate. You are free to choose whether you begin your jump in your village’s good graces or if you’ve already abandoned them to pursue your own ends.",
-            "cost": {},
-            "image": "https://external-content.duckduckgo.com/iu/?u=http%3A%2F%2Fimg4.wikia.nocookie.net%2F__cb20140823143758%2Fwwwdynapaul%2Fimages%2F4%2F4a%2FObito_Uchiha.png&f=1&nofb=1&ipt=b1b6236615dda42cfd0ba4c4f66ef152bc82bb2e7e2b0137429ec0a0a0af7b38"
+            "image": "https://static.wikia.nocookie.net/fictionalfighters/images/4/4a/Obito_Uchiha.png"
           }
         ],
         "subcategories": []
@@ -99,22 +95,19 @@
             "id": "startingOptionsGenderMale",
             "label": "Male",
             "description": "You arrive as male.",
-            "cost": {},
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse3.mm.bing.net%2Fth%2Fid%2FOIP.CzHF2AxzxIkDbtoDE0VZDgHaEK%3Fcb%3D12%26pid%3DApi&f=1&ipt=ead176b0ecd473f06bb76f74725357e1073d95ef00f0e80f9c5550e9bc61d457&ipo=images"
+            "image": "https://img4.wikia.nocookie.net/__cb20130731153209/naruto/pt-br/images/7/7d/Zabuza.png"
           },
           {
             "id": "startingOptionsGenderFemale",
             "label": "Female",
             "description": "You arrive as female.",
-            "cost": {},
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse1.mm.bing.net%2Fth%2Fid%2FOIP.YhkU-HxnB820UDhdY3aKUQHaEu%3Fcb%3D12%26pid%3DApi&f=1&ipt=84043b3c611fa9175f5675853d2919d921f20df606b76307c3341c846ae1c097&ipo=images"
+            "image": "https://static.wikia.nocookie.net/xianb/images/f/f3/Boruto_Naruto_Next_Generations_Episode_96_0993.jpg"
           },
           {
             "id": "startingOptionsGenderOther",
             "label": "Other",
             "description": "You arrive embodying another gender expression of your choice.",
-            "cost": {},
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse2.mm.bing.net%2Fth%2Fid%2FOIP.m3u4e1OCdqxG9DIYfkYt-QHaFl%3Fcb%3D12%26pid%3DApi&f=1&ipt=21faa5dbcaa08a118867d6b004425524d7ed6b4ad99361d23f160709db6dae82&ipo=images"
+            "image": "https://images3.wikia.nocookie.net/__cb20111031194812/naruto/images/6/6f/Orochimaru_As_A_Kid.PNG"
           }
         ],
         "columnsPerRow": 3,
@@ -130,50 +123,43 @@
             "id": "startingOptionsLocationKonohagakure",
             "label": "Konohagakure",
             "description": "Konohagakure, or the \"Village Hidden by Leaves\", is the hidden village of the Land of Fire. Konoha is currently ruled by the Third Hokage and is hidden deep within a forest. It is generally seen as the most powerful of the ninja villages. Because of this, Konoha has enjoyed many years of relative peace and stability. Many Konohagakure ninja specialize in the use of Fire Release techniques.",
-            "cost": {},
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fwallpaperbat.com%2Fimg%2F883660-konoha-naruto-uzumaki-hokage-naruto-naruto-uzumaki.jpg&f=1&nofb=1&ipt=233bb0d250e0721e9f2178a13346e1de80fb70a8c1399051b2002065b0cf61cd"
+            "image": "https://vignette2.wikia.nocookie.net/naruto/images/9/91/Konoha.png/revision/latest?cb=20150824051911"
           },
           {
             "id": "startingOptionsLocationKumogakure",
             "label": "Kumogakure",
             "description": "Kumogakure, or the “Village Hidden by Clouds”, is the hidden village of the Land of Lightning. Kumo is currently ruled by the Fourth Raikage and is hidden in a cloudy range of tall mountains. Many Kumogakure ninja use Lightning Release techniques.",
-            "cost": {},
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fvignette.wikia.nocookie.net%2Fnaruto%2Fimages%2F2%2F2f%2FVila_oculta_da_Nuvem.png%2Frevision%2Flatest%3Fcb%3D20131216215006%26path-prefix%3Dpt-br&f=1&nofb=1&ipt=5208af627e910b680a0e1d84162e0c7acf108b6247394f43795d1670a40c24c2"
+            "image": "https://static.wikia.nocookie.net/shinobito/images/5/5a/Kumogakure.png"
           },
           {
             "id": "startingOptionsLocationIwagakure",
             "label": "Iwagakure",
             "description": "Iwagakure, or the “Village Hidden by Rocks”, is the hidden village of the Land of Earth. Iwa is currently ruled by the Third Tsuchikage. The rocky mountain ranges that surround the village provide a natural stronghold that it is very proud of. Many Iwagakure ninja use Earth Release techniques. Iwagakure is well-known for the rock-hard attitude of its shinobi; as soon as the Tsuchikage gives an order, the Iwa-nin follow it without hesitation, even if it means death.",
-            "cost": {},
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse2.mm.bing.net%2Fth%2Fid%2FOIP.etvLuOuh7UukLLCXSHA5TQHaEL%3Fpid%3DApi&f=1&ipt=4f7fa9956201dfd096f57f20128868c14553505a68db842e8562e9a08903408d&ipo=images"
+            "image": "https://static.wikia.nocookie.net/naruto/images/e/e4/Iwagakure_no_Sato.png"
           },
           {
             "id": "startingOptionsLocationSunagakure",
             "label": "Sunagakure",
             "description": "Sunagakure, or “Village Hidden by Sand”, is the hidden village of the Land of Wind. Suna is currently ruled by the Fourth Kazekage. Being surrounded by desert offers the village a natural deterrent against invasion. Many Sunagakure ninja use Wind Release techniques and relentlessly pursue victory.",
-            "cost": {},
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse1.mm.bing.net%2Fth%2Fid%2FOIP.TLnUHypzqPGrCEadWlMw_gHaEJ%3Fcb%3D12%26pid%3DApi&f=1&ipt=b2931ca140ca21e7f60d7b2655a678f657ecab08e45ab742d822083125c9d4b3&ipo=images"
+            "image": "https://vignette.wikia.nocookie.net/naruto/images/b/b0/Sunagakure.png/revision/latest?cb=20150125145503&path-prefix=id"
           },
           {
             "id": "startingOptionsLocationKirigakure",
             "label": "Kirigakure",
             "description": "Kirigakure, or the “Village Hidden by Mist”, is the hidden village of the Land of Water. Kiri is currently ruled by the Fifth Mizukage. The village is shrouded in a thick mist and surrounded by mountains. Many Kiri ninja use Water Release techniques, and while its past is bloody, reform is underway.",
-            "cost": {},
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse4.mm.bing.net%2Fth%2Fid%2FOIP.aH3AUVFWw_ZAtF-eeVY7VQHaEK%3Fcb%3D12%26pid%3DApi&f=1&ipt=1307b1f03db464f85c4142455b78ea1a81ccf5de4ebed3f4d0e222948cf82c03&ipo=images"
+            "image": "https://vignette.wikia.nocookie.net/naruto/images/4/40/Vila_Oculta_da_N%C3%A9voa.png/revision/latest?cb=20180415203704&path-prefix=pt-br"
           },
           {
             "id": "startingOptionsLocationAmegakure",
             "label": "Amegakure",
             "description": "Amegakure, or the “Village Hidden by Rain”, is a small but highly industrialized hidden village located in an unnamed country. Rain falls almost constantly and collects in a massive lake surrounding the settlement. Ame is frequently hired for assassination missions and secretly houses the Akatsuki.",
-            "cost": {},
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse2.mm.bing.net%2Fth%2Fid%2FOIP.cHDvGIdFbwRT4Nx70d7xGQHaFj%3Fcb%3D12%26pid%3DApi&f=1&ipt=618b0b7c9d5b22e8fbe6aaa7da44d170a9d0dab997743d2e18ea2bf028d7d106&ipo=images"
+            "image": "https://vignette.wikia.nocookie.net/naruto/images/4/41/Amegakure.png/revision/latest?cb=20120428143733&path-prefix=pt-br"
           },
           {
             "id": "startingOptionsLocationLandOfIron",
             "label": "Land of Iron",
             "description": "The Land of Iron is an icy, snow-covered country located among three mountains. Its military is composed of samurai rather than shinobi, and longstanding neutrality accords keep ninja from interfering. Diplomatic summits are often held here.",
-            "cost": {},
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse4.mm.bing.net%2Fth%2Fid%2FOIP.r2RMGRJ40N_9h9xxkuJmwwHaDt%3Fcb%3D12%26pid%3DApi&f=1&ipt=de9edcc0e764a7c0a436f0cd268d09e84333076887fe2251733c3ccc57ce3c68&ipo=images"
+            "image": "https://static.wikia.nocookie.net/borutofanon/images/e/e0/110C4CF1-3C00-48F7-80F9-C8F2DAC2B707.webp"
           }
         ],
         "columnsPerRow": 4,
@@ -189,122 +175,170 @@
             "id": "startingOptionsRaceHuman",
             "label": "Human",
             "description": "A standard human. Nothing particularly special, but it’s free.",
-            "cost": {
-              "RP": 1
-            },
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse2.mm.bing.net%2Fth%2Fid%2FOIP.7fAREdPMVPbEHY4zYRrejgHaHa%3Fcb%3D12%26pid%3DApi&f=1&ipt=5c0a1ccee893ced42bffca19d9953c9c1226b451f8a7e916effa586409065008&ipo=images"
+            "image": "https://static.wikia.nocookie.net/gengakurenosato/images/9/95/Fu_1.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "RP": 1
+                }
+              }
+            ]
           },
           {
             "id": "startingOptionsRaceAnimalSummon",
             "label": "Animal Summon",
             "description": "An animal companion that grows in power and size, gaining species-based supernatural abilities. Base size comparable to a normal specimen.",
-            "cost": {
-              "CP": 100,
-              "RP": 1
-            },
-            "image": "https://external-content.duckduckgo.com/iu/?u=http%3A%2F%2Fimg3.wikia.nocookie.net%2F__cb20090430112109%2Fnaruto%2Fimages%2Ff%2Ff9%2FToads_Part_II.PNG&f=1&nofb=1&ipt=ca34f05c870ca528e6dc6f0883addd043b77da667c3230c68cedfad96f23e9e6"
+            "image": "https://static.wikia.nocookie.net/naruto/images/f/f4/The_3rd_And_Enma.PNG",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 100,
+                  "RP": 1
+                }
+              }
+            ]
           },
           {
             "id": "startingOptionsRaceAnimalSummon1",
             "label": "Animal Summon",
             "description": "As above, but you begin much larger—nearly the size of a small house, with significant physical might.",
-            "cost": {
-              "CP": 200,
-              "RP": 1
-            },
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse1.mm.bing.net%2Fth%2Fid%2FOIP.7UBEqTtAAf_pYs9FZ9Xk0wHaEE%3Fpid%3DApi&f=1&ipt=1fb3ed83ce7d817c844e54d11fce25450ad91c9f73bb159fb1fc8be90d6dd43c&ipo=images"
+            "image": "https://static4.wikia.nocookie.net/__cb20110721122603/naruto/images/a/a2/The_Great_Toad's_Prediction.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 200,
+                  "RP": 1
+                }
+              }
+            ]
           },
           {
             "id": "startingOptionsRaceAnimalSummon2",
             "label": "Animal Summon",
             "description": "A gargantuan summon rivaling Gamabunta or Manda, or a transformation to reach that size at will. Grants a discount on the Sage Mode perk.",
-            "cost": {
-              "CP": 300,
-              "RP": 1
-            },
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fwallpapercave.com%2Fwp%2Fwp2101984.png&f=1&nofb=1&ipt=6322d9f22956720f885e051b549155cc39cde6f2c806fbd4087734f0d454e63e"
+            "image": "https://static.wikia.nocookie.net/naruto/images/9/98/Gamabunta_vs_Shukaku.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 300,
+                  "RP": 1
+                }
+              }
+            ]
           },
           {
             "id": "startingOptionsRaceMechaHuman",
             "label": "Mecha-Human",
             "description": "Become a mecha-fied human with flight, modular weaponry, chakra absorption, and other machine advantages, but requiring repairs instead of natural healing.",
-            "cost": {
-              "CP": 300,
-              "RP": 1
-            },
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse2.mm.bing.net%2Fth%2Fid%2FOIP.ooh4ygJPSqFPzTQlHSH1hwHaEK%3Fcb%3D12%26pid%3DApi&f=1&ipt=b7e6b9ed2903e5c655e6e91b8222da3190787939fe6c5de8c0297c6e3a5fb83b&ipo=images"
+            "image": "https://static.wikia.nocookie.net/naruto/images/e/e6/Asura_Path_No_Cloak.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 300,
+                  "RP": 1
+                }
+              }
+            ]
           },
           {
             "id": "startingOptionsRaceMechaHuman1",
             "label": "Mecha-Human",
             "description": "All the benefits of a magic robot body with drawbacks nullified—heal and improve naturally while retaining all mechanical upgrades. Works with Hybrid for cyborg adaptations.",
-            "cost": {
-              "CP": 400,
-              "RP": 1
-            },
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse1.mm.bing.net%2Fth%2Fid%2FOIP.FdOyPqybM9jFuBDNmZzTDQHaEK%3Fcb%3D12%26pid%3DApi&f=1&ipt=cc7a3a2264f1edc98aaa94929bcb11596608d9344ce4981bb11276f02fe9d59b&ipo=imageshttps://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse1.mm.bing.net%2Fth%2Fid%2FOIP.FdOyPqybM9jFuBDNmZzTDQHaEK%3Fcb%3D12%26pid%3DApi&f=1&ipt=cc7a3a2264f1edc98aaa94929bcb11596608d9344ce4981bb11276f02fe9d59b&ipo=images"
+            "image": "https://static.wikia.nocookie.net/naruto/images/d/df/Flaming_Arrow_Missiles.PNG",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 400,
+                  "RP": 1
+                }
+              }
+            ]
           },
           {
             "id": "startingOptionsRaceZetsuWhite",
             "label": "Zetsu [White]",
             "description": "A White Zetsu with flawless transformations, chakra-draining spores, and persistent parasite clones. Discount on Regeneration Kekkei Genkai.",
-            "cost": {
-              "CP": 400,
-              "RP": 1
-            },
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse3.mm.bing.net%2Fth%2Fid%2FOIP.ohks4Xwl5ESy6yMVCkte-AHaFj%3Fcb%3D12%26pid%3DApi&f=1&ipt=bedf75e6fdb6efe33b0376dc0ebe42e8acf73bf2ad14571a1777a006b530de4a&ipo=images"
+            "image": "https://img3.wikia.nocookie.net/__cb20140116202944/naruto/images/b/bd/White_&_Guruguru.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 400,
+                  "RP": 1
+                }
+              }
+            ]
           },
           {
             "id": "startingOptionsRaceZetsuBlack",
             "label": "Zetsu [Black]",
             "description": "A Black Zetsu with a malleable body, possession abilities, perfect sensory recording, free Chakra Sensing Kekkei Genkai, and Wood Release without prerequisites.",
-            "cost": {
-              "CP": 400,
-              "RP": 1
-            },
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse2.mm.bing.net%2Fth%2Fid%2FOIP.AE99CUxW6nMMma3dplkmUQHaEK%3Fcb%3D12%26pid%3DApi&f=1&ipt=d2806785732f609ddc668d93f6bfde313049cfcc2324a71b6f73da310b76d993&ipo=images"
+            "image": "https://static.wikia.nocookie.net/naruto/images/e/e9/Black_Zetsu.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 400,
+                  "RP": 1
+                }
+              }
+            ]
           },
           {
             "id": "startingOptionsRaceZetsuWhiteBlack",
             "label": "Zetsu [White & Black]",
             "description": "Half White, half Black—split into two autonomous bodies. Perks apply to both halves, and either can regenerate the other if destroyed.",
-            "cost": {
-              "CP": 600,
-              "RP": 1
-            },
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse1.mm.bing.net%2Fth%2Fid%2FOIP.rRHrfBUm_H-cNoqtgNpj8gHaFj%3Fcb%3D12%26pid%3DApi&f=1&ipt=4e50c5177d4aa9c2a96de4f708721ee83bb27cf7479685113621a2a034213d23&ipo=images"
+            "image": "https://img1.wikia.nocookie.net/__cb20120121123147/naruto/images/e/e2/Zetsu_dividing.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 600,
+                  "RP": 1
+                }
+              }
+            ]
           },
           {
             "id": "startingOptionsRaceTsutsuki",
             "label": "Ōtsutsuki",
             "description": "Celestial being with overwhelming strength, durability, vast chakra reserves, enhanced Byakugan that reads fate, and Kāma-based resurrection.",
-            "cost": {
-              "CP": 800,
-              "RP": 1,
-              "RGP": -1
-            },
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse3.mm.bing.net%2Fth%2Fid%2FOIP.tiVk-CZUvkhz_8I1H3_89AHaEK%3Fcb%3D12%26pid%3DApi&f=1&ipt=c6bf7d4cc1cfa8219928d4681974242a492918190b8e40fc6e55a00d554e8e2b&ipo=images"
+            "image": "https://vignette.wikia.nocookie.net/naruto/images/0/0b/Manipolazione_delle_Ossa.png/revision/latest/scale-to-width-down/2000?cb=20180421080332&path-prefix=it",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 800,
+                  "RP": 1,
+                  "RGP": -1
+                }
+              }
+            ]
           },
           {
             "id": "startingOptionsRaceTsutsuki2",
             "label": "Ōtsutsuki 2",
             "description": "Ōtsutsuki who has consumed a Chakra Fruit—gain Rinnegan or Isshiki’s dōjutsu, flight, Yomotsu Hirasaka, and chakra reserves surpassing Jūbi Madara.",
-            "cost": {
-              "CP": 400
-            },
             "prerequisites": "startingOptionsRaceTsutsuki",
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse3.mm.bing.net%2Fth%2Fid%2FOIP.pubQzJdOdGrQW6Ar1RUAIQHaEN%3Fcb%3D12%26pid%3DApi&f=1&ipt=1b2e831714f3c5e0ec5c12dfbbcd6eb237f0c71b042e2e7217291a3ac6210a6a&ipo=images"
+            "image": "https://static.wikia.nocookie.net/shinobi-striker/images/8/87/Isshiki.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 400
+                }
+              }
+            ]
           },
           {
             "id": "startingOptionsRaceHybridVariable",
             "label": "Hybrid [Variable]",
             "description": "Combine two or more races. Pay the full CP cost for each race plus +100 CP per additional race beyond the first two. Gains all racial traits and discounts.",
-            "cost": {
-              "CP": 100,
-              "RP": -1
-            },
             "maxSelections": 20,
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fi.pinimg.com%2Foriginals%2Fb1%2Fe6%2F3b%2Fb1e63b8ac3c8c86925e58b80d454d161.jpg&f=1&nofb=1&ipt=5d86a3d9aab9b9be72c29d2a2446738a3332e49c11d23807ff535ac0abd9f077"
+            "image": "https://vignette2.wikia.nocookie.net/naruto/images/e/e5/Maxresdefault.jpg/revision/latest?cb=20151130111818&path-prefix=ro",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 100,
+                  "RP": -1
+                }
+              }
+            ]
           }
         ],
         "columnsPerRow": 4,
@@ -324,259 +358,359 @@
             "id": "perksAbilitiesGeneralPerksAbilitiesChakraFree",
             "label": "Chakra (Free)",
             "description": "Begin with chakra reserves equal to an average Jōnin. In future Jumps you can awaken chakra pathways in others by channeling your energy.",
-            "cost": {
-              "CP": 0
-            },
             "conflictsWith": [
               "perksAbilitiesGeneralPerksAbilitiesChakra100",
               "perksAbilitiesGeneralPerksAbilitiesChakra200"
             ],
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse2.mm.bing.net%2Fth%2Fid%2FOIP.Az7FMswbf1PUtNj8SMFz4wHaFj%3Fpid%3DApi&f=1&ipt=522ac3c195f4b7cd1d4dd130f234feb01e656bdf623ccce83e6747ad71302eb8&ipo=images"
+            "image": "https://static.wikia.nocookie.net/naruto/images/9/91/Lightning_cutter.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 0
+                }
+              }
+            ]
           },
           {
             "id": "perksAbilitiesGeneralPerksAbilitiesChakra100",
             "label": "Chakra (100)",
             "description": "Start with chakra reserves comparable to an average Kage.",
-            "cost": {
-              "CP": 100
-            },
             "conflictsWith": [
               "perksAbilitiesGeneralPerksAbilitiesChakraFree",
               "perksAbilitiesGeneralPerksAbilitiesChakra200"
             ],
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fi.ytimg.com%2Fvi%2F1NuHtAg6Byk%2Fmaxresdefault.jpg&f=1&nofb=1&ipt=9e4f5f649c36e8ec4b22b420eb9f1c261c8706c04c0369a87373f75c91891a03"
+            "image": "https://static.wikia.nocookie.net/naruto/images/6/66/Sage_Art_Goemon.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 100
+                }
+              }
+            ]
           },
           {
             "id": "perksAbilitiesGeneralPerksAbilitiesChakra200",
             "label": "Chakra (200)",
             "description": "Possess immense chakra on par with Kisame Hoshigaki, the 'Tailless Tailed Beast'.",
-            "cost": {
-              "CP": 200
-            },
             "conflictsWith": [
               "perksAbilitiesGeneralPerksAbilitiesChakraFree",
               "perksAbilitiesGeneralPerksAbilitiesChakra100"
             ],
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fstaticg.sportskeeda.com%2Feditor%2F2022%2F07%2F38e5a-16589157875295.png&f=1&nofb=1&ipt=f04379b46be577ff11e2fcf595b7e828411869763096590e2199ec69bc537d22"
+            "image": "https://vignette.wikia.nocookie.net/naruto/images/5/57/Prisi%C3%B3n_de_Agua_Jutsu_Danza_de_Tibur%C3%B3n_Anime.png/revision/latest?cb=20150909191019&path-prefix=es",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 200
+                }
+              }
+            ]
           },
           {
             "id": "perksAbilitiesGeneralPerksAbilitiesAcademyTraining",
             "label": "Academy Training",
             "description": "Graduate-level shinobi fundamentals: survival, stealth, trap-making, basic tools, three Academy jutsu, taijutsu forms, and chakra control for reinforced strength/speed and genjutsu dispels.",
-            "cost": {
-              "CP": 0
-            },
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse3.mm.bing.net%2Fth%2Fid%2FOIP.jwwL_9yhQUTf65SvVdTJ5QHaEA%3Fcb%3D12%26pid%3DApi&f=1&ipt=79ef4a7bf14bdf55f5c7eb45a91fdcb2ecbc80783c2eb626193249599b419ce6&ipo=images"
+            "image": "https://static.wikia.nocookie.net/naruto/images/4/4d/Academy.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 0
+                }
+              }
+            ]
           },
           {
             "id": "perksAbilitiesGeneralPerksAbilitiesNatureAffinity",
             "label": "Nature Affinity",
             "description": "Gain one elemental or Yin/Yang chakra nature affinity. Doubles affinity strength with matching dojutsu-based bloodlines.",
-            "cost": {
-              "CP": 0
-            },
             "maxSelections": 1,
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse3.mm.bing.net%2Fth%2Fid%2FOIP.yLUCz4YbAnroNN0M2tqQEQHaEO%3Fcb%3D12%26pid%3DApi&f=1&ipt=5ad678de356be7c8f5c9ebbee6dd6001fc016b400edd9086f25825d83a8118e0&ipo=images"
+            "image": "https://static.wikia.nocookie.net/naruto/images/9/95/Katon_G%C5%8Dka_Mekkyaku.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 0
+                }
+              }
+            ]
           },
           {
             "id": "perksAbilitiesGeneralPerksAbilitiesAdditionalNatureAffinity",
             "label": "Additional Nature Affinity",
             "description": "Acquire another chakra nature affinity (limit seven total).",
-            "cost": {
-              "CP": 50
-            },
             "maxSelections": 6,
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse1.mm.bing.net%2Fth%2Fid%2FOIP.YQ-D432LLPQZdsfotRW-lQHaG4%3Fcb%3D12%26pid%3DApi&f=1&ipt=6eec54b1496e5735e5c343a2bf58eb5d6a412e73414e6c01099eef30bb785f72&ipo=images"
+            "image": "https://static.wikia.nocookie.net/naruto/images/d/d6/All_is_Suffering.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 50
+                }
+              }
+            ]
           },
           {
             "id": "perksAbilitiesGeneralPerksAbilitiesERankJutsuTechnique",
             "label": "E-Rank Jutsu Technique",
             "description": "Know any one E-rank technique at Academy graduate mastery.",
-            "cost": {
-              "CP": 0
-            },
             "maxSelections": 20,
             "discountType": "jutsu",
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse1.mm.bing.net%2Fth%2Fid%2FOIP.sbDXmXJzKdkLdUAsOz2aNgAAAA%3Fcb%3D12%26pid%3DApi&f=1&ipt=4c1b46a5fbee2eb108fba4854030bd4a3eee8a3e7aa1320a0aca64d2d0cae3ee&ipo=images"
+            "image": "https://static.wikia.nocookie.net/naruto/images/9/9f/Cloak_of_Invisibility2.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 0
+                }
+              }
+            ]
           },
           {
             "id": "perksAbilitiesGeneralPerksAbilitiesDRankJutsuTechnique",
             "label": "D-Rank Jutsu Technique",
             "description": "Master a D-rank technique (e.g., Body Flicker).",
-            "cost": {
-              "CP": 50
-            },
             "maxSelections": 20,
             "discountType": "jutsu",
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse1.mm.bing.net%2Fth%2Fid%2FOIP.DmiJl2HSQBc5tO6ZWpa3yQHaEJ%3Fcb%3D12%26pid%3DApi&f=1&ipt=d2992fa6c7f9128e07b2d989eece8f972868fc3f6ccfe89c388774b1c51ec469&ipo=images"
+            "image": "https://static.wikia.nocookie.net/naruto/images/0/0d/Shadow_Shuriken.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 50
+                }
+              }
+            ]
           },
           {
             "id": "perksAbilitiesGeneralPerksAbilitiesCRankJutsuTechnique",
             "label": "C-Rank Jutsu Technique",
             "description": "Master a C-rank technique (e.g., Lee's Drunken Fist).",
-            "cost": {
-              "CP": 100
-            },
             "maxSelections": 20,
             "discountType": "jutsu",
-            "image": "https://static.wikia.nocookie.net/naruto/images/b/b7/Mind_Body_Switch_Handseal.png"
+            "image": "https://static.wikia.nocookie.net/naruto/images/6/60/Obito_using_fire_technique.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 100
+                }
+              }
+            ]
           },
           {
             "id": "perksAbilitiesGeneralPerksAbilitiesBRankJutsuTechnique",
             "label": "B-Rank Jutsu Technique",
             "description": "Master a B-rank technique (e.g., Kurenai's Tree Binding Death).",
-            "cost": {
-              "CP": 200
-            },
             "maxSelections": 20,
             "discountType": "jutsu",
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse1.mm.bing.net%2Fth%2Fid%2FOIP.alyyu3PQT5KCniD8khzIpgHaDt%3Fcb%3D12%26pid%3DApi&f=1&ipt=047e042d1f59cbad99e0c043beca69287f59d7e2796f1bc5ff2df5ba77376ee5&ipo=images"
+            "image": "https://static.wikia.nocookie.net/naruto/images/0/07/Tobirama_creating_Shadow_Clones.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 200
+                }
+              }
+            ]
           },
           {
             "id": "perksAbilitiesGeneralPerksAbilitiesARankJutsuTechnique",
             "label": "A-Rank Jutsu Technique",
             "description": "Master an A-rank technique (e.g., Chidori).",
-            "cost": {
-              "CP": 300
-            },
             "maxSelections": 20,
             "discountType": "jutsu",
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fwallpapercave.com%2Fwp%2Fwp5106725.jpg&f=1&nofb=1&ipt=5e955e2d1f7a20836a64fe757fc65433a4f08c6fee12f4a90960017f5b7c9075"
+            "image": "https://static.wikia.nocookie.net/naruto/images/b/b6/Vermillion_Rasengan.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 300
+                }
+              }
+            ]
           },
           {
             "id": "perksAbilitiesGeneralPerksAbilitiesSRankJutsuTechnique",
             "label": "S-Rank Jutsu Technique",
             "description": "Master an S-rank technique (e.g., Flying Thunder God). Over-purchasing adds mastery; prerequisites must still be met.",
-            "cost": {
-              "CP": 400
-            },
             "maxSelections": 20,
             "discountType": "jutsu",
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fstaticg.sportskeeda.com%2Feditor%2F2022%2F06%2Fa721b-16542391202732.png&f=1&nofb=1&ipt=0226b65da27af6f662ccdb0379033d96d61d90b30d0aca9730bf94c64bb0b19d"
+            "image": "https://static.wikia.nocookie.net/naruto/images/c/c6/Minato_flies_to_a_kunai.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 400
+                }
+              }
+            ]
           },
           {
             "id": "perksAbilitiesGeneralPerksAbilitiesSRankJutsuTechnique1",
             "label": "S+ Rank Jutsu Technique",
             "description": "Over-purchase to elevate a technique to S+ mastery, removing drawbacks and granting total control.",
-            "cost": {
-              "CP": 500
-            },
             "maxSelections": 20,
             "discountType": "jutsu",
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fi.pinimg.com%2Foriginals%2Fc8%2F6a%2Fda%2Fc86ada0f88fc2cced1c82bbd5de1e998.jpg&f=1&nofb=1&ipt=a33781d8d35a5a41e8b6057475bc9cec9df642d1f847ee643817ac73c21259dc"
+            "image": "https://static.wikia.nocookie.net/naruto/images/5/52/F%C5%ABton_Rasenshuriken.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 500
+                }
+              }
+            ]
           },
           {
             "id": "perksAbilitiesGeneralPerksAbilitiesAnimeStyle",
             "label": "Anime Style",
             "description": "Toggle the aesthetic of each Jump to match any anime art style.",
-            "cost": {
-              "CP": 50
-            },
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fimg00.deviantart.net%2Fba17%2Fi%2F2015%2F108%2Fe%2F1%2Fuzumaki_naruto_fan_art_by_christianamiel21-d76m5po.jpg&f=1&nofb=1&ipt=157e6c4fe837664b64a25832b1d890d7a8b2bc193d8d7c9a30a656c32134a6c1"
+            "image": "https://static.wikia.nocookie.net/naruto/images/d/d4/Rin_heals_Obito's_wounds.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 50
+                }
+              }
+            ]
           },
           {
             "id": "perksAbilitiesGeneralPerksAbilitiesUltimateNinjaStyle",
             "label": "Ultimate Ninja Style",
             "description": "Make your techniques dramatically stylish without altering their power. Can extend to teammates.",
-            "cost": {
-              "CP": 50
-            },
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fpreview.redd.it%2Fwhat-would-you-rate-itachis-aura-on-a-scale-from-1-10-v0-l54luvicthjc1.jpg%3Fwidth%3D710%26format%3Dpjpg%26auto%3Dwebp%26s%3Db9ec6ebb22c9845e01a05d9a748d129fa26a5c68&f=1&nofb=1&ipt=75a91b36e1f3a8e5f100e27f754c04592692e52c994b11bb23caa4c9bfa5a847"
+            "image": "https://static.wikia.nocookie.net/naruto/images/5/5b/Orochimaru's_failed_attempt.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 50
+                }
+              }
+            ]
           },
           {
             "id": "perksAbilitiesGeneralPerksAbilitiesCrafty",
             "label": "Crafty",
             "description": "For 50CP: Learn to forge and craft mission-essential ninja supplies on the go.\n\nFor 100 CP: Produce items of commercial quality and build gear supporting any perk-based skills (e.g., puppets, medical tools)",
-            "cost": {
-              "CP": 50
-            },
             "maxSelections": 2,
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse2.mm.bing.net%2Fth%2Fid%2FOIP._SLqOadYIiFGPE3_2bRlQQHaDt%3Fcb%3D12%26pid%3DApi&f=1&ipt=797135844ab6b08c1909dde1978e8e866d7cfd3eada1fbde25afd7a1de248b9f&ipo=images"
+            "image": "https://static.wikia.nocookie.net/naruto/images/5/5c/Tenten_ep237.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 50
+                }
+              }
+            ]
           },
           {
             "id": "perksAbilitiesGeneralPerksAbilitiesGoodLooking",
             "label": "Good Looking",
             "description": "For 50 CP: Improve your appearance to a 9/10; does not include appearance change.\n\nFor 100 CP: Become an 11/10 beauty with a free appearance change of choice.",
-            "cost": {
-              "CP": 50
-            },
             "maxSelections": 2,
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse2.mm.bing.net%2Fth%2Fid%2FOIP.U4SHa1Egy_E-YhIw-cqocAHaF3%3Fcb%3D12%26pid%3DApi&f=1&ipt=19ad6f03d1d6e36571a0244a9f98f2273ea8f24dbb087c2775e34b861828813f&ipo=images"
+            "image": "https://static.wikia.nocookie.net/naruto/images/a/ac/Skilled_Mist.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 50
+                }
+              }
+            ]
           },
           {
             "id": "perksAbilitiesGeneralPerksAbilitiesStingsALittle",
             "label": "Stings A Little",
             "description": "For 50CP: Gain significantly heightened pain tolerance, shrugging off punishment far better than average shinobi.\n\nFor 100 CP: Near-total physical pain immunity—torture feels no worse than a paper cut (mental trauma still possible).",
-            "cost": {
-              "CP": 50
-            },
             "maxSelections": 2,
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse4.mm.bing.net%2Fth%2Fid%2FOIP.qW-l319Difol-2zDDgzLWQHaEK%3Fcb%3D12%26pid%3DApi&f=1&ipt=95a0942ca8c619ab743442a283fa4937a9b359a709f98b961f1e750f12b6c596&ipo=images"
+            "image": "https://static.wikia.nocookie.net/naruto/images/9/92/Third_Raikage's_Lightning_Chakra_Mode.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 50
+                }
+              }
+            ]
           },
           {
             "id": "perksAbilitiesGeneralPerksAbilitiesTsunadeSStrength",
             "label": "Tsunade’s Strength",
             "description": "Possess immense raw strength: crack terrain with a finger, shatter Sannin, or breach Susanoo with a handful of blows.",
-            "cost": {
-              "CP": 100
-            },
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse4.mm.bing.net%2Fth%2Fid%2FOIP.3Amn3xYZigGpyflrd8lI-QHaFj%3Fcb%3D12%26pid%3DApi&f=1&ipt=f89b3a269eb284c98550000e1d651f314bc59a63e35834a5c4fd7e70eb599dfb&ipo=images"
+            "image": "https://static.wikia.nocookie.net/naruto/images/b/b3/Heaven_spear_kick.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 100
+                }
+              }
+            ]
           },
           {
             "id": "perksAbilitiesGeneralPerksAbilitiesSpecialist",
             "label": "Specialist",
             "description": "Acquire additional specialties or styles, each granting rapid mastery in the chosen field. Can mix focuses (e.g., Nin-Taijutsu).",
-            "cost": {
-              "CP": 200,
-              "SP": -1
-            },
             "maxSelections": 20,
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse2.mm.bing.net%2Fth%2Fid%2FOIP.Ib9ngjbMpS8csSC3KBVTUQHaEP%3Fcb%3D12%26pid%3DApi&f=1&ipt=e8fc2438e414f4d547a8432e8a62e76aa0fefe24b22bcbd5881e88d35975c00c&ipo=imageshttps://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse2.mm.bing.net%2Fth%2Fid%2FOIP.Ib9ngjbMpS8csSC3KBVTUQHaEP%3Fcb%3D12%26pid%3DApi&f=1&ipt=e8fc2438e414f4d547a8432e8a62e76aa0fefe24b22bcbd5881e88d35975c00c&ipo=images"
+            "image": "https://static.wikia.nocookie.net/naruto/images/f/f0/Mystical_Palm_Technique.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 200,
+                  "SP": -1
+                }
+              }
+            ]
           },
           {
             "id": "perksAbilitiesGeneralPerksAbilitiesUnsealable",
             "label": "Unsealable",
             "description": "Immune to sealing techniques; your powers cannot be suppressed or imprisoned by fūinjutsu (extends to other methods post-Jump).",
-            "cost": {
-              "CP": 200
-            },
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse2.mm.bing.net%2Fth%2Fid%2FOIP.1bqtz5c9GapvvFf0pgxkNwHaGY%3Fcb%3D12%26pid%3DApi&f=1&ipt=e775c7cb32c0a567bae3e0c500ba7f2fe01ed3a728fb67b1f0e2ad6b357777e3&ipo=images"
+            "image": "https://static.wikia.nocookie.net/naruto/images/4/4b/Orochimaru_Tests_Sasuke.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 200
+                }
+              }
+            ]
           },
           {
             "id": "perksAbilitiesGeneralPerksAbilitiesMyWorld",
             "label": "My World",
             "description": "Total immunity to hallucinations and illusions, including Tsukuyomi and Infinite Tsukuyomi.",
-            "cost": {
-              "CP": 200
-            },
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fi.pinimg.com%2F736x%2F3a%2Ff9%2F3c%2F3af93cc3965ba1a06b4a574a478ae2c4.jpg&f=1&nofb=1&ipt=d0b5dcc3760b32a0cbe8651eef9d0929b3d4a6c74b5260d2203fdef92e9e1925"
+            "image": "https://img1.wikia.nocookie.net/__cb20140420234024/naruto/es/images/5/59/Apariencia_de_Itachi_Uchiha.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 200
+                }
+              }
+            ]
           },
           {
             "id": "perksAbilitiesGeneralPerksAbilitiesWhatSMineIsMine",
             "label": "What’s Mine Is Mine",
             "description": "Your DNA is undecipherable and immune to cloning. Toggle to allow or deny access at will.",
-            "cost": {
-              "CP": 200
-            },
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse1.mm.bing.net%2Fth%2Fid%2FOIP.fe92S6DGK7O5W3dfJ61N7AHaDt%3Fcb%3D12%26pid%3DApi&f=1&ipt=6c46ebdd7ae2220edb73338cc758770e18eb8264a1f19f83505c666f9a430cfe&ipo=images"
+            "image": "https://static.wikia.nocookie.net/2b62371e-6d34-460c-bf39-fdda45d70859/scale-to-width/755",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 200
+                }
+              }
+            ]
           },
           {
             "id": "perksAbilitiesGeneralPerksAbilitiesHanzSTouch",
             "label": "Hanzō’s Touch",
             "description": "Implanted with a lethal salamander venom sac; exhale targeted toxins causing agony and death within days, with antidote provided.",
-            "cost": {
-              "CP": 300
-            },
-            "image": "https://external-content.duckduckgo.com/iu/?u=http%3A%2F%2Fimages2.wikia.nocookie.net%2F__cb20120802150510%2Fnaruto%2Fimages%2F8%2F85%2FHanzo_wielding_Kusarigama.png&f=1&nofb=1&ipt=f4c904e685831468000ae00b555667879412fa283d08b8c5dd9654626f6dfcd6"
+            "image": "https://img2.wikia.nocookie.net/__cb20120919185339/naruto/images/1/15/Hanzo_and_his_poison_sac.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 300
+                }
+              }
+            ]
           },
           {
             "id": "perksAbilitiesGeneralPerksAbilitiesTheEightGates",
             "label": "The Eight Gates",
             "description": "The Eight Gates are special points in the body that exist to control the flow of chakra within the body. Ordinarily, a person could use no more than 20% of their potential in order to prevent the body from harming itself. With training, an individual can learn to release these limiters, increasing their strength and speed. By taking this perk, you can now open all Eight Gates and survive unlike in canon. You will, however, be incapacitated for a minimum of six months unless you possess a regenerative factor that can counteract your injuries.",
-            "cost": {
-              "CP": 600
-            },
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse3.mm.bing.net%2Fth%2Fid%2FOIP.8Vk6baLO0I5PV17rkfoBOQHaEK%3Fcb%3D12%26pid%3DApi&f=1&ipt=4a96a39082b59146ee0badd8781de3f3560258ed1c16e66c2afc597f6d578c90&ipo=images"
+            "image": "https://vignette.wikia.nocookie.net/naruto/images/b/b7/Might_Duy.png/revision/latest?cb=20150702201634&path-prefix=pt-br",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 600
+                }
+              }
+            ]
           }
         ],
         "columnsPerRow": 4,
@@ -591,50 +725,62 @@
             "id": "perksAbilitiesSageModeSageMode",
             "label": "Sage Mode",
             "description": "Attune yourself to natural energy and enter Sage Mode, mastering a tradition such as the toads, snakes, or a custom mentor. Gain senjutsu chakra that bolsters every combat discipline, grants chakra sensing, and guarantees flawless energy balance without petrification. Additional Sage Mode traditions cost 50 CP via the option below.\n\nFree if you are the Jūbi Jinchūriki",
-            "cost": {
-              "CP": 400
-            },
             "maxSelections": 1,
-            "discounts": [
+            "image": "https://vignette.wikia.nocookie.net/naruto/images/d/dc/Naruto's_Sage_Mode.png/revision/latest?cb=20150124180545",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 400
+                }
+              }
+            ],
+            "modifiedCosts": [
               {
                 "id": "jinchRikiTailedBeastsJBiTheTenTails",
                 "cost": {
                   "CP": 0
                 }
               }
-            ],
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fwallpapercave.com%2Fwp%2Fwp2853459.jpg&f=1&nofb=1&ipt=3030fe2bc7e949857be1d0013cd82d4af9d100b36295a02784bb3675d4923974"
+            ]
           },
           {
             "id": "perksAbilitiesSageModeAdditionalSageTradition",
             "label": "Additional Sage Tradition",
             "description": "Expand your senjutsu repertoire with another Sage Mode lineage or custom path, adding its techniques and nuances to your arsenal.",
-            "cost": {
-              "CP": 50
-            },
             "prerequisites": "perksAbilitiesSageModeSageMode",
             "maxSelections": 20,
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse4.mm.bing.net%2Fth%2Fid%2FOIP.LJSd7SUmktFI0CYNCCk2QQHaF4%3Fcb%3D12%26pid%3DApi&f=1&ipt=fbcc4d13e0f6f54cb5558f0118e60589c134f1eaa7faca6603d2927e61b61b52&ipo=images"
+            "image": "https://static.wikia.nocookie.net/naruto/images/0/0b/Kabuto_Part_II.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 50
+                }
+              }
+            ]
           },
           {
             "id": "perksAbilitiesSageModeSixPathsSenjutsu",
             "label": "Six Paths Senjutsu",
             "description": "Elevate Sage Mode into its Six Paths form, massively amplifying every senjutsu boost, granting immunity to non-senjutsu attacks, empowering any dōjutsu, awakening Yin-Yang Release, Truth-Seeking Balls, and flight. Costs CP unless you are a Jūbi Jinchūriki.",
-            "cost": {
-              "CP": 400,
-              "TSBP": -10
-            },
             "prerequisites": "perksAbilitiesSageModeSageMode",
             "maxSelections": 1,
-            "discounts": [
+            "image": "https://static.wikia.nocookie.net/naruto/images/c/cc/Obito%27s_Jinchuriki_Form_from_behind.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 400,
+                  "TSBP": -10
+                }
+              }
+            ],
+            "modifiedCosts": [
               {
                 "id": "jinchRikiTailedBeastsJBiTheTenTails",
                 "cost": {
                   "CP": 0
                 }
               }
-            ],
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2F3.bp.blogspot.com%2F-A7j6Gd4bQlE%2FWDG9kVQI47I%2FAAAAAAAAAB0%2FFA_FJIDB3Pgo1-Vog3zUvrIOnqpXN6fTQCLcB%2Fs1600%2FSix_Paths_Sage_Mode.png&f=1&nofb=1&ipt=8812a024afc26680e7dc2b9128e976e31f45774022df3d2ed81bc4931af24b9c"
+            ]
           }
         ],
         "columnsPerRow": 3,

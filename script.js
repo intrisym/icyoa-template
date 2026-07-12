@@ -27,6 +27,7 @@ let pointCategories = {};
 let pointCategoryDefaultVisibility = {};
 let visiblePointCategories = new Set();
 let pointEnablementSets = [];
+let optionGroups = [];
 const enabledPointTypeSelections = {};
 const openPointEnablementGroups = new Set();
 const dynamicSelections = {};
@@ -397,6 +398,7 @@ function resetGlobalState() {
     pointCategoryDefaultVisibility = {};
     visiblePointCategories = new Set();
     pointEnablementSets = [];
+    optionGroups = [];
     optionTitleAlignment = "center";
     optionMetaAlignment = "center";
     optionDescriptionAlignment = "center";
@@ -551,6 +553,25 @@ function normalizePointEnablementSets(pointsEntry = {}) {
             };
         })
         .filter(entry => pointTypes.has(entry.pointType) && entry.subtypes.length);
+}
+
+function normalizeOptionGroups(pointsEntry = {}) {
+    const raw = Array.isArray(pointsEntry.optionGroups) ? pointsEntry.optionGroups : [];
+    const seen = new Set();
+    return raw
+        .map(group => {
+            const id = String(group?.id || "").trim();
+            const label = String(group?.label || id).trim() || id;
+            const optionIds = Array.isArray(group?.optionIds)
+                ? Array.from(new Set(group.optionIds.map(optionId => String(optionId || "").trim()).filter(Boolean)))
+                : [];
+            return { id, label, optionIds };
+        })
+        .filter(group => {
+            if (!group.id || seen.has(group.id) || !group.optionIds.length) return false;
+            seen.add(group.id);
+            return true;
+        });
 }
 
 function normalizePointCategoryDefaults(rawDefaults = {}, categoryNames = []) {
@@ -2792,6 +2813,7 @@ function applyCyoaData(rawData, {
         pointTooltips = normalizePointTooltips(pointsEntry?.pointTooltips, Object.keys(originalPoints));
         derivedValueConfigs = normalizeDerivedValues(pointsEntry);
         pointEnablementSets = normalizePointEnablementSets(pointsEntry);
+        optionGroups = normalizeOptionGroups(pointsEntry);
         applyDefaultPointEnablementGroups();
         points = {
             ...originalPoints
@@ -3777,12 +3799,24 @@ function scopeRequirementMet(scopeType, scopeName) {
     return false;
 }
 
+function findOptionGroup(groupId) {
+    const target = String(groupId || "").trim();
+    return optionGroups.find(group => group.id === target || group.label === target) || null;
+}
+
+function optionGroupSelectionCount(groupId) {
+    const group = findOptionGroup(groupId);
+    if (!group) return 0;
+    return group.optionIds.reduce((sum, optionId) => sum + (selectedOptions[optionId] || 0), 0);
+}
+
 function evaluateRequirementExpression(expression) {
     return window.evaluatePrereqExpr(
         expression,
         id => selectedOptions[id] || 0,
         pointType => getPointRequirementValue(pointType),
-        (scopeType, scopeName) => scopeRequirementMet(scopeType, scopeName)
+        (scopeType, scopeName) => scopeRequirementMet(scopeType, scopeName),
+        groupId => optionGroupSelectionCount(groupId)
     );
 }
 
@@ -4419,6 +4453,18 @@ function parsePrerequisiteExpression(expression = "") {
         if (isIdentifier || isQuotedPointType) {
             consume();
             const next = peek();
+            if (token === "group" && next === "(") {
+                consume("(");
+                const nameToken = consume();
+                if (!/^"(?:\\.|[^"\\])*"$|^'(?:\\.|[^'\\])*'$/.test(nameToken || "")) {
+                    throw new Error("Group prerequisites must use a quoted group ID");
+                }
+                consume(")");
+                return {
+                    type: "group",
+                    id: unquotePrerequisitePointName(nameToken)
+                };
+            }
             if ((token === "category" || token === "subcategory") && next === "(") {
                 consume("(");
                 const nameToken = consume();
@@ -4487,6 +4533,7 @@ function evaluatePrerequisiteNode(node) {
     if (node.type === "atom") return meetsCountRequirement(node.id);
     if (node.type === "point") return evaluatePointRequirement(node.pointType, node.operator, node.value);
     if (node.type === "scope") return scopeRequirementMet(node.scopeType, node.name);
+    if (node.type === "group") return optionGroupSelectionCount(node.id) > 0;
     if (node.type === "not") return !evaluatePrerequisiteNode(node.child);
     if (node.type === "and") return node.children.every(evaluatePrerequisiteNode);
     if (node.type === "or") return node.children.some(evaluatePrerequisiteNode);
@@ -4518,6 +4565,21 @@ function buildPrerequisiteDisplayLines(expression = "") {
         const label = `${node.scopeType === "category" ? "Category" : "Subcategory"} ${node.name}`;
         return `${satisfied ? "✅" : "❌"} ${negated ? "NOT " : ""}${escapeHtml(label)}`;
     };
+    const groupText = (node, negated, inheritedSatisfiedOr = false) => {
+        const group = findOptionGroup(node.id);
+        if (!group) return "";
+        const groupSatisfied = optionGroupSelectionCount(node.id) > 0;
+        const satisfied = inheritedSatisfiedOr || (negated ? !groupSatisfied : groupSatisfied);
+        return group.optionIds
+            .map(optionId => {
+                if (!findOptionById(optionId)) return "";
+                const optionSelected = meetsCountRequirement(optionId);
+                const symbol = satisfied || (negated ? !optionSelected : optionSelected) ? "✅" : "❌";
+                return `${symbol} ${negated ? "NOT " : ""}${getOptionLabelMarkup(optionId)}`;
+            })
+            .filter(Boolean)
+            .join(" OR ");
+    };
     const inline = (node, inheritedSatisfiedOr = false, negated = false) => {
         if (!node) return "";
         if (node.type === "atom") {
@@ -4529,8 +4591,11 @@ function buildPrerequisiteDisplayLines(expression = "") {
         if (node.type === "scope") {
             return scopeText(node, negated, inheritedSatisfiedOr);
         }
+        if (node.type === "group") {
+            return groupText(node, negated, inheritedSatisfiedOr);
+        }
         if (node.type === "not") {
-            if (node.child?.type === "atom" || node.child?.type === "point" || node.child?.type === "scope") return inline(node.child, inheritedSatisfiedOr, !negated);
+            if (node.child?.type === "atom" || node.child?.type === "point" || node.child?.type === "scope" || node.child?.type === "group") return inline(node.child, inheritedSatisfiedOr, !negated);
             const childText = inline(node.child, inheritedSatisfiedOr, false);
             return childText ? `NOT (${childText})` : "";
         }

@@ -1,8 +1,9 @@
 // Minimal safe logical expression evaluator for prerequisites
 // Supports: &&, ||, parentheses, variable names (option IDs), point thresholds,
-// and scope predicates like category("Powers") or subcategory("Powers > Flight").
+// scope predicates like category("Powers") or subcategory("Powers > Flight"),
+// and option group predicates like group("martialClasses").
 // Point thresholds use point type names directly, e.g. Strength >= 13 or "Caster Level" >= 5.
-// Usage: evaluatePrereqExpr(expr, optionLookupFn, pointLookupFn, scopeLookupFn)
+// Usage: evaluatePrereqExpr(expr, optionLookupFn, pointLookupFn, scopeLookupFn, groupLookupFn)
 
 function unquotePointName(rawName = "") {
     const text = String(rawName).trim();
@@ -23,7 +24,7 @@ function comparePointValue(actualValue, operator, requiredValue) {
     return actual === required;
 }
 
-function evaluatePrereqExpr(expr, lookupFn, pointLookupFn = () => 0, scopeLookupFn = () => false) {
+function evaluatePrereqExpr(expr, lookupFn, pointLookupFn = () => 0, scopeLookupFn = () => false, groupLookupFn = () => 0) {
     if (typeof expr !== 'string') {
         throw new Error('Prerequisite expression must be a string');
     }
@@ -31,10 +32,16 @@ function evaluatePrereqExpr(expr, lookupFn, pointLookupFn = () => 0, scopeLookup
     const pointNamePattern = String.raw`(?:"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|[a-zA-Z_][a-zA-Z0-9_]*)`;
     const quotedNamePattern = String.raw`("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')`;
     const scopePattern = new RegExp(`\\b(category|subcategory)\\s*\\(\\s*${quotedNamePattern}\\s*\\)`, "g");
+    const groupPattern = new RegExp(`\\bgroup\\s*\\(\\s*${quotedNamePattern}\\s*\\)`, "g");
     const comparisonPattern = new RegExp(`(${pointNamePattern})\\s*(>=|<=|>|<|==|=)\\s*(-?\\d+(?:\\.\\d+)?)`, "g");
     const shorthandPattern = new RegExp(`(${pointNamePattern})\\s+(-?\\d+(?:\\.\\d+)?)\\+`, "g");
 
-    const withScopePredicates = expr.replace(scopePattern, (_, scopeType, rawName) => {
+    const withGroupPredicates = expr.replace(groupPattern, (_, rawName) => {
+        const result = Number(groupLookupFn(unquotePointName(rawName)) || 0) > 0;
+        return result ? "true" : "false";
+    });
+
+    const withScopePredicates = withGroupPredicates.replace(scopePattern, (_, scopeType, rawName) => {
         const result = !!scopeLookupFn(scopeType, unquotePointName(rawName));
         return result ? "true" : "false";
     });
