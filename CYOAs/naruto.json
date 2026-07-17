@@ -796,73 +796,97 @@
             "id": "perksAbilitiesDiscountedTechniquesDiscountedJutsuTechniqueDRank",
             "label": "Discounted Jutsu Technique [D-Rank]",
             "description": "Halve the cost of a D-rank technique (50→0 CP). Requires a specialization.",
-            "cost": {
-              "CP": 0,
-              "SP": 1
-            },
             "prerequisites": "perksAbilitiesGeneralPerksAbilitiesSpecialist",
             "maxSelections": 20,
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse1.mm.bing.net%2Fth%2Fid%2FOIP.DmiJl2HSQBc5tO6ZWpa3yQHaEJ%3Fcb%3D12%26pid%3DApi&f=1&ipt=d2992fa6c7f9128e07b2d989eece8f972868fc3f6ccfe89c388774b1c51ec469&ipo=images"
+            "image": "https://static.wikia.nocookie.net/naruto/images/6/69/Paper_Shuriken.PNG",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 0,
+                  "SP": 1
+                }
+              }
+            ]
           },
           {
             "id": "perksAbilitiesDiscountedTechniquesDiscountedJutsuTechniqueCRank",
             "label": "Discounted Jutsu Technique [C-Rank]",
             "description": "Halve the cost of a C-rank technique (100→50 CP). Requires a specialization.",
-            "cost": {
-              "CP": 50,
-              "SP": 1
-            },
             "prerequisites": "perksAbilitiesGeneralPerksAbilitiesSpecialist",
             "maxSelections": 20,
-            "image": "https://static.wikia.nocookie.net/naruto/images/b/b7/Mind_Body_Switch_Handseal.png"
+            "image": "https://static.wikia.nocookie.net/naruto/images/e/e0/Violent_Water_Wave.PNG",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 50,
+                  "SP": 1
+                }
+              }
+            ]
           },
           {
             "id": "perksAbilitiesDiscountedTechniquesDiscountedJutsuTechniqueBRank",
             "label": "Discounted Jutsu Technique [B-Rank]",
             "description": "Halve the cost of a B-rank technique (200→100 CP). Requires a specialization.",
-            "cost": {
-              "CP": 100,
-              "SP": 1
-            },
             "prerequisites": "perksAbilitiesGeneralPerksAbilitiesSpecialist",
             "maxSelections": 20,
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse1.mm.bing.net%2Fth%2Fid%2FOIP.alyyu3PQT5KCniD8khzIpgHaDt%3Fcb%3D12%26pid%3DApi&f=1&ipt=047e042d1f59cbad99e0c043beca69287f59d7e2796f1bc5ff2df5ba77376ee5&ipo=images"
+            "image": "https://static.wikia.nocookie.net/naruto/images/c/cf/Flying_Swallow.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 100,
+                  "SP": 1
+                }
+              }
+            ]
           },
           {
             "id": "perksAbilitiesDiscountedTechniquesDiscountedJutsuTechniqueARank",
             "label": "Discounted Jutsu Technique [A-Rank]",
             "description": "Halve the cost of an A-rank technique (300→150 CP). Requires a specialization.",
-            "cost": {
-              "CP": 150,
-              "SP": 1
-            },
             "prerequisites": "perksAbilitiesGeneralPerksAbilitiesSpecialist",
             "maxSelections": 20,
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fwallpapercave.com%2Fwp%2Fwp5106725.jpg&f=1&nofb=1&ipt=5e955e2d1f7a20836a64fe757fc65433a4f08c6fee12f4a90960017f5b7c9075"
+            "image": "https://static.wikia.nocookie.net/naruto/images/e/e6/Multiple_Shadow_Clone_Technique.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 150,
+                  "SP": 1
+                }
+              }
+            ]
           },
           {
             "id": "perksAbilitiesDiscountedTechniquesDiscountedJutsuTechniqueSRank",
             "label": "Discounted Jutsu Technique [S-Rank]",
             "description": "Halve the cost of an S-rank technique (400→200 CP). Requires a specialization.",
-            "cost": {
-              "CP": 200,
-              "SP": 1
-            },
             "prerequisites": "perksAbilitiesGeneralPerksAbilitiesSpecialist",
             "maxSelections": 20,
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fstaticg.sportskeeda.com%2Feditor%2F2022%2F06%2Fa721b-16542391202732.png&f=1&nofb=1&ipt=0226b65da27af6f662ccdb0379033d96d61d90b30d0aca9730bf94c64bb0b19d"
+            "image": "https://static.wikia.nocookie.net/naruto/images/f/fe/Creation_Rebirth.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 200,
+                  "SP": 1
+                }
+              }
+            ]
           },
           {
             "id": "perksAbilitiesDiscountedTechniquesDiscountedJutsuTechniqueSRank1",
             "label": "Discounted Jutsu Technique [S+ Rank]",
             "description": "Halve the cost of over-purchasing an S-rank technique to S+ mastery (500→250 CP). Requires a specialization.",
-            "cost": {
-              "CP": 250,
-              "SP": 1
-            },
             "prerequisites": "perksAbilitiesGeneralPerksAbilitiesSpecialist",
             "maxSelections": 20,
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fi.pinimg.com%2Foriginals%2Fc8%2F6a%2Fda%2Fc86ada0f88fc2cced1c82bbd5de1e998.jpg&f=1&nofb=1&ipt=a33781d8d35a5a41e8b6057475bc9cec9df642d1f847ee643817ac73c21259dc"
+            "image": "https://static.wikia.nocookie.net/naruto/images/a/a1/Akahigi_Hyakki_no_S%C5%8Den.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 250,
+                  "SP": 1
+                }
+              }
+            ]
           }
         ],
         "columnsPerRow": 3,
@@ -877,91 +901,111 @@
             "id": "perksAbilitiesDropInMyNind",
             "label": "My Nindō",
             "description": "The Ninja Way, a personal rule that each shinobi lives and dies by. It is their motto, their belief and the way they live their lives, and it can be anything no matter how immoral or cruel. You too have a motto that you will follow and abide by to the ends of the Earth and no matter how many hardships you face or what situations arise, you remain steadfast to your Nindō.\n\nUnlike others, you will always find ways to achieve what you need to without compromising your beliefs whatsoever. After all, this is your Nindō.",
-            "cost": {
-              "CP": 100
-            },
             "maxSelections": 1,
-            "discounts": [
+            "image": "https://static.wikia.nocookie.net/naruto/images/4/42/Naruto_Part_III.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 100
+                }
+              }
+            ],
+            "modifiedCosts": [
               {
                 "id": "startingOptionsBackgroundDropIn",
                 "cost": {
                   "CP": 0
                 }
               }
-            ],
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse1.mm.bing.net%2Fth%2Fid%2FOIP.Dozhp57dp9FqE18Cm1FSZwHaEJ%3Fcb%3D12%26pid%3DApi&f=1&ipt=e1180de147a4cb213b037b371d9cf39aec1359452f4e668872656e400657233e&ipo=images"
+            ]
           },
           {
             "id": "perksAbilitiesDropInShonenCharm",
             "label": "Shonen Charm",
             "description": "It is the quality of every protagonist to beat the trauma out of their opponents, to do decades of psychological work in a matter of hits. The greater the damage you inflict on your enemies, the better they become at breezing past all of the hang-ups that they were inflicted with as if by magic. But this has to be an actual fight, you cannot just physically abuse them.",
-            "cost": {
-              "CP": 200
-            },
             "maxSelections": 1,
-            "discounts": [
+            "image": "https://static.wikia.nocookie.net/naruto/images/8/8d/Tsunade_vs_naruto.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 200
+                }
+              }
+            ],
+            "modifiedCosts": [
               {
                 "id": "startingOptionsBackgroundDropIn",
                 "cost": {
                   "CP": 100
                 }
               }
-            ],
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fimage.geekship.com.br%2FDjKmdgyM8gwu7ysswbVFR6W_wUs%3D%2F1920x0%2Fsmart%2Ffilters%3Astrip_icc()%3Aformat(webp)%2Fhull.geekship.com.br%2Fwp-content%2Fuploads%2F2023%2F04%2FNaruto-Shippuden.jpg&f=1&nofb=1&ipt=00a1e2d530d6a60e328cbcf779237ded71c61282ada7c919e1b297dc6a9c3665"
+            ]
           },
           {
             "id": "perksAbilitiesDropInOldFashionedNinja",
             "label": "Old-Fashioned Ninja",
             "description": "With all the different types of jutsu around, people seem to forget what exactly ninja are about. It is about being a shadow. It is about sneaking through with nothing but skill and not relying solely on chakra. You are an old school shinobi with the skills to back it up, you could sneak through an entire village of ninja and deface their most prized monument in paint without being seen whatsoever. Furthermore, you have mastered it to the point where you could maintain it even if you were half asleep or higher than the clouds.",
-            "cost": {
-              "CP": 200
-            },
             "maxSelections": 1,
-            "discounts": [
+            "image": "https://static.wikia.nocookie.net/naruto/images/1/17/Danz%C5%8D.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 200
+                }
+              }
+            ],
+            "modifiedCosts": [
               {
                 "id": "startingOptionsBackgroundDropIn",
                 "cost": {
                   "CP": 100
                 }
               }
-            ],
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse1.mm.bing.net%2Fth%2Fid%2FOIP.RNZVjybRAQVjhhvYNEiOwgHaHa%3Fpid%3DApi&f=1&ipt=543100762eada9e5b13e1042380674833d1add1b1282affe1b0241a068826998&ipo=images"
+            ]
           },
           {
             "id": "perksAbilitiesDropInLucky",
             "label": "Lucky",
             "description": "You are obscenely lucky with a capital L, random events always go your way, you trip over treasures and fortunes others would sell their soul for and your enemies always seem to suffer from something or other every time they come across you. This is not a win button, however. If you anger a being too powerful compared to you, you will be lucky enough to probably make it out alive if not in one piece, but that is better than most people get.",
-            "cost": {
-              "CP": 400
-            },
             "maxSelections": 1,
-            "discounts": [
+            "image": "https://static.wikia.nocookie.net/naruto/images/b/be/Shikamaru%27s_dream.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 400
+                }
+              }
+            ],
+            "modifiedCosts": [
               {
                 "id": "startingOptionsBackgroundDropIn",
                 "cost": {
                   "CP": 200
                 }
               }
-            ],
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse1.mm.bing.net%2Fth%2Fid%2FOIP.qoYFgWtd-h1NNPIaW22S1QHaHa%3Fcb%3D12%26pid%3DApi&f=1&ipt=44b28970406130bf2bad46bbac186af2be9d0999d246e024a9ac919daffb8259&ipo=images"
+            ]
           },
           {
             "id": "perksAbilitiesDropInWillOfFire",
             "label": "Will of Fire",
             "description": "Konoha is known for its Will of Fire, and now you embody that ideal with a fire that burns especially bright. No amount of damage done to your body may squander your spirit. You could be too exhausted to move a limb, but you would still try to charge your enemy by pushing yourself with your chin. Your will is so powerful you could still fight after being knocked out cold. Your cut off head would probably try and bite your opponents' ankles for a while before you actually died. Yes, you could literally push yourself beyond death with this, if only for a little while, to give allies some extra time to heal you.\n\nBe careful about taking things that far though. Even for someone with an unbreakable will, being dead is still dead, and if you are not resuscitated soon after crossing that line, you will not be coming back.",
-            "cost": {
-              "CP": 600
-            },
             "maxSelections": 1,
-            "discounts": [
+            "image": "https://static.wikia.nocookie.net/naruto/images/3/39/Itachi_talks_to_Hiruzen.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 600
+                }
+              }
+            ],
+            "modifiedCosts": [
               {
                 "id": "startingOptionsBackgroundDropIn",
                 "cost": {
                   "CP": 300
                 }
               }
-            ],
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse3.mm.bing.net%2Fth%2Fid%2FOIP.azjFwQsuY8QVPRExr3mbKAHaFc%3Fcb%3D12%26pid%3DApi&f=1&ipt=49c011d7e93460027baff985a3cdbfad444b0c8d72a4d367c5d204dea73546c8&ipo=images"
+            ]
           }
         ],
         "columnsPerRow": 3,
@@ -976,91 +1020,111 @@
             "id": "perksAbilitiesGeniusCoolCalmAndCollected",
             "label": "Cool, Calm and Collected",
             "description": "Like a certain cyclops Jōnin, you possess the incredibly rare skill to be unfazed with everything. Regardless of what happens, you will never panic or let your emotions get to you, possessing the ability to look at a situation calmly with zero prejudice or subjectivity involved. When you say you're totally objective, you are.",
-            "cost": {
-              "CP": 100
-            },
             "maxSelections": 1,
-            "discounts": [
+            "image": "https://static.wikia.nocookie.net/naruto/images/2/2e/Kakashi_leaves_the_Anbu.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 100
+                }
+              }
+            ],
+            "modifiedCosts": [
               {
                 "id": "startingOptionsBackgroundGenius",
                 "cost": {
                   "CP": 0
                 }
               }
-            ],
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse4.mm.bing.net%2Fth%2Fid%2FOIP.hvLnolQxX2o5u9pvO_hjHwHaFi%3Fpid%3DApi&f=1&ipt=2e84c8d5e914fd59311407ea1313b7a347c159a805cc0a2ad891556092ea16e0&ipo=images"
+            ]
           },
           {
             "id": "perksAbilitiesGeniusUnRusted",
             "label": "Un-Rusted",
             "description": "You aren’t human, are you? After all, how else do you possess such an ability? You see, unlike what science has taught, you possess the ability to never become rusty or lose your instincts regardless of how long ago you practiced. You could be sitting at a desk for years and come out swinging swords with the skills, coordination and instincts you had previously. Barring age, even your physical abilities will never change—you only go up now, never down. But be warned: this ability doesn’t do anything against age, so while you might possess the same skills and instincts, if your physical characteristics have deteriorated due to age and not anything else, then this won’t preserve them.",
-            "cost": {
-              "CP": 200
-            },
             "maxSelections": 1,
-            "discounts": [
+            "image": "https://static.wikia.nocookie.net/naruto/images/8/89/Ishi_no_Ishi.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 200
+                }
+              }
+            ],
+            "modifiedCosts": [
               {
                 "id": "startingOptionsBackgroundGenius",
                 "cost": {
                   "CP": 100
                 }
               }
-            ],
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse3.mm.bing.net%2Fth%2Fid%2FOIP.yC3Y9g2_-ZA9iF7qjCzRbgHaFj%3Fcb%3D12%26pid%3DApi&f=1&ipt=2d566f9c2a5ca907d637cba705f70df4ee3cbd896c624e7b11c554331827b4a7&ipo=images"
+            ]
           },
           {
             "id": "perksAbilitiesGeniusJutsuMastery",
             "label": "Jutsu Mastery",
             "description": "Your control over jutsu and other techniques is akin to an experienced master. Any jutsu you already know no longer needs hand signs to use beyond the most basic of ones like the hand sign needed for the Fireball Technique. Any technique you learn will very quickly be mastered up to this level. Creating a Rasengan with just one hand? Easy. You could even form a Rasenshuriken one-handed if you know it—and you can reach this standard with every technique you wield.",
-            "cost": {
-              "CP": 200
-            },
             "maxSelections": 1,
-            "discounts": [
+            "image": "https://static.wikia.nocookie.net/naruto/images/f/fe/Five_Release_Great_Combo_Technique.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 200
+                }
+              }
+            ],
+            "modifiedCosts": [
               {
                 "id": "startingOptionsBackgroundGenius",
                 "cost": {
                   "CP": 100
                 }
               }
-            ],
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse1.mm.bing.net%2Fth%2Fid%2FOIP.Bl-PXMPhTMTMC_Qu8kU_7gHaDt%3Fcb%3D12%26pid%3DApi&f=1&ipt=f6cd826855dd6e43cb78840368fcc1ae4f04220d9d98f6674310401998e7fbc5&ipo=images"
+            ]
           },
           {
             "id": "perksAbilitiesGeniusOoohJumper",
             "label": "Oooh Jumper",
             "description": "There’s something about you, Jumper—a certain charm that seems to draw people around you. When they speak of beings such as Hashirama Senju and Naruto Uzumaki and the raw power of their charisma, the force that seems to burst from them like a tidal wave, they speak of people like you. With a few minutes of talking to people, you could turn them into either your best friends or your most loyal subordinates and unlike others, they would serve you loyally rather than through fear or extortion. Whether through your mere presence or your comforting words, you can bring about the best in others even if it lies so deep that even the best cannot see it.",
-            "cost": {
-              "CP": 400
-            },
             "maxSelections": 1,
-            "discounts": [
+            "image": "https://static.wikia.nocookie.net/naruto/images/b/be/Naruto_gives_Hinata_power.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 400
+                }
+              }
+            ],
+            "modifiedCosts": [
               {
                 "id": "startingOptionsBackgroundGenius",
                 "cost": {
                   "CP": 200
                 }
               }
-            ],
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse2.mm.bing.net%2Fth%2Fid%2FOIP.2b-SE3FWkWHQZ4wLlXEKQAHaFi%3Fcb%3D12%26pid%3DApi&f=1&ipt=30ea7f7f3356255e1d703d3cb311103dbb2da21ab1034481a690c884062325af&ipo=images"
+            ]
           },
           {
             "id": "perksAbilitiesGeniusKamiNoShinobi",
             "label": "Kami no Shinobi",
             "description": "Maybe one day. All those who hold this title are or were monsters of all things ninja related. They mastered in days what would take others months. What would take others lifetimes would take them less than a decade. They made progress after progress in mind, body, and chakra far quicker than ever thought possible, and you are now one of them. Your sheer overwhelming talent and natural skill in the ninja arts all but guarantees you a place in history alongside those known as the Gods of Shinobi.",
-            "cost": {
-              "CP": 600
-            },
             "maxSelections": 1,
-            "discounts": [
+            "image": "https://static.wikia.nocookie.net/naruto/images/d/d2/Senju_%26_Uchiha_truce.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 600
+                }
+              }
+            ],
+            "modifiedCosts": [
               {
                 "id": "startingOptionsBackgroundGenius",
                 "cost": {
                   "CP": 300
                 }
               }
-            ],
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse2.mm.bing.net%2Fth%2Fid%2FOIP.Z1yKFPWjHLgvy4O3Hh3-oQHaFj%3Fcb%3D12%26pid%3DApi&f=1&ipt=a81292577f65e2537be27435000e1c0102da8c309d19870c1cf7e2a0145d6ec4&ipo=images"
+            ]
           }
         ],
         "columnsPerRow": 3,
@@ -1075,102 +1139,126 @@
             "id": "perksAbilitiesMedicEideticMemory",
             "label": "Eidetic Memory ",
             "description": "You possess a memory that will never forget anything and with an instant recall attached to it. Furthermore, no matter what, you will never be able to forget anything unless you consciously choose to forget.",
-            "cost": {
-              "CP": 100
-            },
             "maxSelections": 1,
-            "discounts": [
+            "image": "https://static.wikia.nocookie.net/naruto/images/4/42/Sakura_training.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 100
+                }
+              }
+            ],
+            "modifiedCosts": [
               {
                 "id": "startingOptionsBackgroundMedic",
                 "cost": {
                   "CP": 0
                 }
               }
-            ],
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse1.mm.bing.net%2Fth%2Fid%2FOIP.MJUhGTqNlk9qRQDWyCatwgHaFm%3Fcb%3D12%26pid%3DApi&f=1&ipt=c35bfd537db13d9bce366324bf482285c9b27141884aa9c4fbc79526a25b5a27&ipo=images"
+            ]
           },
           {
             "id": "perksAbilitiesMedicPerfectControl",
             "label": "Perfect Control",
             "description": "To be a medic requires absolute control over one's chakra, both to regulate the chakra and to conserve it. You in particular are a master of the art, able to precisely utilize the exact amount of energy needed for a task without any additional energy being wasted whatsoever. As a by-product of such control, you can control the flow and molding of the energy needed for jutsu or other techniques with only a fraction of the seals required and with no loss in power or range.",
-            "cost": {
-              "CP": 200
-            },
             "maxSelections": 1,
-            "discounts": [
+            "image": "https://static.wikia.nocookie.net/naruto/images/2/2e/Poison_Removal.PNG",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 200
+                }
+              }
+            ],
+            "modifiedCosts": [
               {
                 "id": "startingOptionsBackgroundMedic",
                 "cost": {
                   "CP": 100
                 }
               }
-            ],
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse1.mm.bing.net%2Fth%2Fid%2FOIP.bKBB4Zn4otoQ1na5nQLt7AAAAA%3Fcb%3D12%26pid%3DApi&f=1&ipt=7c6f46f840da029317bcd3b62d25ef318f55759e673cfe20bcf56760dacc4c76&ipo=images"
+            ]
           },
           {
             "id": "perksAbilitiesMedicShinobiWare",
             "label": "Shinobi-Ware",
             "description": "Otherwise known as Integrated Mechanical Ninja Tools, Shinobi-Ware are scientific ninja tools developed as prosthetics for civilians and ninja alike. Currently, these types of tools are not even an idea which is why it’s so puzzling that you know how to make them, or to be more precise, you know how to make microscopic tools that can modify a person's circulatory and nervous system. The tools you can make are revolutionary, capable of altering an organism down to the cellular level, turning people into living weapons, or completely restructuring their bodily systems.",
-            "cost": {
-              "CP": 200
-            },
             "maxSelections": 1,
-            "discounts": [
+            "image": "https://static.wikia.nocookie.net/naruto/images/f/f3/Ao%27s_Chakra_Blade.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 200
+                }
+              }
+            ],
+            "modifiedCosts": [
               {
                 "id": "startingOptionsBackgroundMedic",
                 "cost": {
                   "CP": 100
                 }
               }
-            ],
-            "image": "https://static.wikia.nocookie.net/naruto/images/7/72/Scientific_Ninja_Tools.png"
+            ]
           },
           {
             "id": "perksAbilitiesMedicMasterOfBiology",
             "label": "Master of Biology",
             "description": "Say what you will about Orochimaru. For all his cruelty and evil, you cannot deny his skill in the science of biology. Utilizing near-modern technology, Orochimaru, and later Kabuto, were able to perfectly comprehend and even reproduce others’ abilities. With only a scrap of DNA, he was able to perfectly reproduce Kekkei Genkai, create artificial limbs and organs, and even create near identical clones of the original. You too possess this knowledge and skill able to rival that homicidal maniac in the biological sciences. With time and practice, all it will take is a single cell for you to unlock everything about a being.",
-            "cost": {
-              "CP": 400
-            },
             "maxSelections": 1,
-            "discounts": [
+            "image": "https://static.wikia.nocookie.net/naruto/images/2/27/Orochimaru%27s_experimentation.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 400
+                }
+              }
+            ],
+            "modifiedCosts": [
               {
                 "id": "startingOptionsBackgroundMedic",
                 "cost": {
                   "CP": 200
                 }
               }
-            ],
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse4.mm.bing.net%2Fth%2Fid%2FOIP.YdUCHcAq9sK1mvuLG_cyCAHaEK%3Fcb%3D12%26pid%3DApi&f=1&ipt=5a7f9630f14a3d891703a701da2abca666131a91c4139ce30f942168ce6a860b&ipo=images"
+            ]
           },
           {
             "id": "perksAbilitiesMedicWorldSGreatestMedicNin",
             "label": "World's Greatest Medic-Nin",
             "description": "A title given to only one other, the Slug Princess Tsunade herself. Like her, your ability as a medic is legendary. You are able to identify injuries and other ailments with merely a glance and treat conditions others have deemed impossible. For example, your skills in the medical arts is such that you could heal the necrosis caused by the Dead Demon Consuming Seal or the psychological torture inflicted by Tsukuyomi, easily create cures against the poisons of the great Chiyo, and even heal yourself after being cut in half. There is nothing you cannot heal given time. Obviously, this comes with all the medical knowledge one would expect for a medic of your caliber; one example of this is your knowledge of the cellular structure and, if you were to perform an autopsy, you could easily detect damage at the cellular level and immediately tell what could have caused it and what exactly happened. Of course, to keep your title you can’t just coast by on what you know. So now and in all future Jumps, all attempts to increase knowledge relating to medicine and healing will be learnt ten times faster than every other so-called medic.",
-            "cost": {
-              "CP": 600
-            },
             "maxSelections": 1,
-            "discounts": [
+            "image": "https://static.wikia.nocookie.net/naruto/images/e/e8/Nara_Clan_Medical_Encyclopaedia.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 600
+                }
+              }
+            ],
+            "modifiedCosts": [
               {
                 "id": "startingOptionsBackgroundMedic",
                 "cost": {
                   "CP": 300
                 }
               }
-            ],
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse3.mm.bing.net%2Fth%2Fid%2FOIP.0ACLzFKycYDDs8o432hyEQHaDs%3Fcb%3D12%26pid%3DApi&f=1&ipt=7dabc8483784dcac2d63b2d2c5ef7744050e9eb147f0d85317ae35ba073242e2&ipo=images"
+            ]
           },
           {
             "id": "perksAbilitiesMedicMedicalTechniqueUpgrade",
             "label": "Medical Technique Upgrade ",
             "description": "Requires World's Greatest Medic-Nin. Upgrade any medical, regeneration, or healing reincarnation technique to S+ mastery.",
-            "cost": {
-              "CP": 100
-            },
             "prerequisites": "perksAbilitiesMedicWorldSGreatestMedicNin",
             "maxSelections": 20,
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse4.mm.bing.net%2Fth%2Fid%2FOIP.PixCNfVTJGg_RtRQPAm6HQAAAA%3Fcb%3D12%26pid%3DApi&f=1&ipt=fcf6b9f399b553a2cb5fa086b469ad9f861b18d249beefd8396394b4de98d241&ipo=images"
+            "image": "https://static.wikia.nocookie.net/naruto/images/e/e4/Sakura_and_Shizune_autopsy.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 100
+                }
+              }
+            ]
           }
         ],
         "columnsPerRow": 3,
@@ -1185,91 +1273,111 @@
             "id": "perksAbilitiesVillainReputation",
             "label": "Reputation ",
             "description": "Even long after his death, the very thought of Madara living was enough to create an alliance of all five ninja villages. Now you possess such a reputation, one that causes the mere mention of your name to drive fear into the hearts of even the most cold-blooded killers and most powerful entities. The effectiveness will only increase as you perform more deeds and become more and more infamous.",
-            "cost": {
-              "CP": 100
-            },
             "maxSelections": 1,
-            "discounts": [
+            "image": "https://static.wikia.nocookie.net/naruto/images/e/e1/Danzo_in_Hokage_wear.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 100
+                }
+              }
+            ],
+            "modifiedCosts": [
               {
                 "id": "startingOptionsBackgroundVillain",
                 "cost": {
                   "CP": 0
                 }
               }
-            ],
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse2.mm.bing.net%2Fth%2Fid%2FOIP.gxcgdyDJSRrRFdtDf7vQpQHaDt%3Fcb%3D12%26pid%3DApi&f=1&ipt=446aa8f351125b31841b4dddd35a22aa978384c6aa86bb2329ba005011b2f33a&ipo=images"
+            ]
           },
           {
             "id": "perksAbilitiesVillainBrainwashing",
             "label": "Brainwashing",
             "description": "Obito Uchiha was once a good man, but all that changed once Madara got a hold of him. Until the very end, he remained loyal to Madara, regardless of anything that contradicted that loyalty. Like him, you now know exactly how to break a person’s spirit and mind, gradually twisting them until your ideals and dreams become theirs. This process will take time and the greater the being’s will, the more time it will take. A child would take a matter of days, while a Kage would take at least a year, and possibly more. It is still possible for the effects of this brainwashing to be broken, much like how Obito eventually broke free and returned to how he once was in his final moments.",
-            "cost": {
-              "CP": 200
-            },
             "maxSelections": 1,
-            "discounts": [
+            "image": "https://static.wikia.nocookie.net/naruto/images/a/a7/Madara_saves_Obito.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 200
+                }
+              }
+            ],
+            "modifiedCosts": [
               {
                 "id": "startingOptionsBackgroundVillain",
                 "cost": {
                   "CP": 100
                 }
               }
-            ],
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse1.mm.bing.net%2Fth%2Fid%2FOIP.Z20awJE5B6GRda62MykVcwHaEK%3Fcb%3D12%26pid%3DApi&f=1&ipt=e7668983f275510f1fed4a4f77f5442fde5cf2a1d82cbd64d4de7f4e2fecbd7b&ipo=images"
+            ]
           },
           {
             "id": "perksAbilitiesVillainMasterfulActing",
             "label": "Masterful Acting",
             "description": "You have to hand it to Obito. For decades, he masterfully hid his identity and truly became Madara to the point where even those who knew him best could not recognize him. Like him, you too are a performer of masterful skill and talent, able to subdue your original personality and truly become another person to the point where even their closest of friends could not find a single flaw in your disguise. From the tone of your voice to the way you dress to your conscious and unconscious acts, you perform as if second nature with there being nothing ever giving you away for even a second. Except maybe your face, but that’s what masks are for.",
-            "cost": {
-              "CP": 200
-            },
             "maxSelections": 1,
-            "discounts": [
+            "image": "https://static.wikia.nocookie.net/naruto/images/6/67/Tobi_declares_war.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 200
+                }
+              }
+            ],
+            "modifiedCosts": [
               {
                 "id": "startingOptionsBackgroundVillain",
                 "cost": {
                   "CP": 100
                 }
               }
-            ],
-            "image": "https://static.wikia.nocookie.net/naruto/images/3/3c/Obito.png"
+            ]
           },
           {
             "id": "perksAbilitiesVillainMasterfulPlanning",
             "label": "Masterful Planning",
             "description": "Say what you want of Zetsu but he was a master planner, pulling at the springs of even incredibly powerful beings like Madara, Indra Ōtsutsuki, and all the Kage alongside the ninja world. With only his ability to plan, Zetsu was able to manipulate the entire world and most major events from the shadows over countless lifetimes in his quest to resurrect his mother, and you are his equal. Your planning is legendary, able to encompass literal lifetimes and manipulate entire worlds, all without them even knowing you exist. Furthermore, unlike other so-called master planners, your plans take into account every possible eventuality and change that could ever occur to disrupt your plans. Your plans also possess one final unique ability. The longer your plans are in motion, the more momentum they gain, eventually becoming impossible to stop. This momentum will take time to build up, taking multiple generations to become truly unstoppable.",
-            "cost": {
-              "CP": 400
-            },
             "maxSelections": 1,
-            "discounts": [
+            "image": "https://static.wikia.nocookie.net/naruto/images/7/70/Black_Zetsu%27s_Mayfly.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 400
+                }
+              }
+            ],
+            "modifiedCosts": [
               {
                 "id": "startingOptionsBackgroundVillain",
                 "cost": {
                   "CP": 200
                 }
               }
-            ],
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse4.mm.bing.net%2Fth%2Fid%2FOIP.-s-_FkazkV7W9d6cqBCXJQHaFj%3Fcb%3D12%26pid%3DApi&f=1&ipt=ad06bb16c31596d33128c66a81ff7a37e36cc2f78a89f607baf8a45835f659cc&ipo=images"
+            ]
           },
           {
             "id": "perksAbilitiesVillainADecadeAhead",
             "label": "A Decade Ahead",
             "description": "A mind that comes along once in a lifetime is one of the titles that people will one day bestow upon you, a pioneer in the art of science. You possess an intellect that can push the boundaries of science and technology, create things that can push society forward by decades, if not centuries. In only a few short years of work, you could push society from the time of swords and horse-drawn carriages to trains, TVs and movies. It’s now less on what you can learn and more on how much you can fit in a week.",
-            "cost": {
-              "CP": 600
-            },
             "maxSelections": 1,
-            "discounts": [
+            "image": "https://static.wikia.nocookie.net/naruto/images/7/7c/Kaija_H%C5%8Din.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 600
+                }
+              }
+            ],
+            "modifiedCosts": [
               {
                 "id": "startingOptionsBackgroundVillain",
                 "cost": {
                   "CP": 300
                 }
               }
-            ],
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse3.mm.bing.net%2Fth%2Fid%2FOIP.ZVeiapXuyO1IhR4Q25aiSAHaFm%3Fcb%3D12%26pid%3DApi&f=1&ipt=6c6f4cfa725d09b322a6ebf66e2bd9627237625b64cc7759bc450c9bfe6f2057&ipo=images"
+            ]
           }
         ],
         "columnsPerRow": 3,

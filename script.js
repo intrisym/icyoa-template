@@ -4611,12 +4611,21 @@ function buildPrerequisiteDisplayLines(expression = "") {
         }
         return "";
     };
+    const makeLine = (html, spacedBefore = false) => ({ html, spacedBefore });
     const lines = (node, inheritedSatisfiedOr = false, negated = false) => {
         if (!node) return [];
         if (node.type === "and") {
-            return node.children.flatMap(child => lines(child, inheritedSatisfiedOr, negated));
+            return node.children.flatMap((child, index) => {
+                const childLines = lines(child, inheritedSatisfiedOr, negated);
+                if (index > 0 && childLines.length > 0) {
+                    childLines[0] = typeof childLines[0] === "string"
+                        ? makeLine(childLines[0], true)
+                        : { ...childLines[0], spacedBefore: true };
+                }
+                return childLines;
+            });
         }
-        return [inline(node, inheritedSatisfiedOr, negated)].filter(Boolean);
+        return [inline(node, inheritedSatisfiedOr, negated)].filter(Boolean).map(html => makeLine(html));
     };
     return lines(ast);
 }
@@ -4648,19 +4657,19 @@ function buildRequirementDisplayLines(requirement) {
             const actual = selectedOptions[id] || 0;
             const satisfied = exprTrue || (negated ? actual < requiredCount : actual >= requiredCount);
             const label = getOptionLabelMarkup(id) + (requiredCount > 1 ? ` (x${requiredCount})` : "");
-            prereqLines.push(`${satisfied ? "✅" : "❌"} ${negated ? "NOT " : ""}${label}`);
+            prereqLines.push({ html: `${satisfied ? "✅" : "❌"} ${negated ? "NOT " : ""}${label}`, spacedBefore: prereqLines.length > 0 });
         });
         return prereqLines;
     }
     if (Array.isArray(requirement)) {
-        return requirement.map(rawId => {
+        return requirement.map((rawId, index) => {
             const [id, minSuffix] = String(rawId).split('__');
             if (!findOptionById(id)) return "";
             const requiredCount = minSuffix ? Number(minSuffix) : 1;
             const label = getOptionLabelMarkup(id) + (requiredCount > 1 ? ` (x${requiredCount})` : "");
             const isSelected = meetsCountRequirement(String(rawId));
             const symbol = isSelected ? "✅" : "❌";
-            return `${symbol} ${label}`;
+            return { html: `${symbol} ${label}`, spacedBefore: index > 0 };
         }).filter(Boolean);
     }
     if (typeof requirement === 'object' && requirement !== null) {
@@ -4669,13 +4678,13 @@ function buildRequirementDisplayLines(requirement) {
         const orList = requirement.or || [];
         const orAccepted = orList.some(id => meetsCountRequirement(String(id)));
         if (andList.length) {
-            prereqLines.push(...andList.map(rawId => {
+            prereqLines.push(...andList.map((rawId, index) => {
                 const [id, minSuffix] = String(rawId).split('__');
                 if (!findOptionById(id)) return "";
                 const requiredCount = minSuffix ? Number(minSuffix) : 1;
                 const label = getOptionLabelMarkup(id) + (requiredCount > 1 ? ` (x${requiredCount})` : "");
                 const isSelected = meetsCountRequirement(String(rawId));
-                return `${isSelected ? "✅" : "❌"} ${label}`;
+                return { html: `${isSelected ? "✅" : "❌"} ${label}`, spacedBefore: index > 0 };
             }).filter(Boolean));
         }
         if (orList.length) {
@@ -4687,7 +4696,7 @@ function buildRequirementDisplayLines(requirement) {
                 const symbol = orAccepted ? "✅" : (meetsCountRequirement(String(rawId)) ? "✅" : "❌");
                 return `${symbol} ${label}`;
             }).filter(Boolean).join(" OR ");
-            if (orLine) prereqLines.push(orLine);
+            if (orLine) prereqLines.push({ html: orLine, spacedBefore: prereqLines.length > 0 });
         }
         return prereqLines;
     }
@@ -5488,9 +5497,14 @@ function appendOptionMetaSection(container, titleHtml, lines = [], className = "
     const body = document.createElement("div");
     body.className = "option-meta-lines";
     lines.forEach(line => {
+        const lineHtml = typeof line === "object" && line !== null ? line.html : line;
+        if (!lineHtml) return;
         const item = document.createElement("div");
         item.className = "option-meta-line";
-        item.innerHTML = line;
+        if (typeof line === "object" && line !== null && line.spacedBefore) {
+            item.classList.add("option-meta-line-group-start");
+        }
+        item.innerHTML = lineHtml;
         body.appendChild(item);
     });
     section.appendChild(body);
