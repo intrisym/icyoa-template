@@ -46,7 +46,54 @@
     "pointCategoryDefaults": {},
     "derivedValues": [],
     "enableablePointSets": [],
-    "optionGroups": []
+    "optionGroups": [
+      {
+        "id": "basicNatureAffinity",
+        "label": "Basic Nature Affinity",
+        "optionIds": [
+          "perksAbilitiesGeneralPerksAbilitiesNatureAffinityFire",
+          "perksAbilitiesGeneralPerksAbilitiesNatureAffinityWater",
+          "perksAbilitiesGeneralPerksAbilitiesNatureAffinityWind",
+          "perksAbilitiesGeneralPerksAbilitiesNatureAffinityLightning",
+          "perksAbilitiesGeneralPerksAbilitiesNatureAffinityEarth"
+        ]
+      },
+      {
+        "id": "fireNatureAffinity",
+        "label": "Fire Nature Affinity",
+        "optionIds": [
+          "perksAbilitiesGeneralPerksAbilitiesNatureAffinityFire"
+        ]
+      },
+      {
+        "id": "waterNatureAffinity",
+        "label": "Water Nature Affinity",
+        "optionIds": [
+          "perksAbilitiesGeneralPerksAbilitiesNatureAffinityWater"
+        ]
+      },
+      {
+        "id": "windNatureAffinity",
+        "label": "Wind Nature Affinity",
+        "optionIds": [
+          "perksAbilitiesGeneralPerksAbilitiesNatureAffinityWind"
+        ]
+      },
+      {
+        "id": "lightningNatureAffinity",
+        "label": "Lightning Nature Affinity",
+        "optionIds": [
+          "perksAbilitiesGeneralPerksAbilitiesNatureAffinityLightning"
+        ]
+      },
+      {
+        "id": "earthNatureAffinity",
+        "label": "Earth Nature Affinity",
+        "optionIds": [
+          "perksAbilitiesGeneralPerksAbilitiesNatureAffinityEarth"
+        ]
+      }
+    ]
   },
   {
     "type": "settings",
@@ -113,7 +160,7 @@
             "image": "https://images3.wikia.nocookie.net/__cb20111031194812/naruto/images/6/6f/Orochimaru_As_A_Kid.PNG"
           }
         ],
-        "columnsPerRow": 3,
+        "columnsPerRow": 2,
         "subcategories": []
       },
       {
@@ -165,7 +212,7 @@
             "image": "https://static.wikia.nocookie.net/borutofanon/images/e/e0/110C4CF1-3C00-48F7-80F9-C8F2DAC2B707.webp"
           }
         ],
-        "columnsPerRow": 4,
+        "columnsPerRow": 2,
         "subcategories": []
       },
       {
@@ -354,7 +401,7 @@
             ]
           }
         ],
-        "columnsPerRow": 4,
+        "columnsPerRow": 2,
         "subcategories": []
       }
     ]
@@ -432,25 +479,198 @@
             ]
           },
           {
-            "id": "perksAbilitiesGeneralPerksAbilitiesNatureAffinity",
-            "label": "Nature Affinity",
-            "description": "Gain one elemental or Yin/Yang chakra nature affinity. Doubles affinity strength with matching dojutsu-based bloodlines.",
-            "maxSelections": 1,
-            "image": "https://static.wikia.nocookie.net/naruto/images/9/95/Katon_G%C5%8Dka_Mekkyaku.png",
+            "id": "perksAbilitiesGeneralPerksAbilitiesNatureAffinityFire",
+            "label": "Nature Affinity: Fire",
+            "description": "Gain Fire Release as a chakra nature affinity. The first basic nature affinity you select is free; additional basic natures normally cost 50 CP. Free with Rinnegan.",
+            "image": "https://static.wikia.nocookie.net/naruto/images/4/48/Grandfire_Ball.PNG/",
             "costOptions": [
               {
                 "cost": {
                   "CP": 0
                 }
               }
+            ],
+            "modifiedCosts": [
+              {
+                "idsAny": [
+                  "perksAbilitiesGeneralPerksAbilitiesNatureAffinityWater",
+                  "perksAbilitiesGeneralPerksAbilitiesNatureAffinityWind",
+                  "perksAbilitiesGeneralPerksAbilitiesNatureAffinityLightning",
+                  "perksAbilitiesGeneralPerksAbilitiesNatureAffinityEarth"
+                ],
+                "minSelected": 1,
+                "cost": {
+                  "CP": 50
+                },
+                "priority": 1
+              },
+              {
+                "id": "kekkeiGenkaiRinneganRinnegan",
+                "cost": {
+                  "CP": 0
+                },
+                "priority": 2
+              }
             ]
           },
           {
-            "id": "perksAbilitiesGeneralPerksAbilitiesAdditionalNatureAffinity",
-            "label": "Additional Nature Affinity",
-            "description": "Acquire another chakra nature affinity (limit seven total).",
-            "maxSelections": 6,
-            "image": "https://static.wikia.nocookie.net/naruto/images/d/d6/All_is_Suffering.png",
+            "id": "perksAbilitiesGeneralPerksAbilitiesNatureAffinityWater",
+            "label": "Nature Affinity: Water",
+            "description": "Gain Water Release as a chakra nature affinity. The first basic nature affinity you select is free; additional basic natures normally cost 50 CP. Free with Rinnegan.",
+            "image": "https://static.wikia.nocookie.net/naruto/images/d/da/Water_Release_Water_Shockwave_1.png/",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 0
+                }
+              }
+            ],
+            "modifiedCosts": [
+              {
+                "idsAny": [
+                  "perksAbilitiesGeneralPerksAbilitiesNatureAffinityFire",
+                  "perksAbilitiesGeneralPerksAbilitiesNatureAffinityWind",
+                  "perksAbilitiesGeneralPerksAbilitiesNatureAffinityLightning",
+                  "perksAbilitiesGeneralPerksAbilitiesNatureAffinityEarth"
+                ],
+                "minSelected": 1,
+                "cost": {
+                  "CP": 50
+                },
+                "priority": 1
+              },
+              {
+                "id": "kekkeiGenkaiRinneganRinnegan",
+                "cost": {
+                  "CP": 0
+                },
+                "priority": 2
+              }
+            ]
+          },
+          {
+            "id": "perksAbilitiesGeneralPerksAbilitiesNatureAffinityWind",
+            "label": "Nature Affinity: Wind",
+            "description": "Gain Wind Release as a chakra nature affinity. The first basic nature affinity you select is free; additional basic natures normally cost 50 CP. Free with Rinnegan.",
+            "image": "https://static.wikia.nocookie.net/naruto/images/5/5f/Sage_Art_Wind_Release_Dust_Cloud.PNG/",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 0
+                }
+              }
+            ],
+            "modifiedCosts": [
+              {
+                "idsAny": [
+                  "perksAbilitiesGeneralPerksAbilitiesNatureAffinityFire",
+                  "perksAbilitiesGeneralPerksAbilitiesNatureAffinityWater",
+                  "perksAbilitiesGeneralPerksAbilitiesNatureAffinityLightning",
+                  "perksAbilitiesGeneralPerksAbilitiesNatureAffinityEarth"
+                ],
+                "minSelected": 1,
+                "cost": {
+                  "CP": 50
+                },
+                "priority": 1
+              },
+              {
+                "id": "kekkeiGenkaiRinneganRinnegan",
+                "cost": {
+                  "CP": 0
+                },
+                "priority": 2
+              }
+            ]
+          },
+          {
+            "id": "perksAbilitiesGeneralPerksAbilitiesNatureAffinityLightning",
+            "label": "Nature Affinity: Lightning",
+            "description": "Gain Lightning Release as a chakra nature affinity. The first basic nature affinity you select is free; additional basic natures normally cost 50 CP. Free with Rinnegan.",
+            "image": "https://static.wikia.nocookie.net/naruto/images/c/c1/Lightning_Release_False_Darkness.png/",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 0
+                }
+              }
+            ],
+            "modifiedCosts": [
+              {
+                "idsAny": [
+                  "perksAbilitiesGeneralPerksAbilitiesNatureAffinityFire",
+                  "perksAbilitiesGeneralPerksAbilitiesNatureAffinityWater",
+                  "perksAbilitiesGeneralPerksAbilitiesNatureAffinityWind",
+                  "perksAbilitiesGeneralPerksAbilitiesNatureAffinityEarth"
+                ],
+                "minSelected": 1,
+                "cost": {
+                  "CP": 50
+                },
+                "priority": 1
+              },
+              {
+                "id": "kekkeiGenkaiRinneganRinnegan",
+                "cost": {
+                  "CP": 0
+                },
+                "priority": 2
+              }
+            ]
+          },
+          {
+            "id": "perksAbilitiesGeneralPerksAbilitiesNatureAffinityEarth",
+            "label": "Nature Affinity: Earth",
+            "description": "Gain Earth Release as a chakra nature affinity. The first basic nature affinity you select is free; additional basic natures normally cost 50 CP. Free with Rinnegan.",
+            "image": "https://static.wikia.nocookie.net/naruto/images/4/4c/Earth_Release.png/",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 0
+                }
+              }
+            ],
+            "modifiedCosts": [
+              {
+                "idsAny": [
+                  "perksAbilitiesGeneralPerksAbilitiesNatureAffinityFire",
+                  "perksAbilitiesGeneralPerksAbilitiesNatureAffinityWater",
+                  "perksAbilitiesGeneralPerksAbilitiesNatureAffinityWind",
+                  "perksAbilitiesGeneralPerksAbilitiesNatureAffinityLightning"
+                ],
+                "minSelected": 1,
+                "cost": {
+                  "CP": 50
+                },
+                "priority": 1
+              },
+              {
+                "id": "kekkeiGenkaiRinneganRinnegan",
+                "cost": {
+                  "CP": 0
+                },
+                "priority": 2
+              }
+            ]
+          },
+          {
+            "id": "perksAbilitiesGeneralPerksAbilitiesAdditionalNatureAffinityYin",
+            "label": "Nature Affinity: Yin",
+            "description": "Pay 50 CP to gain Yin Release as a chakra nature affinity. Yin cannot be selected as your free basic nature affinity.",
+            "image": "https://static.wikia.nocookie.net/naruto/images/6/66/Rikudo_Yin.png/",
+            "costOptions": [
+              {
+                "cost": {
+                  "CP": 50
+                }
+              }
+            ]
+          },
+          {
+            "id": "perksAbilitiesGeneralPerksAbilitiesAdditionalNatureAffinityYang",
+            "label": "Nature Affinity: Yang",
+            "description": "Pay 50 CP to gain Yang Release as a chakra nature affinity. Yang cannot be selected as your free basic nature affinity.",
+            "image": "https://static.wikia.nocookie.net/naruto/images/b/b9/Rikudo_Yang.png/",
             "costOptions": [
               {
                 "cost": {
@@ -726,7 +946,7 @@
             ]
           }
         ],
-        "columnsPerRow": 4,
+        "columnsPerRow": 2,
         "subcategories": []
       },
       {
@@ -796,7 +1016,7 @@
             ]
           }
         ],
-        "columnsPerRow": 3,
+        "columnsPerRow": 2,
         "subcategories": []
       },
       {
@@ -902,7 +1122,7 @@
             ]
           }
         ],
-        "columnsPerRow": 3,
+        "columnsPerRow": 2,
         "subcategories": []
       },
       {
@@ -1021,7 +1241,7 @@
             ]
           }
         ],
-        "columnsPerRow": 3,
+        "columnsPerRow": 2,
         "subcategories": []
       },
       {
@@ -1140,7 +1360,7 @@
             ]
           }
         ],
-        "columnsPerRow": 3,
+        "columnsPerRow": 2,
         "subcategories": []
       },
       {
@@ -1274,7 +1494,7 @@
             ]
           }
         ],
-        "columnsPerRow": 3,
+        "columnsPerRow": 2,
         "subcategories": []
       },
       {
@@ -1393,7 +1613,7 @@
             ]
           }
         ],
-        "columnsPerRow": 3,
+        "columnsPerRow": 2,
         "subcategories": []
       }
     ]
@@ -1449,7 +1669,7 @@
             ]
           }
         ],
-        "columnsPerRow": 3,
+        "columnsPerRow": 2,
         "subcategories": []
       },
       {
@@ -1648,7 +1868,7 @@
             ]
           }
         ],
-        "columnsPerRow": 4,
+        "columnsPerRow": 2,
         "subcategories": [],
         "text": "",
         "mergeDefaultCostOptions": true,
@@ -1750,7 +1970,7 @@
             ]
           }
         ],
-        "columnsPerRow": 3,
+        "columnsPerRow": 2,
         "subcategories": [],
         "text": "",
         "mergeDefaultCostOptions": true,
@@ -1770,13 +1990,7 @@
             "id": "kekkeiGenkaiElementalWoodRelease",
             "label": "Wood Release",
             "description": "Unlock Wood Release to sculpt living timber into constructs, clones, and chakra-suppressing restraints on a monumental scale.",
-            "prerequisites": {
-              "or": [
-                "kekkeiGenkaiClanSenjuClan",
-                "startingOptionsRaceZetsuBlack",
-                "startingOptionsRaceZetsuWhiteBlack"
-              ]
-            },
+            "prerequisites": "(group(\"earthNatureAffinity\") && group(\"waterNatureAffinity\")) || kekkeiGenkaiClanSenjuClan || startingOptionsRaceZetsuBlack || startingOptionsRaceZetsuWhiteBlack",
             "maxSelections": 1,
             "image": "https://static.wikia.nocookie.net/naruto/images/5/5e/Mokuton_no_Tenzo.png",
             "costOptions": [
@@ -1805,6 +2019,7 @@
             "id": "kekkeiGenkaiElementalMudRelease",
             "label": "Mud Release",
             "description": "Fuse earth and water to transmute terrain into mud and sculpt it freely. Optional cosmetic: perpetually mud-caked hands.",
+            "prerequisites": "group(\"earthNatureAffinity\") && group(\"waterNatureAffinity\")",
             "maxSelections": 1,
             "image": "https://static.wikia.nocookie.net/naruto/images/f/fd/Mudslide_technique.png",
             "costOptions": [
@@ -1819,6 +2034,7 @@
             "id": "kekkeiGenkaiElementalScorchRelease",
             "label": "Scorch Release",
             "description": "Blend wind and fire to form heat orbs capable of desiccating targets instantly; combining at least three creates a forest-scorching super orb.",
+            "prerequisites": "group(\"windNatureAffinity\") && group(\"fireNatureAffinity\")",
             "maxSelections": 1,
             "image": "https://static.wikia.nocookie.net/naruto/images/f/f2/Scorch_Release.png",
             "costOptions": [
@@ -1833,6 +2049,7 @@
             "id": "kekkeiGenkaiElementalStormRelease",
             "label": "Storm Release",
             "description": "Channel water and lightning into laser-like torrents that flow like water, curve mid-flight, and strike with light-speed ferocity.",
+            "prerequisites": "group(\"waterNatureAffinity\") && group(\"lightningNatureAffinity\")",
             "maxSelections": 1,
             "image": "https://static.wikia.nocookie.net/naruto/images/0/06/Ranton_Reiz%C4%81_S%C4%81kasu.png",
             "costOptions": [
@@ -1847,6 +2064,7 @@
             "id": "kekkeiGenkaiElementalSwiftRelease",
             "label": "Swift Release",
             "description": "Harness lightning and wind to move faster than sight. With training, even the Sharingan struggles to track your motions.",
+            "prerequisites": "group(\"lightningNatureAffinity\") && group(\"windNatureAffinity\")",
             "maxSelections": 1,
             "image": "https://static.wikia.nocookie.net/naruto/images/f/fc/Jinton.png",
             "costOptions": [
@@ -1861,6 +2079,7 @@
             "id": "kekkeiGenkaiElementalTyphoonRelease",
             "label": "Typhoon Release",
             "description": "Supercharge wind release to conjure island-levelling tempests and gale force assaults.",
+            "prerequisites": "group(\"windNatureAffinity\")",
             "maxSelections": 1,
             "image": "https://static.wikia.nocookie.net/naruto/images/e/eb/Great_Consecutive_Bursting_Extreme_Winds.png",
             "costOptions": [
@@ -1875,6 +2094,7 @@
             "id": "kekkeiGenkaiElementalExplosionReleaseContact",
             "label": "Explosion Release – Contact",
             "description": "Combine earth and lightning so your strikes detonate with devastating force.",
+            "prerequisites": "group(\"earthNatureAffinity\") && group(\"lightningNatureAffinity\")",
             "maxSelections": 1,
             "image": "https://static.wikia.nocookie.net/naruto/images/e/e0/Gari_Ground_Explosion.png",
             "costOptions": [
@@ -1889,6 +2109,7 @@
             "id": "kekkeiGenkaiElementalExplosionReleaseClayArtist",
             "label": "Explosion Release – Clay Artist",
             "description": "Infuse clay sculptures with explosive chakra, gaining an endless supply of detonating creations.",
+            "prerequisites": "group(\"earthNatureAffinity\") && group(\"lightningNatureAffinity\")",
             "maxSelections": 1,
             "image": "https://static.wikia.nocookie.net/naruto/images/8/89/C2_Mines.png",
             "costOptions": [
@@ -1936,6 +2157,7 @@
             "id": "kekkeiGenkaiElementalBoilRelease",
             "label": "Boil Release",
             "description": "Mix fire and water to produce corrosive vapors or superheated steam, or to bring your chakra to a boiling, strength-boosting state.",
+            "prerequisites": "group(\"fireNatureAffinity\") && group(\"waterNatureAffinity\")",
             "maxSelections": 1,
             "image": "https://static.wikia.nocookie.net/naruto/images/a/ac/Skilled_Mist.png",
             "costOptions": [
@@ -1960,6 +2182,7 @@
             "id": "kekkeiGenkaiElementalLavaRelease",
             "label": "Lava Release",
             "description": "Fuse fire and earth to manifest lava in multiple variants: molten rock, acidic mud, quicklime, vulcanized rubber, or volcanic ash. Select one form on purchase.",
+            "prerequisites": "group(\"fireNatureAffinity\") && group(\"earthNatureAffinity\")",
             "maxSelections": 1,
             "image": "https://static.wikia.nocookie.net/naruto/images/4/4d/Shakugary%C5%ABgan_no_Jutsu.png",
             "costOptions": [
@@ -1999,6 +2222,7 @@
             "id": "kekkeiGenkaiElementalMagnetRelease",
             "label": "Magnet Release",
             "description": "Unite earth and wind to generate magnetic fields, manipulating a chosen medium such as iron sand, gold dust, or standard sand with Gaara-level finesse. Optionally magnetize targets on contact.",
+            "prerequisites": "group(\"earthNatureAffinity\") && group(\"windNatureAffinity\")",
             "maxSelections": 1,
             "image": "https://static.wikia.nocookie.net/naruto/images/0/0e/Gold_Dust_Wave.png/",
             "costOptions": [
@@ -2038,6 +2262,7 @@
             "id": "kekkeiGenkaiElementalCrystalRelease",
             "label": "Crystal Release",
             "description": "Crystallize matter—terrain, moisture, or foes—down to the cellular level and shape the resultant crystal constructs. Susceptible to lightning and specific resonance frequencies.",
+            "prerequisites": "group(\"earthNatureAffinity\")",
             "maxSelections": 1,
             "image": "https://static.wikia.nocookie.net/naruto/images/5/5c/Jade_Crystal_Prison.png/",
             "costOptions": [
@@ -2052,6 +2277,7 @@
             "id": "kekkeiGenkaiElementalIceRelease",
             "label": "Ice Release",
             "description": "Weave wind and water into resilient ice, craft mirrors for instant repositioning, and lower ambient temperatures to summon snowfall.",
+            "prerequisites": "group(\"windNatureAffinity\") && group(\"waterNatureAffinity\")",
             "maxSelections": 1,
             "image": "https://static.wikia.nocookie.net/naruto/images/a/a1/Ice_Release_Crystal_Wall.png/",
             "costOptions": [
@@ -2066,6 +2292,7 @@
             "id": "kekkeiGenkaiElementalSteelRelease",
             "label": "Steel Release",
             "description": "Transmute your chakra into ultra-hard metal, reinforcing your body or forging weapons on demand.",
+            "prerequisites": "group(\"earthNatureAffinity\") && group(\"lightningNatureAffinity\")",
             "maxSelections": 1,
             "image": "https://static.wikia.nocookie.net/naruto/images/8/81/Steel_armour.png/",
             "costOptions": [
@@ -2080,6 +2307,7 @@
             "id": "kekkeiGenkaiElementalDustRelease",
             "label": "Dust Release",
             "description": "Master the wind-earth-fire Kekkei Tōta, creating molecular disintegration constructs that erase anything caught within.",
+            "prerequisites": "group(\"windNatureAffinity\") && group(\"earthNatureAffinity\") && group(\"fireNatureAffinity\")",
             "maxSelections": 1,
             "image": "https://static.wikia.nocookie.net/naruto/images/2/20/Dust_Release.png/",
             "costOptions": [
@@ -2091,7 +2319,7 @@
             ]
           }
         ],
-        "columnsPerRow": 4,
+        "columnsPerRow": 2,
         "subcategories": [],
         "text": "",
         "mergeDefaultCostOptions": true,
@@ -2266,7 +2494,7 @@
             ]
           }
         ],
-        "columnsPerRow": 4,
+        "columnsPerRow": 2,
         "subcategories": [],
         "text": "",
         "mergeDefaultCostOptions": true,
@@ -2476,7 +2704,7 @@
             ]
           }
         ],
-        "columnsPerRow": 4,
+        "columnsPerRow": 2,
         "subcategories": [],
         "mergeDefaultCostOptions": true,
         "costOptions": [
@@ -2566,10 +2794,12 @@
               {
                 "cost": {
                   "BLP": 100,
-                  "RGP": -1
+                  "RGP": -1,
+                  "BO": 1
                 }
               }
-            ]
+            ],
+            "maxSelections": 10
           },
           {
             "id": "kekkeiGenkaiRinneganLimbo",
@@ -2684,7 +2914,7 @@
             ]
           }
         ],
-        "columnsPerRow": 3,
+        "columnsPerRow": 2,
         "subcategories": [],
         "mergeDefaultCostOptions": true,
         "costOptions": [
@@ -2833,7 +3063,7 @@
             ]
           }
         ],
-        "columnsPerRow": 3,
+        "columnsPerRow": 2,
         "subcategories": [],
         "maxSelections": 1
       },
@@ -2974,7 +3204,7 @@
             ]
           }
         ],
-        "columnsPerRow": 4,
+        "columnsPerRow": 2,
         "subcategories": []
       },
       {
@@ -3269,7 +3499,7 @@
             ]
           }
         ],
-        "columnsPerRow": 4,
+        "columnsPerRow": 2,
         "subcategories": []
       }
     ],
@@ -3356,7 +3586,7 @@
             "maxSelections": 10
           }
         ],
-        "columnsPerRow": 3,
+        "columnsPerRow": 2,
         "subcategories": []
       },
       {
@@ -3505,7 +3735,7 @@
             ]
           }
         ],
-        "columnsPerRow": 4,
+        "columnsPerRow": 2,
         "subcategories": []
       },
       {
@@ -3573,7 +3803,7 @@
             "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse1.mm.bing.net%2Fth%2Fid%2FOIP.EYBDgAFnIvEGeaY5MVdx5gHaIr%3Fcb%3D12%26pid%3DApi&f=1&ipt=89c5b6c71711749208d7e825b4e10bd3462fa9b6ea0ef67ad0a3f0ce05719e4e&ipo=images"
           }
         ],
-        "columnsPerRow": 3,
+        "columnsPerRow": 2,
         "subcategories": []
       },
       {
@@ -3857,7 +4087,7 @@
             ]
           }
         ],
-        "columnsPerRow": 4,
+        "columnsPerRow": 2,
         "subcategories": []
       }
     ]
@@ -4016,7 +4246,7 @@
             ]
           }
         ],
-        "columnsPerRow": 3,
+        "columnsPerRow": 2,
         "subcategories": []
       }
     ]
@@ -4521,7 +4751,7 @@
             ]
           }
         ],
-        "columnsPerRow": 4,
+        "columnsPerRow": 2,
         "subcategories": []
       },
       {
@@ -4612,7 +4842,7 @@
             ]
           }
         ],
-        "columnsPerRow": 3,
+        "columnsPerRow": 2,
         "subcategories": []
       },
       {
@@ -4695,7 +4925,7 @@
             ]
           }
         ],
-        "columnsPerRow": 3,
+        "columnsPerRow": 2,
         "subcategories": []
       },
       {
@@ -4811,7 +5041,7 @@
         "discountSelectionLimit": 2,
         "discountEligibleUnder": 100,
         "discountMode": "free",
-        "columnsPerRow": 3,
+        "columnsPerRow": 2,
         "subcategories": []
       },
       {
@@ -4928,7 +5158,7 @@
         "discountSelectionLimit": 20,
         "discountEligibleUnder": 400,
         "discountMode": "half",
-        "columnsPerRow": 4,
+        "columnsPerRow": 2,
         "subcategories": []
       },
       {
@@ -5013,7 +5243,7 @@
         "discountRequires": "kekkeiGenkaiRinneganRinnegan",
         "discountAutoApplyAll": true,
         "discountRequiresMessage": "Purchase the Rinnegan to unlock 50% discounts on every treasured tool.",
-        "columnsPerRow": 3,
+        "columnsPerRow": 2,
         "subcategories": []
       },
       {
@@ -5120,7 +5350,7 @@
             ]
           }
         ],
-        "columnsPerRow": 4,
+        "columnsPerRow": 2,
         "subcategories": []
       },
       {
@@ -5502,7 +5732,7 @@
             ]
           }
         ],
-        "columnsPerRow": 3,
+        "columnsPerRow": 2,
         "subcategories": []
       }
     ]
@@ -6249,7 +6479,7 @@
             ]
           }
         ],
-        "columnsPerRow": 4,
+        "columnsPerRow": 2,
         "subcategories": []
       },
       {
@@ -6352,7 +6582,7 @@
             ]
           }
         ],
-        "columnsPerRow": 4,
+        "columnsPerRow": 2,
         "subcategories": []
       },
       {
@@ -6431,7 +6661,7 @@
             ]
           }
         ],
-        "columnsPerRow": 3,
+        "columnsPerRow": 2,
         "subcategories": []
       }
     ]
