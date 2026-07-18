@@ -2320,16 +2320,17 @@
             "label": "Convert BLP to MSP",
             "description": "For 100 BLP, buy 1 MSP",
             "prerequisites": "kekkeiGenkaiSharinganMangekySharingan",
-            "maxSelections": 1,
             "image": "https://static.wikia.nocookie.net/naruto/images/1/1e/Kakashi%27s_Mangeky%C5%8D_Sharingan.png/",
             "costOptions": [
               {
                 "cost": {
                   "BLP": 100,
-                  "MSP": -1
+                  "MSP": -1,
+                  "BO": 1
                 }
               }
-            ]
+            ],
+            "maxSelections": 20
           },
           {
             "id": "kekkeiGenkaiSharinganEternalMangekySharingan",
