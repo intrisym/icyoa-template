@@ -203,7 +203,7 @@ function getStoryInputConfigById(inputId) {
 function walkSubcategoryTree(subcategories, callback, path = []) {
     if (!Array.isArray(subcategories)) return;
     subcategories.forEach((subcat, index) => {
-        const nextPath = path.concat([{ index, name: subcat?.name || "" }]);
+        const nextPath = path.concat([{ index, name: subcat?.name || "", subcat }]);
         callback(subcat, nextPath);
         if (Array.isArray(subcat?.subcategories) && subcat.subcategories.length) {
             walkSubcategoryTree(subcat.subcategories, callback, nextPath);
@@ -833,17 +833,35 @@ function getMergedDefaultCostForSelection(costOptions = [], selectionNumber = 1)
     }, {});
 }
 
+function getInheritedCostSubcategory(info = {}) {
+    const subcatPath = Array.isArray(info.subcatPath) && info.subcatPath.length
+        ? info.subcatPath
+        : (info.subcat ? [info.subcat] : []);
+    for (let index = subcatPath.length - 1; index >= 0; index -= 1) {
+        const entry = subcatPath[index];
+        const subcat = entry?.subcat || entry;
+        if (Array.isArray(subcat?.costOptions) && subcat.costOptions.length > 0) return subcat;
+    }
+    return null;
+}
+
+function getInheritedCostOptions(info = {}) {
+    const subcat = getInheritedCostSubcategory(info);
+    return Array.isArray(subcat?.costOptions) ? subcat.costOptions : [];
+}
+
 function getMergedDefaultCostForOption(option, selectionNumber = null) {
     const info = option?.id ? findSubcategoryInfo(option.id) : {};
-    const subcategoryOptions = Array.isArray(info.subcat?.costOptions) ? info.subcat.costOptions : [];
-    if (info.subcat?.mergeDefaultCostOptions !== true || !subcategoryOptions.length) return {};
+    const inheritedSubcat = getInheritedCostSubcategory(info);
+    const subcategoryOptions = Array.isArray(inheritedSubcat?.costOptions) ? inheritedSubcat.costOptions : [];
+    if (inheritedSubcat?.mergeDefaultCostOptions !== true || !subcategoryOptions.length) return {};
     return getMergedDefaultCostForSelection(subcategoryOptions, selectionNumber || getNextSelectionNumber(option));
 }
 
 function getConfiguredCostOptions(option) {
     const info = option?.id ? findSubcategoryInfo(option.id) : {};
     const ownOptions = Array.isArray(option?.costOptions) ? option.costOptions : [];
-    const subcategoryOptions = Array.isArray(info.subcat?.costOptions) ? info.subcat.costOptions : [];
+    const subcategoryOptions = getInheritedCostOptions(info);
     const hasDirectOptionCost = option?.cost && typeof option.cost === "object" && Object.keys(option.cost).length > 0;
     const hasOwnCostOptions = costOptionsHaveMeaningfulCost(ownOptions);
     return hasOwnCostOptions ? ownOptions : (hasDirectOptionCost ? [] : subcategoryOptions);
@@ -885,9 +903,10 @@ function normalizeOptionCostOptions(option, { selectionNumber = null, includeUna
     const effectiveSelectionNumber = selectionNumber || getNextSelectionNumber(option);
     const info = option?.id ? findSubcategoryInfo(option.id) : {};
     const ownOptions = Array.isArray(option?.costOptions) ? option.costOptions : [];
-    const subcategoryOptions = Array.isArray(info.subcat?.costOptions) ? info.subcat.costOptions : [];
+    const inheritedSubcat = getInheritedCostSubcategory(info);
+    const subcategoryOptions = Array.isArray(inheritedSubcat?.costOptions) ? inheritedSubcat.costOptions : [];
     const shouldMergeDefaults = costOptionsHaveMeaningfulCost(ownOptions)
-        && info.subcat?.mergeDefaultCostOptions === true
+        && inheritedSubcat?.mergeDefaultCostOptions === true
         && subcategoryOptions.length > 0;
     const defaultCost = shouldMergeDefaults
         ? getMergedDefaultCostForSelection(subcategoryOptions, effectiveSelectionNumber)
@@ -1568,7 +1587,7 @@ function getOptionEffectiveCostChoices(option, options = {}) {
         const info = option?.id ? findSubcategoryInfo(option.id) : {};
         const hasDirectOptionCost = option?.cost && typeof option.cost === "object" && Object.keys(option.cost).length > 0;
         const hasConfiguredCostOptions = (Array.isArray(option?.costOptions) && option.costOptions.length > 0)
-            || (!hasDirectOptionCost && Array.isArray(info.subcat?.costOptions) && info.subcat.costOptions.length > 0);
+            || (!hasDirectOptionCost && getInheritedCostOptions(info).length > 0);
         if (hasConfiguredCostOptions) return [];
         return [{
             index: null,
@@ -3692,7 +3711,7 @@ function canSelect(option, { costOptionIndex = null } = {}) {
     const info = findSubcategoryInfo(option.id);
     const hasDirectOptionCost = option?.cost && typeof option.cost === "object" && Object.keys(option.cost).length > 0;
     const hasConfiguredCostOptions = (Array.isArray(option.costOptions) && option.costOptions.length > 0)
-        || (!hasDirectOptionCost && Array.isArray(info.subcat?.costOptions) && info.subcat.costOptions.length > 0);
+        || (!hasDirectOptionCost && getInheritedCostOptions(info).length > 0);
     const selectedCostOptionIndex = costOptionIndex ?? getInitialCostOptionIndex(option, nextSelectionNumber);
     const selectedCostOption = selectedCostOptionIndex === null || selectedCostOptionIndex === undefined
         ? availableCostOptions[0]
@@ -4145,6 +4164,7 @@ function findSubcategoryInfo(optionId) {
             return {
                 cat,
                 subcat: null,
+                subcatPath: [],
                 key: buildSubcategoryKey(c, cat.name, -1, 'root'),
                 catKey: buildCategoryKey(c, cat.name)
             };
@@ -4156,6 +4176,7 @@ function findSubcategoryInfo(optionId) {
                 result = {
                     cat,
                     subcat: sub,
+                    subcatPath: path,
                     key: buildSubcategoryKey(c, cat.name, null, null, path),
                     catKey: buildCategoryKey(c, cat.name)
                 };
@@ -4166,6 +4187,7 @@ function findSubcategoryInfo(optionId) {
     return {
         cat: null,
         subcat: null,
+        subcatPath: [],
         key: null,
         catKey: null
     };
@@ -4460,6 +4482,18 @@ function parsePrerequisiteExpression(expression = "") {
                     throw new Error("Group prerequisites must use a quoted group ID");
                 }
                 consume(")");
+                const operatorToken = peek();
+                if ([">=", "<=", ">", "<", "==", "="].includes(operatorToken)) {
+                    const operator = consume();
+                    const valueToken = consume();
+                    if (!/^-?\d+(?:\.\d+)?$/.test(valueToken || "")) throw new Error("Invalid group prerequisite value");
+                    return {
+                        type: "group",
+                        id: unquotePrerequisitePointName(nameToken),
+                        operator,
+                        value: Number(valueToken)
+                    };
+                }
                 return {
                     type: "group",
                     id: unquotePrerequisitePointName(nameToken)
@@ -4533,7 +4567,15 @@ function evaluatePrerequisiteNode(node) {
     if (node.type === "atom") return meetsCountRequirement(node.id);
     if (node.type === "point") return evaluatePointRequirement(node.pointType, node.operator, node.value);
     if (node.type === "scope") return scopeRequirementMet(node.scopeType, node.name);
-    if (node.type === "group") return optionGroupSelectionCount(node.id) > 0;
+    if (node.type === "group") {
+        const actual = optionGroupSelectionCount(node.id);
+        if (node.operator === ">=") return actual >= node.value;
+        if (node.operator === ">") return actual > node.value;
+        if (node.operator === "<=") return actual <= node.value;
+        if (node.operator === "<") return actual < node.value;
+        if (node.operator === "==" || node.operator === "=") return actual === node.value;
+        return actual > 0;
+    }
     if (node.type === "not") return !evaluatePrerequisiteNode(node.child);
     if (node.type === "and") return node.children.every(evaluatePrerequisiteNode);
     if (node.type === "or") return node.children.some(evaluatePrerequisiteNode);
@@ -4568,8 +4610,15 @@ function buildPrerequisiteDisplayLines(expression = "") {
     const groupText = (node, negated, inheritedSatisfiedOr = false) => {
         const group = findOptionGroup(node.id);
         if (!group) return "";
-        const groupSatisfied = optionGroupSelectionCount(node.id) > 0;
+        const actual = optionGroupSelectionCount(node.id);
+        const groupSatisfied = node.operator
+            ? evaluatePrerequisiteNode(node)
+            : actual > 0;
         const satisfied = inheritedSatisfiedOr || (negated ? !groupSatisfied : groupSatisfied);
+        if (node.operator) {
+            const operator = node.operator === "==" ? "=" : node.operator;
+            return `${satisfied ? "✅" : "❌"} ${negated ? "NOT " : ""}${escapeHtml(group.label)} ${escapeHtml(operator)} ${escapeHtml(String(node.value))} (${actual}/${node.value})`;
+        }
         return group.optionIds
             .map(optionId => {
                 if (!findOptionById(optionId)) return "";

@@ -26,6 +26,14 @@ const MIME_TYPES = {
     ".ttf": "font/ttf"
 };
 
+const NECROMANCER_SPELL_SCHOOL_SLUGS = new Map([
+    ["Liber Mortis", "liberMortis"],
+    ["Liber Animas", "liberAnimas"],
+    ["Kroveri Hæma", "kroveriHma"],
+    ["Promræn Caro", "promraenCaro"],
+    ["Reunu Pertemru", "reunuPertemru"]
+]);
+
 function sendJson(res, status, body) {
     const payload = JSON.stringify(body);
     res.writeHead(status, {
@@ -91,6 +99,113 @@ async function validateFileParam(pathname) {
     return filePath;
 }
 
+function stripGeneratedNecromancerTierPrereq(prereq) {
+    if (!prereq || typeof prereq !== "string") return prereq;
+    return prereq
+        .replace(/\s*\(?\s*group\("[^"]+Tier[234]Spells"\)\s*>=\s*[234]\s*\)?\s*/g, "")
+        .replace(/^\s*&&\s*|\s*&&\s*$/g, "")
+        .replace(/\(\s*\)/g, "")
+        .trim();
+}
+
+function mergeNecromancerPrereq(existing, generated) {
+    const cleanExisting = stripGeneratedNecromancerTierPrereq(existing);
+    if (!cleanExisting) return generated;
+    if (cleanExisting === generated) return generated;
+    return `(${cleanExisting}) && (${generated})`;
+}
+
+function pruneUndefinedJsonValues(value) {
+    if (Array.isArray(value)) {
+        value.forEach(pruneUndefinedJsonValues);
+        return;
+    }
+    if (!value || typeof value !== "object") return;
+    Object.keys(value).forEach(key => {
+        if (value[key] === undefined) delete value[key];
+        else pruneUndefinedJsonValues(value[key]);
+    });
+}
+
+function applyNecromancerSpellRules(data, fileName = "") {
+    if (path.basename(fileName) !== "necromancer.json" || !Array.isArray(data)) return data;
+
+    const pointsEntry = data.find(entry => entry?.type === "points");
+    const spells = data.find(entry => entry?.name === "Spells");
+    if (!pointsEntry || !spells || !Array.isArray(spells.subcategories)) return data;
+
+    const spellSchools = spells.subcategories.filter(subcat => subcat?.name !== "Points");
+    const generatedGroups = [];
+    const generatedGroupIds = new Set();
+    const allTier1Ids = [];
+
+    spellSchools.forEach(school => {
+        const slug = NECROMANCER_SPELL_SCHOOL_SLUGS.get(school?.name);
+        if (!slug || !Array.isArray(school.subcategories)) return;
+        const tiers = new Map(school.subcategories.map(tier => [tier?.name, tier]));
+        ["Tier 4", "Tier 3", "Tier 2", "Tier 1"].forEach(tierName => {
+            const tier = tiers.get(tierName);
+            if (!tier || !Array.isArray(tier.options)) return;
+            const tierNumber = tierName.match(/\d+/)?.[0];
+            const groupId = `${slug}Tier${tierNumber}Spells`;
+            generatedGroupIds.add(groupId);
+            generatedGroups.push({
+                id: groupId,
+                label: `${school.name} ${tierName} Spells`,
+                optionIds: tier.options.map(option => option?.id).filter(Boolean)
+            });
+            if (tierName === "Tier 1") {
+                allTier1Ids.push(...tier.options.map(option => option?.id).filter(Boolean));
+            }
+        });
+    });
+
+    pointsEntry.optionGroups = [
+        ...(Array.isArray(pointsEntry.optionGroups)
+            ? pointsEntry.optionGroups.filter(group => !generatedGroupIds.has(group?.id))
+            : []),
+        ...generatedGroups
+    ];
+
+    spellSchools.forEach(school => {
+        const slug = NECROMANCER_SPELL_SCHOOL_SLUGS.get(school?.name);
+        if (!slug || !Array.isArray(school.subcategories)) return;
+        const tiers = new Map(school.subcategories.map(tier => [tier?.name, tier]));
+        const tier4 = tiers.get("Tier 4");
+        const tier3 = tiers.get("Tier 3");
+        const tier2 = tiers.get("Tier 2");
+        const tier1 = tiers.get("Tier 1");
+        (tier4?.options || []).forEach(option => {
+            option.prerequisites = stripGeneratedNecromancerTierPrereq(option.prerequisites) || undefined;
+        });
+        (tier3?.options || []).forEach(option => {
+            option.prerequisites = mergeNecromancerPrereq(option.prerequisites, `group("${slug}Tier4Spells") >= 4`);
+        });
+        (tier2?.options || []).forEach(option => {
+            option.prerequisites = mergeNecromancerPrereq(option.prerequisites, `group("${slug}Tier3Spells") >= 3`);
+        });
+        (tier1?.options || []).forEach(option => {
+            option.prerequisites = mergeNecromancerPrereq(option.prerequisites, `group("${slug}Tier2Spells") >= 2`);
+        });
+    });
+
+    const pointsSubcategory = spells.subcategories.find(subcat => subcat?.name === "Points");
+    const motherPathId = "spellsPointsMotherSPath";
+    const motherPath = (pointsSubcategory?.options || []).find(option => option?.id === motherPathId);
+    if (motherPath) {
+        motherPath.conflictsWith = Array.from(new Set(["spellsPointsNormalPath", ...allTier1Ids]));
+    }
+    spellSchools.forEach(school => {
+        const tier1 = (school.subcategories || []).find(tier => tier?.name === "Tier 1");
+        (tier1?.options || []).forEach(option => {
+            option.conflictsWith = Array.from(new Set([motherPathId, ...allTier1Ids.filter(id => id !== option.id)]));
+        });
+    });
+
+    pruneUndefinedJsonValues(data);
+    return data;
+}
+
 async function handleGetConfig(req, res) {
     try {
         const parsedUrl = url.parse(req.url, true);
@@ -143,7 +258,8 @@ async function handlePutConfig(req, res) {
             });
             return;
         }
-        await fsp.writeFile(filePath, JSON.stringify(parsed, null, 2), "utf8");
+        const normalized = applyNecromancerSpellRules(parsed, fileName);
+        await fsp.writeFile(filePath, JSON.stringify(normalized, null, 2), "utf8");
         sendJson(res, 200, {
             ok: true
         });
@@ -301,8 +417,15 @@ const server = http.createServer(async (req, res) => {
     res.end("Method not allowed");
 });
 
-server.listen(PORT, () => {
-    const baseUrl = `http://localhost:${PORT}`;
-    console.log(`View CYOA at ${baseUrl}/`);
-    console.log(`Open the visual editor at ${baseUrl}/editor.html`);
-});
+if (require.main === module) {
+    server.listen(PORT, () => {
+        const baseUrl = `http://localhost:${PORT}`;
+        console.log(`View CYOA at ${baseUrl}/`);
+        console.log(`Open the visual editor at ${baseUrl}/editor.html`);
+    });
+}
+
+module.exports = {
+    applyNecromancerSpellRules,
+    server
+};

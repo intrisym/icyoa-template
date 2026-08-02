@@ -10,6 +10,13 @@
         filterQuery: ""
     };
     const CONFIG_ENDPOINT = "/api/config";
+    const NECROMANCER_SPELL_SCHOOL_SLUGS = new Map([
+        ["Liber Mortis", "liberMortis"],
+        ["Liber Animas", "liberAnimas"],
+        ["Kroveri Hæma", "kroveriHma"],
+        ["Promræn Caro", "promraenCaro"],
+        ["Reunu Pertemru", "reunuPertemru"]
+    ]);
     const tempSyncState = {
         enabled: false,
         pendingData: null,
@@ -251,6 +258,104 @@
         applyEditorTheme(getPreferredTheme());
     }
 
+    function stripGeneratedNecromancerTierPrereq(prereq) {
+        if (!prereq || typeof prereq !== "string") return prereq;
+        return prereq
+            .replace(/\s*\(?\s*group\("[^"]+Tier[234]Spells"\)\s*>=\s*[234]\s*\)?\s*/g, "")
+            .replace(/^\s*&&\s*|\s*&&\s*$/g, "")
+            .replace(/\(\s*\)/g, "")
+            .trim();
+    }
+
+    function mergeNecromancerPrereq(existing, generated) {
+        const cleanExisting = stripGeneratedNecromancerTierPrereq(existing);
+        if (!cleanExisting) return generated;
+        if (cleanExisting === generated) return generated;
+        return `(${cleanExisting}) && (${generated})`;
+    }
+
+    function pruneUndefinedJsonValues(value) {
+        if (Array.isArray(value)) {
+            value.forEach(pruneUndefinedJsonValues);
+            return;
+        }
+        if (!value || typeof value !== "object") return;
+        Object.keys(value).forEach(key => {
+            if (value[key] === undefined) delete value[key];
+            else pruneUndefinedJsonValues(value[key]);
+        });
+    }
+
+    function applyNecromancerSpellRulesForSave(data, fileName = "") {
+        if (fileName !== "necromancer.json" || !Array.isArray(data)) return data;
+        const pointsEntry = data.find(entry => entry?.type === "points");
+        const spells = data.find(entry => entry?.name === "Spells");
+        if (!pointsEntry || !spells || !Array.isArray(spells.subcategories)) return data;
+
+        const spellSchools = spells.subcategories.filter(subcat => subcat?.name !== "Points");
+        const generatedGroups = [];
+        const generatedGroupIds = new Set();
+        const allTier1Ids = [];
+
+        spellSchools.forEach(school => {
+            const slug = NECROMANCER_SPELL_SCHOOL_SLUGS.get(school?.name);
+            if (!slug || !Array.isArray(school.subcategories)) return;
+            const tiers = new Map(school.subcategories.map(tier => [tier?.name, tier]));
+            ["Tier 4", "Tier 3", "Tier 2", "Tier 1"].forEach(tierName => {
+                const tier = tiers.get(tierName);
+                if (!tier || !Array.isArray(tier.options)) return;
+                const tierNumber = tierName.match(/\d+/)?.[0];
+                const groupId = `${slug}Tier${tierNumber}Spells`;
+                generatedGroupIds.add(groupId);
+                generatedGroups.push({
+                    id: groupId,
+                    label: `${school.name} ${tierName} Spells`,
+                    optionIds: tier.options.map(option => option?.id).filter(Boolean)
+                });
+                if (tierName === "Tier 1") allTier1Ids.push(...tier.options.map(option => option?.id).filter(Boolean));
+            });
+        });
+
+        pointsEntry.optionGroups = [
+            ...(Array.isArray(pointsEntry.optionGroups)
+                ? pointsEntry.optionGroups.filter(group => !generatedGroupIds.has(group?.id))
+                : []),
+            ...generatedGroups
+        ];
+
+        spellSchools.forEach(school => {
+            const slug = NECROMANCER_SPELL_SCHOOL_SLUGS.get(school?.name);
+            if (!slug || !Array.isArray(school.subcategories)) return;
+            const tiers = new Map(school.subcategories.map(tier => [tier?.name, tier]));
+            (tiers.get("Tier 4")?.options || []).forEach(option => {
+                option.prerequisites = stripGeneratedNecromancerTierPrereq(option.prerequisites) || undefined;
+            });
+            (tiers.get("Tier 3")?.options || []).forEach(option => {
+                option.prerequisites = mergeNecromancerPrereq(option.prerequisites, `group("${slug}Tier4Spells") >= 4`);
+            });
+            (tiers.get("Tier 2")?.options || []).forEach(option => {
+                option.prerequisites = mergeNecromancerPrereq(option.prerequisites, `group("${slug}Tier3Spells") >= 3`);
+            });
+            (tiers.get("Tier 1")?.options || []).forEach(option => {
+                option.prerequisites = mergeNecromancerPrereq(option.prerequisites, `group("${slug}Tier2Spells") >= 2`);
+            });
+        });
+
+        const motherPathId = "spellsPointsMotherSPath";
+        const motherPath = (spells.subcategories.find(subcat => subcat?.name === "Points")?.options || [])
+            .find(option => option?.id === motherPathId);
+        if (motherPath) motherPath.conflictsWith = Array.from(new Set(["spellsPointsNormalPath", ...allTier1Ids]));
+        spellSchools.forEach(school => {
+            const tier1 = (school.subcategories || []).find(tier => tier?.name === "Tier 1");
+            (tier1?.options || []).forEach(option => {
+                option.conflictsWith = Array.from(new Set([motherPathId, ...allTier1Ids.filter(id => id !== option.id)]));
+            });
+        });
+
+        pruneUndefinedJsonValues(data);
+        return data;
+    }
+
     function queueTempSave(data) {
         if (!tempSyncState.enabled) return;
         tempSyncState.pendingData = data;
@@ -261,7 +366,7 @@
 
     async function flushTempSaveQueue() {
         if (!tempSyncState.enabled || !tempSyncState.pendingData) return;
-        const payload = tempSyncState.pendingData;
+        const payload = applyNecromancerSpellRulesForSave(tempSyncState.pendingData, state.selectedFile);
         tempSyncState.pendingData = null;
         tempSyncState.saving = true;
         try {
@@ -4813,7 +4918,7 @@
             costOptionsLabel.textContent = "Payment options";
             const costOptionsHint = document.createElement("div");
             costOptionsHint.className = "field-help";
-            costOptionsHint.textContent = "Leave empty to inherit this subcategory's default payment options.";
+            costOptionsHint.textContent = "Leave empty to inherit the nearest parent subcategory's default payment options.";
             const costOptionsContainer = document.createElement("div");
             costOptionsContainer.className = "list-stack";
             renderCostOptionsEditor(costOptionsContainer, option, {

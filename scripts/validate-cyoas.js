@@ -857,6 +857,101 @@ function validateEnableablePointSets(file, pointsEntry, pointTypes, optionIds, e
     });
 }
 
+function validateNecromancerSpellRules(file, data, errors) {
+    if (file !== "necromancer.json") return;
+    const pointsEntry = data.find(entry => entry.type === "points");
+    const spells = data.find(entry => entry?.name === "Spells");
+    if (!pointsEntry || !spells) return;
+
+    const schoolSlugs = new Map([
+        ["Liber Mortis", "liberMortis"],
+        ["Liber Animas", "liberAnimas"],
+        ["Kroveri Hæma", "kroveriHma"],
+        ["Promræn Caro", "promraenCaro"],
+        ["Reunu Pertemru", "reunuPertemru"]
+    ]);
+    const optionGroups = new Set((pointsEntry.optionGroups || []).map(group => group?.id));
+    const spellSchools = (spells.subcategories || []).filter(subcat => subcat?.name !== "Points");
+    const allTier1Ids = [];
+    const hasGeneratedPrerequisite = (option, expected) => typeof option.prerequisites === "string" && option.prerequisites.includes(expected);
+
+    spellSchools.forEach(school => {
+        const tier1 = (school.subcategories || []).find(tier => tier?.name === "Tier 1");
+        allTier1Ids.push(...(tier1?.options || []).map(option => option.id).filter(Boolean));
+    });
+
+    schoolSlugs.forEach((slug, schoolName) => {
+        const school = spellSchools.find(subcat => subcat?.name === schoolName);
+        if (!school) {
+            pushIssue(errors, file, `Necromancer Spells is missing school "${schoolName}".`);
+            return;
+        }
+
+        [4, 3, 2, 1].forEach(tierNumber => {
+            const groupId = `${slug}Tier${tierNumber}Spells`;
+            if (!optionGroups.has(groupId)) {
+                pushIssue(errors, file, `Necromancer spell rules missing option group "${groupId}".`);
+            }
+        });
+
+        const tiers = new Map((school.subcategories || []).map(tier => [tier?.name, tier]));
+        const tier4 = tiers.get("Tier 4");
+        const tier3 = tiers.get("Tier 3");
+        const tier2 = tiers.get("Tier 2");
+        const tier1 = tiers.get("Tier 1");
+        if (!tier4 || !tier3 || !tier2 || !tier1) {
+            pushIssue(errors, file, `Necromancer school "${schoolName}" must define Tier 4, Tier 3, Tier 2, and Tier 1.`);
+            return;
+        }
+
+        (tier4.options || []).forEach(option => {
+            if (option.prerequisites) {
+                pushIssue(errors, file, `${option.id} should not have spell-tier prerequisites.`);
+            }
+        });
+        (tier3.options || []).forEach(option => {
+            const expected = `group("${slug}Tier4Spells") >= 4`;
+            if (!hasGeneratedPrerequisite(option, expected)) {
+                pushIssue(errors, file, `${option.id} must include ${expected}.`);
+            }
+        });
+        (tier2.options || []).forEach(option => {
+            const expected = `group("${slug}Tier3Spells") >= 3`;
+            if (!hasGeneratedPrerequisite(option, expected)) {
+                pushIssue(errors, file, `${option.id} must include ${expected}.`);
+            }
+        });
+        (tier1.options || []).forEach(option => {
+            const expected = `group("${slug}Tier2Spells") >= 2`;
+            if (!hasGeneratedPrerequisite(option, expected)) {
+                pushIssue(errors, file, `${option.id} must include ${expected}.`);
+            }
+            const conflicts = new Set(normalizeIdList(option.conflictsWith));
+            if (!conflicts.has("spellsPointsMotherSPath")) {
+                pushIssue(errors, file, `${option.id} must conflict with Mother's Path.`);
+            }
+            allTier1Ids.forEach(otherId => {
+                if (otherId !== option.id && !conflicts.has(otherId)) {
+                    pushIssue(errors, file, `${option.id} must conflict with Tier 1 spell "${otherId}".`);
+                }
+            });
+        });
+    });
+
+    const pointsSubcategory = (spells.subcategories || []).find(subcat => subcat?.name === "Points");
+    const motherPath = (pointsSubcategory?.options || []).find(option => option?.id === "spellsPointsMotherSPath");
+    if (!motherPath) {
+        pushIssue(errors, file, "Necromancer Spells > Points is missing Mother's Path.");
+        return;
+    }
+    const motherConflicts = new Set(normalizeIdList(motherPath.conflictsWith));
+    allTier1Ids.forEach(optionId => {
+        if (!motherConflicts.has(optionId)) {
+            pushIssue(errors, file, `Mother's Path must conflict with Tier 1 spell "${optionId}".`);
+        }
+    });
+}
+
 function validateCyoaData(file, data) {
     const errors = [];
     const warnings = [];
@@ -1047,6 +1142,8 @@ function validateCyoaData(file, data) {
             pushIssue(errors, file, `${context}.maxSelections must be at least 1.`);
         }
     });
+
+    validateNecromancerSpellRules(file, data, errors);
 
     return { errors, warnings };
 }

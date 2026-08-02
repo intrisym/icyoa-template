@@ -60,7 +60,7 @@ Current functional coverage includes:
 - Subcategory `requiresOption` gates, including inherited gates for nested options.
 - Subcategory `discountFirstN` with `discountAmount`.
 - Subcategory and category manual discount slots with eligibility ceilings and option-level opt-outs.
-- Subcategory default `costOptions`.
+- Subcategory default `costOptions`, inherited by nested options from the nearest ancestor subcategory.
 - Subcategory `columnsPerRow` metadata.
 - Option-level and subcategory-level freeform text input persistence and import sanitization.
 - Absolute option-level modified costs.

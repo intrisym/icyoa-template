@@ -3,6 +3,7 @@ const path = require("path");
 const assert = require("assert");
 const { evaluatePrereqExpr } = require("../logicExpr");
 const { validateCyoaData } = require("./validate-cyoas");
+const { applyNecromancerSpellRules } = require("../server");
 
 const ROOT = path.join(__dirname, "..");
 const PLAYER_SCRIPT_SOURCE = fs.readFileSync(path.join(ROOT, "script.js"), "utf8");
@@ -290,6 +291,18 @@ function parsePrerequisiteExpression(expression = "") {
                     throw new Error("Group prerequisites must use a quoted group ID");
                 }
                 consume(")");
+                const operatorToken = peek();
+                if ([">=", "<=", ">", "<", "==", "="].includes(operatorToken)) {
+                    const operator = consume();
+                    const valueToken = consume();
+                    if (!/^-?\d+(?:\.\d+)?$/.test(valueToken || "")) throw new Error("Invalid group prerequisite value");
+                    return {
+                        type: "group",
+                        id: unquotePrerequisitePointName(nameToken),
+                        operator,
+                        value: Number(valueToken)
+                    };
+                }
                 return {
                     type: "group",
                     id: unquotePrerequisitePointName(nameToken)
@@ -352,7 +365,15 @@ function evaluatePrerequisiteNode(node, meetsRequirement, getPointValue = () => 
         return actual === node.value;
     }
     if (node.type === "scope") return !!scopeLookup(node.scopeType, node.name);
-    if (node.type === "group") return Number(groupLookup(node.id) || 0) > 0;
+    if (node.type === "group") {
+        const actual = Number(groupLookup(node.id) || 0);
+        if (node.operator === ">=") return actual >= node.value;
+        if (node.operator === ">") return actual > node.value;
+        if (node.operator === "<=") return actual <= node.value;
+        if (node.operator === "<") return actual < node.value;
+        if (node.operator === "==" || node.operator === "=") return actual === node.value;
+        return actual > 0;
+    }
     if (node.type === "not") return !evaluatePrerequisiteNode(node.child, meetsRequirement, getPointValue, scopeLookup, groupLookup);
     if (node.type === "and") return node.children.every(child => evaluatePrerequisiteNode(child, meetsRequirement, getPointValue, scopeLookup, groupLookup));
     if (node.type === "or") return node.children.some(child => evaluatePrerequisiteNode(child, meetsRequirement, getPointValue, scopeLookup, groupLookup));
@@ -570,7 +591,8 @@ class CyoaEngine {
                 values: { Points: 10, Tokens: 0, Skills: 0, Equipment: 0, "Rare Prize": 0, "Rare B": 0 },
                 allowNegative: ["Debt"],
                 optionGroups: [
-                    { id: "starterChoices", label: "Starter Choices", optionIds: ["preA", "preB"] }
+                    { id: "starterChoices", label: "Starter Choices", optionIds: ["preA", "preB"] },
+                    { id: "twoStarterChoices", label: "Two Starter Choices", optionIds: ["preA", "preB"] }
                 ]
             },
             {
@@ -741,6 +763,7 @@ class CyoaEngine {
                             { id: "gearGearExoSuit2", label: "Exo Suit 2", cost: {}, prerequisites: "gearGearExoSuit1 && (powersScienceAlienTech || questsQuestsTheyCameFromBeyond)" },
                             { id: "requiresComplexOrGroups", label: "Requires Complex OR Groups", cost: {}, prerequisites: "(preA || preB) && (multi__2 || oneWayA) && !drawbacksDrawbacksDumb" },
                             { id: "requiresOptionGroup", label: "Requires Option Group", cost: {}, prerequisites: "group(\"starterChoices\")" },
+                            { id: "requiresOptionGroupCount", label: "Requires Option Group Count", cost: {}, prerequisites: "group(\"twoStarterChoices\") >= 2" },
                             { id: "oneWayA", label: "One-Way A", cost: {}, conflictsWith: ["oneWayB"] },
                             { id: "oneWayB", label: "One-Way B", cost: {} },
                             { id: "youAgeYoungAdult", label: "Young Adult", cost: {} },
@@ -1204,17 +1227,34 @@ class CyoaEngine {
         }, {});
     }
 
+    inheritedCostSubcategory(info = {}) {
+        const subcatPath = Array.isArray(info.subcatPath) && info.subcatPath.length
+            ? info.subcatPath
+            : (info.subcat ? [info.subcat] : []);
+        for (let index = subcatPath.length - 1; index >= 0; index -= 1) {
+            const subcat = subcatPath[index];
+            if (Array.isArray(subcat?.costOptions) && subcat.costOptions.length > 0) return subcat;
+        }
+        return null;
+    }
+
+    inheritedCostOptions(info = {}) {
+        const subcat = this.inheritedCostSubcategory(info);
+        return Array.isArray(subcat?.costOptions) ? subcat.costOptions : [];
+    }
+
     getMergedDefaultCostForOption(option, selectionNumber = null) {
         const info = option?.id ? this.findSubcategoryInfo(option.id) : {};
-        const subcategoryOptions = Array.isArray(info.subcat?.costOptions) ? info.subcat.costOptions : [];
-        if (info.subcat?.mergeDefaultCostOptions !== true || !subcategoryOptions.length) return {};
+        const inheritedSubcat = this.inheritedCostSubcategory(info);
+        const subcategoryOptions = Array.isArray(inheritedSubcat?.costOptions) ? inheritedSubcat.costOptions : [];
+        if (inheritedSubcat?.mergeDefaultCostOptions !== true || !subcategoryOptions.length) return {};
         return this.getMergedDefaultCostForSelection(subcategoryOptions, selectionNumber || this.getNextSelectionNumber(option));
     }
 
     configuredCostOptions(option) {
         const info = option?.id ? this.findSubcategoryInfo(option.id) : {};
         const ownOptions = Array.isArray(option?.costOptions) ? option.costOptions : [];
-        const subcategoryOptions = Array.isArray(info.subcat?.costOptions) ? info.subcat.costOptions : [];
+        const subcategoryOptions = this.inheritedCostOptions(info);
         const hasDirectOptionCost = option?.cost && typeof option.cost === "object" && Object.keys(option.cost).length > 0;
         const hasOwnCostOptions = this.costOptionsHaveMeaningfulCost(ownOptions);
         return hasOwnCostOptions ? ownOptions : (hasDirectOptionCost ? [] : subcategoryOptions);
@@ -1247,9 +1287,10 @@ class CyoaEngine {
         const effectiveSelectionNumber = selectionNumber || this.getNextSelectionNumber(option);
         const info = option?.id ? this.findSubcategoryInfo(option.id) : {};
         const ownOptions = Array.isArray(option?.costOptions) ? option.costOptions : [];
-        const subcategoryOptions = Array.isArray(info.subcat?.costOptions) ? info.subcat.costOptions : [];
+        const inheritedSubcat = this.inheritedCostSubcategory(info);
+        const subcategoryOptions = Array.isArray(inheritedSubcat?.costOptions) ? inheritedSubcat.costOptions : [];
         const shouldMergeDefaults = this.costOptionsHaveMeaningfulCost(ownOptions)
-            && info.subcat?.mergeDefaultCostOptions === true
+            && inheritedSubcat?.mergeDefaultCostOptions === true
             && subcategoryOptions.length > 0;
         const defaultCost = shouldMergeDefaults
             ? this.getMergedDefaultCostForSelection(subcategoryOptions, effectiveSelectionNumber)
@@ -1980,7 +2021,7 @@ class CyoaEngine {
             const info = option?.id ? this.findSubcategoryInfo(option.id) : {};
             const hasDirectOptionCost = option?.cost && typeof option.cost === "object" && Object.keys(option.cost).length > 0;
             const hasConfiguredCostOptions = (Array.isArray(option?.costOptions) && option.costOptions.length > 0)
-                || (!hasDirectOptionCost && Array.isArray(info.subcat?.costOptions) && info.subcat.costOptions.length > 0);
+                || (!hasDirectOptionCost && this.inheritedCostOptions(info).length > 0);
             if (hasConfiguredCostOptions) return [];
             return [{ index: null, label: "Cost", cost: this.effectiveCost(option, options) }];
         }
@@ -2213,7 +2254,7 @@ class CyoaEngine {
         const info = this.findSubcategoryInfo(option.id);
         const hasDirectOptionCost = option?.cost && typeof option.cost === "object" && Object.keys(option.cost).length > 0;
         const hasConfiguredCostOptions = (Array.isArray(option.costOptions) && option.costOptions.length > 0)
-            || (!hasDirectOptionCost && Array.isArray(info.subcat?.costOptions) && info.subcat.costOptions.length > 0);
+            || (!hasDirectOptionCost && this.inheritedCostOptions(info).length > 0);
         const selectedChoice = costOptionIndex === null || costOptionIndex === undefined
             ? choices[0]
             : choices.find(choice => choice.index === Number(costOptionIndex));
@@ -2450,8 +2491,21 @@ class CyoaEngine {
         const groupLine = (node, negated = false, inheritedSatisfiedOr = false) => {
             const group = this.optionGroups.find(group => group.id === node.id || group.label === node.id);
             if (!group) return "";
-            const groupSatisfied = this.optionGroupSelectionCount(node.id) > 0;
+            const actual = this.optionGroupSelectionCount(node.id);
+            const groupSatisfied = node.operator
+                ? evaluatePrerequisiteNode(
+                    node,
+                    id => this.meetsCountRequirement(id),
+                    pointType => this.pointRequirementValue(pointType),
+                    (scopeType, scopeName) => this.scopeRequirementMet(scopeType, scopeName),
+                    groupId => this.optionGroupSelectionCount(groupId)
+                )
+                : actual > 0;
             const satisfied = inheritedSatisfiedOr || (negated ? !groupSatisfied : groupSatisfied);
+            if (node.operator) {
+                const operator = node.operator === "==" ? "=" : node.operator;
+                return `${satisfied ? "✅" : "❌"} ${negated ? "NOT " : ""}${group.label} ${operator} ${node.value} (${actual}/${node.value})`;
+            }
             return group.optionIds.map(optionId => {
                 if (!this.optionMap.has(optionId)) return "";
                 const optionSelected = this.meetsCountRequirement(optionId);
@@ -4017,6 +4071,93 @@ test("subcategory cost options should be inherited unless an option defines its 
     assert.strictEqual(engine.points.Tokens, 0);
 });
 
+test("nested subcategories should inherit nearest ancestor cost options", () => {
+    const data = [
+        { type: "title", text: "Nested Inherited Costs" },
+        { type: "points", values: { MP: 10, Tokens: 10 } },
+        {
+            name: "Spells",
+            subcategories: [
+                {
+                    name: "Liber Mortis",
+                    costOptions: [{ cost: { MP: 1 } }],
+                    subcategories: [
+                        {
+                            name: "Tier 4",
+                            options: [
+                                { id: "createUndead", label: "Create Undead" }
+                            ]
+                        },
+                        {
+                            name: "Tier 3",
+                            costOptions: [{ cost: { Tokens: 2 } }],
+                            subcategories: [
+                                {
+                                    name: "Specialized",
+                                    options: [
+                                        { id: "rayOfEnfeeblement", label: "Ray of Enfeeblement" }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ];
+    const engine = new CyoaEngine(data, "nested-inherited-costs.json");
+    assert.deepStrictEqual(engine.effectiveCost("createUndead"), { MP: 1 });
+    assert.deepStrictEqual(engine.effectiveCost("rayOfEnfeeblement"), { Tokens: 2 });
+    engine.select("createUndead");
+    assert.strictEqual(engine.points.MP, 9);
+    engine.select("rayOfEnfeeblement");
+    assert.strictEqual(engine.points.Tokens, 8);
+    assert(
+        PLAYER_SCRIPT_SOURCE.includes("subcatPath: path") &&
+            PLAYER_SCRIPT_SOURCE.includes("entry?.subcat || entry"),
+        "player script should expose the full subcategory path and normalize browser path entries for inherited costs"
+    );
+});
+
+test("server saves should preserve generated Necromancer spell rules", () => {
+    const data = JSON.parse(fs.readFileSync(path.join(ROOT, "CYOAs", "necromancer.json"), "utf8"));
+    const stalePayload = JSON.parse(JSON.stringify(data));
+    const points = stalePayload.find(entry => entry.type === "points");
+    const spells = stalePayload.find(entry => entry.name === "Spells");
+    points.optionGroups = [];
+    spells.subcategories.forEach(school => {
+        if (school.name === "Points") {
+            school.options.forEach(option => {
+                if (option.id === "spellsPointsMotherSPath") option.conflictsWith = ["spellsPointsNormalPath"];
+            });
+            return;
+        }
+        (school.subcategories || []).forEach(tier => {
+            (tier.options || []).forEach(option => {
+                option.conflictsWith = option.id === "spellsLiberMortisTier1Lichdom"
+                    ? ["spellsPointsMotherSPath"]
+                    : undefined;
+                if (option.id === "spellsLiberMortisTier1Lichdom") option.prerequisites = "itemsItemsPhylactery";
+                else delete option.prerequisites;
+            });
+        });
+    });
+
+    const normalized = applyNecromancerSpellRules(stalePayload, "necromancer.json");
+    const normalizedPoints = normalized.find(entry => entry.type === "points");
+    const normalizedSpells = normalized.find(entry => entry.name === "Spells");
+    const liberMortis = normalizedSpells.subcategories.find(school => school.name === "Liber Mortis");
+    const tier3 = liberMortis.subcategories.find(tier => tier.name === "Tier 3");
+    const lichdom = liberMortis.subcategories.find(tier => tier.name === "Tier 1").options.find(option => option.id === "spellsLiberMortisTier1Lichdom");
+    const motherPath = normalizedSpells.subcategories.find(school => school.name === "Points").options.find(option => option.id === "spellsPointsMotherSPath");
+
+    assert.strictEqual(normalizedPoints.optionGroups.length, 20);
+    assert.strictEqual(tier3.options[0].prerequisites, 'group("liberMortisTier4Spells") >= 4');
+    assert.strictEqual(lichdom.prerequisites, '(itemsItemsPhylactery) && (group("liberMortisTier2Spells") >= 2)');
+    assert.strictEqual(lichdom.conflictsWith.length, 13);
+    assert.strictEqual(motherPath.conflictsWith.length, 14);
+});
+
 test("point allocations should split a fixed grant across configured point types", () => {
     const engine = CyoaEngine.synthetic();
     assert.deepStrictEqual(engine.getPointAllocationValues("allocatedTeamGrant"), { Skills: 6, Equipment: 0 });
@@ -4718,10 +4859,18 @@ test("option group prerequisites should unlock from grouped options and render m
 
     assert.strictEqual(engine.canSelect("requiresOptionGroup"), false);
     assert.deepStrictEqual(engine.displayRequirementLines("requiresOptionGroup"), ["❌ Pre A OR ❌ Pre B"]);
+    assert.strictEqual(engine.canSelect("requiresOptionGroupCount"), false);
+    assert.deepStrictEqual(engine.displayRequirementLines("requiresOptionGroupCount"), ["❌ Two Starter Choices >= 2 (0/2)"]);
 
     engine.select("preB");
     assert.strictEqual(engine.canSelect("requiresOptionGroup"), true);
     assert.deepStrictEqual(engine.displayRequirementLines("requiresOptionGroup"), ["✅ Pre A OR ✅ Pre B"]);
+    assert.strictEqual(engine.canSelect("requiresOptionGroupCount"), false);
+    assert.deepStrictEqual(engine.displayRequirementLines("requiresOptionGroupCount"), ["❌ Two Starter Choices >= 2 (1/2)"]);
+
+    engine.select("preA");
+    assert.strictEqual(engine.canSelect("requiresOptionGroupCount"), true);
+    assert.deepStrictEqual(engine.displayRequirementLines("requiresOptionGroupCount"), ["✅ Two Starter Choices >= 2 (2/2)"]);
 
     assert(
         PLAYER_SCRIPT_SOURCE.includes("optionGroupSelectionCount") &&

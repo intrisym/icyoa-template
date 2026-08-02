@@ -32,11 +32,17 @@ function evaluatePrereqExpr(expr, lookupFn, pointLookupFn = () => 0, scopeLookup
     const pointNamePattern = String.raw`(?:"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|[a-zA-Z_][a-zA-Z0-9_]*)`;
     const quotedNamePattern = String.raw`("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')`;
     const scopePattern = new RegExp(`\\b(category|subcategory)\\s*\\(\\s*${quotedNamePattern}\\s*\\)`, "g");
+    const groupComparisonPattern = new RegExp(`\\bgroup\\s*\\(\\s*${quotedNamePattern}\\s*\\)\\s*(>=|<=|>|<|==|=)\\s*(-?\\d+(?:\\.\\d+)?)`, "g");
     const groupPattern = new RegExp(`\\bgroup\\s*\\(\\s*${quotedNamePattern}\\s*\\)`, "g");
     const comparisonPattern = new RegExp(`(${pointNamePattern})\\s*(>=|<=|>|<|==|=)\\s*(-?\\d+(?:\\.\\d+)?)`, "g");
     const shorthandPattern = new RegExp(`(${pointNamePattern})\\s+(-?\\d+(?:\\.\\d+)?)\\+`, "g");
 
-    const withGroupPredicates = expr.replace(groupPattern, (_, rawName) => {
+    const withGroupComparisons = expr.replace(groupComparisonPattern, (_, rawName, operator, rawValue) => {
+        const result = comparePointValue(groupLookupFn(unquotePointName(rawName)), operator, rawValue);
+        return result ? "true" : "false";
+    });
+
+    const withGroupPredicates = withGroupComparisons.replace(groupPattern, (_, rawName) => {
         const result = Number(groupLookupFn(unquotePointName(rawName)) || 0) > 0;
         return result ? "true" : "false";
     });
