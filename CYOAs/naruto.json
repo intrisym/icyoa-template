@@ -654,7 +654,7 @@
             ]
           },
           {
-            "id": "perksAbilitiesGeneralPerksAbilitiesAdditionalNatureAffinityYin",
+            "id": "perksAbilitiesGeneralPerksAbilitiesNatureAffinityYin",
             "label": "Nature Affinity: Yin",
             "description": "Pay 50 CP to gain Yin Release as a chakra nature affinity. Yin cannot be selected as your free basic nature affinity.",
             "image": "https://static.wikia.nocookie.net/naruto/images/6/66/Rikudo_Yin.png/",
@@ -667,7 +667,7 @@
             ]
           },
           {
-            "id": "perksAbilitiesGeneralPerksAbilitiesAdditionalNatureAffinityYang",
+            "id": "perksAbilitiesGeneralPerksAbilitiesNatureAffinityYang",
             "label": "Nature Affinity: Yang",
             "description": "Pay 50 CP to gain Yang Release as a chakra nature affinity. Yang cannot be selected as your free basic nature affinity.",
             "image": "https://static.wikia.nocookie.net/naruto/images/b/b9/Rikudo_Yang.png/",
@@ -1657,7 +1657,6 @@
             "id": "kekkeiGenkaiKekkeiGenkaiPerksExchangeConvertCpToBlp",
             "label": "Convert CP to BLP",
             "description": "Exchange CP for BLP at a 1:2 ratio to fund additional bloodline purchases.",
-            "maxSelections": 20,
             "image": "https://static.wikia.nocookie.net/naruto/images/9/9d/Hanabi%27s_Byakugan.png",
             "costOptions": [
               {
@@ -1666,7 +1665,8 @@
                   "BLP": -100
                 }
               }
-            ]
+            ],
+            "maxSelections": 40
           }
         ],
         "columnsPerRow": 2,
