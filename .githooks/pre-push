@@ -1,0 +1,5 @@
+#!/bin/sh
+set -u
+
+repo_root=$(git rev-parse --show-toplevel) || exit 1
+exec sh "$repo_root/scripts/check.sh"

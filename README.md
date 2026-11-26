@@ -35,14 +35,40 @@ An open-source **Interactive Choose Your Own Adventure (ICYOA)** template. Build
 Run the full pre-push verification suite before publishing changes:
 
 ```bash
-npm test
+sh scripts/check.sh
 ```
 
-The same verification suite is also configured in GitHub Actions under [`.github/workflows/ci.yml`](https://github.com/intrisym/icyoa-template/blob/main/.github/workflows/ci.yml), so pushes to `main` / `master` and pull requests will run the repository checks automatically.
+The script works from any working directory when invoked using its path, requires Node.js 22 or newer and npm, and does not change CYOA files. CYOA validation runs first. Each error identifies the file, option label/ID, field, and problem, and the errors repeat at the end so they remain visible after other checks finish. Passing suites produce compact `PASS` lines; failed suites print their details. It runs every check and exits nonzero if any check fails. Drafts are checked too. `npm test` also runs the verification suite, stopping at the first failed command.
+
+GitHub Actions runs the same shell script in `.github/workflows/ci.yml` on pull requests targeting `main` / `master`, pushes to those branches, merge-queue checks, and manual runs.
+
+In Actions, CYOA errors also appear as file-associated error annotations and in an **Errors to fix** table on the workflow run's job summary, with columns for file, option, field, and problem. Passing-suite logs are grouped so their details can be expanded without burying the failures.
+
+### Blocking Invalid Changes Before Main
+
+GitHub Actions runs after code reaches GitHub. To block invalid changes from merging into `main`, configure a branch protection rule or ruleset in the repository settings:
+
+1. Target `main` and require a pull request before merging.
+2. Require the **Verify** status check from the **CI** workflow to pass.
+3. Require the branch to be up to date, and restrict bypasses if administrators should also be subject to the checks.
+
+These GitHub settings are not enabled by adding a workflow file. See [GitHub's protected branch documentation](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches).
+
+Local pre-push validation runs before every push, including feature branches and tags. The hook in `.githooks/pre-push` runs the full check automatically and stops the push on failure. Configure it once in each clone with:
+
+```bash
+git config --local core.hooksPath .githooks
+```
+
+If you already use a custom hooks path, integrate the hook into that setup instead of replacing it. The hook checks the current working copy once per push, regardless of the destination branch or number of refs being pushed. Commit the content you validated before pushing. Git does not share local configuration with new clones, so each clone needs this setup. Local hooks can be bypassed; required GitHub checks provide enforcement for all contributors.
+
+### Validation Coverage
 
 This runs JavaScript syntax checks, validates every existing `CYOAs/*.json` file as a regression fixture, and runs functional scenario tests against a self-contained synthetic CYOA fixture. The functional tests simulate selecting and removing options, gaining and spending points, subcategory max-selection replacement, max-selection bypass options, prerequisite unlocks, conditional pricing priority, absolute modified costs, relative modified costs, discount slots, and min/max cost clamps.
 
 The CYOA validator checks that files parse, required core entries exist, option IDs are unique, referenced IDs exist, point maps are valid, prerequisite expressions are safe, modified-cost rules are coherent, and theme settings use supported values.
+
+This includes nested prerequisite objects and arrays, malformed incompatibility inputs, references to removed or renamed IDs, unknown currencies/groups/scopes, malformed node structures, and invalid selection limits. These checks validate supported structure and rules; they do not prove gameplay balance or that every possible build is reachable.
 
 Current functional coverage includes:
 
@@ -85,6 +111,7 @@ Useful focused commands:
 npm run check:js
 npm run test:cyoas
 npm run test:functional
+npm run test:versions
 npm run verify
 ```
 
@@ -115,7 +142,22 @@ The Visual Editor lets you build and manage your CYOAs without touching code.
    - Add **Options** inside categories. Give them names, descriptions, and costs.
    - Set **Starting Points** (e.g., "100 Gold").
    - Use the theme controls to customize colors, fonts, light/dark mode values, and whether players can switch modes.
-5. The file will automatically be saved to the `CYOAs` directory. You may modify or delete it directly if you prefer.
+5. Edits automatically save to the selected file in `CYOAs`. New CYOAs start as drafts and appear in the player selector after publication.
+
+#### Drafts and Published Versions
+
+- Select an existing CYOA and click **Create Draft From This Version**. For an unversioned CYOA, this first preserves the original file as published **v0.1**, keeping its existing player URL, then opens a separate editable draft.
+- Changes autosave only to the draft. Published versions are read-only in the editor and cannot be overwritten or moved to trash through the API.
+- Click **Publish Version** when ready. The dialog suggests the next version, which you can edit: releases `1`, `1.1`, and `1.2` suggest `1.3`; you can instead enter `1.2.1` or `2.0`. The first release of a new CYOA defaults to `0.1`.
+- Add optional release notes and confirm. Publication validates the CYOA and creates a separate release file, leaving existing releases and the working draft intact. Equivalent existing numbers such as `1` and `1.0` cannot be reused.
+- Players see one entry per CYOA, with the newest release selected by default and older versions available in its version picker. Drafts are omitted from the player list but remain previewable by direct link; they are not private files.
+- **Choose Version** in the editor switches between the current CYOA's drafts and published releases, including when opened from the live preview. In the player, **Choose Version** sits beside the other action buttons and lists only published releases of the current CYOA. **Select CYOA** in the editor still opens the full adventure list.
+- Each release has a permanent link such as `index.html?cyoa=adventure_v1_2.json`. The **Latest release** link uses the series identifier, for example `index.html?latest=adventure.json`, and opens whichever published version has the highest version number.
+- Exported player builds record their exact CYOA filename. Importing into a different version is rejected; open the matching version first. Older exports without a filename ask for confirmation.
+- Creating a draft and opening a CYOA preserve existing option IDs. When you rename a category, subcategory, or option label, leaving the name field regenerates affected option IDs and updates prerequisites, conflicts, grants, groups, and selected-option formulas within that CYOA. Nested option paths and category/subcategory scope predicates update too. Published releases remain read-only.
+- Run `node generate-manifest.js` before deploying to static hosting. The manifest includes published releases and existing unversioned CYOAs, and excludes drafts. Publishing locally does not deploy changes to your hosted site.
+
+Existing unversioned CYOAs stay editable until you create their first draft. Published protection applies to the editor and API; direct filesystem or Git edits can still change files.
 
 ### 3. Logic & Requirements
 Want one choice to depend on another?

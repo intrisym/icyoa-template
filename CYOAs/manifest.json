@@ -1,38 +1,134 @@
 [
   {
     "filename": "blue_lock___wild_card_project.json",
-    "title": "Blue Lock - Wild Card Project"
+    "title": "Blue Lock - Wild Card Project",
+    "seriesId": "blue_lock___wild_card_project.json",
+    "status": "published",
+    "version": "1.0",
+    "sourceFile": null,
+    "baseVersion": null,
+    "targetVersion": null,
+    "releaseNotes": ""
   },
   {
     "filename": "hunter_x_hunter_v2.json",
-    "title": "Hunter x Hunter"
+    "title": "Hunter x Hunter",
+    "seriesId": "hunter_x_hunter_v2.json",
+    "status": "legacy",
+    "version": null,
+    "sourceFile": null,
+    "baseVersion": null,
+    "targetVersion": null,
+    "releaseNotes": ""
   },
   {
     "filename": "lantern_corps_recruit.json",
-    "title": "Lantern Corps Recruit"
+    "title": "Lantern Corps Recruit",
+    "seriesId": "lantern_corps_recruit.json",
+    "status": "legacy",
+    "version": null,
+    "sourceFile": null,
+    "baseVersion": null,
+    "targetVersion": null,
+    "releaseNotes": ""
   },
   {
     "filename": "marvel.json",
-    "title": "Marvel"
+    "title": "Marvel",
+    "seriesId": "marvel.json",
+    "status": "legacy",
+    "version": null,
+    "sourceFile": null,
+    "baseVersion": null,
+    "targetVersion": null,
+    "releaseNotes": ""
   },
   {
     "filename": "naruto.json",
-    "title": "Naruto Jumpchain CYOA"
+    "title": "Naruto Jumpchain CYOA",
+    "seriesId": "naruto.json",
+    "status": "legacy",
+    "version": null,
+    "sourceFile": null,
+    "baseVersion": null,
+    "targetVersion": null,
+    "releaseNotes": ""
+  },
+  {
+    "filename": "necromancer.json",
+    "title": "Necromancer",
+    "seriesId": "necromancer.json",
+    "status": "legacy",
+    "version": null,
+    "sourceFile": null,
+    "baseVersion": null,
+    "targetVersion": null,
+    "releaseNotes": ""
+  },
+  {
+    "filename": "overlord_cyoa.json",
+    "title": "Overlord CYOA",
+    "seriesId": "overlord_cyoa.json",
+    "status": "legacy",
+    "version": null,
+    "sourceFile": null,
+    "baseVersion": null,
+    "targetVersion": null,
+    "releaseNotes": ""
+  },
+  {
+    "filename": "path_of_a_super.json",
+    "title": "Path of a Super",
+    "seriesId": "path_of_a_super.json",
+    "status": "legacy",
+    "version": null,
+    "sourceFile": null,
+    "baseVersion": null,
+    "targetVersion": null,
+    "releaseNotes": ""
   },
   {
     "filename": "superheroAmalgam.json",
-    "title": "Becoming a Superhero"
+    "title": "Becoming a Superhero",
+    "seriesId": "superheroAmalgam.json",
+    "status": "legacy",
+    "version": null,
+    "sourceFile": null,
+    "baseVersion": null,
+    "targetVersion": null,
+    "releaseNotes": ""
   },
   {
     "filename": "superpowered_world.json",
-    "title": "Superpowered World"
+    "title": "Superpowered World",
+    "seriesId": "superpowered_world.json",
+    "status": "legacy",
+    "version": null,
+    "sourceFile": null,
+    "baseVersion": null,
+    "targetVersion": null,
+    "releaseNotes": ""
   },
   {
     "filename": "the_boys.json",
-    "title": "The Boys"
+    "title": "The Boys",
+    "seriesId": "the_boys.json",
+    "status": "legacy",
+    "version": null,
+    "sourceFile": null,
+    "baseVersion": null,
+    "targetVersion": null,
+    "releaseNotes": ""
   },
   {
     "filename": "the_flash_cyoa.json",
-    "title": "The Flash CYOA"
+    "title": "The Flash CYOA",
+    "seriesId": "the_flash_cyoa.json",
+    "status": "legacy",
+    "version": null,
+    "sourceFile": null,
+    "baseVersion": null,
+    "targetVersion": null,
+    "releaseNotes": ""
   }
 ]

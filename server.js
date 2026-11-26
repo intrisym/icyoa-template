@@ -3,12 +3,14 @@ const fs = require("fs");
 const fsp = require("fs/promises");
 const path = require("path");
 const url = require("url");
+const { createVersionStore } = require("./cyoaVersions");
+const { metadata } = require("./versioning");
 
 const ROOT = __dirname;
 const CYOAS_DIR = path.join(ROOT, "CYOAs");
+const versionStore = createVersionStore(CYOAS_DIR);
 const PORT = Number(process.env.PORT) || 3000;
 const MAX_BODY_SIZE = 10 * 1024 * 1024; // Increased to 10MB for larger CYOAs
-const TRASH_DIR = path.join(CYOAS_DIR, ".trash");
 
 const MIME_TYPES = {
     ".html": "text/html; charset=utf-8",
@@ -59,27 +61,10 @@ function readRequestBody(req) {
     });
 }
 
-async function getCyoaTitle(filename) {
+async function handleGetCyoas(req, res) {
     try {
-        const filePath = path.join(CYOAS_DIR, filename);
-        const content = await fsp.readFile(filePath, "utf8");
-        const data = JSON.parse(content);
-        const titleEntry = data.find(e => e.type === "title");
-        return titleEntry ? titleEntry.text : filename;
-    } catch (err) {
-        console.error(`Error reading title from ${filename}:`, err);
-        return filename;
-    }
-}
-
-async function handleGetCyoas(res) {
-    try {
-        const files = await fsp.readdir(CYOAS_DIR);
-        const jsonFiles = files.filter(f => f.endsWith(".json") && f !== "manifest.json");
-        const cyoas = await Promise.all(jsonFiles.map(async (f) => {
-            const title = await getCyoaTitle(f);
-            return { filename: f, title };
-        }));
+        const includeDrafts = url.parse(req.url, true).query.editor === "1";
+        const cyoas = await versionStore.list(includeDrafts);
         sendJson(res, 200, cyoas);
     } catch (err) {
         sendJson(res, 500, { ok: false, error: err.message });
@@ -258,13 +243,17 @@ async function handlePutConfig(req, res) {
             });
             return;
         }
-        const normalized = applyNecromancerSpellRules(parsed, fileName);
-        await fsp.writeFile(filePath, JSON.stringify(normalized, null, 2), "utf8");
+        const existing = await versionStore.read(fileName).catch(error => {
+            if (error.status === 404) return null;
+            throw error;
+        });
+        const normalized = applyNecromancerSpellRules(parsed, metadata(existing || [])?.seriesId || fileName);
+        await versionStore.save(fileName, normalized);
         sendJson(res, 200, {
             ok: true
         });
     } catch (err) {
-        const status = err instanceof SyntaxError ? 400 : 500;
+        const status = err.status || (err instanceof SyntaxError ? 400 : 500);
         sendJson(res, status, {
             ok: false,
             error: err.message || String(err)
@@ -277,17 +266,9 @@ async function handleCreateCyoa(req, res) {
     try {
         const raw = await readRequestBody(req);
         const { filename, title } = JSON.parse(raw);
-        if (!filename || !filename.endsWith(".json")) {
+        if (typeof filename !== "string" || !filename.endsWith(".json")) {
             return sendJson(res, 400, { ok: false, error: "Invalid filename" });
         }
-        const filePath = path.join(CYOAS_DIR, filename);
-
-        // Check if file already exists
-        try {
-            await fsp.access(filePath);
-            return sendJson(res, 400, { ok: false, error: "File already exists" });
-        } catch { }
-
         const template = [
             { "type": "title", "text": title || "New CYOA" },
             { "type": "description", "text": "A new adventure begins." },
@@ -296,10 +277,10 @@ async function handleCreateCyoa(req, res) {
             { "type": "backpack", "enabled": true }
         ];
 
-        await fsp.writeFile(filePath, JSON.stringify(template, null, 2), "utf8");
+        await versionStore.create(filename, template);
         sendJson(res, 201, { ok: true, filename });
     } catch (err) {
-        sendJson(res, 500, { ok: false, error: err.message });
+        sendJson(res, err.status || 500, { ok: false, error: err.message });
     }
 }
 
@@ -313,19 +294,23 @@ async function handleDeleteCyoa(req, res) {
             return sendJson(res, 400, { ok: false, error: "Invalid file parameter." });
         }
 
-        // Ensure trash directory exists
-        try {
-            await fsp.access(TRASH_DIR);
-        } catch {
-            await fsp.mkdir(TRASH_DIR, { recursive: true });
-        }
-
-        const trashPath = path.join(TRASH_DIR, `${Date.now()}-${fileName}`);
-        await fsp.rename(filePath, trashPath);
+        await versionStore.remove(fileName);
 
         sendJson(res, 200, { ok: true, trashed: true });
     } catch (err) {
-        sendJson(res, 500, { ok: false, error: err.message });
+        sendJson(res, err.status || 500, { ok: false, error: err.message });
+    }
+}
+
+async function handleVersionAction(req, res, action) {
+    try {
+        const body = JSON.parse(await readRequestBody(req));
+        const result = action === "draft"
+            ? await versionStore.createDraft(body.file)
+            : await versionStore.publish(body.file, body.version, body.releaseNotes);
+        sendJson(res, 201, { ok: true, ...result });
+    } catch (error) {
+        sendJson(res, error.status || (error instanceof SyntaxError ? 400 : 500), { ok: false, error: error.message });
     }
 }
 
@@ -382,7 +367,22 @@ const server = http.createServer(async (req, res) => {
     const pathname = parsedUrl.pathname || "/";
 
     if (req.method === "GET" && pathname === "/api/cyoas") {
-        await handleGetCyoas(res);
+        await handleGetCyoas(req, res);
+        return;
+    }
+
+    if (req.method === "GET" && pathname === "/api/cyoas/next-version") {
+        try {
+            const file = url.parse(req.url, true).query.file;
+            sendJson(res, 200, { version: await versionStore.suggestedVersion(file) });
+        } catch (error) {
+            sendJson(res, error.status || 500, { ok: false, error: error.message });
+        }
+        return;
+    }
+
+    if (req.method === "POST" && (pathname === "/api/cyoas/draft" || pathname === "/api/cyoas/publish")) {
+        await handleVersionAction(req, res, pathname.endsWith("/draft") ? "draft" : "publish");
         return;
     }
 

@@ -1,42 +1,20 @@
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs/promises");
+const path = require("path");
+const { createVersionStore } = require("./cyoaVersions");
 
-const CYOAS_DIR = path.join(__dirname, 'CYOAs');
-const MANIFEST_FILE = path.join(CYOAS_DIR, 'manifest.json');
-
-async function getCyoaTitle(filename) {
-    try {
-        const filePath = path.join(CYOAS_DIR, filename);
-        const content = fs.readFileSync(filePath, 'utf8');
-        const data = JSON.parse(content);
-        const titleEntry = data.find(e => e.type === "title");
-        return titleEntry ? titleEntry.text : filename;
-    } catch (err) {
-        console.error(`Error reading title from ${filename}:`, err);
-        return filename;
-    }
+async function generateManifest(directory = path.join(__dirname, "CYOAs")) {
+    const cyoas = await createVersionStore(directory).list();
+    await fs.writeFile(path.join(directory, "manifest.json"), JSON.stringify(cyoas, null, 2) + "\n");
+    return cyoas;
 }
 
-async function generateManifest() {
-    try {
-        if (!fs.existsSync(CYOAS_DIR)) {
-            console.error(`Directory ${CYOAS_DIR} does not exist.`);
-            return;
-        }
-
-        const files = fs.readdirSync(CYOAS_DIR);
-        const jsonFiles = files.filter(f => f.endsWith('.json') && f !== 'manifest.json');
-
-        const cyoas = await Promise.all(jsonFiles.map(async (f) => {
-            const title = await getCyoaTitle(f);
-            return { filename: f, title };
-        }));
-
-        fs.writeFileSync(MANIFEST_FILE, JSON.stringify(cyoas, null, 2), 'utf8');
-        console.log(`Successfully generated ${MANIFEST_FILE} with ${cyoas.length} CYOAs.`);
-    } catch (err) {
-        console.error('Error generating manifest:', err);
-    }
+if (require.main === module) {
+    generateManifest().then(cyoas => {
+        console.log(`Generated manifest with ${cyoas.length} playable CYOAs.`);
+    }).catch(error => {
+        console.error(error);
+        process.exitCode = 1;
+    });
 }
 
-generateManifest();
+module.exports = { generateManifest };

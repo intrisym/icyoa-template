@@ -9,6 +9,7 @@ const storyInputs = {};
 let currentTab = null; // Track current active tab
 let backpackEnabled = false; // Track if backpack is enabled
 let themeMode = "toggle";
+let currentCyoaFile = new URLSearchParams(window.location.search).get("cyoa") || null;
 let optionTitleAlignment = "center";
 let optionMetaAlignment = "center";
 let optionDescriptionAlignment = "center";
@@ -1924,6 +1925,7 @@ function buildExportState() {
     restoreActiveSliderModifierPointValues();
     const state = {
         selectedOptions,
+        cyoaFile: currentCyoaFile,
         points: { ...points },
         discountedSelections,
         selectedCostOptionHistory,
@@ -2005,6 +2007,7 @@ function buildPackedExportState() {
         s: full.selectedOptions,
         p: full.points
     };
+    if (full.cyoaFile) packed.f = full.cyoaFile;
 
     if (hasOwnEntries(full.discountedSelections)) packed.d = full.discountedSelections;
     if (hasOwnEntries(full.selectedCostOptionHistory)) packed.h = full.selectedCostOptionHistory;
@@ -2029,6 +2032,7 @@ function unpackImportedState(importedData) {
     if (!Object.prototype.hasOwnProperty.call(importedData, "v")) return importedData;
 
     return {
+        cyoaFile: importedData.f || null,
         selectedOptions: importedData.s || {},
         points: importedData.p || {},
         discountedSelections: importedData.d || {},
@@ -2133,6 +2137,10 @@ document.getElementById("importBtn").onclick = () => openModal("import");
 document.getElementById("modalClose").onclick = () => closeModal();
 
 document.getElementById("backpackBtn").onclick = () => openBackpackModal();
+document.getElementById("chooseVersionBtn").onclick = chooseCurrentVersion;
+document.getElementById("closeVersionPickerBtn").onclick = () => {
+    document.getElementById("cyoaSelectionModal").style.display = "none";
+};
 document.getElementById("backpackModalClose").onclick = () => closeBackpackModal();
 
 document.getElementById("resetBtn").onclick = () => {
@@ -2227,6 +2235,10 @@ modalConfirmBtn.onclick = async () => {
         if (typeof importedData !== 'object' || !importedData.points || !importedData.selectedOptions) {
             throw new Error("Invalid format");
         }
+        if (importedData.cyoaFile && importedData.cyoaFile !== currentCyoaFile) {
+            throw new Error(`This build belongs to ${importedData.cyoaFile}. Open that CYOA version before importing it.`);
+        }
+        if (!importedData.cyoaFile && !confirm("This older build does not identify its CYOA version. Import into the current version?")) return;
 
         // Clear current states
         for (let key in selectedOptions) delete selectedOptions[key];
@@ -2855,6 +2867,7 @@ function applyCyoaData(rawData, {
         if (backpackBtn) {
             backpackBtn.style.display = backpackEnabled ? "inline-block" : "none";
         }
+        renderPlayerVersionBar(data);
 
         renderAccordion();
         applyDynamicCosts();
@@ -2891,14 +2904,20 @@ function applyCyoaData(rawData, {
 // Load and parse the input configuration
 async function loadConfiguration() {
     const urlParams = new URLSearchParams(window.location.search);
-    const selectedCyoa = urlParams.get('cyoa');
+    let selectedCyoa = urlParams.get('cyoa');
+    if (urlParams.has("latest")) {
+        const groups = CyoaVersioning.groupPublished(await fetchCyoaList());
+        const latest = groups.find(group => (group[0].seriesId || group[0].filename) === urlParams.get("latest"))?.[0];
+        selectedCyoa = latest?.filename || null;
+    }
+    currentCyoaFile = selectedCyoa;
 
     if (selectedCyoa) {
         setLoadingOverlayVisible(true);
         updateLoadingOverlay(5, "Loading CYOA configuration...");
         let loadedSuccessfully = false;
         try {
-            const res = await fetch(`CYOAs/${selectedCyoa}`);
+            const res = await fetch(`CYOAs/${encodeURIComponent(selectedCyoa)}`, { cache: "no-store" });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
             updateLoadingOverlay(20, "Configuration loaded. Preparing assets...");
@@ -2951,10 +2970,12 @@ async function fetchCyoaList() {
     return [];
 }
 
-async function showCyoaSelectionModal() {
+async function showCyoaSelectionModal({ seriesId = null } = {}) {
     const modal = document.getElementById("cyoaSelectionModal");
     const listContainer = document.getElementById("cyoaList");
     modal.style.display = "block";
+    document.getElementById("cyoaSelectionTitle").textContent = seriesId ? "Choose Version" : "Choose a CYOA";
+    document.getElementById("closeVersionPickerBtn").hidden = !seriesId;
 
     const cyoas = await fetchCyoaList();
     listContainer.innerHTML = "";
@@ -2964,17 +2985,86 @@ async function showCyoaSelectionModal() {
         return;
     }
 
-    cyoas.forEach(cyoa => {
+    CyoaVersioning.groupPublished(cyoas, seriesId).forEach(versions => {
+        const cyoa = versions[0];
         const item = document.createElement("div");
         item.className = "cyoa-item";
-        item.textContent = cyoa.title || cyoa.filename;
-        item.onclick = () => {
+        const title = document.createElement("strong");
+        title.textContent = cyoa.title || cyoa.filename;
+        item.appendChild(title);
+        const select = document.createElement("select");
+        select.setAttribute("aria-label", `Version of ${cyoa.title || cyoa.filename}`);
+        versions.forEach((release, index) => {
+            const option = document.createElement("option");
+            option.value = release.filename;
+            option.textContent = release.version ? `v${release.version}${index === 0 ? " (latest)" : ""}` : "Version 1";
+            select.appendChild(option);
+        });
+        if (versions.some(release => release.filename === currentCyoaFile)) select.value = currentCyoaFile;
+        item.appendChild(select);
+        const play = document.createElement("button");
+        play.type = "button";
+        play.textContent = "Play";
+        play.onclick = () => {
             const newUrl = new URL(window.location.href);
-            newUrl.searchParams.set('cyoa', cyoa.filename);
+            newUrl.searchParams.delete("latest");
+            newUrl.searchParams.set('cyoa', select.value);
             window.location.href = newUrl.toString();
         };
+        item.appendChild(play);
         listContainer.appendChild(item);
     });
+}
+
+function chooseCurrentVersion() {
+    const preview = new URLSearchParams(window.location.search).get("editorPreview") === "1";
+    const editorWindow = window.parent !== window ? window.parent : window.opener;
+    if (preview && editorWindow && !editorWindow.closed) {
+        editorWindow.postMessage({ type: "cyoa-choose-version" }, window.location.origin);
+        return;
+    }
+    const release = CyoaVersioning.metadata(window._lastCyoaData || []);
+    showCyoaSelectionModal({ seriesId: release?.seriesId || currentCyoaFile });
+}
+
+function renderPlayerVersionBar(data) {
+    const release = CyoaVersioning.metadata(data);
+    const button = document.getElementById("chooseVersionBtn");
+    if (button) button.hidden = !currentCyoaFile;
+    if (!release) {
+        document.getElementById("playerVersionBar")?.remove();
+        return;
+    }
+    let bar = document.getElementById("playerVersionBar");
+    if (!bar) {
+        bar = document.createElement("div");
+        bar.id = "playerVersionBar";
+        document.getElementById("cyoaTitle")?.after(bar);
+        if (!bar.isConnected) document.querySelector(".container")?.prepend(bar);
+    }
+    bar.replaceChildren();
+    const label = document.createElement("span");
+    label.textContent = release.status === "draft" ? "Draft preview" : `Version ${release.version}`;
+    bar.appendChild(label);
+    if (release.status === "published") {
+        const latest = document.createElement("a");
+        const target = new URL(window.location.href);
+        target.search = "";
+        target.searchParams.set("latest", release.seriesId);
+        if (new URLSearchParams(window.location.search).get("editorPreview") === "1") target.searchParams.set("editorPreview", "1");
+        latest.href = target.toString();
+        latest.textContent = "Latest release";
+        bar.appendChild(latest);
+    }
+    if (release.releaseNotes) {
+        const notes = document.createElement("details");
+        const summary = document.createElement("summary");
+        summary.textContent = "Release notes";
+        const text = document.createElement("p");
+        text.textContent = release.releaseNotes;
+        notes.append(summary, text);
+        bar.appendChild(notes);
+    }
 }
 
 loadConfiguration().catch(err => {

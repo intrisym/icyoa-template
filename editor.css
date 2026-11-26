@@ -1079,6 +1079,10 @@ textarea {
     border-bottom: 1px solid var(--border-subtle);
 }
 
+.create-cyoa-form[hidden] {
+    display: none;
+}
+
 .create-cyoa-form input {
     flex: 1;
 }
@@ -1087,6 +1091,23 @@ textarea {
     display: flex;
     gap: 8px;
     align-items: center;
+}
+
+.cyoa-version-group {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 16px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    background: var(--surface-alt);
+}
+
+.cyoa-version-group select {
+    width: 100%;
+    min-width: 0;
 }
 
 .cyoa-item {
@@ -1127,4 +1148,36 @@ textarea {
 
 .delete-cyoa-btn:hover {
     background: var(--danger-hover);
+}
+
+:root dialog {
+    color: inherit;
+    background: var(--surface);
+    border: 1px solid currentColor;
+    border-radius: 12px;
+    max-width: min(540px, 90vw);
+}
+
+.editor-content {
+    border: 0;
+    padding: 0;
+    margin: 0;
+    min-width: 0;
+}
+
+.version-controls,
+.publish-form {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    margin: 12px 0;
+}
+
+.version-controls [hidden] {
+    display: none;
+}
+
+dialog::backdrop {
+    background: rgba(0, 0, 0, 0.55);
 }

@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const { evaluatePrereqExpr } = require("../logicExpr");
+const { buildDiagnostics, formatDiagnostics, reportGithub } = require("./validation-report");
 
 const ROOT = path.join(__dirname, "..");
 const CYOAS_DIR = path.join(ROOT, "CYOAs");
@@ -187,7 +188,25 @@ function extractRequirementIds(requirement) {
 }
 
 function validateRequirementExpression(file, context, requirement, errors) {
-    if (typeof requirement !== "string") return;
+    if (requirement === undefined || requirement === null) return;
+    if (Array.isArray(requirement)) {
+        requirement.forEach((entry, index) => validateRequirementExpression(file, `${context}[${index}]`, entry, errors));
+        return;
+    }
+    if (typeof requirement === "object") {
+        const keys = Object.keys(requirement);
+        if (!keys.length || keys.some(key => !["and", "or", "not"].includes(key))) {
+            pushIssue(errors, file, `${context} prerequisite objects must use only "and", "or", and "not" keys.`);
+        }
+        keys.filter(key => ["and", "or", "not"].includes(key)).forEach(key => {
+            validateRequirementExpression(file, `${context}.${key}`, requirement[key], errors);
+        });
+        return;
+    }
+    if (typeof requirement !== "string") {
+        pushIssue(errors, file, `${context} must be a prerequisite string, array, or logical object.`);
+        return;
+    }
     try {
         evaluatePrereqExpr(requirement, () => 0, () => 0, () => false);
     } catch (err) {
@@ -961,13 +980,34 @@ function validateCyoaData(file, data) {
         return { errors, warnings };
     }
 
+    const validateNodeShape = (node, context) => {
+        if (!node || typeof node !== "object" || Array.isArray(node)) {
+            pushIssue(errors, file, `${context} must be an object.`);
+            return;
+        }
+        for (const key of ["options", "subcategories"]) {
+            if (node[key] === undefined) continue;
+            if (!Array.isArray(node[key])) pushIssue(errors, file, `${context}.${key} must be an array.`);
+            else node[key].forEach((entry, index) => validateNodeShape(entry, `${context}.${key}[${index}]`));
+        }
+        if (node.prerequisitesBySelection !== undefined && !Array.isArray(node.prerequisitesBySelection)) {
+            pushIssue(errors, file, `${context}.prerequisitesBySelection must be an array.`);
+        }
+        if (node.conflictsWith !== undefined && typeof node.conflictsWith !== "string"
+            && (!Array.isArray(node.conflictsWith) || node.conflictsWith.some(entry => typeof entry !== "string" || !entry.trim()))) {
+            pushIssue(errors, file, `${context}.conflictsWith must be a string or an array of non-empty option ID strings.`);
+        }
+    };
+    data.forEach((entry, index) => validateNodeShape(entry, `entry[${index}]`));
+    if (errors.length) return { errors, warnings };
+
     const titleEntry = data.find(entry => entry.type === "title");
     if (!titleEntry || typeof titleEntry.text !== "string" || !titleEntry.text.trim()) {
         pushIssue(errors, file, "missing non-empty title entry.");
     }
 
     const pointsEntry = data.find(entry => entry.type === "points");
-    if (!pointsEntry || typeof pointsEntry.values !== "object" || Array.isArray(pointsEntry.values)) {
+    if (!pointsEntry || !pointsEntry.values || typeof pointsEntry.values !== "object" || Array.isArray(pointsEntry.values)) {
         pushIssue(errors, file, "missing points entry with values map.");
     }
     const pointTypes = new Set(Object.keys(pointsEntry?.values || {}));
@@ -1091,8 +1131,8 @@ function validateCyoaData(file, data) {
         validateAutoGrants(file, `${context}.autoGrants`, option.autoGrants, optionIds, errors);
         validateAutoGrants(file, `${context}.discountGrants`, option.discountGrants, optionIds, errors);
 
-        if (option.maxSelections !== undefined && Number(option.maxSelections) < 1) {
-            pushIssue(errors, file, `${context}.maxSelections must be at least 1.`);
+        if (option.maxSelections !== undefined && (!Number.isInteger(Number(option.maxSelections)) || Number(option.maxSelections) < 1)) {
+            pushIssue(errors, file, `${context}.maxSelections must be a positive integer.`);
         }
         if (option.bypassSubcategoryMaxSelections !== undefined && typeof option.bypassSubcategoryMaxSelections !== "boolean") {
             pushIssue(errors, file, `${context}.bypassSubcategoryMaxSelections must be a boolean.`);
@@ -1121,11 +1161,11 @@ function validateCyoaData(file, data) {
         validateIdRefs(file, `${subcatPath}.requiresOption`, extractRequirementIds(subcat.requiresOption), optionIds, errors);
         validateModifiedCostRules(file, `${subcatPath}.modifiedCosts`, subcat.modifiedCosts, optionIds, pointTypes, errors, warnings);
         validateModifiedCostRules(file, `${subcatPath}.discounts`, subcat.discounts, optionIds, pointTypes, errors, warnings);
-        if (subcat.maxSelections !== undefined && Number(subcat.maxSelections) < 1) {
-            pushIssue(errors, file, `${subcatPath}.maxSelections must be at least 1.`);
+        if (subcat.maxSelections !== undefined && (!Number.isInteger(Number(subcat.maxSelections)) || Number(subcat.maxSelections) < 1)) {
+            pushIssue(errors, file, `${subcatPath}.maxSelections must be a positive integer.`);
         }
-        if (subcat.defaultOptionMaxSelections !== undefined && Number(subcat.defaultOptionMaxSelections) < 1) {
-            pushIssue(errors, file, `${subcatPath}.defaultOptionMaxSelections must be at least 1.`);
+        if (subcat.defaultOptionMaxSelections !== undefined && (!Number.isInteger(Number(subcat.defaultOptionMaxSelections)) || Number(subcat.defaultOptionMaxSelections) < 1)) {
+            pushIssue(errors, file, `${subcatPath}.defaultOptionMaxSelections must be a positive integer.`);
         }
     });
 
@@ -1138,8 +1178,8 @@ function validateCyoaData(file, data) {
         validateGroupRequirementRefs(file, `${context}.requiresOption`, category.requiresOption, optionGroupIds, errors);
         validateIdRefs(file, `${context}.requiresOption`, extractRequirementIds(category.requiresOption), optionIds, errors);
         validatePointMap(file, `${context}.discountAmount`, category.discountAmount, pointTypes, errors, warnings);
-        if (category.maxSelections !== undefined && Number(category.maxSelections) < 1) {
-            pushIssue(errors, file, `${context}.maxSelections must be at least 1.`);
+        if (category.maxSelections !== undefined && (!Number.isInteger(Number(category.maxSelections)) || Number(category.maxSelections) < 1)) {
+            pushIssue(errors, file, `${context}.maxSelections must be a positive integer.`);
         }
     });
 
@@ -1158,24 +1198,30 @@ function validateCyoa(file) {
         return { errors: [`${file}: invalid JSON: ${err.message}`], warnings: [] };
     }
 
-    return validateCyoaData(file, data);
+    try {
+        return validateCyoaData(file, data);
+    } catch (err) {
+        return { errors: [`${file}: invalid CYOA structure: ${err.message}`], warnings: [] };
+    }
 }
 
 function main() {
     const files = readJsonFiles(CYOAS_DIR);
     const results = files.map(validateCyoa);
     const allErrors = results.flatMap(result => result.errors);
-    const allWarnings = results.flatMap(result => result.warnings);
-
-    if (allWarnings.length) {
-        console.warn(`CYOA validation warnings (${allWarnings.length}):`);
-        allWarnings.forEach(warning => console.warn(`- ${warning}`));
-    }
+    const diagnostics = results.flatMap((result, index) => {
+        let source = "";
+        if (result.errors.length || result.warnings.length) {
+            try { source = fs.readFileSync(path.join(CYOAS_DIR, files[index]), "utf8"); } catch {}
+        }
+        return buildDiagnostics(files[index], result, source);
+    });
+    if (diagnostics.length) console.error(formatDiagnostics(diagnostics));
+    if (process.env.GITHUB_ACTIONS === "true") reportGithub(diagnostics);
 
     if (allErrors.length) {
-        console.error(`CYOA validation failed with ${allErrors.length} issue(s):`);
-        allErrors.forEach(error => console.error(`- ${error}`));
-        process.exit(1);
+        process.exitCode = 1;
+        return;
     }
 
     console.log(`Validated ${files.length} CYOA fixture(s): ${files.join(", ")}.`);

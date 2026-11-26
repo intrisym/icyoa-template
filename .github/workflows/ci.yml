@@ -6,11 +6,20 @@ on:
       - main
       - master
   pull_request:
+    branches:
+      - main
+      - master
+  merge_group:
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   verify:
     name: Verify
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Check out repository
@@ -24,5 +33,5 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Run verification suite
-        run: npm test
+      - name: Validate CYOAs and run verification checks
+        run: sh scripts/check.sh

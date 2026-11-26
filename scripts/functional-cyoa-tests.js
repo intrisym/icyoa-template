@@ -203,6 +203,7 @@ function runPlayerScriptExportImportHelpers(state) {
         "optionGrantDiscountSelections",
         "autoGrantedSelections",
         "randomRollResults",
+        "currentCyoaFile",
         `${source}; const packed = buildPackedExportState(); return { packed, unpacked: unpackImportedState(JSON.parse(JSON.stringify(packed))) };`
     );
     return execute(
@@ -221,7 +222,8 @@ function runPlayerScriptExportImportHelpers(state) {
         state.categoryDiscountSelections || {},
         state.optionGrantDiscountSelections || {},
         state.autoGrantedSelections || {},
-        state.randomRollResults || {}
+        state.randomRollResults || {},
+        state.cyoaFile || null
     );
 }
 
@@ -4029,7 +4031,7 @@ test("subcategory default option max selections should make child options repeat
     data[2].subcategories[0].defaultOptionMaxSelections = 0;
     assert(
         validateCyoaData("subcategory-default-option-max-invalid.json", data).errors.some(error =>
-            error.includes("defaultOptionMaxSelections must be at least 1")
+            error.includes("defaultOptionMaxSelections must be a positive integer")
         ),
         "validation should reject invalid subcategory default option max selections"
     );
@@ -5610,6 +5612,9 @@ test("packed export state should round-trip selections, points, inputs, and gran
     assert.deepStrictEqual(unpacked.randomRollResults, engine.randomRollResults);
 
     const scriptRoundTrip = runPlayerScriptExportImportHelpers(engine.buildExportState());
+    const versionedRoundTrip = runPlayerScriptExportImportHelpers({ ...engine.buildExportState(), cyoaFile: "example_v1_2.json" });
+    assert.strictEqual(versionedRoundTrip.packed.f, "example_v1_2.json");
+    assert.strictEqual(versionedRoundTrip.unpacked.cyoaFile, "example_v1_2.json");
     assert.deepStrictEqual(scriptRoundTrip.unpacked.selectedOptions, engine.selectedOptions);
     assert.deepStrictEqual(scriptRoundTrip.unpacked.points, engine.points);
     assert.deepStrictEqual(scriptRoundTrip.unpacked.discountedSelections, engine.discountedSelections);
