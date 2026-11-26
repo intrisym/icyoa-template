@@ -80,6 +80,36 @@ Historical commits through `.commit-conventions.json` are excluded. Push and PR 
 
 Run `npm run lint:commits` to audit the current branch's entire history after the configured baseline, including published commits, or `npm run test:commits` to test the validator and real Git-hook integration. The full verification script includes those integration tests. This local setup does not change GitHub branch protection settings; require both CI checks in GitHub to enforce the policy when local hooks are bypassed.
 
+### Image Loading Checks
+
+The visual editor marks blocked image hosts with a red outline and an inline explanation on header and option image URL fields, including URLs already present when a CYOA is loaded. Feedback updates as you type and clears when you replace or remove the URL. This indicates editor validity; it does not automatically remove existing URLs or prevent saving/exporting CYOA data.
+
+Edit `blockedDomains` in `imageUrlPolicy.js` to maintain the blocklist. Each entry has a `domain` and a user-facing `reason`; domain matches include subdomains, but not similarly named domains or mentions inside paths/query strings. WallpaperCave is the initial entry because its URLs failed DNS resolution in the reported checks. This is a project policy, not a claim that the host fails on every network. Unlisted hosts still need the image-loading checks below.
+
+Install the browser once, then run the image checks locally:
+
+```sh
+npm install
+npx playwright install chromium
+sh scripts/check-images.sh
+```
+
+To check only one CYOA:
+
+```sh
+sh scripts/check-images.sh CYOAs/blue_lock___wild_card_project_v1_1.json
+```
+
+`npm run test:images` runs the same check. It checks every header and option image in all local CYOA JSON files, including nested subcategories and drafts, and tests each distinct URL once per origin. Chromium must load and decode the image successfully; HTTP errors, invalid image responses, network errors, and ten-second timeouts fail the check. Each failure lists the URL, CYOA file, and affected header or option. Full results are written to `image-check-report.json` (ignored by Git).
+
+Each URL is tested from localhost and from the production page's origin. The checker serves a minimal document at the production URL using Playwright request interception; external image requests are real, with the browser's normal referrer and mixed-content behavior. This tests the current files before deploying them. Relative image paths are served from this checkout. It does not deploy anything or store external images in the repository.
+
+The production directory defaults to `https://intrisym.github.io/icyoa-template/`. For a fork or a different deployment, set `IMAGE_CHECK_PRODUCTION_URL` to your HTTPS player directory URL, ending in `/`.
+
+CI runs this as the separate **Image loading** job on pushes and PRs, with file annotations and a downloadable JSON report. It also runs `npm run test:images:unit`, which checks the checker against controlled responses, including referrer behavior. Network checks are separate from `sh scripts/check.sh` and the pre-push hook so ordinary data/logic verification stays offline. To require image checks before merging, add **Image loading** to the required status checks in GitHub branch protection.
+
+These checks verify availability at test time. External hosts can change later, and the simulated production origin does not replace testing the deployed site in your browser.
+
 ### Validation Coverage
 
 This runs JavaScript syntax checks, validates every existing `CYOAs/*.json` file as a regression fixture, and runs functional scenario tests against a self-contained synthetic CYOA fixture. The functional tests simulate selecting and removing options, gaining and spending points, subcategory max-selection replacement, max-selection bypass options, prerequisite unlocks, conditional pricing priority, absolute modified costs, relative modified costs, discount slots, and min/max cost clamps.

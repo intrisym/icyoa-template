@@ -924,6 +924,19 @@ textarea {
     border-color: var(--danger);
 }
 
+input.image-url-invalid,
+input.image-url-invalid:focus {
+    border-color: var(--danger);
+    outline: 2px solid var(--danger);
+    outline-offset: 1px;
+}
+
+.image-url-error {
+    color: var(--danger);
+    font-size: 0.875rem;
+    margin: 4px 0 0;
+}
+
 .preview-header {
     display: flex;
     justify-content: space-between;

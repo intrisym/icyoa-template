@@ -2095,6 +2095,7 @@
         });
         headerField.appendChild(headerLabel);
         headerField.appendChild(headerInput);
+        CyoaImageUrlPolicy.bindInput(headerInput);
 
         // Prevent upscaling toggle
         const preventField = document.createElement("div");
@@ -4805,6 +4806,7 @@
             });
             imageField.appendChild(imageLabel);
             imageField.appendChild(imageInput);
+            CyoaImageUrlPolicy.bindInput(imageInput);
             body.appendChild(imageField);
 
             const inputTypeField = document.createElement("div");

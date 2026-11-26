@@ -2,17 +2,22 @@
   "name": "icyoa-template",
   "version": "1.0.0",
   "private": true,
-    "scripts": {
-        "check:js": "node --check script.js && node --check editor.js && node --check logicExpr.js && node --check server.js && node --check generate-manifest.js && node --check versioning.js && node --check cyoaVersions.js && node --check optionIds.js && node --check versionPicker.js && node --check scripts/validate-commit-message.js",
-        "lint:commits": "node scripts/validate-commit-message.js --range HEAD",
-        "test:commits": "node --test scripts/commit-message-tests.js",
-        "test:ids": "node --test scripts/option-id-tests.js",
-        "test:versions": "node --test scripts/versioning-tests.js",
-        "test:cyoas": "node scripts/validate-cyoas.js",
-        "test:validation": "node --test scripts/validation-tests.js",
-        "test:exhaustive": "node scripts/exhaustive-cyoa-tests.js",
-        "test:functional": "node scripts/functional-cyoa-tests.js",
-        "verify": "npm run check:js && npm run test:cyoas && npm run test:validation && npm run test:functional && npm run test:versions && npm run test:ids && npm run test:commits",
-        "test": "npm run verify"
-    }
+  "scripts": {
+    "check:js": "node --check script.js && node --check editor.js && node --check logicExpr.js && node --check server.js && node --check generate-manifest.js && node --check versioning.js && node --check cyoaVersions.js && node --check optionIds.js && node --check versionPicker.js && node --check imageUrlPolicy.js && node --check scripts/validate-commit-message.js && node --check scripts/check-images.js && node --check scripts/image-check-tests.js",
+    "lint:commits": "node scripts/validate-commit-message.js --range HEAD",
+    "test:commits": "node --test scripts/commit-message-tests.js",
+    "test:ids": "node --test scripts/option-id-tests.js",
+    "test:versions": "node --test scripts/versioning-tests.js",
+    "test:cyoas": "node scripts/validate-cyoas.js",
+    "test:images": "node scripts/check-images.js",
+    "test:images:unit": "node --test scripts/image-check-tests.js",
+    "test:validation": "node --test scripts/validation-tests.js scripts/image-url-policy-tests.js",
+    "test:exhaustive": "node scripts/exhaustive-cyoa-tests.js",
+    "test:functional": "node scripts/functional-cyoa-tests.js",
+    "verify": "npm run check:js && npm run test:cyoas && npm run test:validation && npm run test:functional && npm run test:versions && npm run test:ids && npm run test:commits",
+    "test": "npm run verify"
+  },
+  "devDependencies": {
+    "playwright": "^1.65.1"
+  }
 }
