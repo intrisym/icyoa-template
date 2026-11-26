@@ -25,6 +25,9 @@ const validMessages = [
     "fix: correct defaults\n\nRefs: #123\nAdditional details on another line.\nReviewed-by: Z",
     "revert: undo parser change\n\nRefs: abc123",
     "docs: explain the API\n\nOrdinary free-form body text: still allowed.",
+    "fix: improve detection\n\nBreaking change detection now ignores quoted examples.",
+    "fix: improve detection\n\nThe parser recognizes these tokens.\nBreaking change detection remains ordinary prose.",
+    "fix: improve detection\n\nRefs: #123\nBreaking change detection is explained in this footer value.",
     "fix: normalize line endings\r\n\r\nDescription.\r\n"
 ];
 

@@ -21,7 +21,7 @@ function validateMessage(message) {
     };
     for (let index = 2; index < lines.length; index += 1) {
         const line = lines[index];
-        const breaking = /^breaking[ -]change\b/i.test(line);
+        const breaking = /^breaking[ -]change(?::| #)/i.test(line);
         if (breaking && !/^(BREAKING CHANGE|BREAKING-CHANGE): /.test(line)) {
             errors.push(`Line ${index + 1}: use uppercase BREAKING CHANGE: <description> or BREAKING-CHANGE: <description>.`);
         }
