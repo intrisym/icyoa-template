@@ -63,6 +63,14 @@ function createVersionStore(directory) {
         return [...data.filter(entry => entry?.type !== "publication"), { type: "publication", ...release }];
     }
 
+    async function archive(filename) {
+        const trashDirectory = path.join(directory, ".trash");
+        await fs.mkdir(trashDirectory, { recursive: true });
+        const archivedFile = path.join(trashDirectory, `${Date.now()}-${randomUUID()}-${filename}`);
+        await fs.rename(filePath(filename), archivedFile);
+        return archivedFile;
+    }
+
     return {
         read,
         list,
@@ -70,7 +78,9 @@ function createVersionStore(directory) {
             return mutate(async () => {
                 if (!Array.isArray(data)) fail(400, "CYOA must contain a JSON array.");
                 let existing = null;
-                try { existing = await read(filename); } catch (error) { if (error.status !== 404) throw error; }
+                try { existing = await read(filename); } catch (error) {
+                    if (error.status !== 404 || filename !== "temp-input.json") throw error;
+                }
                 const release = existing && metadata(existing);
                 if (release?.status === "published") fail(409, "Published versions are read-only. Create a draft to make changes.");
                 const saved = data.filter(entry => entry?.type !== "publication");
@@ -119,6 +129,7 @@ function createVersionStore(directory) {
                 if (versions.some(existing => compareVersions(existing, version) === 0)) fail(409, "That version is already published. Choose another number.");
                 if (typeof releaseNotes !== "string" || releaseNotes.length > 10000) fail(400, "Release notes must be text up to 10,000 characters.");
                 const publishedFile = `${release.seriesId.replace(/\.json$/, "")}_v${version.replace(/\./g, "_")}.json`;
+                await fs.mkdir(path.join(directory, ".trash"), { recursive: true });
                 await write(publishedFile, withMetadata(data, {
                     seriesId: release.seriesId,
                     status: "published",
@@ -127,6 +138,12 @@ function createVersionStore(directory) {
                     publishedAt: new Date().toISOString(),
                     releaseNotes
                 }), true);
+                try {
+                    await archive(filename);
+                } catch (error) {
+                    await fs.unlink(filePath(publishedFile));
+                    throw error;
+                }
                 return { filename: publishedFile, version };
             });
         },
@@ -140,9 +157,7 @@ function createVersionStore(directory) {
             return mutate(async () => {
                 const release = metadata(await read(filename));
                 if (release?.status === "published") fail(409, "Published versions cannot be deleted from the editor.");
-                const trashDirectory = path.join(directory, ".trash");
-                await fs.mkdir(trashDirectory, { recursive: true });
-                await fs.rename(filePath(filename), path.join(trashDirectory, `${Date.now()}-${filename}`));
+                await archive(filename);
             });
         }
     };

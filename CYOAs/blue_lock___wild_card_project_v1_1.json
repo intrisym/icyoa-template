@@ -1148,10 +1148,10 @@
   {
     "type": "publication",
     "seriesId": "blue_lock___wild_card_project.json",
-    "status": "draft",
-    "sourceFile": "blue_lock___wild_card_project.json",
-    "baseVersion": "1.0",
-    "targetVersion": "1.1",
-    "createdAt": "2026-11-25T02:43:58.468Z"
+    "status": "published",
+    "version": "1.1",
+    "sourceFile": "blue_lock___wild_card_project_draft_v1_1.json",
+    "publishedAt": "2026-11-26T16:45:09.055Z",
+    "releaseNotes": ""
   }
 ]

@@ -68,10 +68,13 @@ test("draft edits and publication do not alter older releases, and manual versio
     const second = await store.publish(draft.filename, "1.2", "New choices");
     assert.equal(metadata(await store.read(second.filename)).releaseNotes, "New choices");
     assert.deepEqual(await store.read(first.filename), original);
-    assert.equal(await store.suggestedVersion(draft.filename), "1.3");
-    const patch = await store.publish(draft.filename, "1.2.1");
+    await assert.rejects(store.read(draft.filename), { status: 404 });
+    assert.equal(await store.suggestedVersion(second.filename), "1.3");
+    const patchDraft = await store.createDraft(second.filename);
+    const patch = await store.publish(patchDraft.filename, "1.2.1");
     assert.equal(patch.version, "1.2.1");
-    const major = await store.publish(draft.filename, "2.0");
+    const majorDraft = await store.createDraft(patch.filename);
+    const major = await store.publish(majorDraft.filename, "2.0");
     assert.equal(major.version, "2.0");
     await assert.rejects(store.save(second.filename, fixture()), { status: 409 });
 });
@@ -84,8 +87,11 @@ test("concurrent and equivalent version numbers cannot overwrite a release", asy
         store.publish("adventure.json", "1.0")
     ]);
     assert.equal(results.filter(result => result.status === "fulfilled").length, 1);
-    assert.equal(results.find(result => result.status === "rejected").reason.status, 409);
-    await assert.rejects(store.create("adventure.json", fixture()), { status: 409 });
+    assert.equal(results.find(result => result.status === "rejected").reason.status, 404);
+    const published = (await store.list())[0];
+    const draft = await store.createDraft(published.filename);
+    await assert.rejects(store.publish(draft.filename, "1.0.0"), { status: 409 });
+    await assert.rejects(store.create(draft.filename, fixture()), { status: 409 });
 });
 
 test("autosave cannot change publication metadata or mark a draft as published", async context => {
@@ -101,8 +107,9 @@ test("autosave cannot change publication metadata or mark a draft as published",
 test("player lists and static manifests exclude drafts and group releases numerically", async context => {
     const { store, directory } = await setup(context);
     await store.create("adventure.json", fixture());
-    await store.publish("adventure.json", "1.9");
-    await store.publish("adventure.json", "1.10");
+    const first = await store.publish("adventure.json", "1.9");
+    const draft = await store.createDraft(first.filename);
+    await store.publish(draft.filename, "1.10");
     const manifest = await generateManifest(directory);
     assert.equal(manifest.length, 2);
     assert(manifest.every(entry => entry.status === "published"));
@@ -129,9 +136,38 @@ test("removing a draft leaves published releases available", async context => {
     const { store } = await setup(context);
     await store.create("adventure.json", fixture());
     const release = await store.publish("adventure.json", "0.1");
-    await store.remove("adventure.json");
+    const draft = await store.createDraft(release.filename);
+    await store.remove(draft.filename);
     assert.equal(metadata(await store.read(release.filename)).status, "published");
     assert.equal((await store.list(true)).length, 1);
+});
+
+test("publishing archives the source draft and stale autosaves cannot recreate it", async context => {
+    const { store, directory } = await setup(context);
+    await store.create("adventure.json", fixture());
+    const original = await store.read("adventure.json");
+    const release = await store.publish("adventure.json", "1.1");
+    assert.deepEqual((await store.list(true)).map(entry => entry.filename), [release.filename]);
+    const archived = await fs.readdir(path.join(directory, ".trash"));
+    assert.equal(archived.length, 1);
+    assert.deepEqual(JSON.parse(await fs.readFile(path.join(directory, ".trash", archived[0]), "utf8")), original);
+    await assert.rejects(store.save("adventure.json", original), { status: 404 });
+    await assert.rejects(store.read("adventure.json"), { status: 404 });
+});
+
+test("an archive failure leaves the draft available and does not leave a partial publication", async context => {
+    const { store, directory } = await setup(context);
+    await store.create("adventure.json", fixture());
+    const original = await store.read("adventure.json");
+    const rename = fs.rename;
+    context.mock.method(fs, "rename", async (source, destination) => {
+        if (source === path.join(directory, "adventure.json")) throw new Error("Cannot archive draft");
+        return rename(source, destination);
+    });
+    await assert.rejects(store.publish("adventure.json", "1.1"), /Cannot archive draft/);
+    assert.deepEqual(await store.read("adventure.json"), original);
+    assert.equal((await store.list()).length, 0);
+    await assert.rejects(store.read("adventure_v1_1.json"), { status: 404 });
 });
 
 test("the editor groups a v1.1 draft with its v1.0 release while preserving separate CYOAs", () => {

@@ -11,6 +11,17 @@
     "releaseNotes": ""
   },
   {
+    "filename": "blue_lock___wild_card_project_v1_1.json",
+    "title": "Blue Lock - Wild Card Project",
+    "seriesId": "blue_lock___wild_card_project.json",
+    "status": "published",
+    "version": "1.1",
+    "sourceFile": "blue_lock___wild_card_project_draft_v1_1.json",
+    "baseVersion": null,
+    "targetVersion": null,
+    "releaseNotes": ""
+  },
+  {
     "filename": "hunter_x_hunter_v2.json",
     "title": "Hunter x Hunter",
     "seriesId": "hunter_x_hunter_v2.json",
