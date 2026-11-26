@@ -258,7 +258,13 @@ Tags and emphasis markers should be closed in the reverse order they were opened
 Sharing your CYOA is free and easy with GitHub Pages:
 
 1. **Update Manifest:** Run `node generate-manifest.js` to refresh the list of available adventures. This ensures your new CYOA is correctly indexed and visible on the live site.
-2. **Commit & Push:** Save your CYOA and refreshed manifest (`git commit -am "My CYOA"`) and push them to GitHub (`git push`).
+2. **Stage, Commit & Push:** Published releases create new JSON files. Stage the release and refreshed manifest together so the deployed picker never points to a missing file. Replace the example release filename below with your actual filename:
+   ```bash
+   git add -- CYOAs/my_adventure_v0_1.json CYOAs/manifest.json
+   git commit -m "feat(cyoa): publish the first release"
+   git push
+   ```
+   If the completed draft was tracked by Git, stage its deletion too. Using `git commit -am` alone does not include new, untracked release files.
 3. **Enable Pages:**
    - Go to your repo settings on GitHub.
    - Click **Pages** in the left sidebar.
