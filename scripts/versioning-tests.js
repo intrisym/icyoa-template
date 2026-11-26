@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs/promises");
 const os = require("node:os");
 const path = require("node:path");
+const { spawnSync } = require("node:child_process");
 const { createVersionStore } = require("../cyoaVersions");
 const { metadata, compareVersions, nextVersion, normalizeVersion, groupPublished, groupForEditor } = require("../versioning");
 const { generateManifest } = require("../generate-manifest");
@@ -118,6 +119,55 @@ test("player lists and static manifests exclude drafts and group releases numeri
     assert.deepEqual(groups[0].map(entry => entry.version), ["1.10", "1.9"]);
     const saved = JSON.parse(await fs.readFile(path.join(directory, "manifest.json"), "utf8"));
     assert.deepEqual(saved, manifest);
+});
+
+test("deployable manifests exclude Git-ignored local CYOAs before parsing them", async context => {
+    const { directory } = await setup(context);
+    const env = { ...process.env };
+    for (const key of ["GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR", "GIT_INDEX_FILE", "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_PREFIX"]) delete env[key];
+    const initialized = spawnSync("git", ["init", "-q", directory], { env, encoding: "utf8" });
+    assert.equal(initialized.status, 0, initialized.stderr);
+    await fs.writeFile(path.join(directory, ".gitignore"), "private.json\n");
+    await fs.writeFile(path.join(directory, "private.json"), "invalid ignored JSON");
+    await fs.writeFile(path.join(directory, "public.json"), JSON.stringify(fixture()));
+    const manifest = await generateManifest(directory);
+    assert.deepEqual(manifest.map(entry => entry.filename), ["public.json"]);
+});
+
+test("manifest write failures preserve the previous manifest and remove temporary files", async context => {
+    const { directory } = await setup(context);
+    const filename = path.join(directory, "manifest.json");
+    const previous = '[{"filename":"previous.json","title":"Previous release"}]\n';
+    await fs.writeFile(filename, previous);
+    await fs.writeFile(path.join(directory, "public.json"), JSON.stringify(fixture()));
+    const writeFile = fs.writeFile;
+    context.mock.method(fs, "writeFile", async (target, ...args) => {
+        if (String(target).endsWith(".manifest.tmp")) {
+            await writeFile(target, "partial JSON");
+            throw new Error("Simulated manifest write failure");
+        }
+        return writeFile(target, ...args);
+    });
+    await assert.rejects(generateManifest(directory), /Simulated manifest write failure/);
+    assert.equal(await fs.readFile(filename, "utf8"), previous);
+    assert(!(await fs.readdir(directory)).some(entry => entry.endsWith(".manifest.tmp")));
+});
+
+test("manifest rename failures preserve the previous manifest and remove temporary files", async context => {
+    const { directory } = await setup(context);
+    const filename = path.join(directory, "manifest.json");
+    const previous = '[{"filename":"previous.json","title":"Previous release"}]\n';
+    await fs.writeFile(filename, previous);
+    await fs.writeFile(path.join(directory, "public.json"), JSON.stringify(fixture()));
+    context.mock.method(fs, "rename", async (source, destination) => {
+        assert.equal(destination, filename);
+        assert.equal(await fs.readFile(filename, "utf8"), previous);
+        assert.equal(JSON.parse(await fs.readFile(source, "utf8"))[0].filename, "public.json");
+        throw new Error("Simulated manifest rename failure");
+    });
+    await assert.rejects(generateManifest(directory), /Simulated manifest rename failure/);
+    assert.equal(await fs.readFile(filename, "utf8"), previous);
+    assert(!(await fs.readdir(directory)).some(entry => entry.endsWith(".manifest.tmp")));
 });
 
 test("invalid filenames and broken prerequisites are rejected before publishing", async context => {

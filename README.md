@@ -174,7 +174,7 @@ The Visual Editor lets you build and manage your CYOAs without touching code.
 - Each release has a permanent link such as `index.html?cyoa=adventure_v1_2.json`. The **Latest release** link uses the series identifier, for example `index.html?latest=adventure.json`, and opens whichever published version has the highest version number.
 - Exported player builds record their exact CYOA filename. Importing into a different version is rejected; open the matching version first. Older exports without a filename ask for confirmation.
 - Creating a draft and opening a CYOA preserve existing option IDs. When you rename a category, subcategory, or option label, leaving the name field regenerates affected option IDs and updates prerequisites, conflicts, grants, groups, and selected-option formulas within that CYOA. Nested option paths and category/subcategory scope predicates update too. Published releases remain read-only.
-- Run `node generate-manifest.js` before deploying to static hosting. The manifest includes published releases and existing unversioned CYOAs, and excludes drafts. Publishing locally does not deploy changes to your hosted site.
+- Run `node generate-manifest.js` before deploying to static hosting. The manifest includes published releases and existing unversioned CYOAs, and excludes drafts and Git-ignored local files. It is replaced atomically only after the new JSON is fully written. Publishing locally does not deploy changes to your hosted site.
 
 Existing unversioned CYOAs stay editable until you create their first draft. Published protection applies to the editor and API; direct filesystem or Git edits can still change files.
 

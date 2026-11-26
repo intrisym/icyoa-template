@@ -88,17 +88,6 @@
     "releaseNotes": ""
   },
   {
-    "filename": "path_of_a_super.json",
-    "title": "Path of a Super",
-    "seriesId": "path_of_a_super.json",
-    "status": "legacy",
-    "version": null,
-    "sourceFile": null,
-    "baseVersion": null,
-    "targetVersion": null,
-    "releaseNotes": ""
-  },
-  {
     "filename": "superheroAmalgam.json",
     "title": "Becoming a Superhero",
     "seriesId": "superheroAmalgam.json",
