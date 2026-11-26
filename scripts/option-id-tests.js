@@ -97,6 +97,25 @@ test("scope predicates follow renamed categories and nested subcategories", () =
     ]), 'category("Weapons") && subcategory("Weapons > Athletics > Advanced") && group("Weapons")');
 });
 
+test("scope renames preserve dollar signs and replacement-string metacharacters literally", () => {
+    for (const nextName of ["Cash $$", "Cash $&", "Cash $1", "Cash $`", "Cash $'"]) {
+        assert.equal(rewriteRequirement('category("Weapons")', new Map(), [
+            { kind: "category", before: "Weapons", after: nextName }
+        ]), `category(${JSON.stringify(nextName)})`);
+        assert.equal(rewriteRequirement('subcategory("Weapons > Physical")', new Map(), [
+            { kind: "subcategory", before: "Weapons", after: nextName }
+        ]), `subcategory(${JSON.stringify(nextName + " > Physical")})`);
+    }
+});
+
+test("ID regeneration updates mixed string and object automatic grants", () => {
+    const source = { id: "old", label: "Speed" };
+    const grant = { id: "grant", autoGrants: ["old", "untouched", { id: "old", canDeselect: true }] };
+    const data = [{ name: "Weapons", subcategories: [{ name: "Physical", options: [source, grant] }] }];
+    regenerate(data, [{ option: source, path: ["Weapons", "Athletics"] }], () => "newId");
+    assert.deepEqual(grant.autoGrants, ["newId", "untouched", { id: "newId", canDeselect: true }]);
+});
+
 test("renamed nested options retain valid prerequisites and published releases are unchanged", () => {
     const source = { id: "old", label: "Speed" };
     const data = [

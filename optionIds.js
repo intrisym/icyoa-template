@@ -24,7 +24,7 @@
                     && (entry.before === originalName || predicate[1] === "subcategory" && originalName.startsWith(entry.before + " > ")));
                 if (!change) return token;
                 const nextName = change.after + originalName.slice(change.before.length);
-                return token.replace(predicate[2], JSON.stringify(nextName));
+                return token.replace(predicate[2], () => JSON.stringify(nextName));
             });
         }
         if (Array.isArray(value)) return value.map(item => rewriteRequirement(item, changes, scopeChanges));
@@ -73,6 +73,9 @@
                         if (rule[field] !== undefined) rule[field] = updateList(rule[field]);
                     }
                 }
+            }
+            if (Array.isArray(node.autoGrants)) {
+                node.autoGrants = node.autoGrants.map(grant => typeof grant === "string" ? replaceId(grant, changes) : grant);
             }
             for (const key of ["autoGrants", "discountGrants"]) {
                 for (const grant of node[key] || []) {
