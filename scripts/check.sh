@@ -15,7 +15,7 @@ trap 'rm -rf "$check_logs"' 0
 trap 'exit 1' 1 2 15
 
 printf '%s\n' 'Checking CYOA data first...'
-for check in test:cyoas check:js test:validation test:functional test:versions test:ids; do
+for check in test:cyoas check:js test:validation test:functional test:versions test:ids test:commits; do
     check_log="$check_logs/$check.log"
     if npm_config_update_notifier=false npm run "$check" >"$check_log" 2>&1; then
         printf 'PASS %s\n' "$check"

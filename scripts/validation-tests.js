@@ -104,7 +104,7 @@ test("the shell runner works from another directory, runs every check, and retur
     assert.equal(result.status, 1);
     assert(result.stderr.includes("Failed checks: test:cyoas"));
     const checks = (await fs.readFile(log, "utf8")).trim().split("\n");
-    assert.deepEqual(checks, ["test:cyoas", "check:js", "test:validation", "test:functional", "test:versions", "test:ids"]);
+    assert.deepEqual(checks, ["test:cyoas", "check:js", "test:validation", "test:functional", "test:versions", "test:ids", "test:commits"]);
     assert.equal(result.stderr.split("Missing prerequisite speed").length - 1, 2);
     assert(!result.stdout.includes("Verbose passing output"));
     assert(result.stdout.includes("PASS test:functional"));
@@ -167,6 +167,7 @@ test("file-level errors are still readable when JSON cannot be parsed", () => {
 test("the configured pre-push hook checks every push and propagates the check result", async context => {
     const directory = await temporaryDirectory(context);
     await fs.mkdir(path.join(directory, "scripts"));
+    await fs.writeFile(path.join(directory, "scripts/validate-commit-message.js"), 'process.exit(Number(process.env.COMMIT_EXIT || "0"));\n');
     await fs.writeFile(path.join(directory, "scripts/check.sh"), '#!/bin/sh\nprintf "checked\\n" >> "$CHECK_LOG"\nexit "${CHECK_EXIT:-1}"\n');
     await fs.writeFile(path.join(directory, "git"), '#!/bin/sh\nprintf "%s\\n" "$CHECK_REPO"\n', { mode: 0o755 });
     const log = path.join(directory, "hook.log");
@@ -180,4 +181,6 @@ test("the configured pre-push hook checks every push and propagates the check re
     assert.equal((await fs.readFile(log, "utf8")).trim().split("\n").length, 4);
     env.CHECK_EXIT = "0";
     assert.equal(run("refs/heads/feature abc refs/heads/feature def\n").status, 0);
+    env.COMMIT_EXIT = "1";
+    assert.equal(run("refs/heads/feature abc refs/heads/feature def\n").status, 1);
 });
