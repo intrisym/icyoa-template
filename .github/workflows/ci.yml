@@ -2,9 +2,8 @@ name: CI
 
 on:
   push:
-  create:
   pull_request:
-    types: [opened, synchronize, reopened, edited, ready_for_review]
+    types: [opened, synchronize, reopened, ready_for_review]
   merge_group:
   workflow_dispatch:
 
@@ -28,7 +27,7 @@ jobs:
         with:
           node-version: 22
 
-      - name: Validate commit messages and pull request title
+      - name: Validate contributed commit messages
         run: node scripts/validate-commit-message.js --event
 
   verify:

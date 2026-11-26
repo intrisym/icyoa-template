@@ -120,7 +120,7 @@ test("pre-push checks new branch commits and catches a bypassed commit-msg hook"
     assert.equal(check(["--pre-push"], { input: `refs/heads/feature ${"f".repeat(40)} refs/heads/feature ${baseline}\n` }).status, 1);
 });
 
-test("CI checks PR titles on edited events as well as all contributed commits", async context => {
+test("CI checks contributed commits without imposing a PR title format", async context => {
     const { directory, git, check } = await repository(context);
     git(["commit", "--allow-empty", "-m", "feat: add a feature"]);
     const sha = git(["rev-parse", "HEAD"]);
@@ -131,13 +131,36 @@ test("CI checks PR titles on edited events as well as all contributed commits", 
     };
     assert.equal((await run("feat(editor): select versions")).status, 0);
     const invalidTitle = await run("Add version selection");
-    assert.equal(invalidTitle.status, 1);
-    assert(invalidTitle.stderr.includes("Pull request title"));
-    assert.equal((await run("feat: title\n\nBody is not allowed in a title")).status, 1);
+    assert.equal(invalidTitle.status, 0);
+    assert.equal((await run("feat: title\n\nBody is not allowed in a title")).status, 0);
     await fs.writeFile(eventPath, JSON.stringify({ after: sha }));
     assert.equal(check(["--event"], { extraEnv: { GITHUB_EVENT_PATH: eventPath, GITHUB_EVENT_NAME: "push" } }).status, 0);
     await fs.writeFile(eventPath, JSON.stringify({ ref: "feature/new-branch", ref_type: "branch" }));
     assert.equal(check(["--event"], { extraEnv: { GITHUB_EVENT_PATH: eventPath, GITHUB_EVENT_NAME: "create", GITHUB_SHA: sha } }).status, 0);
+});
+
+test("push and PR ranges exclude published history but reject newly introduced invalid messages", async context => {
+    const { directory, git, check } = await repository(context);
+    git(["-c", "core.hooksPath=/dev/null", "commit", "--allow-empty", "-m", "Already published merge message"]);
+    const base = git(["rev-parse", "HEAD"]);
+    git(["update-ref", "refs/remotes/upstream/main", base]);
+    git(["update-ref", "refs/remotes/origin/main", base]);
+    git(["commit", "--allow-empty", "-m", "fix: restore images"]);
+    const eventPath = path.join(directory, "range-event.json");
+    const run = async (name, event) => {
+        await fs.writeFile(eventPath, JSON.stringify(event));
+        return check(["--event"], { extraEnv: { GITHUB_EVENT_PATH: eventPath, GITHUB_EVENT_NAME: name } });
+    };
+    for (const valid of [true, false]) {
+        if (!valid) git(["-c", "core.hooksPath=/dev/null", "commit", "--allow-empty", "-m", "New invalid message"]);
+        const head = git(["rev-parse", "HEAD"]);
+        const expected = valid ? 0 : 1;
+        assert.equal(check(["--pre-push", "upstream"], { input: `refs/heads/main ${head} refs/heads/main ${base}\n` }).status, expected);
+        assert.equal(check(["--pre-push", "upstream"], { input: `refs/heads/feature ${head} refs/heads/feature ${"0".repeat(40)}\n` }).status, expected);
+        assert.equal((await run("push", { before: base, after: head })).status, expected);
+        assert.equal((await run("push", { before: "0".repeat(40), after: head, repository: { default_branch: "main" } })).status, expected);
+        assert.equal((await run("pull_request", { pull_request: { title: "Any title", base: { sha: base }, head: { sha: head } } })).status, expected);
+    }
 });
 
 test("merge queue checks contributor commits without rejecting the synthetic merge message", async context => {

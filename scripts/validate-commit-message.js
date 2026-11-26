@@ -65,9 +65,9 @@ function baseline() {
     return config.baseline;
 }
 
-function collectCommits(tips, { exclude = [], noMerges = false } = {}) {
+function collectCommits(tips, { exclude = [], noMerges = false, remote } = {}) {
     if (!tips.length) return [];
-    const output = git(["rev-list", "--reverse", ...(noMerges ? ["--no-merges"] : []), ...tips, "--not", baseline(), ...exclude]);
+    const output = git(["rev-list", "--reverse", ...(noMerges ? ["--no-merges"] : []), ...tips, "--not", baseline(), ...exclude, ...(remote ? [`--remotes=${remote}/*`] : [])]);
     return output ? output.split("\n") : [];
 }
 
@@ -80,28 +80,39 @@ function commitTip(ref, optional = false) {
     return result.stdout.trim();
 }
 
-function commitsForPush(input) {
+function existingCommit(ref) {
+    const result = spawnSync("git", ["rev-parse", "--verify", "--end-of-options", `${ref}^{commit}`], { encoding: "utf8" });
+    return result.status === 0 ? result.stdout.trim() : null;
+}
+
+function commitsForPush(input, remote = "origin") {
     const tips = [];
+    const exclude = [];
     for (const line of input.trim().split("\n")) {
         if (!line.trim()) continue;
         const fields = line.trim().split(/\s+/);
-        if (fields.length !== 4 || !/^[a-f0-9]+$/i.test(fields[1])) throw new Error("Invalid pre-push reference input.");
+        if (fields.length !== 4 || !/^[a-f0-9]+$/i.test(fields[1]) || !/^[a-f0-9]+$/i.test(fields[3])) throw new Error("Invalid pre-push reference input.");
+        const previous = existingCommit(fields[3]);
+        if (previous) exclude.push(previous);
         if (/^0+$/.test(fields[1])) continue;
         const tip = commitTip(fields[1], true);
         if (tip) tips.push(tip);
     }
-    return collectCommits([...new Set(tips)]);
+    return collectCommits([...new Set(tips)], { exclude, remote });
 }
 
 function eventTargets(event, eventName, sha) {
     if (eventName === "pull_request" || eventName === "pull_request_target") {
-        return { title: event.pull_request.title, tips: [commitTip(event.pull_request.head.sha)] };
+        return { tips: [commitTip(event.pull_request.head.sha)], exclude: event.pull_request.base ? [commitTip(event.pull_request.base.sha)] : [] };
     }
     if (eventName === "merge_group") {
         return { tips: [commitTip(event.merge_group.head_sha)], exclude: [commitTip(event.merge_group.base_sha)], noMerges: true };
     }
     const ref = eventName === "push" ? event.after : sha || "HEAD";
-    return { tips: !ref || /^0+$/.test(ref) ? [] : [commitTip(ref, eventName === "push")] };
+    const previous = eventName === "push" && event.before && !/^0+$/.test(event.before)
+        ? commitTip(event.before) : existingCommit(`refs/remotes/origin/${event.repository?.default_branch || "main"}`);
+    const tip = !ref || /^0+$/.test(ref) ? null : commitTip(ref, eventName === "push");
+    return { tips: tip ? [tip] : [], exclude: previous ? [previous] : [] };
 }
 
 function validateCommits(commits) {
@@ -139,8 +150,8 @@ function main(args = process.argv.slice(2)) {
     let checked = "message";
     if (args[0] === "--file" && args.length === 2) {
         issues = validateMessage(readMessageFile(args[1])).map(error => ({ subject: "Commit message", error }));
-    } else if (args[0] === "--pre-push" && args.length === 1) {
-        const commits = commitsForPush(fs.readFileSync(0, "utf8"));
+    } else if (args[0] === "--pre-push" && args.length <= 2) {
+        const commits = commitsForPush(fs.readFileSync(0, "utf8"), args[1]);
         checked = `${commits.length} commit(s)`;
         issues = validateCommits(commits);
     } else if (args[0] === "--range" && args.length === 2) {
@@ -152,11 +163,7 @@ function main(args = process.argv.slice(2)) {
         const targets = eventTargets(event, process.env.GITHUB_EVENT_NAME, process.env.GITHUB_SHA);
         const commits = collectCommits(targets.tips, targets);
         issues = validateCommits(commits);
-        if (targets.title !== undefined) {
-            const titleErrors = /[\r\n]/.test(targets.title) ? ["The pull request title must be a single Conventional Commits header."] : validateMessage(targets.title);
-            issues.unshift(...titleErrors.map(error => ({ subject: "Pull request title", error })));
-        }
-        checked = `${commits.length} commit(s)${targets.title !== undefined ? " and PR title" : ""}`;
+        checked = `${commits.length} commit(s)`;
     } else {
         throw new Error("Usage: node scripts/validate-commit-message.js --file <message-file> | --range <ref> | --pre-push | --event");
     }
