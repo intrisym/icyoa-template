@@ -2,15 +2,39 @@ name: CI
 
 on:
   push:
-    branches:
-      - main
-      - master
+  create:
   pull_request:
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+  merge_group:
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
+  conventional-commits:
+    name: Conventional Commits
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check out full commit history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate commit messages and pull request title
+        run: node scripts/validate-commit-message.js --event
+
   verify:
     name: Verify
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Check out repository
@@ -24,5 +48,5 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Run verification suite
-        run: npm test
+      - name: Validate CYOAs and run verification checks
+        run: sh scripts/check.sh

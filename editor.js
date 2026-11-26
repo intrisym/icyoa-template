@@ -9,6 +9,7 @@
         selectedFile: new URLSearchParams(window.location.search).get('cyoa') || null,
         filterQuery: ""
     };
+    let versionBusy = false;
     const CONFIG_ENDPOINT = "/api/config";
     const NECROMANCER_SPELL_SCHOOL_SLUGS = new Map([
         ["Liber Mortis", "liberMortis"],
@@ -231,7 +232,7 @@
 
     function getPreviewUrl() {
         return state.selectedFile
-            ? `index.html?cyoa=${encodeURIComponent(state.selectedFile)}`
+            ? `index.html?cyoa=${encodeURIComponent(state.selectedFile)}&editorPreview=1`
             : "index.html";
     }
 
@@ -357,7 +358,7 @@
     }
 
     function queueTempSave(data) {
-        if (!tempSyncState.enabled) return;
+        if (!tempSyncState.enabled || versionBusy || CyoaVersioning.metadata(state.data)?.status === "published") return;
         tempSyncState.pendingData = data;
         if (!tempSyncState.saving) {
             void flushTempSaveQueue();
@@ -418,7 +419,7 @@
                     error: "Config file must contain a JSON array."
                 };
             }
-            tempSyncState.enabled = true;
+            tempSyncState.enabled = CyoaVersioning.metadata(data)?.status !== "published";
             tempSyncState.warningShown = false;
             return {
                 ok: true,
@@ -1215,16 +1216,7 @@
         return normalized;
     }
 
-    function generateOptionId(label = "option", {
-        path = [],
-        skipOption = null
-    } = {}) {
-        const used = collectOptionIds();
-        if (skipOption && skipOption.id) {
-            used.delete(skipOption.id);
-        }
-
-        // Combine path parts and label
+    function getOptionIdBase(label, path) {
         const fullParts = [...path, label].filter(Boolean);
         const base = fullParts.map((p, i) => {
             const s = slugifyLabel(p);
@@ -1232,7 +1224,16 @@
             return i === 0 ? s : s.charAt(0).toUpperCase() + s.slice(1);
         }).join("");
 
-        const normalized = normalizeIdBase(base);
+        return normalizeIdBase(base);
+    }
+
+    function generateOptionId(label = "option", {
+        path = [],
+        skipOption = null
+    } = {}) {
+        const used = collectOptionIds();
+        if (skipOption && skipOption.id) used.delete(skipOption.id);
+        const normalized = getOptionIdBase(label, path);
         let candidate = normalized;
         let attempt = 1;
         while (used.has(candidate)) {
@@ -1245,6 +1246,7 @@
     function syncOptionIds(path, options = []) {
         if (!Array.isArray(options)) return;
         options.forEach(opt => {
+            if (opt.id) return;
             optionIdAutoMap.set(opt, true);
             opt.id = generateOptionId(opt.label, { path, skipOption: opt });
         });
@@ -1265,6 +1267,27 @@
             const basePath = [category?.name || ""].filter(Boolean);
             syncSubcategoryTreeOptionIds(basePath, category?.subcategories || []);
         });
+    }
+
+    function getSubcategoryOptionTargets(basePath, subcategories = []) {
+        return subcategories.flatMap(subcat => {
+            const path = [...basePath, subcat.name || ""].filter(Boolean);
+            return [
+                ...(subcat.options || []).map(option => ({ option, path })),
+                ...getSubcategoryOptionTargets(path, subcat.subcategories || [])
+            ];
+        });
+    }
+
+    function regenerateNamedOptionIds(targets, scopeChanges = []) {
+        const changes = CyoaOptionIds.regenerate(state.data, targets,
+            (option, path) => getOptionIdBase(option.label, path), scopeChanges);
+        if (changes.size || scopeChanges.length) {
+            renderGlobalSettings();
+            scheduleRenderCategories();
+        }
+        renderEditorNavigation(getCategorySnapshots());
+        schedulePreviewUpdate();
     }
 
     function schedulePreviewUpdate() {
@@ -3881,6 +3904,7 @@
             const nameInput = document.createElement("input");
             nameInput.type = "text";
             nameInput.value = category.name || "";
+            let previousCategoryName = nameInput.value;
             nameInput.placeholder = "Category name";
             nameInput.addEventListener("input", () => {
                 category.name = nameInput.value;
@@ -3895,9 +3919,16 @@
                 schedulePreviewUpdate();
             });
             nameInput.addEventListener("blur", () => {
-                syncSubcategoryTreeOptionIds([category.name], category.subcategories || []);
-                renderEditorNavigation(getCategorySnapshots());
-                schedulePreviewUpdate();
+                if (previousCategoryName === category.name) return;
+                const scopeChanges = [
+                    { kind: "category", before: previousCategoryName, after: category.name },
+                    { kind: "subcategory", before: previousCategoryName, after: category.name }
+                ];
+                previousCategoryName = category.name;
+                regenerateNamedOptionIds([
+                    ...(category.options || []).map(option => ({ option, path: [category.name] })),
+                    ...getSubcategoryOptionTargets([category.name], category.subcategories || [])
+                ], scopeChanges);
             });
             nameField.appendChild(nameLabel);
             nameField.appendChild(nameInput);
@@ -4094,6 +4125,7 @@
                 const subNameInput = document.createElement("input");
                 subNameInput.type = "text";
                 subNameInput.value = subcat.name || "";
+                let previousSubcategoryName = subNameInput.value;
                 subNameInput.placeholder = "Background";
                 subNameInput.addEventListener("input", () => {
                     subcat.name = subNameInput.value;
@@ -4108,9 +4140,13 @@
                     schedulePreviewUpdate();
                 });
                 subNameInput.addEventListener("blur", () => {
-                    syncSubcategoryTreeOptionIds([category.name], [subcat]);
-                    renderEditorNavigation(getCategorySnapshots());
-                    schedulePreviewUpdate();
+                    if (previousSubcategoryName === subcat.name) return;
+                    const basePath = [category.name, ...namePath];
+                    const scopeChanges = [{ kind: "subcategory",
+                        before: [...basePath, previousSubcategoryName].join(" > "),
+                        after: [...basePath, subcat.name].join(" > ") }];
+                    previousSubcategoryName = subcat.name;
+                    regenerateNamedOptionIds(getSubcategoryOptionTargets(basePath, [subcat]), scopeChanges);
                 });
                 subNameField.appendChild(subNameLabel);
                 subNameField.appendChild(subNameInput);
@@ -4715,6 +4751,7 @@
             const labelInput = document.createElement("input");
             labelInput.type = "text";
             labelInput.value = option.label || "";
+            let previousOptionLabel = labelInput.value;
             labelInput.placeholder = "Displayed choice text. Supports Markdown emphasis and legacy [color=#d32f2f], [weight=600], and [size=120%] tags.";
             labelInput.addEventListener("input", () => {
                 option.label = labelInput.value;
@@ -4727,21 +4764,9 @@
                 schedulePreviewUpdate();
             });
             labelInput.addEventListener("blur", () => {
-                const newId = generateOptionId(option.label, {
-                    path: normalizedPath,
-                    skipOption: option
-                });
-                option.id = newId;
-                optionIdAutoMap.set(option, true);
-                idInput.value = newId;
-                summaryLabel.innerHTML = "";
-                summaryLabel.appendChild(createSummaryHeader(
-                    formatOptionSummary(option),
-                    Object.keys(option.cost || {}).length ? [`${Object.keys(option.cost).length} cost type${Object.keys(option.cost).length === 1 ? "" : "s"}`] : []
-                ));
-                refreshOptionWarnings();
-                renderEditorNavigation(getCategorySnapshots());
-                schedulePreviewUpdate();
+                if (previousOptionLabel === option.label) return;
+                previousOptionLabel = option.label;
+                regenerateNamedOptionIds([{ option, path: normalizedPath }]);
             });
             labelField.appendChild(labelLabel);
             labelField.appendChild(labelInput);
@@ -6688,9 +6713,12 @@
 
     function handleImport(text) {
         try {
+            if (CyoaVersioning.metadata(state.data)?.status === "published") throw new Error("Create a draft before importing changes.");
             const parsed = JSON.parse(text);
             if (!Array.isArray(parsed)) throw new Error("Imported JSON must be an array.");
-            state.data = parsed;
+            const release = CyoaVersioning.metadata(state.data);
+            state.data = parsed.filter(entry => entry?.type !== "publication");
+            if (release) state.data.push(release);
             regenerateAllOptionIds();
             renderGlobalSettings();
             scheduleRenderCategories();
@@ -6715,10 +6743,11 @@
         const config = await loadSelectedConfig();
         if (config.ok) {
             state.data = config.data;
-            regenerateAllOptionIds();
+            if (!CyoaVersioning.metadata(state.data)) regenerateAllOptionIds();
             renderGlobalSettings();
             scheduleRenderCategories();
             schedulePreviewUpdate();
+            updateVersionControls();
             showEditorMessage(`Loaded ${state.selectedFile}`, "success");
             return;
         }
@@ -6730,18 +6759,45 @@
 
     async function fetchCyoaList() {
         try {
-            const res = await fetch("/api/cyoas");
+            const res = await fetch("/api/cyoas?editor=1", { cache: "no-store" });
             if (res.ok) return await res.json();
         } catch (e) { }
         return [];
     }
 
-    async function showSelectionModal() {
+    async function trashCyoa(cyoa, { currentOnly = false } = {}) {
+        if (cyoa.status === "published") return;
+        if (!confirm(`Move "${cyoa.title || cyoa.filename}" to trash?`)) return;
+        try {
+            const response = await fetch(`/api/cyoas?file=${encodeURIComponent(cyoa.filename)}`, { method: "DELETE" });
+            const result = await response.json();
+            if (!response.ok || !result.ok) throw new Error(result.error || "Failed to move this CYOA to trash.");
+            showEditorMessage(`Moved ${cyoa.filename} to trash.`, "success");
+            if (state.selectedFile === cyoa.filename) window.location.href = window.location.pathname;
+            else showSelectionModal({ currentOnly });
+        } catch (error) {
+            showEditorMessage(`Delete failed: ${error.message}`, "error");
+        }
+    }
+
+    async function showSelectionModal({ currentOnly = false } = {}) {
         const modal = document.getElementById("cyoaSelectionModal");
         const listContainer = document.getElementById("cyoaList");
         if (!modal || !listContainer) return;
 
+        const previousFocus = document.activeElement;
+        const close = () => {
+            modal.style.display = "none";
+            previousFocus?.focus();
+        };
+        modal.classList.toggle("version-selection-modal", currentOnly);
+        modal.querySelector(".modal-buttons").style.display = "flex";
         modal.style.display = "block";
+        const release = CyoaVersioning.metadata(state.data);
+        const seriesId = release?.seriesId || state.selectedFile;
+        document.getElementById("editorSelectionTitle").textContent = currentOnly ? "Choose Version" : "Choose or Create a CYOA";
+        modal.querySelector(".create-cyoa-form").hidden = currentOnly;
+        listContainer.textContent = currentOnly ? "Loading versions…" : "Loading CYOAs…";
         const cyoas = await fetchCyoaList();
         listContainer.innerHTML = "";
 
@@ -6750,53 +6806,70 @@
             return;
         }
 
-        cyoas.forEach(cyoa => {
+        const groups = CyoaVersioning.groupForEditor(cyoas, currentOnly ? seriesId : null);
+        if (currentOnly) {
+            if (!groups.length) {
+                listContainer.textContent = "No versions are available for this CYOA.";
+                modal.querySelector(".modal-buttons").style.display = "flex";
+                return;
+            }
+            modal.querySelector(".modal-buttons").style.display = "none";
+            CyoaVersionPicker.render({
+                container: listContainer,
+                versions: groups[0],
+                currentFile: state.selectedFile,
+                editor: true,
+                onOpen: version => version.filename === state.selectedFile ? close() : openEditorFile(version.filename),
+                onCancel: close,
+                onDelete: version => trashCyoa(version, { currentOnly: true })
+            });
+            return;
+        }
+        groups.forEach(versions => {
             const container = document.createElement("div");
             container.className = "cyoa-item-container";
 
             const item = document.createElement("div");
-            item.className = "cyoa-item";
-            item.textContent = cyoa.title || cyoa.filename;
-            item.onclick = () => {
-                const newUrl = new URL(window.location.href);
-                newUrl.searchParams.set('cyoa', cyoa.filename);
-                window.location.href = newUrl.toString();
-            };
+            item.className = "cyoa-version-group";
+            const current = versions.find(version => version.filename === state.selectedFile) || versions[0];
+            const title = document.createElement("strong");
+            title.textContent = current.title || current.filename;
+            item.appendChild(title);
+            const select = document.createElement("select");
+            select.setAttribute("aria-label", `Version of ${current.title || current.filename}`);
+            versions.forEach(cyoa => {
+                const option = document.createElement("option");
+                option.value = cyoa.filename;
+                option.textContent = cyoa.status === "draft"
+                    ? `Draft${cyoa.targetVersion ? ` v${cyoa.targetVersion}` : ""}${cyoa.baseVersion ? ` — based on v${cyoa.baseVersion}` : ""}`
+                    : cyoa.version ? `v${cyoa.version} — Published (read-only)` : "Version 1";
+                select.appendChild(option);
+            });
+            select.value = current.filename;
+            item.appendChild(select);
+            const openButton = document.createElement("button");
+            openButton.type = "button";
+            openButton.addEventListener("click", () => openEditorFile(select.value));
+            item.appendChild(openButton);
 
             const deleteBtn = document.createElement("button");
             deleteBtn.type = "button";
             deleteBtn.className = "delete-cyoa-btn";
             deleteBtn.innerHTML = "🗑️";
             deleteBtn.title = "Move to trash";
+            function updateSelectedVersion() {
+                const selected = versions.find(version => version.filename === select.value);
+                openButton.textContent = selected.status === "published" ? "View Version" : "Edit Draft";
+                if (selected.status === "legacy" || !selected.status) openButton.textContent = "Edit CYOA";
+                deleteBtn.disabled = selected.status === "published";
+                deleteBtn.title = deleteBtn.disabled ? "Published versions are preserved" : "Move selected draft to trash";
+            }
+            select.addEventListener("change", updateSelectedVersion);
+            updateSelectedVersion();
             deleteBtn.onclick = async (e) => {
                 e.stopPropagation();
-                if (!confirm(`Move "${cyoa.title || cyoa.filename}" to trash?`)) return;
-                try {
-                    const res = await fetch(`/api/cyoas?file=${encodeURIComponent(cyoa.filename)}`, {
-                        method: "DELETE"
-                    });
-                    const text = await res.text();
-                    let result;
-                    try {
-                        result = JSON.parse(text);
-                    } catch (parseErr) {
-                        if (res.status === 404) throw new Error("API endpoint not found. Please restart server.js to enable management features.");
-                        throw new Error(text.slice(0, 50) || `Server error ${res.status}`);
-                    }
-                    if (result.ok) {
-                        showEditorMessage(`Moved ${cyoa.filename} to trash.`, "success");
-                        // If we deleted the file we are currently editing, redirect to default
-                        if (state.selectedFile === cyoa.filename) {
-                            window.location.href = window.location.pathname; // Reload without query params
-                        } else {
-                            showSelectionModal(); // Refresh list
-                        }
-                    } else {
-                        throw new Error(result.error || "Failed to delete");
-                    }
-                } catch (err) {
-                    showEditorMessage(`Delete failed: ${err.message}`, "error");
-                }
+                const cyoa = versions.find(version => version.filename === select.value);
+                await trashCyoa(cyoa);
             };
 
             container.appendChild(item);
@@ -6842,7 +6915,94 @@
         }
     }
 
+    function updateVersionControls() {
+        const release = CyoaVersioning.metadata(state.data);
+        const published = release?.status === "published";
+        document.getElementById("versionStatus").textContent = published
+            ? `Published v${release.version} — read-only`
+            : release?.status === "draft"
+                ? `Draft${release.targetVersion ? ` v${release.targetVersion}` : ""}${release.baseVersion ? ` based on v${release.baseVersion}` : " — first release will be v0.1"}`
+                : "Version 1";
+        document.getElementById("editableContent").disabled = published || versionBusy;
+        document.getElementById("addCategoryBtn").disabled = published || versionBusy;
+        document.getElementById("importJsonBtn").disabled = published || versionBusy;
+        document.getElementById("createDraftBtn").disabled = !state.selectedFile || versionBusy;
+        document.getElementById("chooseEditorVersionBtn").disabled = !state.selectedFile || versionBusy;
+        document.getElementById("publishVersionBtn").hidden = release?.status !== "draft";
+        document.getElementById("publishVersionBtn").disabled = versionBusy;
+    }
+
+    function openEditorFile(filename) {
+        const target = new URL(window.location.href);
+        target.searchParams.set("cyoa", filename);
+        window.location.assign(target.toString());
+    }
+
+    async function requestVersionAction(action, values = {}) {
+        if (versionBusy) return;
+        versionBusy = true;
+        updateVersionControls();
+        try {
+            while (tempSyncState.saving) await new Promise(resolve => setTimeout(resolve, 25));
+            tempSyncState.pendingData = null;
+            if (CyoaVersioning.metadata(state.data)?.status !== "published") {
+                const save = await fetch(`${CONFIG_ENDPOINT}?file=${encodeURIComponent(state.selectedFile)}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(applyNecromancerSpellRulesForSave(cloneData(state.data), CyoaVersioning.metadata(state.data)?.seriesId || state.selectedFile))
+                });
+                if (!save.ok) throw new Error((await save.json()).error || "Could not save the latest edits.");
+            }
+            const response = await fetch(`/api/cyoas/${action}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ file: state.selectedFile, ...values })
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error || "Version action failed.");
+            openEditorFile(result.filename);
+        } finally {
+            versionBusy = false;
+            updateVersionControls();
+        }
+    }
+
     function setupEventListeners() {
+        document.getElementById("chooseEditorVersionBtn")?.addEventListener("click", () => showSelectionModal({ currentOnly: true }));
+        document.getElementById("createDraftBtn")?.addEventListener("click", async () => {
+            try {
+                await requestVersionAction("draft");
+            } catch (error) {
+                showEditorMessage(error.message, "error", 8000);
+            }
+        });
+        document.getElementById("publishVersionBtn")?.addEventListener("click", async () => {
+            try {
+                const response = await fetch(`/api/cyoas/next-version?file=${encodeURIComponent(state.selectedFile)}`, { cache: "no-store" });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || "Could not suggest a version.");
+                document.getElementById("publishVersion").value = result.version;
+                document.getElementById("releaseNotes").value = "";
+                document.getElementById("publishError").textContent = "";
+                document.getElementById("publishDialog").showModal();
+            } catch (error) {
+                showEditorMessage(error.message, "error", 8000);
+            }
+        });
+        document.getElementById("cancelPublishBtn")?.addEventListener("click", () => document.getElementById("publishDialog").close());
+        document.getElementById("publishForm")?.addEventListener("submit", async event => {
+            event.preventDefault();
+            const button = document.getElementById("confirmPublishBtn");
+            button.disabled = true;
+            try {
+                const version = CyoaVersioning.normalizeVersion(document.getElementById("publishVersion").value);
+                await requestVersionAction("publish", { version, releaseNotes: document.getElementById("releaseNotes").value });
+            } catch (error) {
+                document.getElementById("publishError").textContent = error.message;
+            } finally {
+                button.disabled = false;
+            }
+        });
         editorSearchInput?.addEventListener("input", () => {
             state.filterQuery = normalizeFilterText(editorSearchInput.value);
             scheduleRenderCategories();
@@ -6950,6 +7110,12 @@
 
         window.addEventListener("message", (event) => {
             if (!event.data) return;
+            if (event.data.type === "cyoa-choose-version" && event.origin === window.location.origin
+                && (event.source === previewFrame?.contentWindow || event.source === detachedPreviewWindow)) {
+                showSelectionModal({ currentOnly: true });
+                window.focus();
+                return;
+            }
             if (event.data.type === "cyoa-data-update-result") {
                 if (detachedPreviewWindow && detachedPreviewWindow.closed) {
                     detachedPreviewWindow = null;

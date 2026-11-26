@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CYOA Visual Editor</title>
     <link rel="stylesheet" href="editor.css">
+    <link rel="stylesheet" href="versionPicker.css">
 </head>
 
 <body>
@@ -25,6 +26,12 @@
                 </div>
                 <input id="importFileInput" type="file" accept="application/json" hidden>
             </header>
+            <div class="version-controls" aria-label="CYOA versions">
+                <span id="versionStatus" role="status">Select a CYOA to manage versions.</span>
+                <button id="chooseEditorVersionBtn" type="button" disabled>Choose Version</button>
+                <button id="createDraftBtn" type="button" disabled>Create Draft From This Version</button>
+                <button id="publishVersionBtn" type="button" hidden>Publish Version</button>
+            </div>
             <section class="editor-nav-shell" aria-label="Editor navigation">
                 <div class="editor-nav-toolbar">
                     <div class="editor-search">
@@ -40,8 +47,10 @@
                 <div id="editorNavigator" class="editor-navigator"></div>
             </section>
 
-            <div id="globalSettings"></div>
-            <div id="categoryList"></div>
+            <fieldset id="editableContent" class="editor-content">
+                <div id="globalSettings"></div>
+                <div id="categoryList"></div>
+            </fieldset>
         </section>
         <section class="preview-panel">
             <div class="preview-header">
@@ -57,9 +66,9 @@
     </div>
 
     <!-- CYOA Selection Modal -->
-    <div id="cyoaSelectionModal" class="modal">
+    <div id="cyoaSelectionModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="editorSelectionTitle">
         <div class="modal-content">
-            <h3>Choose or Create a CYOA</h3>
+            <h3 id="editorSelectionTitle">Choose or Create a CYOA</h3>
             
             <div class="create-cyoa-form">
                 <input id="newCyoaTitle" type="text" placeholder="New Adventure Title">
@@ -76,6 +85,24 @@
         </div>
     </div>
 
+    <dialog id="publishDialog">
+        <form id="publishForm" class="publish-form">
+            <h3>Publish Version</h3>
+            <p>This release will be read-only and have its own permanent player link. Older releases stay available.</p>
+            <label for="publishVersion">Version number</label>
+            <input id="publishVersion" name="version" required placeholder="0.1" autocomplete="off">
+            <label for="releaseNotes">Release notes (optional)</label>
+            <textarea id="releaseNotes" name="releaseNotes" rows="4" maxlength="10000"></textarea>
+            <p id="publishError" role="alert"></p>
+            <div class="panel-actions">
+                <button id="confirmPublishBtn" type="submit">Publish Version</button>
+                <button id="cancelPublishBtn" type="button" class="button-subtle">Cancel</button>
+            </div>
+        </form>
+    </dialog>
+    <script src="versioning.js"></script>
+    <script src="versionPicker.js"></script>
+    <script src="optionIds.js"></script>
     <script src="editor.js"></script>
 </body>
 

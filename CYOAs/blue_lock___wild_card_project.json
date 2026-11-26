@@ -547,5 +547,13 @@
   {
     "type": "backpack",
     "enabled": true
+  },
+  {
+    "type": "publication",
+    "seriesId": "blue_lock___wild_card_project.json",
+    "status": "published",
+    "version": "1.0",
+    "sourceUrl": "https://intrisym.github.io/icyoa-template/CYOAs/blue_lock___wild_card_project.json",
+    "preservedAt": "2026-11-25T02:44:13.429Z"
   }
 ]

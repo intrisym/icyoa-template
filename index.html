@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CYOA Character Builder</title>
     <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="versionPicker.css" />
 </head>
 
 <body>
@@ -40,6 +41,7 @@
             <button id="importBtn">Import Choices</button>
             <button id="resetBtn" style="background-color: #f44336; color: white;">Reset All</button>
             <button id="backpackBtn" style="display: none; background-color: #4CAF50; color: white;">View Backpack</button>
+            <button id="chooseVersionBtn" type="button" hidden>Choose Version</button>
         </div>
     </div>
 
@@ -54,13 +56,14 @@
     </div>
 
     <!-- CYOA Selection Modal -->
-    <div id="cyoaSelectionModal" class="modal">
+    <div id="cyoaSelectionModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="cyoaSelectionTitle">
         <div class="modal-content">
-            <h3>Choose a CYOA</h3>
+            <h3 id="cyoaSelectionTitle">Choose a CYOA</h3>
             <div id="cyoaList" class="cyoa-list">
                 <!-- CYOAs will be listed here -->
                 <p>Loading CYOAs...</p>
             </div>
+            <button id="closeVersionPickerBtn" type="button" hidden>Cancel</button>
         </div>
     </div>
 
@@ -85,6 +88,8 @@
         </div>
     </div>
 
+    <script src="versioning.js"></script>
+    <script src="versionPicker.js"></script>
     <script src="logicExpr.js"></script>
     <script src="script.js"></script>
 </body>

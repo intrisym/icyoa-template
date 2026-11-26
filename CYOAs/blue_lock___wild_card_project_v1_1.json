@@ -1,0 +1,1157 @@
+[
+  {
+    "type": "title",
+    "text": "Blue Lock - Wild Card Project"
+  },
+  {
+    "type": "description",
+    "text": "Following the massive success of the blue lock program, you have been selected as the first test subject of the wildcard project. Genetic treatment, neural recalibration, you name it. All of the best technology in the world is available so that you can become the best striker in the world."
+  },
+  {
+    "type": "headerImage",
+    "url": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fwallpapercave.com%2Fwp%2Fwp12045083.png&f=1&nofb=1&ipt=2fce8ec48739ea72dd67c5367bf7a3c25181c600a5f12d33cb8699ca488a857e"
+  },
+  {
+    "type": "points",
+    "values": {
+      "Weapons": 0
+    },
+    "allowNegative": [],
+    "attributeRanges": {},
+    "pointTooltips": {},
+    "pointCategories": {},
+    "pointCategoryDefaults": {},
+    "derivedValues": [],
+    "enableablePointSets": [],
+    "optionGroups": []
+  },
+  {
+    "type": "settings",
+    "themeMode": "light"
+  },
+  {
+    "type": "theme",
+    "bg-color": "#0B1622",
+    "container-bg": "#152233",
+    "text-color": "#FFFFFF",
+    "text-muted": "#94A3B8",
+    "accent-color": "#00A3FF",
+    "accent-text": "#0B1622",
+    "border-color": "#1E293B",
+    "item-bg": "#1E293B",
+    "item-header-bg": "#2D3748",
+    "points-bg": "#0066A6",
+    "points-border": "#0082CC",
+    "shadow-color": "rgba(0, 163, 255, 0.2)",
+    "points-text": "#f9fffb",
+    "option-meta-bg": "#0B1622",
+    "option-meta-heading-bg": "rgba(0, 163, 255, 0.18)",
+    "option-meta-heading-text": "#FFFFFF",
+    "option-meta-prerequisites-color": "#00A3FF",
+    "font-base": "20px",
+    "font-title": "44px",
+    "font-description": "22px",
+    "font-tab": "20px",
+    "font-accordion": "22px",
+    "font-subcategory": "24px",
+    "font-option-title": "21px",
+    "font-option-req": "18px",
+    "font-option-desc": "19px",
+    "font-story": "21px",
+    "font-story-input": "20px",
+    "font-points": "20px",
+    "font-points-value": "20px",
+    "font-prereq-help": "17px",
+    "font-label": "19px",
+    "font-heading": "Verdana, sans-serif",
+    "font-body": "'Quicksand', sans-serif",
+    "selection-glow-color": "#2563eb",
+    "option-meta-points-color": "#cccccc",
+    "option-meta-conditional-color": "#0ea5e9",
+    "option-meta-auto-grants-color": "#16a34a",
+    "option-meta-slider-modifiers-color": "#7c3aed",
+    "option-meta-random-results-color": "#db2777",
+    "option-meta-conflicts-color": "#dc2626"
+  },
+  {
+    "name": "Difficulty",
+    "subcategories": [
+      {
+        "name": "Difficulty",
+        "type": "storyBlock",
+        "text": "Choose one difficulty to set your starting Weapon points. Drawbacks can grant additional points.",
+        "maxSelections": 1,
+        "columnsPerRow": 3,
+        "options": [
+          {
+            "label": "Easy",
+            "description": "",
+            "id": "difficultyStartingBudgetEasy",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": -8
+                }
+              }
+            ],
+            "image": "https://i.pinimg.com/originals/66/c2/9e/66c29e463e3950e30d3582bb11fbb203.jpg"
+          },
+          {
+            "label": "Normal",
+            "description": "",
+            "id": "difficultyStartingBudgetNormal",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": -5
+                }
+              }
+            ],
+            "image": "https://preview.redd.it/colored-sendou-v0-1hcmrp9vyef71.jpg?width=1080&crop=smart&auto=webp&s=cf029dc8bf707a0e5170b27177ef0809a74b15e5"
+          },
+          {
+            "label": "Hard",
+            "description": "",
+            "id": "difficultyStartingBudgetHard",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": -3
+                }
+              }
+            ],
+            "image": "https://i.ytimg.com/vi/-CwFL2gOvD8/maxresdefault.jpg"
+          }
+        ],
+        "subcategories": []
+      }
+    ]
+  },
+  {
+    "name": "Ego",
+    "subcategories": [
+      {
+        "name": "Type",
+        "type": "storyBlock",
+        "text": "\"To become the world's best striker, you must choose your foundation. What motivates you when everything is on the line? How do you thrive under pressure?\" - Jinpachi Ego",
+        "options": [
+          {
+            "label": "Freedom",
+            "description": "You thrive in chaos - Creating, improvising, disrupting: You play best in broken formations and unplanned moments. Where your instincts rule. ",
+            "id": "egoTypeFreedom",
+            "image": "https://i.pinimg.com/736x/49/e1/20/49e120c407dacab1c8f24b5a4fdb2dde.jpg"
+          },
+          {
+            "label": "Restriction",
+            "description": "You sharpen under pressure. Tight systems, roles, and directives force you to evolve. You take constraints and weaponize them.",
+            "id": "egoTypeRestriction",
+            "image": "https://i.redd.it/k44hfubxw9381.png"
+          }
+        ],
+        "maxSelections": 1,
+        "subcategories": []
+      },
+      {
+        "name": "Category",
+        "type": "storyBlock",
+        "text": "\"The mutant geniuses with abnormal physical abilities and irregular plays become singularity points. By analyzing the geniuses and forming new tactics or data to counter them... the talented learners develop plays using a new kind of logic.\" - Jinpachi Ego",
+        "options": [
+          {
+            "label": "Wholistic (Talented Learner)",
+            "description": "You factor in every moving piece of the game. You adapt to every single player on the field and bend them to your will. ",
+            "id": "egoCategoryWholisticTalentedLearner",
+            "image": "https://i.pinimg.com/originals/33/23/d7/3323d70456fbae3c2469f1e8384d4acf.jpg?nii=t"
+          },
+          {
+            "label": "Individualistic (Genius)",
+            "description": "You are trained and honed through determination and obsession. You focus on yourself - Your body, your instincts, and your hunger. ",
+            "id": "egoCategoryIndividualisticGenius",
+            "image": "https://i.pinimg.com/736x/2a/5b/64/2a5b64268bf7ca0a273e7aacda2cc378.jpg"
+          }
+        ],
+        "maxSelections": 1,
+        "subcategories": []
+      },
+      {
+        "name": "Archetype",
+        "type": "storyBlock",
+        "text": "According to our data, you fall under this archetype. ",
+        "options": [
+          {
+            "label": "Maverick",
+            "description": "You reinvent football every time you touch the ball. You are pure unpredictability. A wild genius. ",
+            "id": "egoArchetypeMaverick",
+            "image": "https://preview.redd.it/bachira-colored-panel-v0-wr90dpjjan8a1.png?auto=webp&s=87ba4d85e4dbe29ceee72a845d9d3a16a4c30a76",
+            "prerequisites": "egoCategoryIndividualisticGenius && egoTypeFreedom"
+          },
+          {
+            "label": "Rebel",
+            "description": "Rules and resistance only feed your hunger. You are an unstoppable monster who never stops evolving. ",
+            "id": "egoArchetypeRebel",
+            "image": "https://i.pinimg.com/originals/71/12/0f/71120faa4155da447e7c0c7908077654.jpg",
+            "prerequisites": "egoCategoryIndividualisticGenius && egoTypeRestriction"
+          },
+          {
+            "label": "Monarch",
+            "description": "Every move is calculated. Nothing is wasted. You spin the odds to your favor. ",
+            "id": "egoArchetypeMonarch",
+            "image": "https://i.pinimg.com/474x/dc/fe/52/dcfe52f033a57516b9ccc7aef60f9a54.jpg?nii=t",
+            "prerequisites": "egoCategoryWholisticTalentedLearner && egoTypeRestriction"
+          },
+          {
+            "label": "Explorer",
+            "description": "You roam and venture into unknown territories. You plot and strategize faster than anyone else. ",
+            "id": "egoArchetypeExplorer",
+            "image": "https://i.pinimg.com/originals/c2/b8/12/c2b81257f9c4594d6b9f94bd64fa9861.jpg",
+            "prerequisites": "egoCategoryWholisticTalentedLearner && egoTypeFreedom"
+          }
+        ],
+        "maxSelections": 1,
+        "subcategories": []
+      }
+    ]
+  },
+  {
+    "name": "Physique",
+    "subcategories": [
+      {
+        "name": "Height",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Short",
+            "description": "",
+            "id": "physiqueHeightShort",
+            "image": "https://i.ytimg.com/vi/hV9xNRqYEyM/maxresdefault.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": -1
+                }
+              }
+            ]
+          },
+          {
+            "label": "Medium",
+            "description": "",
+            "id": "physiqueHeightMedium",
+            "image": "https://wallpaperaccess.com/full/9456223.jpg"
+          },
+          {
+            "label": "Tall",
+            "description": "",
+            "id": "physiqueHeightTall",
+            "image": "https://i.pinimg.com/originals/04/07/b6/0407b6c882df39b929ac798731a96411.jpg"
+          }
+        ],
+        "maxSelections": 1,
+        "subcategories": []
+      },
+      {
+        "name": "Build",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Lean",
+            "description": "",
+            "id": "physiqueBuildLean",
+            "image": "https://i.pinimg.com/736x/68/4b/75/684b755b5696c5dc4a4c1061ea379d84.jpg"
+          },
+          {
+            "label": "Balanced",
+            "description": "",
+            "id": "physiqueBuildBalanced",
+            "image": "https://i.pinimg.com/originals/a3/10/cb/a310cb128b7622f013a8b7a807f9ad02.jpg"
+          },
+          {
+            "label": "Bulky",
+            "description": "",
+            "id": "physiqueBuildBulky",
+            "image": "https://i.pinimg.com/originals/84/34/8a/84348a6cf18eb8d25139b52fd7e4b60f.jpg"
+          }
+        ],
+        "maxSelections": 1,
+        "subcategories": []
+      },
+      {
+        "name": "Strong Foot",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Right",
+            "description": "",
+            "id": "physiqueStrongFootRight",
+            "image": "https://i.pinimg.com/474x/a3/a5/24/a3a524af75ca48065085421da5fedacf.jpg?nii=t"
+          },
+          {
+            "label": "Left",
+            "description": "",
+            "id": "physiqueStrongFootLeft",
+            "image": "https://i.pinimg.com/474x/f9/ab/4d/f9ab4d9fa29e0b6fe6b7d9e7e9235080.jpg?nii=t"
+          }
+        ],
+        "maxSelections": 1,
+        "subcategories": []
+      }
+    ],
+    "description": "Your physique serves as the foundation of your physical capabilities, influencing your natural strengths, limitations, and overall athletic potential. While training and dedication can help overcome certain shortcomings, your natural build will ultimately influence how far you can develop specific talents and the playing styles best suited to you."
+  },
+  {
+    "name": "Weapons",
+    "subcategories": [
+      {
+        "name": "Physical",
+        "type": "storyBlock",
+        "text": "All world-class players have a consistent formula for producing goals. This formula is based on your natural talents and honed skills: Your weapons. What are the tools you have to score goals? ",
+        "options": [
+          {
+            "label": "Acceleration",
+            "description": "Your first step is nuclear. You hit top speed instantly, leaving defenders in the dust. ",
+            "id": "weaponsPhysicalAcceleration",
+            "image": "https://i.pinimg.com/originals/9d/ec/72/9dec72aa9e3422b66300d5d111ccfa2e.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": 1
+                }
+              }
+            ]
+          },
+          {
+            "label": "Acrobatics",
+            "description": "You dominate by flipping, contorting, and scoring from impossible angles mid-air.",
+            "id": "weaponsPhysicalAcrobatics",
+            "image": "https://i.pinimg.com/originals/ff/61/c7/ff61c7aa1bee728256905b2a2d1bf6bf.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": 1
+                }
+              }
+            ]
+          },
+          {
+            "label": "Balance",
+            "description": "You never go down no matter what. Shoulder checks, fouls, and uneven ground cannot stop you.",
+            "id": "weaponsPhysicalBalance",
+            "image": "https://wallpapercave.com/wp/wp15363657.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": 1
+                }
+              }
+            ]
+          },
+          {
+            "label": "Reach",
+            "description": "You stretch further than others thank to your long limbs and springlike flexibility. ",
+            "id": "weaponsPhysicalReach",
+            "image": "https://wallpapercave.com/wp/wp16021127.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": 1
+                }
+              }
+            ]
+          },
+          {
+            "label": "Speed",
+            "description": "You are a straight-line terror with a blistering top speed on the open field. ",
+            "id": "weaponsPhysicalSpeed",
+            "image": "https://i.pinimg.com/originals/22/71/18/227118e2b187f86d76d6ed6c2f835ead.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": 1
+                }
+              }
+            ]
+          },
+          {
+            "label": "Stamina",
+            "description": "You are a machine who sustains 100% performance deep into extra time. ",
+            "id": "weaponsPhysicalStamina",
+            "image": "https://wallpapercave.com/wp/wp15148705.webp",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": 1
+                }
+              }
+            ]
+          },
+          {
+            "label": "Strength",
+            "description": "You bulldoze defenders in every physical duel and press. ",
+            "id": "weaponsPhysicalStrength",
+            "image": "https://i.pinimg.com/736x/c7/08/92/c708926abffb4093344f70f1dcb58f3d.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": 1
+                }
+              }
+            ]
+          }
+        ],
+        "subcategories": []
+      },
+      {
+        "name": "Technical",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Ambidexterity",
+            "description": "Right or left doesn't matter. You shoot, dribble, and pass with both like a natural. ",
+            "id": "weaponsTechnicalAmbidexterity",
+            "image": "https://staticg.sportskeeda.com/editor/2024/05/6dfb3-17170656055725-1920.jpg?w=640",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": 1
+                }
+              }
+            ]
+          },
+          {
+            "label": "Ball Possession",
+            "description": "You can shield, protect, and keep possession of the ball under any pressure. ",
+            "id": "weaponsTechnicalBallPossession",
+            "image": "https://i.pinimg.com/736x/bb/e7/a1/bbe7a1ef70dd9c742add4c36af89cf3a.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": 1
+                }
+              }
+            ]
+          },
+          {
+            "label": "Dribbling",
+            "description": "You can break ankles and finesse defenders with surgical footwork.",
+            "id": "weaponsTechnicalDribbling",
+            "image": "https://i.pinimg.com/474x/63/ce/ac/63ceac057536fbc2f4792fb7041215fd.jpg?nii=t",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": 1
+                }
+              }
+            ]
+          },
+          {
+            "label": "Trapping",
+            "description": "You can control the ball instantly with a perfect first touch every time. ",
+            "id": "weaponsTechnicalTrapping",
+            "image": "https://i.pinimg.com/736x/bf/94/2f/bf942f011b356db114fe001871ea2b52.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": 1
+                }
+              }
+            ]
+          },
+          {
+            "label": "Passing",
+            "description": "You possess exceptional passing ability, capable of delivering pinpoint passes with extraordinary accuracy, timing, and precision. Whether threading the ball through tight defensive lines, executing long-range passes, or setting up scoring opportunities from seemingly impossible angles, you can consistently deliver the ball exactly where it needs to be.",
+            "id": "weaponsTechnicalPassing",
+            "image": "https://i.pinimg.com/736x/80/f7/63/80f763cd0cf1335c9036f89aa0ec0161.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": 1
+                }
+              }
+            ]
+          }
+        ],
+        "subcategories": []
+      },
+      {
+        "name": "Shooting",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Golden Zone",
+            "description": "You find your perfect kill spot on the field. Every spot from this golden zone is statistically lethal. ",
+            "id": "weaponsShootingGoldenZone",
+            "image": "https://static.wikia.nocookie.net/b25dffb0-fbde-4489-91d3-277e136dc8e4/scale-to-width/755",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": 1
+                }
+              }
+            ],
+            "conflictsWith": [
+              "drawbacksDrawbacksPoorFinisher"
+            ]
+          },
+          {
+            "label": "Curling Shot",
+            "description": "Your shots arc around walls and past keepers at absurd angles. ",
+            "id": "weaponsShootingCurlingShot",
+            "image": "https://i.ytimg.com/vi/-w9UwBIf1QE/maxresdefault.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": 1
+                }
+              }
+            ],
+            "conflictsWith": [
+              "drawbacksDrawbacksPoorFinisher"
+            ]
+          },
+          {
+            "label": "Direct Shot",
+            "description": "You shoot without delay, possessing a one-touch killer that strikes without warning. ",
+            "id": "weaponsShootingDirectShot",
+            "image": "https://i.pinimg.com/736x/36/78/72/367872de4768dd57344ee46dd846817d.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": 1
+                }
+              }
+            ],
+            "conflictsWith": [
+              "drawbacksDrawbacksPoorFinisher"
+            ]
+          },
+          {
+            "label": "Finesse Shot",
+            "description": "You can instantly thread shots from range with the perfect blend of power and precision. ",
+            "id": "weaponsShootingFinesseShot",
+            "image": "https://wallpapercave.com/wp/wp12172848.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": 1
+                }
+              }
+            ],
+            "conflictsWith": [
+              "drawbacksDrawbacksPoorFinisher"
+            ]
+          }
+        ],
+        "subcategories": []
+      },
+      {
+        "name": "Mental",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Off the ball movement",
+            "description": "You can shake off your marks and always appear in the most optimal spaces. ",
+            "id": "weaponsMentalOffTheBallMovement",
+            "image": "https://i.pinimg.com/originals/5c/43/a7/5c43a7871e4b2c7da8ef7d580c53c382.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": 1
+                }
+              }
+            ]
+          },
+          {
+            "label": "FIQ",
+            "description": "You read plays before they happen. You see the flow, angles, and shifts of the game like a master tactician. ",
+            "id": "weaponsMentalFiq",
+            "image": "https://i.pinimg.com/474x/8e/58/a2/8e58a2fa1df37acba60181b147aff46a.jpg?nii=t",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": 1
+                }
+              }
+            ]
+          },
+          {
+            "label": "EIQ",
+            "description": "You understand people and can manipulate them to your advantage. You stay in control while others might be provoked. ",
+            "id": "weaponsMentalEiq",
+            "image": "https://i.pinimg.com/originals/a0/2b/6e/a02b6e5da1ae4e2351725de18a3dd541.jpg?nii=t",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": 1
+                }
+              }
+            ]
+          },
+          {
+            "label": "Spatial Awareness",
+            "description": "You can track where everyone is and their movements so long as they are in your field of view. ",
+            "id": "weaponsMentalSpatialAwareness",
+            "image": "https://preview.redd.it/kurona-n-isagi-colored-panel-v0-f8egq6fuxvqa1.png?width=640&crop=smart&auto=webp&s=66f467a4a4a2dcadfe6227b50b2327ab333cd8ad",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": 1
+                }
+              }
+            ]
+          }
+        ],
+        "subcategories": []
+      },
+      {
+        "name": "Special",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Reflex",
+            "description": "You understand the mechanism behind \"Reflex\" and better apply it during matches. This allows you to process threats instantly, giving you the best reaction time when it counts. ",
+            "id": "weaponsSpecialReflex",
+            "image": "https://i.pinimg.com/736x/7a/1b/b3/7a1bb3d9b03d28cb32de3c13f654f9fa.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": 1
+                }
+              }
+            ]
+          },
+          {
+            "label": "Flow",
+            "description": "You understand the mechanism behind \"flow\" and better achieve it during matches. This allows you to tap into peak performance states with ease, reaching your best self at will. ",
+            "id": "weaponsSpecialFlow",
+            "image": "https://i.pinimg.com/originals/f6/00/a1/f600a12b024e6c71f643187f29312294.jpg?nii=t",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": 1
+                }
+              }
+            ]
+          },
+          {
+            "label": "Luck",
+            "description": "You understand the mechanism behind \"luck\" and better prepare for it during matches. This allows you to defy probability and chance. The ball will come to you when it truly matters. ",
+            "id": "weaponsSpecialLuck",
+            "image": "https://i.pinimg.com/474x/9e/70/60/9e7060b9eb04a320f1ca6923389df72a.jpg?nii=t",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": 1
+                }
+              }
+            ]
+          },
+          {
+            "label": "Predator Eye",
+            "description": "Prerequisites: Restriction and at least one of Curling Shot, Direct Shot, or Finesse Shot.\n\nYou only see the goal, and your focus narrows. Locking in on the keeper's movements. You strike at their weakest moment. ",
+            "id": "weaponsSpecialPredatorEye",
+            "prerequisites": "(weaponsShootingCurlingShot || weaponsShootingDirectShot || weaponsShootingFinesseShot) && egoTypeRestriction",
+            "image": "https://i.pinimg.com/originals/6a/69/98/6a699835feff16643d9bd1dd812e9150.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": 1
+                }
+              }
+            ]
+          },
+          {
+            "label": "Metavision",
+            "description": "Prerequisites: Wholistic (Talented Learner) and at least one of FIQ, EIQ, or Spatial Awareness.\n\nYou see everything. Constant scanning gives you a 360 godlike understanding of space and flow. ",
+            "id": "weaponsSpecialMetavision",
+            "prerequisites": "(weaponsMentalFiq || weaponsMentalEiq || weaponsMentalSpatialAwareness) && egoCategoryWholisticTalentedLearner",
+            "image": "https://otakukart.com/wp-content/uploads/2023/05/blue-lock-1.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": 1
+                }
+              }
+            ],
+            "conflictsWith": [
+              "egoCategoryIndividualisticGenius"
+            ]
+          }
+        ],
+        "subcategories": []
+      },
+      {
+        "name": "Combinations",
+        "type": "storyBlock",
+        "text": "",
+        "options": [
+          {
+            "label": "Monster of Physicality",
+            "description": "You possess the ultimate all-around physique in Blue Lock, a true Monster of Physicality. Across acceleration, speed, stamina, strength, and ambidexterity, you stand among the very best, rivaling the likes of Chigiri's speed, and Kunigami's strength post-Wild Card in their respective specialties. However, your chosen height and build elevate the physical attributes best suited to your physique even further, making you the undisputed best in Blue Lock within those domains, while your remaining attributes remain firmly among the elite.\n\nYour physical superiority is not absolute, however. Extraordinary anomalies blessed with heaven-defying gifts, such as Julian Loki's Godspeed, can still surpass you within their unique specialties. Nevertheless, your unparalleled combination of physical excellence makes you a monster even among monsters, possessing the potential to one day surpass even Noel Noa.",
+            "id": "weaponsCombinationsMonsterOfPhysicality",
+            "image": "https://wallpapercave.com/wp/wp15283834.jpg",
+            "prerequisites": "weaponsPhysicalAcceleration && weaponsPhysicalSpeed && weaponsPhysicalStamina && weaponsPhysicalStrength && weaponsTechnicalAmbidexterity"
+          },
+          {
+            "label": "Blessed by God",
+            "description": "You were born with a heaven-defying gift, an extraordinary anomaly that sets you apart from even the greatest footballers. In addition to Monster of Physicality, you now possess a singular, innate talent that defies conventional understanding. Much like Julian Loki's Godspeed, your gift is fundamentally unique to you, something that cannot be replicated through training, observation, or imitation.\n\nChoose one extraordinary ability rooted in an innate physical, neurological, sensory, or instinctual abnormality. Your gift cannot originate from the analytical intelligence, adaptability, or calculated techniques associated with Talented Learners. While its potential may be limitless, mastering it requires dedication and growth. You are a Genius, but whether your gift becomes an unrivaled weapon depends entirely on how you cultivate it.",
+            "id": "weaponsCombinationsBlessedByGod",
+            "image": "https://i.pinimg.com/736x/06/ac/97/06ac97f9eb92423ac66a0e38a3d171d6.jpg",
+            "prerequisites": "weaponsCombinationsMonsterOfPhysicality && egoCategoryIndividualisticGenius",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": 3
+                }
+              }
+            ],
+            "conflictsWith": [
+              "egoCategoryWholisticTalentedLearner"
+            ]
+          },
+          {
+            "label": "Eyes of God",
+            "description": "You possess an almost omniscient understanding of the football field, rivalling or even surpassing Isagi Yoichi's extraordinary spatial awareness and predictive abilities. By combining Metavision, exceptional intelligence, psychological insight, and an understanding of luck, you can anticipate players' movements, intentions, and decisions several steps ahead, perceiving opportunities invisible to others.\n\nBy manipulating opponents, influencing the flow of play, and positioning yourself at precisely the right moment, you can engineer situations where your desired outcome becomes almost inevitable. The entire field becomes your chessboard, with every player an unwitting piece in your grand strategy.",
+            "id": "weaponsCombinationsEyesOfGod",
+            "image": "https://i.pinimg.com/originals/28/bb/80/28bb80d109b42ef15d2781b2c320db2a.jpg?nii=t",
+            "prerequisites": "weaponsSpecialMetavision && weaponsSpecialLuck && weaponsMentalFiq && weaponsMentalEiq && weaponsMentalSpatialAwareness && weaponsMentalOffTheBallMovement"
+          },
+          {
+            "label": "The Chameleon",
+            "description": "You possess an extraordinary aptitude for understanding and replicating the techniques of other players, much like Reo Mikage. Through careful observation and exceptional football intelligence, you can analyze the movements, techniques, and decision-making processes behind another player's abilities, allowing you to reproduce their skills despite lacking their individual specializations.\n\nHowever, your copied abilities can only reach 99% of the original's effectiveness, and you cannot replicate techniques that exceed your natural physical capabilities. While you can imitate another player's shooting technique, dribbling style, or ball control, you cannot reproduce innate physical advantages such as extraordinary speed, strength, or reach. The more complex the technique, the greater the understanding and practice required to replicate it successfully.",
+            "id": "weaponsCombinationsTheChameleon",
+            "image": "https://i.pinimg.com/originals/1c/8d/c9/1c8dc9170fa6006e200feed00f4f51c7.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": 1
+                }
+              }
+            ],
+            "prerequisites": "weaponsMentalFiq  && weaponsMentalSpatialAwareness && weaponsTechnicalTrapping && weaponsTechnicalDribbling && weaponsTechnicalPassing && (weaponsShootingCurlingShot || weaponsShootingDirectShot || weaponsShootingFinesseShot)"
+          },
+          {
+            "label": "Perfect Assimilation",
+            "description": "Your extraordinary perception and analytical abilities have elevated The Chameleon beyond mere imitation into true assimilation. Through Eyes of God, you can instantly discern the underlying principles, mechanics, and weaknesses of another player's techniques, allowing you to reproduce and integrate them into your own arsenal at an unprecedented rate. Rather than blindly copying another player's movements, you instinctively understand how to adapt each technique to complement your own physique, strengths, and playing style.\n\nMore importantly, you are no longer bound by The Chameleon's 99% replication ceiling. By identifying inefficiencies, eliminating unnecessary movements, and combining compatible techniques, you can refine copied abilities into entirely new weapons that may even surpass their originals in effectiveness. However, your improvements remain constrained by your physical capabilities",
+            "id": "weaponsCombinationsPerfectAssimilation",
+            "prerequisites": "weaponsCombinationsEyesOfGod && weaponsCombinationsTheChameleon",
+            "image": "https://i.pinimg.com/originals/fc/e9/60/fce96097e9e0f7e8882fe1b75aae4ec6.jpg"
+          },
+          {
+            "label": "Brute Forcing",
+            "description": "Your monstrous physique and extraordinary talent for imitation have developed a terrifying synergy, allowing you to compensate for imperfections in copied techniques through sheer physical superiority. Where The Chameleon normally limits your imitations to 99% of their original effectiveness, your overwhelming speed, strength, acceleration, and coordination allow you to brute-force your way past this limitation, potentially achieving results that surpass the original user's execution.\n\nHowever, your superiority stems from your physical capabilities rather than a deeper mastery of the techniques themselves. While you can overpower the limitations of copied abilities through sheer athleticism, you cannot replicate innate anomalies or heaven-defying gifts beyond your body's capabilities. Your effectiveness ultimately depends on how well a technique complements your physique, with some copied abilities benefiting far more than others.",
+            "id": "weaponsCombinationsBruteForcing",
+            "image": "https://i.pinimg.com/originals/ae/5b/1f/ae5b1fefbc47aebf2fefdf82571356b3.jpg?nii=t",
+            "prerequisites": "weaponsCombinationsTheChameleon && weaponsCombinationsMonsterOfPhysicality"
+          },
+          {
+            "label": "The Puppeteer",
+            "description": "You possess an extraordinary ability to manipulate the movements and decisions of everyone on the field, treating players as pieces on your personal chessboard. By combining exceptional football intelligence, psychological insight, and pinpoint passing, you can exploit the habits, instincts, and expectations of others, subtly guiding teammates and opponents into positions that serve your ambitions.\n\nRather than simply responding to the flow of the match, you actively orchestrate it. Every pass becomes a calculated instrument of manipulation, forcing opponents into unfavorable positions while creating seemingly effortless opportunities for your teammates. Even those who recognize your intentions may find themselves dancing to your tune, their own decisions unwittingly advancing your plans.",
+            "id": "weaponsCombinationsThePuppeteer",
+            "image": "https://i.pinimg.com/originals/af/f7/5b/aff75b24a5f3ecfdb5e2838248ffb476.jpg",
+            "prerequisites": "weaponsTechnicalPassing && weaponsMentalFiq && weaponsMentalSpatialAwareness"
+          },
+          {
+            "label": "Phantom Striker",
+            "description": "You possess an almost supernatural ability to disappear from your opponents' awareness, becoming a phantom on the football field. By combining exceptional off-the-ball movement, explosive acceleration, spatial awareness, and psychological insight, you can instinctively exploit blind spots, manipulate attention, and slip away from even the most vigilant defenders.\n\nMore importantly, you can deliberately engineer moments when opponents lose track of you, exploiting their expectations and reactions to move undetected into dangerous positions. By the time they recognize your presence, you have already positioned yourself for the decisive play. However, opponents with exceptional spatial awareness or predictive abilities may still anticipate your movements.",
+            "id": "weaponsCombinationsPhantomStriker",
+            "image": "https://i.pinimg.com/originals/e5/df/3d/e5df3da38269d22e1cb2c28540a802e3.jpg",
+            "prerequisites": "weaponsMentalOffTheBallMovement && weaponsPhysicalAcceleration && weaponsMentalSpatialAwareness && weaponsMentalEiq"
+          },
+          {
+            "label": "Demon of the Penalty Area",
+            "description": "You possess an almost supernatural instinct for scoring goals, transforming the penalty area into your personal domain. Your extraordinary spatial awareness, reflexes, and acrobatic abilities allow you to instinctively perceive the goal's location without looking directly at it. Your body responds to scoring opportunities before conscious thought can intervene, enabling you to unleash devastating shots from unconventional angles and seemingly impossible positions.\n\nWithin your Golden Zone, your offensive instincts reach their absolute peak, allowing you to turn even the most awkward passes, rebounds, and aerial opportunities into legitimate scoring chances. You can execute extraordinary bicycle kicks, airborne volleys, and improvised finishes regardless of your body's orientation. However, your overwhelming scoring prowess remains most effective within your preferred territory, and exceptional defenders can still prevent you from receiving the ball.",
+            "id": "weaponsCombinationsDemonOfThePenaltyArea",
+            "image": "https://i.pinimg.com/originals/7a/1b/b3/7a1bb3d9b03d28cb32de3c13f654f9fa.jpg",
+            "prerequisites": "weaponsPhysicalAcrobatics && weaponsMentalSpatialAwareness && weaponsSpecialReflex && weaponsShootingDirectShot && weaponsShootingGoldenZone && egoCategoryIndividualisticGenius",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": 1
+                }
+              }
+            ]
+          },
+          {
+            "label": "The Dancing Monster",
+            "description": "You possess an extraordinary instinct for dribbling, transforming the ball into a natural extension of your body. Your movements transcend conventional techniques, allowing you to spontaneously weave together unpredictable feints, explosive accelerations, and unconventional maneuvers. Rather than consciously planning your movements, you instinctively create them in the moment, dancing through defenders with an almost supernatural rhythm.\n\nMore importantly, your creativity and instincts allow your dribbling to evolve continuously, producing movements and combinations that even you may never have attempted before. The more freely you express yourself, the more unpredictable and dangerous you become, making it exceptionally difficult for opponents to anticipate your next move. While your techniques can be studied and imitated, the instinctive creativity behind them remains uniquely yours.",
+            "id": "weaponsCombinationsTheDancingMonster",
+            "image": "https://i.pinimg.com/originals/7d/41/5f/7d415f34834d20861e83c14e0a9bc557.jpg",
+            "prerequisites": "egoCategoryIndividualisticGenius && weaponsTechnicalDribbling && weaponsPhysicalBalance && weaponsPhysicalAcceleration && weaponsSpecialReflex && weaponsSpecialFlow"
+          }
+        ],
+        "subcategories": []
+      }
+    ]
+  },
+  {
+    "name": "Drawbacks",
+    "subcategories": [
+      {
+        "name": "Drawbacks",
+        "type": "storyBlock",
+        "text": "Drawbacks gain extra points at the cost of enduring a setback or other type of handicap to add to the challenge.",
+        "options": [
+          {
+            "label": "Anxious",
+            "description": "You suffer from crippling anxiety, constantly fearing the worst and doubting your own abilities. Even trivial situations can trigger excessive worry, though sufficient motivation or an opportunity to prove yourself can temporarily push you beyond your insecurities.\n\nHowever, this anxiety is not insurmountable. Through repeated exposure to challenges, personal growth, and developing confidence in your abilities, you can gradually learn to manage your fears and eventually overcome this debilitating mindset.",
+            "id": "drawbacksDrawbacksAnxious",
+            "image": "https://i.pinimg.com/originals/c2/94/f9/c294f98a04c48299596732561fa6159d.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": -1
+                }
+              }
+            ]
+          },
+          {
+            "label": "Ticking Time Bomb",
+            "description": "You have suffered a serious anterior cruciate ligament (ACL) tear in the past. Although the injury has healed, your knee remains vulnerable to reinjury, particularly when subjected to excessive physical stress. Pushing yourself too hard, making sudden changes in direction, landing awkwardly, or overexerting your leg can potentially cause the injury to resurface.",
+            "id": "drawbacksDrawbacksTickingTimeBomb",
+            "image": "https://preview.redd.it/colored-my-favorite-panel-of-chigiri-v0-im5yx1wrzkx41.png?width=1080&crop=smart&auto=webp&s=fda5f0fdbb37ce1c6bc2036e7929586f0e2a20f0",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": -1
+                }
+              }
+            ]
+          },
+          {
+            "label": "Codependent",
+            "description": "Choose an existing character. You develop an intense and unhealthy attachment to this individual, believing your dreams and ambitions are best achieved together. You dread abandonment or replacement, and separation can provoke overwhelming feelings of jealousy, inadequacy, and despair.\n\nHowever, this attachment is not irreversible. Through personal growth, developing your own identity, and learning to find fulfillment independently, you can gradually overcome your emotional dependence and establish a healthier relationship without sacrificing your ambitions or individuality.",
+            "id": "drawbacksDrawbacksCodependent",
+            "image": "https://preview.redd.it/reo-colored-by-me-v0-0crnvbdyjq571.jpg?width=1080&crop=smart&auto=webp&s=31bc5ebe42ed70035246a133eadde6a0ab872df9",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": -1
+                }
+              }
+            ]
+          },
+          {
+            "label": "Puppet",
+            "description": "You possess a peculiar mentality, finding fulfillment in surrendering your ambitions, individuality, and free will to someone you consider worthy of serving. Rather than pursuing your own desires, you willingly become an instrument of another's will, taking pride in fulfilling their wishes.\n\nHowever, this mentality is not irreversible. Through profound personal growth, discovering your own desires, and developing a sense of self-worth, you can gradually reclaim your individuality and independence. Overcoming such deeply ingrained submission, however, will be exceptionally difficult.",
+            "id": "drawbacksDrawbacksPuppet",
+            "image": "https://criticalhits.com.br/wp-content/webp-express/webp-images/doc-root/wp-content/uploads/2026/07/Blue-Lock-capitulo-353-696x392.jpg.webp",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": -1
+                }
+              }
+            ],
+            "prerequisites": "drawbacksDrawbacksCodependent"
+          },
+          {
+            "label": "Optic Neuropathy",
+            "description": "You suffer from optic neuropathy. Your optic nerves are deteriorating, resulting in visual disturbances that become increasingly noticeable as you physically exert yourself or accumulate fatigue. These disturbances can manifest as blurred vision, blind spots, and dark spots obstructing your field of vision.\n\nUnfortunately, your condition is progressive, meaning your eyesight will continue to deteriorate over time. Without proper medical treatment, the damage will worsen, potentially culminating in complete blindness. While treatment can slow the progression of the disease, it cannot guarantee that your eyesight will be preserved indefinitely.",
+            "id": "drawbacksDrawbacksOpticNeuropathy",
+            "image": "https://preview.redd.it/yukimiya-colored-panel-v0-uoihu8n6z42d1.png?width=1080&crop=smart&auto=webp&s=e0465a572a270afb304300e69679829c109b0fdd",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": -1
+                }
+              }
+            ]
+          },
+          {
+            "label": "The King",
+            "description": "You possess an overwhelming ego and an unwillingness to rely on others when playing football. You believe yourself to be the protagonist on the field, destined to score goals and lead your team to victory. Consequently, you find it extremely difficult to pass the ball, even when doing so would be the better decision. Entrusting your chances to someone else feels like admitting inferiority.\n\nThis mentality makes teamwork difficult. You may ignore instructions, squander passing opportunities, and attempt to overcome opponents alone. You despise being overshadowed by teammates and resent playing a supporting role. While you aren't incapable of cooperation, doing so requires swallowing your pride. You don't want to be just another player on the field; you want to be its king.\n",
+            "id": "drawbacksDrawbacksTheKing",
+            "image": "https://otakukart.com/wp-content/uploads/2023/04/Awakened-Shoei-Baro-1.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": -1
+                }
+              }
+            ]
+          },
+          {
+            "label": "Unmotivated",
+            "description": "You possess an incredibly lazy and laid-back disposition, finding most things tedious and preferring relaxation over unnecessary effort. You struggle to motivate yourself, even when pursuing important goals, often neglecting training, avoiding challenges, and taking the path of least resistance.\n\nHowever, this mentality is not permanent. Through personal growth, discovering a genuine passion, or finding something worth striving for, you can gradually overcome your apathy and develop the discipline and ambition needed to pursue your goals.",
+            "id": "drawbacksDrawbacksUnmotivated",
+            "image": "https://i.pinimg.com/736x/d6/d9/01/d6d9014238021d7cd728c9579d112a99.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": -1
+                }
+              }
+            ]
+          },
+          {
+            "label": "Slow Starter",
+            "description": "You possess exceptionally poor acceleration, requiring considerably more time and distance to reach your maximum speed. Your sluggish first steps leave you vulnerable to explosive opponents, making it difficult to react to sudden changes in play, break away from defenders, or recover your positioning.\n\nHowever, this limitation can be overcome through dedicated training focused on explosive power, sprinting mechanics, and muscular development. While progress will be gradual, you can eventually develop acceleration comparable to other players.",
+            "id": "drawbacksDrawbacksSlowStarter",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": -1
+                }
+              }
+            ],
+            "conflictsWith": [
+              "weaponsPhysicalAcceleration"
+            ],
+            "image": "https://i.ytimg.com/vi/hLbJzzLSFHw/maxresdefault.jpg"
+          },
+          {
+            "label": "Inflexible",
+            "description": "Your body is unusually stiff and uncoordinated, making complex movements, aerial maneuvers, and unconventional shooting positions exceptionally difficult. You struggle to twist, contort, or adjust your body mid-motion, severely limiting your ability to execute acrobatic techniques.\n\nHowever, through consistent flexibility training, coordination exercises, and physical conditioning, you can gradually improve your bodily control and overcome these restrictions. Achieving exceptional acrobatic proficiency will nevertheless require considerable dedication.",
+            "id": "drawbacksDrawbacksInflexible",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": -1
+                }
+              }
+            ],
+            "conflictsWith": [
+              "weaponsPhysicalAcrobatics"
+            ],
+            "image": "https://i.ytimg.com/vi/OsJBwILZ8Pw/maxresdefault.jpg"
+          },
+          {
+            "label": "Limited Reach",
+            "description": "You possess an unusually limited effective reach, whether due to shorter limbs, restricted mobility, or poor extension. You frequently struggle to intercept passes, contest loose balls, and reach opponents who would otherwise be within tackling distance, putting you at a disadvantage in physical confrontations.\n\nWhile your natural proportions cannot easily be changed, you can gradually overcome these limitations through improved flexibility, positioning, timing, and movement techniques. With sufficient development, you can compensate for your restricted reach, though your inherent physical proportions will remain unchanged.",
+            "id": "drawbacksDrawbacksLimitedReach",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": -1
+                }
+              }
+            ],
+            "conflictsWith": [
+              "weaponsPhysicalReach"
+            ],
+            "image": "https://wallpaperaccess.com/full/18720732.jpg"
+          },
+          {
+            "label": "Slow Footed",
+            "description": "Your maximum running speed is considerably below average, making you particularly vulnerable against faster opponents. Even when given sufficient time to accelerate, you struggle to keep pace during extended sprints, leaving you disadvantaged in breakaways, defensive recoveries, and open-field confrontations.\n\nHowever, through dedicated sprint training, muscular development, and improved running mechanics, you can gradually increase your maximum speed. While reaching the level of naturally gifted speedsters may remain difficult, you can eventually overcome your most significant shortcomings.",
+            "id": "drawbacksDrawbacksSlowFooted",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": -1
+                }
+              }
+            ],
+            "conflictsWith": [
+              "weaponsPhysicalSpeed"
+            ],
+            "image": "https://i.ytimg.com/vi/WmoIXL_8p8I/maxresdefault.jpg"
+          },
+          {
+            "label": "Poor Endurance",
+            "description": "You possess exceptionally poor stamina, causing you to tire significantly faster than other players. Prolonged exertion rapidly diminishes your speed, strength, concentration, and technical precision, making it increasingly difficult to maintain your performance throughout an entire match.\n\nHowever, this weakness can be overcome through consistent cardiovascular conditioning, endurance training, and improved physical discipline. With sufficient dedication, you can gradually build the stamina necessary to sustain peak performance for extended periods.",
+            "id": "drawbacksDrawbacksPoorEndurance",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": -1
+                }
+              }
+            ],
+            "conflictsWith": [
+              "weaponsPhysicalStamina"
+            ],
+            "image": "https://wallpapercave.com/wp/wp12276655.jpg"
+          },
+          {
+            "label": "Physically Weak",
+            "description": "You possess an unusually weak physique, leaving you severely disadvantaged in physical confrontations. You struggle to withstand aggressive challenges, shield the ball against stronger opponents, or overpower defenders, making you particularly vulnerable in situations requiring raw physical strength.\n\nHowever, through dedicated resistance training, proper conditioning, and muscular development, you can gradually overcome your physical shortcomings. While matching naturally powerful players may require extraordinary effort, you can eventually develop sufficient strength to compete on equal footing.",
+            "id": "drawbacksDrawbacksPhysicallyWeak",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": -1
+                }
+              }
+            ],
+            "conflictsWith": [
+              "weaponsPhysicalStrength"
+            ],
+            "image": "https://i.ytimg.com/vi/ymjGEyJr9k0/maxresdefault.jpg"
+          },
+          {
+            "label": "Poor Finisher",
+            "description": "Much like Asahi Naruhaya, you possess a glaring weakness in your ability to score goals. Even when you successfully outmaneuver defenders and create perfect scoring opportunities, you struggle to convert them into goals. Your shots frequently lack the necessary accuracy, power, or timing, causing you to squander opportunities that more capable strikers would easily capitalize on.\n\nHowever, this deficiency is not permanent. Through dedicated shooting practice, technical refinement, and developing a reliable goal-scoring formula suited to your strengths, you can gradually overcome your shortcomings. Until then, no matter how exceptional your other abilities may be, delivering the finishing blow will remain your greatest obstacle.",
+            "id": "drawbacksDrawbacksPoorFinisher",
+            "image": "https://i.pinimg.com/736x/5e/33/a1/5e33a15f6cf24b30c10157d10502e01c.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": -1
+                }
+              }
+            ]
+          },
+          {
+            "label": "One-Footed",
+            "description": "You possess an overwhelming reliance on your dominant foot, with your weaker foot being exceptionally unreliable. Shooting, passing, dribbling, and even controlling the ball become significantly more difficult when forced to use it. Experienced opponents can easily exploit this weakness by restricting access to your preferred side, severely limiting your offensive options and making your movements predictable.\n\nHowever, this limitation is not permanent. Through dedicated training, repetition, and developing coordination with your weaker foot, you can gradually overcome this imbalance. While achieving true ambidexterity will require considerable effort, you can eventually develop sufficient proficiency to use both feet effectively.",
+            "id": "drawbacksDrawbacksOneFooted",
+            "conflictsWith": [
+              "weaponsTechnicalAmbidexterity"
+            ],
+            "image": "https://i.pinimg.com/originals/e1/40/61/e14061841d5a05614cb1cc0e47725a20.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": -1
+                }
+              }
+            ]
+          },
+          {
+            "label": "Simpleminded",
+            "description": "You struggle to understand complex tactics, recognize subtle patterns, and anticipate sophisticated plays. While your instincts and physical abilities may be exceptional, experienced opponents can exploit your limited tactical understanding. Through study and match experience, you can gradually develop your football intelligence.",
+            "id": "drawbacksDrawbacksSimpleminded",
+            "image": "https://us.oricon-group.com/upimg/detail/2000/2073/img660/1bed59f31bfc4582d1bf2d797d7b36a8.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": -1
+                }
+              }
+            ],
+            "conflictsWith": [
+              "weaponsMentalFiq",
+              "weaponsSpecialMetavision"
+            ]
+          },
+          {
+            "label": "Uncreative",
+            "description": "You struggle to independently create scoring situations. Without a teammate or opponent providing direction, your play becomes stagnant and predictable. Through experience and experimentation, you can gradually develop your own creativity.",
+            "id": "drawbacksDrawbacksUncreative",
+            "image": "https://i.pinimg.com/736x/04/e1/c4/04e1c4a2162fa7ce6e1ddee557f38afa.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": -1
+                }
+              }
+            ],
+            "conflictsWith": [
+              "weaponsCombinationsPerfectAssimilation"
+            ]
+          },
+          {
+            "label": "Poor Passing",
+            "description": "Your passing technique is remarkably unreliable, with even relatively straightforward passes suffering from inconsistent accuracy, timing, or weight. This makes coordinated attacks difficult and forces teammates to compensate for your mistakes.",
+            "id": "drawbacksDrawbacksPoorPassing",
+            "image": "https://image.idntimes.com/post/20230212/fireshot-capture-263-netflix-wwwnetflixcom-a8971d207a7a3ee867d6e60c9fc9a7a6.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": -1
+                }
+              }
+            ],
+            "conflictsWith": [
+              "weaponsTechnicalPassing"
+            ]
+          },
+          {
+            "label": "Aerial Liability",
+            "description": "You are exceptionally poor at contesting balls in the air, frequently mistiming jumps, losing aerial duels, and failing to make effective headers. Even when physically capable of reaching the ball, you struggle to capitalize on aerial opportunities.",
+            "id": "drawbacksDrawbacksAerialLiability",
+            "image": "https://i.pinimg.com/originals/bb/52/c5/bb52c510d5ea16189a356ac77bb94ff3.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": -1
+                }
+              }
+            ],
+            "conflictsWith": [
+              "weaponsPhysicalAcrobatics",
+              "physiqueHeightTall"
+            ]
+          },
+          {
+            "label": "Hesistant Tackler",
+            "description": "You instinctively shy away from committing to tackles and physical challenges, allowing opponents additional freedom when carrying the ball.",
+            "id": "drawbacksDrawbacksHesistantTackler",
+            "image": "https://i.pinimg.com/736x/74/ec/f8/74ecf8bfd02c3cd27c857ac645db7edc.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Weapons": -1
+                }
+              }
+            ]
+          }
+        ],
+        "subcategories": []
+      }
+    ]
+  },
+  {
+    "type": "backpack",
+    "enabled": true
+  },
+  {
+    "type": "darkTheme",
+    "bg-color": "#111827",
+    "container-bg": "#1f2937",
+    "text-color": "#f3f4f6",
+    "text-muted": "#9ca3af",
+    "accent-color": "#b91c1c",
+    "accent-text": "#ffffff",
+    "border-color": "#374151",
+    "item-bg": "#1f2937",
+    "item-header-bg": "#374151",
+    "points-bg": "rgba(185, 28, 28, 0.95)",
+    "points-border": "#fbbf24",
+    "points-text": "#000000",
+    "selection-glow-color": "#2563eb",
+    "shadow-color": "rgba(0, 0, 0, 0.5)",
+    "option-meta-bg": "#111827",
+    "option-meta-heading-bg": "rgba(185, 28, 28, 0.18)",
+    "option-meta-heading-text": "#f3f4f6",
+    "option-meta-points-color": "#fbbf24",
+    "option-meta-conditional-color": "#38bdf8",
+    "option-meta-auto-grants-color": "#22c55e",
+    "option-meta-slider-modifiers-color": "#a78bfa",
+    "option-meta-random-results-color": "#f472b6",
+    "option-meta-prerequisites-color": "#f59e0b",
+    "option-meta-conflicts-color": "#f87171",
+    "font-base": "20px",
+    "font-title": "44px",
+    "font-description": "22px",
+    "font-tab": "20px",
+    "font-accordion": "22px",
+    "font-subcategory": "24px",
+    "font-option-title": "24px",
+    "font-option-req": "19px",
+    "font-option-desc": "23px",
+    "font-story": "21px",
+    "font-story-input": "20px",
+    "font-points": "20px",
+    "font-points-value": "20px",
+    "font-prereq-help": "17px",
+    "font-label": "19px",
+    "font-heading": "Verdana, sans-serif",
+    "font-body": "'Quicksand', sans-serif"
+  },
+  {
+    "type": "publication",
+    "seriesId": "blue_lock___wild_card_project.json",
+    "status": "published",
+    "version": "1.1",
+    "sourceFile": "blue_lock___wild_card_project_draft_v1_1.json",
+    "publishedAt": "2026-11-26T16:45:09.055Z",
+    "releaseNotes": ""
+  }
+]
