@@ -44,6 +44,32 @@ test("nested prerequisite syntax and logical object shapes are validated", () =>
     assert.deepEqual(validateCyoaData("test.json", data).errors, []);
 });
 
+test("prerequisite array strings are literal IDs, including hyphens and count suffixes", () => {
+    const data = fixture();
+    const source = data[2].subcategories[0].options[0];
+    source.id = "dash-id";
+    source.maxSelections = 3;
+    option(data).conflictsWith = ["dash-id"];
+    for (const prerequisite of ["dash-id", "dash-id__2"]) {
+        option(data).prerequisites = [prerequisite];
+        assert.deepEqual(validateCyoaData("test.json", data).errors, []);
+    }
+    option(data).prerequisites = ["missing-dash-id"];
+    const missingErrors = validateCyoaData("test.json", data).errors;
+    assert(missingErrors.some(error => error.includes('references unknown option ID "missing-dash-id"')));
+    assert(!missingErrors.some(error => error.includes("invalid prerequisite expression")));
+});
+
+test("non-string prerequisite array entries still receive recursive expression and type validation", () => {
+    for (const prerequisite of [42, { not: "speed ||" }]) {
+        const data = fixture();
+        option(data).prerequisites = [prerequisite];
+        const errors = validateCyoaData("test.json", data).errors;
+        assert(errors.some(error => error.includes(".prerequisites[0]")
+            && (error.includes("invalid prerequisite expression") || error.includes("must be a prerequisite string"))));
+    }
+});
+
 test("incompatibilities reject objects, numbers, and blank array entries", () => {
     for (const conflicts of [{ id: "speed" }, 42, ["speed", ""], [null], [42]]) {
         const data = fixture();

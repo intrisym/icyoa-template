@@ -190,7 +190,9 @@ function extractRequirementIds(requirement) {
 function validateRequirementExpression(file, context, requirement, errors) {
     if (requirement === undefined || requirement === null) return;
     if (Array.isArray(requirement)) {
-        requirement.forEach((entry, index) => validateRequirementExpression(file, `${context}[${index}]`, entry, errors));
+        requirement.forEach((entry, index) => {
+            if (typeof entry !== "string") validateRequirementExpression(file, `${context}[${index}]`, entry, errors);
+        });
         return;
     }
     if (typeof requirement === "object") {
