@@ -2973,10 +2973,17 @@ async function fetchCyoaList() {
 async function showCyoaSelectionModal({ seriesId = null } = {}) {
     const modal = document.getElementById("cyoaSelectionModal");
     const listContainer = document.getElementById("cyoaList");
+    const previousFocus = document.activeElement;
+    const close = () => {
+        modal.style.display = "none";
+        previousFocus?.focus();
+    };
+    modal.classList.toggle("version-selection-modal", !!seriesId);
     modal.style.display = "block";
     document.getElementById("cyoaSelectionTitle").textContent = seriesId ? "Choose Version" : "Choose a CYOA";
     document.getElementById("closeVersionPickerBtn").hidden = !seriesId;
 
+    listContainer.textContent = seriesId ? "Loading versions…" : "Loading CYOAs…";
     const cyoas = await fetchCyoaList();
     listContainer.innerHTML = "";
 
@@ -2985,7 +2992,29 @@ async function showCyoaSelectionModal({ seriesId = null } = {}) {
         return;
     }
 
-    CyoaVersioning.groupPublished(cyoas, seriesId).forEach(versions => {
+    const groups = CyoaVersioning.groupPublished(cyoas, seriesId);
+    const playVersion = version => {
+        if (version.filename === currentCyoaFile) {
+            close();
+            return;
+        }
+        const target = new URL(window.location.href);
+        target.searchParams.delete("latest");
+        target.searchParams.set("cyoa", version.filename);
+        window.location.href = target.toString();
+    };
+    if (seriesId) {
+        if (!groups.length) {
+            listContainer.textContent = "No published versions are available for this CYOA.";
+            document.getElementById("closeVersionPickerBtn").hidden = false;
+            return;
+        }
+        document.getElementById("closeVersionPickerBtn").hidden = true;
+        CyoaVersionPicker.render({ container: listContainer, versions: groups[0], currentFile: currentCyoaFile,
+            onOpen: playVersion, onCancel: close });
+        return;
+    }
+    groups.forEach(versions => {
         const cyoa = versions[0];
         const item = document.createElement("div");
         item.className = "cyoa-item";

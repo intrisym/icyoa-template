@@ -6765,16 +6765,39 @@
         return [];
     }
 
+    async function trashCyoa(cyoa, { currentOnly = false } = {}) {
+        if (cyoa.status === "published") return;
+        if (!confirm(`Move "${cyoa.title || cyoa.filename}" to trash?`)) return;
+        try {
+            const response = await fetch(`/api/cyoas?file=${encodeURIComponent(cyoa.filename)}`, { method: "DELETE" });
+            const result = await response.json();
+            if (!response.ok || !result.ok) throw new Error(result.error || "Failed to move this CYOA to trash.");
+            showEditorMessage(`Moved ${cyoa.filename} to trash.`, "success");
+            if (state.selectedFile === cyoa.filename) window.location.href = window.location.pathname;
+            else showSelectionModal({ currentOnly });
+        } catch (error) {
+            showEditorMessage(`Delete failed: ${error.message}`, "error");
+        }
+    }
+
     async function showSelectionModal({ currentOnly = false } = {}) {
         const modal = document.getElementById("cyoaSelectionModal");
         const listContainer = document.getElementById("cyoaList");
         if (!modal || !listContainer) return;
 
+        const previousFocus = document.activeElement;
+        const close = () => {
+            modal.style.display = "none";
+            previousFocus?.focus();
+        };
+        modal.classList.toggle("version-selection-modal", currentOnly);
+        modal.querySelector(".modal-buttons").style.display = "flex";
         modal.style.display = "block";
         const release = CyoaVersioning.metadata(state.data);
         const seriesId = release?.seriesId || state.selectedFile;
         document.getElementById("editorSelectionTitle").textContent = currentOnly ? "Choose Version" : "Choose or Create a CYOA";
         modal.querySelector(".create-cyoa-form").hidden = currentOnly;
+        listContainer.textContent = currentOnly ? "Loading versions…" : "Loading CYOAs…";
         const cyoas = await fetchCyoaList();
         listContainer.innerHTML = "";
 
@@ -6783,7 +6806,26 @@
             return;
         }
 
-        CyoaVersioning.groupForEditor(cyoas, currentOnly ? seriesId : null).forEach(versions => {
+        const groups = CyoaVersioning.groupForEditor(cyoas, currentOnly ? seriesId : null);
+        if (currentOnly) {
+            if (!groups.length) {
+                listContainer.textContent = "No versions are available for this CYOA.";
+                modal.querySelector(".modal-buttons").style.display = "flex";
+                return;
+            }
+            modal.querySelector(".modal-buttons").style.display = "none";
+            CyoaVersionPicker.render({
+                container: listContainer,
+                versions: groups[0],
+                currentFile: state.selectedFile,
+                editor: true,
+                onOpen: version => version.filename === state.selectedFile ? close() : openEditorFile(version.filename),
+                onCancel: close,
+                onDelete: version => trashCyoa(version, { currentOnly: true })
+            });
+            return;
+        }
+        groups.forEach(versions => {
             const container = document.createElement("div");
             container.className = "cyoa-item-container";
 
@@ -6827,33 +6869,7 @@
             deleteBtn.onclick = async (e) => {
                 e.stopPropagation();
                 const cyoa = versions.find(version => version.filename === select.value);
-                if (!confirm(`Move "${cyoa.title || cyoa.filename}" to trash?`)) return;
-                try {
-                    const res = await fetch(`/api/cyoas?file=${encodeURIComponent(cyoa.filename)}`, {
-                        method: "DELETE"
-                    });
-                    const text = await res.text();
-                    let result;
-                    try {
-                        result = JSON.parse(text);
-                    } catch (parseErr) {
-                        if (res.status === 404) throw new Error("API endpoint not found. Please restart server.js to enable management features.");
-                        throw new Error(text.slice(0, 50) || `Server error ${res.status}`);
-                    }
-                    if (result.ok) {
-                        showEditorMessage(`Moved ${cyoa.filename} to trash.`, "success");
-                        // If we deleted the file we are currently editing, redirect to default
-                        if (state.selectedFile === cyoa.filename) {
-                            window.location.href = window.location.pathname; // Reload without query params
-                        } else {
-                            showSelectionModal(); // Refresh list
-                        }
-                    } else {
-                        throw new Error(result.error || "Failed to delete");
-                    }
-                } catch (err) {
-                    showEditorMessage(`Delete failed: ${err.message}`, "error");
-                }
+                await trashCyoa(cyoa);
             };
 
             container.appendChild(item);
