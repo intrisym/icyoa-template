@@ -17,7 +17,13 @@
       "CP": 1000
     },
     "allowNegative": [],
-    "attributeRanges": {}
+    "attributeRanges": {},
+    "pointTooltips": {},
+    "pointCategories": {},
+    "pointCategoryDefaults": {},
+    "derivedValues": [],
+    "enableablePointSets": [],
+    "optionGroups": []
   },
   {
     "type": "settings",
@@ -67,7 +73,9 @@
     "font-prereq-help": "17px",
     "font-label": "19px",
     "font-heading": "Verdana, sans-serif",
-    "font-body": "'Quicksand', sans-serif"
+    "font-body": "'Quicksand', sans-serif",
+    "option-meta-slider-modifiers-color": "#7c3aed",
+    "option-meta-random-results-color": "#db2777"
   },
   {
     "type": "darkTheme",
@@ -109,7 +117,9 @@
     "font-prereq-help": "16px",
     "font-label": "18px",
     "font-heading": "Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif",
-    "font-body": "'Trebuchet MS', 'Segoe UI', sans-serif"
+    "font-body": "'Trebuchet MS', 'Segoe UI', sans-serif",
+    "option-meta-slider-modifiers-color": "#a78bfa",
+    "option-meta-random-results-color": "#f472b6"
   },
   {
     "name": "Background",
@@ -1130,5 +1140,12 @@
         "maxSelections": 1
       }
     ]
+  },
+  {
+    "type": "publication",
+    "seriesId": "the_boys.json",
+    "status": "published",
+    "version": "1.0",
+    "publishedAt": "2026-11-27T16:33:29.841Z"
   }
 ]

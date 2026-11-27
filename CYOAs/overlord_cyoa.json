@@ -1574,7 +1574,7 @@
               "Attribute Points": 1,
               "Wisdom": -1
             },
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fwww.manga-city.fr%2Fwp-content%2Fuploads%2F2022%2F12%2Fjircniv-overlord-1024x512.jpg&f=1&nofb=1&ipt=1bb8fdaae48132e5241f0ceba882ad4e9b4ae322fbdbf032d5d1c4cfd03b4162"
+            "image": "https://i.pinimg.com/736x/68/ae/ed/68aeed2924fb555b487953b55a0a8efd.jpg"
           },
           {
             "label": "Charisma",
@@ -1706,7 +1706,7 @@
                 }
               }
             ],
-            "image": "https://wallpapercave.com/wp/wp6371818.png"
+            "image": "https://i.pinimg.com/originals/76/ac/05/76ac057c2b01143c9558297f93f819fb.jpg"
           },
           {
             "label": "Human (Martial)",
@@ -2053,7 +2053,7 @@
                 "retroactive": true
               }
             ],
-            "image": "https://wallpapercave.com/wp/wp4180003.png",
+            "image": "https://i.pinimg.com/originals/31/52/81/3152817d278d684d322a9cf1bf065db3.jpg",
             "costOptions": [
               {
                 "cost": {
@@ -2343,7 +2343,7 @@
             "label": "Arthropod",
             "description": "Can see in a limited 360 degree FoV, granting Immunity to Critical Hits\n\nCan see in Complete Darkness\n\nPossess Natural Weapons\n\nCan Repair their Natural Weapons and Exoskeleton",
             "id": "raceHeteromorphArthropod",
-            "image": "https://cdn.donmai.us/original/ee/77/__entoma_vasilissa_zeta_overlord_drawn_by_nb2kyfv8vhie06g__ee77cefc9da5fc0b76497757c43a3d2a.jpg",
+            "image": "https://i.pinimg.com/originals/1c/4e/58/1c4e583fe45469f5b45cf42915ab10b4.png",
             "costOptions": [
               {
                 "cost": {
@@ -2579,7 +2579,7 @@
             "label": "Nymph (Sylvan)",
             "description": "Sylvan have cloven hooves and can issue simple commands to Plant NPCs\n\nBeing Detected can afflict Targets with Fascination\n\nCan shift into a Unique Bestial form, in which they possess Natural Weapons\n\nCan see in Dim Lighting",
             "id": "raceHeteromorphNymphSylvan",
-            "image": "https://vulplex.com/images/featured/Enchanted-Anime-Wallpaper-Mystical-Nymph-in-Lush-Greenery-671cc6a48f456.jpg",
+            "image": "https://i.pinimg.com/736x/e6/37/30/e637307a4d425e0a7f953757bab4c1de.jpg",
             "costOptions": [
               {
                 "cost": {
@@ -3115,7 +3115,7 @@
             "label": "Genie",
             "description": "Ethereal alternate form becomes your base appearance, and can assume a Humanoid alternate form\n\nCan cast any not known spell, but only at the behest of Others. This generates a spell or magical effect that will be suited to the task of accomplishing the \"wish\". Has a chance of backfiring horribly when \"wish\" is worded improperly.\n\nAre specialized in the Conjuration spell school, and can cast Conjuration spells at halved Mana cost",
             "id": "advancedRacialClassesDjinnGenie",
-            "image": "https://dyn1.heritagestatic.com/ha?p=2-7-0-7-6-27076747&it=product",
+            "image": "https://i.pinimg.com/474x/66/33/dd/6633dde07490cf96c067784d3df9824f.jpg",
             "costOptions": [
               {
                 "cost": {
@@ -3820,7 +3820,7 @@
                 }
               }
             ],
-            "image": "https://creator.nightcafe.studio/api/og-creation.jpg?id=FsEHtP6gafiEZuusndbo"
+            "image": "https://i.pinimg.com/736x/82/4b/53/824b53c280f5e77a4deda40a6953ea95.jpg"
           },
           {
             "label": "Scarab ",
@@ -4049,7 +4049,7 @@
                 }
               }
             ],
-            "image": "https://image-b2.civitai.com/file/civitai-media-cache/c1c57d98-1846-4f2a-b8c2-c0ecc6be076e/450x%3Cauto%3E_du"
+            "image": "https://i.pinimg.com/736x/cc/e6/60/cce660b2d27e9a212398e6d7ec87b3a5.jpg"
           }
         ],
         "subcategories": []
@@ -4091,7 +4091,7 @@
                 }
               }
             ],
-            "image": "https://thf.bing.com/th/id/OIP.yWMMKp_q-wU6yngCMWkFggHaHa?cb=thfc1falcon2&pid=Api"
+            "image": "https://i.pinimg.com/originals/11/47/e2/1147e2c36cb38828840d3b6ecadee286.jpg"
           },
           {
             "label": "Earthworm",
@@ -4259,7 +4259,7 @@
                 }
               }
             ],
-            "image": "https://w0.peakpx.com/wallpaper/653/604/HD-wallpaper-bugs-fighting-a-carnivore-plant-fighting-plant-carnivore-bugs-teeth.jpg",
+            "image": "https://i.pinimg.com/originals/ba/68/e5/ba68e59beefce5c2758f878359432f3b.png",
             "prerequisites": "raceHeteromorphPlanterran",
             "conflictsWith": [
               "advancedRacialClassesPlanterransShamblingMoss"
@@ -4815,7 +4815,7 @@
             "label": "Sylph (Martial)",
             "description": "Can Fly twice as fast and are 50% harder to hit while moving during flight\n\nCan effortlessly hover while Flying, Mana Regeneration is enhanced while hovering",
             "id": "advancedRacialClassesFairiesSylphMartial",
-            "image": "https://embed.pixiv.net/artwork.php?illust_id=141197077&mdate=1771097827",
+            "image": "https://i.pinimg.com/200x150/b3/e2/c0/b3e2c0d10b11be0f8018c0d97725253c.jpg",
             "costOptions": [
               {
                 "cost": {
@@ -4834,7 +4834,7 @@
             "label": "Sylph (Caster)",
             "description": "Can Fly twice as fast and are 50% harder to hit while moving during flight\n\nCan effortlessly hover while Flying, Mana Regeneration is enhanced while hovering",
             "id": "advancedRacialClassesFairiesSylphCaster",
-            "image": "https://creator.nightcafe.studio/api/og-creation.jpg?id=8A8CfGAHs8AvofXihYY7",
+            "image": "https://i.pinimg.com/736x/c0/a5/57/c0a557605bda88178893cb95594e911f.jpg",
             "costOptions": [
               {
                 "cost": {
@@ -4965,7 +4965,7 @@
             "label": "Gorgon",
             "description": "Targets who share a gaze can be afflicted with Petrification\n\nCan Perform a lengthy cast time to cast Spells that inflict Status Effects at halved Mana cost\n\nNatural Weapons have a chance to inflict Poison DoT",
             "id": "advancedRacialClassesNymphGorgon",
-            "image": "https://wallpapercave.com/wp/wp9715623.jpg",
+            "image": "https://i.pinimg.com/736x/4f/bb/d3/4fbbd39fc519993f74abed6ebd5c81d8.jpg",
             "costOptions": [
               {
                 "cost": {
@@ -5319,7 +5319,7 @@
             "label": "Blutsauger",
             "description": "Gain a secondary Mana Pool that is filled by absorbing Vitality\n\nCan absorb Vitality from a Target through touch",
             "id": "advancedRacialClassesUndeadBlutsauger",
-            "image": "https://wallpapercave.com/wp/wp10087173.jpg",
+            "image": "https://i.pinimg.com/originals/b9/b2/fa/b9b2faeec0d75703099a22ece17183e7.jpg",
             "costOptions": [
               {
                 "cost": {
@@ -5423,7 +5423,7 @@
             "label": "Revenant",
             "description": "Are aware of precise location of any nearby Living\n\nCan Perform an Action to reflect damage from an opponent's Physical attack back at them, but this requires precise timing",
             "id": "advancedRacialClassesUndeadRevenant",
-            "image": "https://wallpapercave.com/wp/wp8580785.jpg",
+            "image": "https://i.pinimg.com/originals/0f/d8/16/0fd8168fadc1bb584dbf2c4c7e6a2070.jpg",
             "prerequisites": "advancedRacialClassesUndeadDullahan",
             "costOptions": [
               {
@@ -5450,7 +5450,7 @@
                 }
               }
             ],
-            "image": "https://wallpapercave.com/wp/wp8580816.jpg"
+            "image": "https://i.pinimg.com/originals/8f/08/97/8f0897c8a7d98990eb076d31f58e2967.jpg"
           },
           {
             "label": "Ghost",
@@ -5608,7 +5608,7 @@
                 }
               }
             ],
-            "image": "https://wallpapercave.com/wp/wp6367886.jpg"
+            "image": "https://i.pinimg.com/originals/29/2e/9b/292e9b2c66d577f1ec55203199c8e271.jpg"
           },
           {
             "label": "Barbarian",
@@ -5731,7 +5731,7 @@
                 }
               }
             ],
-            "image": "https://static.vecteezy.com/system/resources/previews/023/141/739/non_2x/a-fantasy-woman-rogue-with-many-weapons-in-a-burning-forest-illustration-ai-generated-photo.jpg"
+            "image": "https://i.pinimg.com/originals/84/c7/a4/84c7a437a546c1a1780ac5829d2880a3.jpg"
           },
           {
             "label": "Hunter",
@@ -5827,7 +5827,7 @@
             "label": "Athlete",
             "description": "  Can Perform Physical Action Commands while Running, Swimming, or Flying with no penalties for movement\n\n  Maximum movement speed is increased and moving quickly consumes less Stamina\n\n  While moving quickly you are 50% harder to Knock Out or Stagger\n\n  Receive no movement penalty regardless of Environment",
             "id": "jobClassesBaseJobClassesAthlete",
-            "image": "https://wallpapercave.com/wp/wp2042357.jpg",
+            "image": "https://i.pinimg.com/236x/de/fd/0e/defd0ec3ce8053ec3d869b01e1051d44.jpg",
             "costOptions": [
               {
                 "cost": {
@@ -6115,7 +6115,7 @@
                 }
               }
             ],
-            "image": "https://w0.peakpx.com/wallpaper/473/508/HD-wallpaper-warrior-armor-art-fantasy-shield-steve-man.jpg",
+            "image": "https://i.pinimg.com/736x/32/4d/19/324d1940b904559fe132665baac03c9d.jpg",
             "prerequisites": "jobClassesBaseJobClassesShieldbearer"
           },
           {
@@ -6322,7 +6322,7 @@
                 }
               }
             ],
-            "image": "https://wallpapercave.com/wp/wp4715533.jpg",
+            "image": "https://i.pinimg.com/originals/be/1e/32/be1e324925417385f6c6c360f3089bd3.jpg",
             "prerequisites": "group(\"martialWeaponry\") && (group(\"divineSpellcasting\") || group(\"arcaneSpellcasting\") || group(\"natureSpellcasting\"))"
           },
           {
@@ -6508,7 +6508,7 @@
                 }
               }
             ],
-            "image": "https://wallpapercave.com/wp/wp5427784.jpg",
+            "image": "https://i.pinimg.com/736x/74/94/50/749450c7fa701b731b55ca8f75e5e8e1.jpg",
             "prerequisites": "jobClassesAdvancedJobClassesAssassin"
           },
           {
@@ -6523,7 +6523,7 @@
                 }
               }
             ],
-            "image": "https://w0.peakpx.com/wallpaper/13/40/HD-wallpaper-jester-fantasy-vainglory-girl-ghost-throne-game-pink-blue.jpg",
+            "image": "https://i.pinimg.com/474x/dc/d5/4e/dcd54e755511d4c7102044f192e73b21--jester-harlequin.jpg",
             "prerequisites": "jobClassesBaseJobClassesBard && Thievery 30+"
           },
           {
@@ -7047,7 +7047,7 @@
             "label": "Blight Mage (Req. any Spellcasting and CON 15+) ",
             "description": "  Can Perform an Action to inflict Sap DoT, Poison DoT, or Disease DoT on a Target for no Mana cost, once every 6 hours\n\n  Can convert damage from Sap DoT, Poison DoT, or Disease DoT into Vitality\n\n  Any DoT effects you inflict on a Target last much longer, and you are Immune to Sap DoT, Poison DoT, and Disease DoT",
             "id": "jobClassesAdvancedJobClassesBlightMageReqAnySpellcastingAndCon15",
-            "image": "https://www.wargamer.com/wp-content/sites/wargamer/2022/11/DnD-poisoned-5e-guide-ray-of-sickness.jpg",
+            "image": "https://i.pinimg.com/originals/f6/46/c0/f646c0fcccf345b2e19bf516b31ed68b.jpg",
             "costOptions": [
               {
                 "cost": {
@@ -7154,7 +7154,7 @@
             "label": "Radiant Adept (Req. any Spellcasting and any % of Light Resistance) ",
             "description": "  Can Purchase radiant Spells from the Yggdrasil Cash Shop\n\n  Cast Radiant and Light Energy spells at halved Mana cost\n\n  Radiant and Light energy Spells have a small chance to Dispel any magic effects on a Target\n",
             "id": "jobClassesAdvancedJobClassesRadiantAdeptReqAnySpellcastingAndAnyOfLightResistance",
-            "image": "https://mrwallpaper.com/images/file/mystical-light-mage-artwork-szkfrfzlbjtomdd3.jpg",
+            "image": "https://i.pinimg.com/originals/03/56/20/035620f49c65039fb5b96617c541c423.jpg",
             "costOptions": [
               {
                 "cost": {
@@ -7219,7 +7219,7 @@
             "label": "Runesmith",
             "description": "  Have Arcane Spellcasting (WIS)\n\n  Can temporarily imbue Crafted Objects with an Arcane Spell\n\n  Can identify any Spells imbued into a Consumable, Weapon, or Crafted Object\n",
             "id": "jobClassesAdvancedJobClassesRunesmith",
-            "image": "https://teaandweed.com/wp-content/uploads/2021/08/armorer-subclass-artificer.jpeg",
+            "image": "https://i.pinimg.com/originals/b8/c3/47/b8c34736a3b154f91fc5da24ced02509.jpg",
             "costOptions": [
               {
                 "cost": {
@@ -7290,7 +7290,7 @@
             "label": "Cambion - Ranged Weaponry",
             "description": "Know how to use Ranged Weaponry (notably Firearms) \n\n  Can Perform an Action to inflict nearby Targets with Confusion or Fascination\n",
             "id": "jobClassesHumanoidEvolutionsCambionRangedWeaponry",
-            "image": "https://uploads.worldanvil.com/uploads/images/b12c7d7774bdedbe4d1c126626e3d2c7.png",
+            "image": "https://i.pinimg.com/custom_covers/200x150/788200440973188835_1535832648.jpg",
             "costOptions": [
               {
                 "cost": {
@@ -7346,7 +7346,7 @@
               }
             ],
             "prerequisites": "(raceHumanoidHumanMartialHalfblood || raceHumanoidHumanCasterHalfblood) && raceHeteromorphUndead",
-            "image": "https://www.mothersalwaysright.com/wp-content/uploads/2025/09/what-Is-a-half-vampire-dhampir-facts-guide.png"
+            "image": "https://i.pinimg.com/736x/1e/01/9b/1e019b5ad18a19888de8d71afee9f4f4.jpg"
           },
           {
             "label": "Ancient Elf",
@@ -7607,7 +7607,7 @@
                 "retroactive": true
               }
             ],
-            "image": "https://images8.alphacoders.com/103/thumb-1920-1036937.jpg"
+            "image": "https://i.pinimg.com/originals/30/c6/92/30c6926728716d0acfa6a2b0fd1ee178.jpg"
           },
           {
             "label": "Maximus",
@@ -7704,7 +7704,7 @@
                 }
               }
             ],
-            "image": "https://images.rawpixel.com/image_social_landscape/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIzLTA4L3Jhd3BpeGVsX29mZmljZV8xNF93YXRlcmNvbG9yX2lsbHVzdHJhdGlvbl9vZl9saWdodGVyX2ZsYW1lX2lzb181MDk2YjAwNS1hY2RlLTRiZTMtOTZhMS0xN2NiY2NjNTQxZjZfMS5qcGc.jpg"
+            "image": "https://i.pinimg.com/736x/18/ef/4a/18ef4a0f8c8b91db5786acbe2cf65d09--lighter.jpg"
           },
           {
             "label": "Refrigerator",
@@ -7804,7 +7804,7 @@
             "label": "Garment",
             "description": "highest evade, no supernatural penalty",
             "id": "cashShopAndGachaCashShopGarment",
-            "image": "https://lexica.art/prompt/06e63338-f284-46d7-addf-c14cb86fa324/opengraph-image?d26e3adb96114073"
+            "image": "https://i.pinimg.com/originals/a2/17/07/a21707fea734c83b6e0ce8608fb65bd0.jpg"
           },
           {
             "label": "Greatshield",
@@ -7846,7 +7846,7 @@
             "label": "Natural Gear",
             "description": "Natural",
             "id": "cashShopAndGachaCashShopNaturalGear",
-            "image": "https://static.vecteezy.com/system/resources/previews/010/876/333/original/dragon-claw-marks-scratches-of-monster-wild-beast-vector.jpg"
+            "image": "https://i.pinimg.com/736x/d5/28/83/d52883c298604e143fb3b63cc6dff03d.jpg"
           },
           {
             "label": "Bow/Crossbow",
@@ -9540,5 +9540,12 @@
         ]
       }
     ]
+  },
+  {
+    "type": "publication",
+    "seriesId": "overlord_cyoa.json",
+    "status": "published",
+    "version": "0.1",
+    "publishedAt": "2026-11-27T06:46:45.241Z"
   }
 ]

@@ -17,7 +17,17 @@
       "Points": 12
     },
     "allowNegative": [],
-    "attributeRanges": {}
+    "attributeRanges": {},
+    "pointTooltips": {},
+    "pointCategories": {},
+    "pointCategoryDefaults": {},
+    "derivedValues": [],
+    "enableablePointSets": [],
+    "optionGroups": []
+  },
+  {
+    "type": "settings",
+    "themeMode": "toggle"
   },
   {
     "type": "backpack",
@@ -36,7 +46,36 @@
     "item-header-bg": "#ffeae7",
     "points-bg": "#ffd700",
     "points-border": "#e6b800",
-    "shadow-color": "rgba(228,27,19,0.08)"
+    "shadow-color": "rgba(228,27,19,0.08)",
+    "points-text": "#000000",
+    "selection-glow-color": "#2563eb",
+    "option-meta-bg": "#f8fafc",
+    "option-meta-heading-bg": "rgba(0, 122, 204, 0.14)",
+    "option-meta-heading-text": "#333333",
+    "option-meta-points-color": "#cccccc",
+    "option-meta-conditional-color": "#0ea5e9",
+    "option-meta-auto-grants-color": "#16a34a",
+    "option-meta-slider-modifiers-color": "#7c3aed",
+    "option-meta-random-results-color": "#db2777",
+    "option-meta-prerequisites-color": "#f59e0b",
+    "option-meta-conflicts-color": "#dc2626",
+    "font-base": "20px",
+    "font-title": "44px",
+    "font-description": "22px",
+    "font-tab": "20px",
+    "font-accordion": "22px",
+    "font-subcategory": "24px",
+    "font-option-title": "24px",
+    "font-option-req": "19px",
+    "font-option-desc": "23px",
+    "font-story": "21px",
+    "font-story-input": "20px",
+    "font-points": "20px",
+    "font-points-value": "20px",
+    "font-prereq-help": "17px",
+    "font-label": "19px",
+    "font-heading": "Verdana, sans-serif",
+    "font-body": "'Quicksand', sans-serif"
   },
   {
     "name": "Benefits",
@@ -49,9 +88,8 @@
           {
             "label": "Frictionless Aura",
             "description": "The Speed Force's most basic and necessary power grants a weak force field around you, protecting you from air resistance and friction heat with the ground, allowing you to run at triple digit speeds without shredding your skin or causing massive turbulence in your wake. This only extends up to wind speeds of a certain level and does nothing to block large solid or liquid matter, hence limiting you to below the speed of sound, as the sonic boom will liquefy your organs. Additionally, you cannot strike with too much speed as it will shatter your human fists against the target, nor can you perform superhuman feats of strength like lifting a full-grown man. ",
-            "cost": {},
             "id": "benefitsBasicBenefitsFrictionlessAura",
-            "image": "https://wallpapercave.com/wp/wp7311709.jpg"
+            "image": "https://i.pinimg.com/originals/20/68/60/2068605c86a7f33992e85822a7ab2d0e.jpg"
           },
           {
             "label": "Super Speed",
@@ -61,7 +99,8 @@
             "image": "https://images2.alphacoders.com/918/thumb-1920-918754.jpg"
           }
         ],
-        "columnsPerRow": 2
+        "columnsPerRow": 2,
+        "subcategories": []
       },
       {
         "name": "Costume",
@@ -108,7 +147,8 @@
               "Points": 1
             }
           }
-        ]
+        ],
+        "subcategories": []
       }
     ]
   },
@@ -197,7 +237,8 @@
               "Points": 1
             }
           }
-        ]
+        ],
+        "subcategories": []
       },
       {
         "name": "Redline Stunts",
@@ -239,7 +280,8 @@
               "Points": 2
             }
           }
-        ]
+        ],
+        "subcategories": []
       }
     ]
   },
@@ -391,7 +433,8 @@
               "Points": 1
             }
           }
-        ]
+        ],
+        "subcategories": []
       }
     ]
   },
@@ -448,18 +491,21 @@
           {
             "label": "Contacts",
             "description": "You have extensive and well formed contacts, allowing you to quickly gather information on subjects or make special requests normally difficult to find.",
-            "cost": {},
             "id": "perksPerksContacts",
-            "image": "https://static.manweimi.cn/wp-content/uploads/2023/08/2023080617005724.jpg"
+            "image": "https://i.pinimg.com/originals/60/48/35/6048356384e47143a9fe441f342aae41.jpg"
           },
           {
             "label": "Ultimate Speed",
             "description": "You have achieved ultimate understanding of the speed force, allowing you to execute moves and maneuvers with practiced ease. Every week, you can tap into your speed, force knowledge to execute a speed stunt or red line you have not taken.",
-            "cost": {
-              "Points": 2
-            },
             "id": "perksPerksUltimateSpeed",
-            "image": "https://www.comicbookherald.com/wp-content/uploads/2016/06/silver-age-flash.png"
+            "image": "https://i.pinimg.com/originals/64/b1/e8/64b1e846a59cb085419bb71f85f21df5.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Points": 2
+                }
+              }
+            ]
           },
           {
             "label": "Lifeline",
@@ -477,7 +523,8 @@
               "Points": 1
             }
           }
-        ]
+        ],
+        "subcategories": []
       }
     ]
   },
@@ -571,7 +618,8 @@
               "Points": 1
             }
           }
-        ]
+        ],
+        "subcategories": []
       },
       {
         "name": "The Rogues",
@@ -602,9 +650,8 @@
           {
             "label": "Weather Wizard",
             "description": "Mark Mardon was serving jail time for robbery when he escaped and fled to the observatory where his brother Clyde was working on an experimental weather-controlling wand, When Clyde called Central City police to turn him in, Mark panicked at the thought of returning to jail and accidentally killed his brother with the weather wand. This crime haunts Mark's conscience to this day. \n\nIn a deluded attempt at honoring his brother's legacy, Mark used the weather wand to commit crimes as the Weather Wizard. He was among the original Rogues who tangled with Barry Allen, and Mardon pondered retiring from his life of crime. However, the Rogues came back together every time a new speedster assumed the mantle of the Flash. \n\nWeather Wizard is about as unpredictable as, well, the weather. Mark delights in using ihs powers for destruction regardless of the collateral damage to others, but his guilt over his brother's death continues to burden him. Likewise, despite having enough savvy to apply his brother's weather technology, he limits his powers and his crimes, incapable of visualizing destruction on a global scale. ",
-            "cost": {},
             "id": "interactionsTheRoguesWeatherWizard",
-            "image": "https://www.writeups.org/wp-content/uploads/Weather-Wizard-Flash-Rogues-DC-Comics-blood-moon-h.jpg"
+            "image": "https://i.pinimg.com/originals/32/8b/1d/328b1d6ef7f2f911e6bed0f763c7ffc4.jpg"
           },
           {
             "label": "Mirror Master",
@@ -616,9 +663,8 @@
           {
             "label": "Captain Boomerang",
             "description": "After he learned to throw the boomerang as a child, Harkness' mother sent him from Australia to live in America. He went to work performing boomerang tricks for a toy company unknowningly owned by his father but would steal from the crowds to help line his pockets until the Flash put a stop to his thievery. \n\nAfter collaborating with the Rogues for a time, Captain Boomerang joined the Suicide Squad and retired after finishing his prison sentence, \n\nCaptain Boomerang tends to get on people's nerves, making it difficult for others to like him. He is elf-serving, blunt, and a childish jerk with a sense of a superiority complex towards everyone else, including his allies. He is, however, a patriotic Aussie. ",
-            "cost": {},
             "id": "interactionsTheRoguesCaptainBoomerang",
-            "image": "https://www.writeups.org/wp-content/uploads/Captain-Boomerang-DC-Comics-Flash-Rogues-Suicide-Squad.jpg"
+            "image": "https://i.pinimg.com/736x/02/c6/79/02c679ada81bb8aa06fffffd64e8667c.jpg"
           },
           {
             "label": "The Top",
@@ -634,7 +680,8 @@
               "Points": -1
             }
           }
-        ]
+        ],
+        "subcategories": []
       },
       {
         "name": "Other Enemies",
@@ -732,8 +779,60 @@
               "Points": -2
             }
           }
-        ]
+        ],
+        "subcategories": []
       }
     ]
+  },
+  {
+    "type": "darkTheme",
+    "bg-color": "#111827",
+    "container-bg": "#1f2937",
+    "text-color": "#f3f4f6",
+    "text-muted": "#9ca3af",
+    "accent-color": "#b91c1c",
+    "accent-text": "#ffffff",
+    "border-color": "#374151",
+    "item-bg": "#1f2937",
+    "item-header-bg": "#374151",
+    "points-bg": "rgba(185, 28, 28, 0.95)",
+    "points-border": "#fbbf24",
+    "points-text": "#000000",
+    "selection-glow-color": "#2563eb",
+    "shadow-color": "rgba(0, 0, 0, 0.5)",
+    "option-meta-bg": "#111827",
+    "option-meta-heading-bg": "rgba(185, 28, 28, 0.18)",
+    "option-meta-heading-text": "#f3f4f6",
+    "option-meta-points-color": "#fbbf24",
+    "option-meta-conditional-color": "#38bdf8",
+    "option-meta-auto-grants-color": "#22c55e",
+    "option-meta-slider-modifiers-color": "#a78bfa",
+    "option-meta-random-results-color": "#f472b6",
+    "option-meta-prerequisites-color": "#f59e0b",
+    "option-meta-conflicts-color": "#f87171",
+    "font-base": "20px",
+    "font-title": "44px",
+    "font-description": "22px",
+    "font-tab": "20px",
+    "font-accordion": "22px",
+    "font-subcategory": "24px",
+    "font-option-title": "24px",
+    "font-option-req": "19px",
+    "font-option-desc": "23px",
+    "font-story": "21px",
+    "font-story-input": "20px",
+    "font-points": "20px",
+    "font-points-value": "20px",
+    "font-prereq-help": "17px",
+    "font-label": "19px",
+    "font-heading": "Verdana, sans-serif",
+    "font-body": "'Quicksand', sans-serif"
+  },
+  {
+    "type": "publication",
+    "seriesId": "the_flash_cyoa.json",
+    "status": "published",
+    "version": "1.0",
+    "publishedAt": "2026-11-27T16:42:30.347Z"
   }
 ]

@@ -24,7 +24,13 @@
     "allowNegative": [
       "Boons"
     ],
-    "attributeRanges": {}
+    "attributeRanges": {},
+    "pointTooltips": {},
+    "pointCategories": {},
+    "pointCategoryDefaults": {},
+    "derivedValues": [],
+    "enableablePointSets": [],
+    "optionGroups": []
   },
   {
     "type": "settings",
@@ -74,7 +80,9 @@
     "font-prereq-help": "17px",
     "font-label": "19px",
     "font-heading": "Verdana, sans-serif",
-    "font-body": "'Quicksand', sans-serif"
+    "font-body": "'Quicksand', sans-serif",
+    "option-meta-slider-modifiers-color": "#7c3aed",
+    "option-meta-random-results-color": "#db2777"
   },
   {
     "type": "darkTheme",
@@ -116,7 +124,9 @@
     "font-prereq-help": "17px",
     "font-label": "19px",
     "font-heading": "Verdana, sans-serif",
-    "font-body": "'Quicksand', sans-serif"
+    "font-body": "'Quicksand', sans-serif",
+    "option-meta-slider-modifiers-color": "#a78bfa",
+    "option-meta-random-results-color": "#f472b6"
   },
   {
     "name": "World",
@@ -205,7 +215,7 @@
             "id": "worldHowCommonAreSuperpowersUnique",
             "borderColor": "gold",
             "prerequisites": "originStoryYourTeamLoneWolf && (boonsAndBanesBanesAllergy || boonsAndBanesBanesBadRep || boonsAndBanesBanesConspiracy || boonsAndBanesBanesCycle || boonsAndBanesBanesPlotMagnet)",
-            "image": "https://wallpapercave.com/wp/wp7238487.jpg"
+            "image": "https://i.pinimg.com/736x/2b/05/0d/2b050dd1e4b167d7b58ac1de67964f29.jpg"
           }
         ],
         "subcategories": [],
@@ -328,7 +338,7 @@
             "label": "Tech",
             "description": "Your powers come from technology. This could be inventions that you wield, or cybernetics that are implanted within you. While their technological basis means that it is easier for you to find ways to upgrade them, it also means that they are vulnerable to being reverse-engineered or disabled by others with the knowledge to learn how they work. ",
             "id": "originStoryOriginStoryTech",
-            "image": "https://wallpapercave.com/wp/wp2538842.jpg"
+            "image": "https://i.pinimg.com/736x/75/5e/69/755e69bc439ed037375b1c36c8bff018.jpg"
           },
           {
             "label": "Cosmic",
@@ -356,7 +366,7 @@
             ],
             "id": "originStoryOriginStoryTraining",
             "borderColor": "red",
-            "image": "https://wallpapercave.com/wp/uApalXS.jpg"
+            "image": "https://i.pinimg.com/736x/db/b9/5b/dbb95babd3f33cbe62e2dee5253e05a3.jpg"
           },
           {
             "label": "None",
@@ -512,7 +522,7 @@
                 "Equipment"
               ]
             },
-            "image": "https://wallpapercave.com/wp/wp9477144.jpg"
+            "image": "https://i.pinimg.com/originals/80/08/ab/8008abd9854dfaccdb95e500d5fcebb5.jpg"
           }
         ],
         "subcategories": [],
@@ -640,7 +650,7 @@
             ],
             "id": "powersPowersEnhancedAgility",
             "maxSelections": 2,
-            "image": "https://wallpapercave.com/wp/wp6822623.jpg"
+            "image": "https://i.pinimg.com/originals/b5/29/81/b5298191b8457661abebc3863dd608a5.jpg?nii=t"
           },
           {
             "label": "Regeneration",
@@ -884,7 +894,7 @@
             ],
             "id": "powersPowersPsychometry",
             "maxSelections": 3,
-            "image": "https://www.comicbookherald.com/wp-content/uploads/2019/01/X-Man-alan-davis.jpg"
+            "image": "https://i.pinimg.com/736x/b8/51/c1/b851c105d53359c71f10b5b6bb63ca0a.jpg"
           },
           {
             "label": "Danger Sense",
@@ -908,7 +918,7 @@
             ],
             "id": "powersPowersDangerSense",
             "maxSelections": 6,
-            "image": "https://www.liveabout.com/thmb/V8NIV66aZL0hcmGJr4xSv3TU0KE=/768x0/filters:no_upscale():max_bytes(150000):strip_icc()/comic-spiderman-614363-5c618d1546e0fb0001849f16.jpg"
+            "image": "https://i.pinimg.com/originals/6a/2e/1b/6a2e1b860af98e1b14fb4d51e15a631d.png"
           },
           {
             "label": "Sense Manipulation",
@@ -1294,7 +1304,7 @@
             ],
             "id": "powersPowersDoppelganger",
             "maxSelections": 3,
-            "image": "https://www.escapistmagazine.com/wp-content/uploads/2025/02/Invincible_Season_2_Dupli-Kate_and_two_of_her_duplicates.jpg?fit=1200%2C675"
+            "image": "https://i.pinimg.com/originals/49/c6/f0/49c6f002df5c810f1e30a63b1e8872a2.jpg"
           },
           {
             "label": "Summons",
@@ -1356,7 +1366,7 @@
             ],
             "id": "powersPowersFlight",
             "maxSelections": 3,
-            "image": "https://w0.peakpx.com/wallpaper/152/404/HD-wallpaper-sentry-marvel-comics-superheroes.jpg"
+            "image": "https://i.pinimg.com/originals/3c/69/71/3c6971d049f348ffdfa32aabe0f072c9.png"
           },
           {
             "label": "Teleportation",
@@ -1442,7 +1452,7 @@
             ],
             "id": "powersPowersConjuration",
             "maxSelections": 2,
-            "image": "https://wallpapercave.com/wp/wp5612739.jpg"
+            "image": "https://i.pinimg.com/736x/72/24/83/72248318e9da1787d875c6b4d7fcff2a.jpg"
           },
           {
             "label": "Domain",
@@ -1592,7 +1602,7 @@
               }
             ],
             "borderColor": "gold",
-            "image": "https://wallpapercave.com/wp/wp7325571.jpg"
+            "image": "https://i.pinimg.com/736x/cc/0e/09/cc0e09b9d0af48aca9f3cf38b985ce41.jpg"
           },
           {
             "label": "Parkour",
@@ -1612,7 +1622,7 @@
               }
             ],
             "borderColor": "gold",
-            "image": "https://wallpapercave.com/wp/wp11025312.jpg"
+            "image": "https://i.pinimg.com/originals/1d/6a/2a/1d6a2adf71a7fca101df76693b1a6730.png"
           },
           {
             "label": "Investigation",
@@ -1913,13 +1923,13 @@
             "label": "Scanning Goggles",
             "description": "A special set of goggles that can allow for a variety of vision modes, including thermal, night vision, blood trace, telescopic, or microsopic. Can integrate the visor from the smoke bombs if desired. ",
             "id": "skillsAndEquipmentEquipmentScanningGoggles",
-            "image": "https://wallpapercave.com/wp/wp7271124.jpg"
+            "image": "https://i.pinimg.com/originals/8f/90/d1/8f90d1cd98c84170d7d5b9c176dced39.jpg"
           },
           {
             "label": "Wrist Computer",
             "description": "A top-of-the-line computer system, contained within a sleek casing on one arm. Can access local networks, and comes with basic \"hacking software\" and alarge amounts of internal memory. Can be taken in the form of a laptop or desktop instead, with identical capabilities. ",
             "id": "skillsAndEquipmentEquipmentWristComputer",
-            "image": "https://wallpapercave.com/wp/wp2116477.jpg"
+            "image": "https://i.pinimg.com/736x/5c/cb/75/5ccb7519d7e42d4ad409724c703e1b9d.jpg"
           },
           {
             "label": "Toolkit",
@@ -1944,7 +1954,7 @@
                 }
               }
             ],
-            "image": "https://www.teahub.io/photos/full/253-2531757_ghost-rider-motorcycle-comic.jpg"
+            "image": "https://i.pinimg.com/originals/50/96/b7/5096b7b642d80f8a0ddb6cf1640720e6.png"
           },
           {
             "label": "Plane",
@@ -2106,8 +2116,7 @@
               {
                 "cost": {
                   "Allies": 1
-                },
-                "prerequisites": "!originStoryYourTeamLoneWolf"
+                }
               },
               {
                 "cost": {
@@ -2115,7 +2124,7 @@
                 }
               }
             ],
-            "image": "https://wallpapercave.com/wp/wp3667640.jpg"
+            "image": "https://i.pinimg.com/736x/bc/32/97/bc3297b99c3659e3ff3461eec40ae77d.jpg"
           },
           {
             "label": "Gen Sin",
@@ -2295,8 +2304,7 @@
               {
                 "cost": {
                   "Allies": 1
-                },
-                "prerequisites": "!originStoryYourTeamLoneWolf"
+                }
               },
               {
                 "cost": {
@@ -2304,7 +2312,7 @@
                 }
               }
             ],
-            "image": "https://wallpapercave.com/wp/wp11243017.jpg"
+            "image": "https://i.pinimg.com/736x/be/10/2b/be102be9b979248029b907ed134cca59.jpg"
           },
           {
             "label": "Polka Dark",
@@ -2409,8 +2417,7 @@
               {
                 "cost": {
                   "Allies": 1
-                },
-                "prerequisites": "!originStoryYourTeamLoneWolf"
+                }
               },
               {
                 "cost": {
@@ -2418,7 +2425,7 @@
                 }
               }
             ],
-            "image": "http://www.them6p.com/wp-content/uploads/2016/06/1292032-kraven-989x1024.jpg"
+            "image": "https://i.pinimg.com/736x/ec/73/9a/ec739aaccab75ceebc6dd4eb125452d7.jpg"
           },
           {
             "label": "Quaestor",
@@ -2509,8 +2516,7 @@
                 "cost": {
                   "Boons": 1,
                   "Allies": 1
-                },
-                "prerequisites": "!originStoryYourTeamLoneWolf"
+                }
               },
               {
                 "cost": {
@@ -2518,7 +2524,7 @@
                 }
               }
             ],
-            "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fwww.writeups.org%2Fwp-content%2Fuploads%2FProteus-DC-Comics-New-Olympians-Batman-Outsiders.jpg&f=1&nofb=1&ipt=8210f17772b5b73b1e2790e05c3234c177893193c529667eeb9a2a30928007ef"
+            "image": "https://i.pinimg.com/originals/19/5c/09/195c0949e0093bcf1366e85f4183f2e2.webp"
           },
           {
             "label": "Infinitress",
@@ -2836,5 +2842,12 @@
     ],
     "textColor": "#C0C0C0",
     "darkTextColor": "#C0C0C0"
+  },
+  {
+    "type": "publication",
+    "seriesId": "superpowered_world.json",
+    "status": "published",
+    "version": "1.0",
+    "publishedAt": "2026-11-27T16:31:13.012Z"
   }
 ]
