@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { requireApproval, sourceBranch, replaceImages, imageType, publicURL, uploadBatch, createImgChestRequest, repair } = require('./rehost-images');
+const { requireApproval, sourceBranch, replaceImages, imageType, publicURL, uploadBatch, createImgChestRequest, checkoutAssetPath, repair } = require('./rehost-images');
 
 const sha = 'a'.repeat(40);
 const run = { id: 123, run_attempt: 1, name: 'CI', conclusion: 'failure', head_sha: sha,
@@ -34,6 +34,21 @@ test('changes only image fields across versions, retaining gameplay and labels',
     assert.equal(changes.length, 4);
     assert.equal(documents[0].data[1].options[0].cost, 3);
     assert.equal(documents[0].data[1].options[0].description, 'https://old/image');
+});
+test('replacement keys account for canonical hostnames without changing URL path casing', () => {
+    const documents = [{ filename: 'example.json', data: [{ options: [
+        { id: 'one', image: 'https://EXAMPLE.com/Art.jpg' }, { id: 'two', image: 'https://example.com/art.jpg' }
+    ] }] }];
+    const changes = replaceImages(documents, new Map([['https://example.com/Art.jpg', 'https://cdn.imgchest.com/files/new.jpg']]));
+    assert.equal(changes.length, 1);
+    assert.equal(documents[0].data[0].options[1].image, 'https://example.com/art.jpg');
+});
+test('checkout assets resolve only inside the configured deployment directories', () => {
+    assert.equal(checkoutAssetPath('images/banner.png'), 'images/banner.png');
+    assert.equal(checkoutAssetPath('https://intrisym.github.io/icyoa-template/images/banner.png'), 'images/banner.png');
+    assert.equal(checkoutAssetPath('https://intrisym.github.io/shared/banner.png'), null);
+    assert.equal(checkoutAssetPath('https://external.test/image.png'), null);
+    assert.equal(checkoutAssetPath('images/%2e%2e%2f%2e%2e%2fsecret'), null);
 });
 test('rejects challenge HTML before uploading', () => {
     assert.throws(() => imageType(Buffer.from('<html>challenge</html>')), /not a supported image/);
@@ -91,6 +106,21 @@ test('enforces 61-second spacing including initial cooldown, and a 60-request bu
     await assert.rejects(fake.send(), error => error.stopUploads && /budget/.test(error.message));
     assert.equal(fake.calls.length, 60);
 });
+test('upload timeout starts after throttling, preserving the full network timeout for every batch', async () => {
+    let time = 0;
+    let calls = 0;
+    const send = createImgChestRequest({ now: () => time, sleep: async milliseconds => { time += milliseconds; },
+        timeoutSignal: duration => ({ createdAt: time, duration }),
+        request: async (_url, options) => {
+            calls++;
+            assert.equal(time, calls * 61000);
+            assert.deepEqual(options.signal, { createdAt: time, duration: 60000 });
+            return { status: 200, headers: new Headers() };
+        }
+    });
+    await send('https://api.imgchest.com/v1/post', { signal: { createdAt: 0 } });
+    await send('https://api.imgchest.com/v1/post', { signal: { createdAt: 0 } });
+});
 test('HTTP 429 stops all further API calls without retrying and preserves Retry-After', async () => {
     const fake = clockedRequest({ status: 429, headers: new Headers({ 'Retry-After': '3600' }) });
     await assert.rejects(fake.send(), error => error.stopUploads && /Retry-After: 3600/.test(error.message));
@@ -104,7 +134,7 @@ test('zero remaining in response headers permits saving the successful upload bu
     assert.equal(fake.calls.length, 1);
 });
 
-function fixture(t, { replacementWorks = true, finalFailures = [], advanced = false, uploadFails = false, sourceCount = 1, rateLimited = false } = {}) {
+function fixture(t, { replacementWorks = true, finalFailures = [], advanced = false, uploadFails = false, sourceCount = 1, rateLimited = false, localAsset = false } = {}) {
     const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'rehosting-test-'));
     t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
     const repository = process.env.GITHUB_REPOSITORY;
@@ -112,6 +142,8 @@ function fixture(t, { replacementWorks = true, finalFailures = [], advanced = fa
     t.after(() => { if (repository === undefined) delete process.env.GITHUB_REPOSITORY; else process.env.GITHUB_REPOSITORY = repository; });
     const sources = Array.from({ length: sourceCount }, (_, index) => `https://source/image${index || ''}.jpg`);
     const original = [{ type: 'category', options: sources.map((image, index) => ({ id: index ? `option-${index}` : 'option-id', image, cost: 4 })) }];
+    if (localAsset) original.unshift({ type: 'headerImage', url: 'images/banner.png' });
+    const imageBytes = Buffer.from([255, 216, 255]);
     const writes = [];
     let scans = 0;
     let uploads = 0;
@@ -121,14 +153,19 @@ function fixture(t, { replacementWorks = true, finalFailures = [], advanced = fa
         if (endpoint.startsWith('git/ref/heads/')) return { object: { sha: advanced ? 'b'.repeat(40) : sha } };
         if (endpoint.startsWith('pulls?')) return [];
         if (endpoint.startsWith('git/commits/')) return { tree: { sha: 'tree' } };
-        if (endpoint.startsWith('git/trees/')) return { tree: [{ path: 'CYOAs/example.json', mode: '100644', type: 'blob', size: 100, sha: 'blob' }] };
+        if (endpoint.startsWith('git/trees/')) return { tree: [{ path: 'CYOAs/example.json', mode: '100644', type: 'blob', size: 100, sha: 'blob' },
+            ...(localAsset ? [{ path: 'images/banner.png', mode: '100644', type: 'blob', size: imageBytes.length, sha: 'image-blob' }] : [])] };
+        if (endpoint === 'git/blobs/image-blob') return { content: imageBytes.toString('base64') };
         if (endpoint.startsWith('git/blobs/')) return { content: Buffer.from(JSON.stringify(original)).toString('base64') };
         throw new Error(`Unexpected endpoint ${endpoint}`);
     };
     const options = {
         reportPath: path.join(directory, 'report.json'), summaryPath: path.join(directory, 'summary.md'),
-        scan: async () => ({ failures: ++scans === 1 ? sources.flatMap((url, index) => Array(2).fill({ url,
-            references: [{ file: 'CYOAs/example.json', id: index ? `option-${index}` : 'option-id', label: 'Test option' }] })) : finalFailures }),
+        scan: async ({ root }) => {
+            if (localAsset) assert.deepEqual(fs.readFileSync(path.join(root, 'images/banner.png')), imageBytes);
+            return { failures: ++scans === 1 ? sources.flatMap((url, index) => Array(2).fill({ url,
+                references: [{ file: 'CYOAs/example.json', id: index ? `option-${index}` : 'option-id', label: 'Test option' }] })) : finalFailures };
+        },
         download: async () => ({ bytes: Buffer.from([255, 216, 255]), type: 'image/jpeg' }),
         upload: async images => {
             uploads++;
@@ -157,6 +194,13 @@ test('41 unique URLs use three upload requests and update every matching field',
     await repair(f.api, { workflow_run: run }, 'secret', f.options);
     assert.equal(f.uploads(), 3);
     assert.equal(JSON.parse(fs.readFileSync(f.options.reportPath)).changes.length, 41);
+});
+test('tracked local image bytes are available to both scans and are never uploaded or changed', async t => {
+    const f = fixture(t, { localAsset: true });
+    await repair(f.api, { workflow_run: run }, 'secret', f.options);
+    assert.equal(f.uploads(), 1);
+    const updated = JSON.parse(f.writes.find(write => write.endpoint === 'git/blobs').body.content);
+    assert.equal(updated[0].url, 'images/banner.png');
 });
 test('429 stops remaining batches, records every unresolved ID and exposes the reason in the Actions summary', async t => {
     const f = fixture(t, { sourceCount: 41, rateLimited: true });

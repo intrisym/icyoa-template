@@ -8,6 +8,8 @@ const https = require('node:https');
 const { imageSlots } = require('../imageMaintenance');
 const { runImageChecks } = require('./check-images');
 const { testImageUrl } = require('./test-image-url');
+const { collectImages } = require('./check-images');
+const { productionURL } = require('../imageVerification');
 
 const ENVIRONMENT = 'image-rehosting';
 const OWNER = 'intrisym';
@@ -23,18 +25,19 @@ function rateLimitError(message) {
 }
 
 function createImgChestRequest({ request = fetch, now = () => performance.now(),
+    timeoutSignal = milliseconds => AbortSignal.timeout(milliseconds),
     sleep = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds)) } = {}) {
     // Initial cooldown plus workflow-wide concurrency also spaces separate runs.
     let nextRequest = now() + REQUEST_INTERVAL_MS;
     let requests = 0;
     let stopped;
-    return async (...args) => {
+    return async (url, options = {}) => {
         if (stopped) throw rateLimitError(stopped);
         if (requests >= MAX_REQUESTS) throw rateLimitError('ImgChest request budget (60 per approved run) exhausted. Start a new approved run after the hourly window resets.');
         while (nextRequest > now()) await sleep(nextRequest - now());
         nextRequest = now() + REQUEST_INTERVAL_MS;
         requests++;
-        const response = await request(...args);
+        const response = await request(url, { ...options, signal: timeoutSignal(60000) });
         const remaining = response.headers?.get('x-ratelimit-remaining');
         const retryAfter = response.headers?.get('retry-after');
         if (response.status === 429) {
@@ -89,7 +92,9 @@ function replaceImages(documents, replacements) {
     for (const document of documents) {
         let changed = false;
         for (const slot of imageSlots(document)) {
-            const replacement = replacements.get(slot.url);
+            let canonical;
+            try { canonical = new URL(slot.url).href; } catch {}
+            const replacement = replacements.get(slot.url) || replacements.get(canonical);
             if (!replacement) continue;
             slot.node[slot.field] = replacement;
             changes.push({ file: slot.file, id: slot.id, label: slot.label, before: slot.url, after: replacement });
@@ -160,7 +165,7 @@ async function uploadBatch(images, token, request) {
     }
     // Do not retry non-idempotent uploads automatically.
     const response = await request('https://api.imgchest.com/v1/post', { method: 'POST', body: form,
-        headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(60000), redirect: 'error' });
+        headers: { Authorization: `Bearer ${token}` }, redirect: 'error' });
     if (!response.ok) throw new Error(`ImgChest upload failed: HTTP ${response.status}.`);
     const post = (await response.json()).data;
     if (!Array.isArray(post?.images) || post.images.length !== images.length) throw new Error('ImgChest returned an unexpected image count.');
@@ -181,6 +186,17 @@ function githubClient(repository, token) {
         if (!response.ok) throw new Error(`GitHub ${method} ${endpoint}: HTTP ${response.status}.`);
         return response.json();
     };
+}
+
+function checkoutAssetPath(value) {
+    for (const base of ['http://localhost:8000/', productionURL()]) {
+        const url = new URL(value, base);
+        const directory = new URL(base);
+        if (url.origin !== directory.origin || !url.pathname.startsWith(directory.pathname)) continue;
+        const relative = decodeURIComponent(url.pathname.slice(directory.pathname.length));
+        if (relative && !relative.includes('\\') && !relative.split('/').some(part => part === '.' || part === '..') && !relative.includes('\0')) return relative;
+    }
+    return null;
 }
 
 async function repair(api, event, token, { scan = runImageChecks, download = downloadImage, upload = uploadBatch,
@@ -216,6 +232,16 @@ async function repair(api, event, token, { scan = runImageChecks, download = dow
             fs.writeFileSync(path.join(root, entry.path), text);
             if (entry.path.startsWith('CYOAs/') && entry.path !== 'CYOAs/manifest.json') documents.push({ filename: path.basename(entry.path), data });
         }
+        const assets = new Set(documents.flatMap(document => collectImages(document.data, document.filename))
+            .map(image => checkoutAssetPath(image.url)).filter(Boolean));
+        for (const entry of tree.tree.filter(entry => assets.has(entry.path))) {
+            if (entry.type !== 'blob' || entry.mode !== '100644' || entry.size > MAX_BYTES) throw new Error('Unexpected local image asset.');
+            const destination = path.resolve(root, entry.path);
+            if (!destination.startsWith(root + path.sep)) throw new Error('Local image asset is outside checkout.');
+            const blob = await api(`git/blobs/${entry.sha}`);
+            fs.mkdirSync(path.dirname(destination), { recursive: true });
+            fs.writeFileSync(destination, Buffer.from(blob.content, 'base64'));
+        }
         // Reproduce with trusted checker code, rather than trusting a CI artifact.
         const initial = await scan({ root, reportPath: path.join(root, 'report.json') });
         if (!initial.failures.length) { save(); return; }
@@ -231,6 +257,7 @@ async function repair(api, event, token, { scan = runImageChecks, download = dow
             const batch = [];
             for (const source of sources.slice(offset, offset + BATCH_SIZE)) {
                 if (stop) { unresolved(source, stop); continue; }
+                if (checkoutAssetPath(source)) { unresolved(source, new Error('Repair this repository image asset in the source branch; local assets are not uploaded.')); continue; }
                 try { batch.push({ source, ...await download(source) }); }
                 catch (error) { unresolved(source, error); }
             }
@@ -288,4 +315,4 @@ async function main() {
 }
 
 if (require.main === module) main().catch(error => { console.error(error.message); process.exitCode = 1; });
-module.exports = { requireApproval, sourceBranch, replaceImages, imageType, publicURL, uploadBatch, createImgChestRequest, renderRehostingSummary, downloadImage, repair };
+module.exports = { requireApproval, sourceBranch, replaceImages, imageType, publicURL, uploadBatch, createImgChestRequest, renderRehostingSummary, checkoutAssetPath, downloadImage, repair };
