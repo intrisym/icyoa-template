@@ -255,4 +255,4 @@ function createImageMaintenance({ directory = path.join(ROOT, "CYOAs"), linksFil
     };
 }
 
-module.exports = { HEADER, imageSlots, groupsFor, planRepairs, slotKey, createImageMaintenance };
+module.exports = { HEADER, imageSlots, groupsFor, planRepairs, slotKey, createImageMaintenance, readDocuments, commitFiles };

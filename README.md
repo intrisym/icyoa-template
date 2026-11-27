@@ -145,6 +145,35 @@ Forks, repair branches and stale source commits are skipped/rejected. An open re
 
 Rehosting cannot recover an image the runner cannot download: DNS errors, deleted images, bot challenges and blocked downloads still need manual attention. Supported source files are JPEG, PNG, GIF and WebP, up to 20 MB, served over public HTTPS with public IPv4 connectivity. Tracked local image assets are copied from the tested commit into the scan checkout as data, up to 20 MB per asset; they are never uploaded to ImgChest. Missing or oversized local assets require a source-branch fix. The **image-rehosting-report** artifact records uploaded post IDs, source/replacement URLs, affected option IDs and unresolved errors. If any images remain failing, no PR is created. Successful uploads may remain on ImgChest after a later check or API operation fails; use the report to recover their URLs or remove posts manually. Uploads are not automatically retried, and a later newly approved attempt may upload again.
 
+### Local image export to ImgChest
+
+Use the local exporter when CI can see image URLs but the hosts block its downloads. It collects URLs from CYOA JSON, a failed checker report, or an earlier repair report. It includes inconclusive results, deduplicates URLs and identical downloaded bytes, and updates every matching header/option image reference across local CYOA versions. Other option data stays unchanged. It never commits or pushes.
+
+Install the existing dependencies and Chromium, then preview a selection:
+
+```sh
+npm ci
+npx playwright install chromium
+npm run images:export -- --host rare-gallery.com --host raregallery.art --host wallpapercrafter.com
+```
+
+For a precise list, extract the JSON from the failed CI run's **image-rehosting-report** artifact and use `--report /absolute/path/to/image-rehosting-report.json` instead of the host filters. This also reuses any completed upload in that report after checking its ImgChest URL. `--file CYOAs/necromancer.json` selects that CYOA's sources; replacements still update matching URLs in other versions. `--all` explicitly selects every external HTTPS image. With no `--apply`, nothing is downloaded, uploaded or changed.
+
+For uploads, set the ImgChest token in your local environment. GitHub environment secrets are not automatically available in your terminal. For the default macOS zsh shell, enter it without putting its value in shell history:
+
+```zsh
+read -s "IMGCHEST_API_TOKEN?ImgChest API token: "
+export IMGCHEST_API_TOKEN
+npm run images:export -- --host rare-gallery.com --host raregallery.art --host wallpapercrafter.com --apply
+unset IMGCHEST_API_TOKEN
+```
+
+`--apply` is your explicit permission to upload and change image fields. Direct downloads are tried first. When a host returns 403/503 or challenge HTML, a fresh visible Playwright browser opens; complete any access check yourself and press Enter in the terminal. The same browser session is reused within the run. No stealth package or automatic CAPTCHA solver is installed. The browser does not receive API-token environment variables. Public HTTPS destinations are checked and pinned through a local CONNECT proxy, including redirects and browser subrequests. A host may still refuse the request; failed downloads are reported without changing that image's URL. `--no-browser` disables the fallback.
+
+Only replacements passing both browser-origin checks are applied. Verified successes are applied even when other images remain unresolved; unresolved results give the command a nonzero exit code. Downloads stay in memory, and `image-export-report.json` records completed uploads and unresolved URLs so the same command can resume without reuploading completed images. Keep this ignored file until finished. `--output /absolute/path/custom-report.json` selects another resumable report. The exporter uses the existing 20-image batch limit, 61-second API pacing and HTTP 429 handling. Avoid running local and CI uploads concurrently with the same token. Only one exporter can run in this checkout at a time; after a forced crash, stop any remaining exporter before removing `.image-export.lock`.
+
+The local command is rejected in GitHub Actions. CI continues using its environment approval checks. Review the JSON diff and run `sh scripts/check-images.sh` after exporting; public CDN availability from GitHub's network still needs to pass CI.
+
 ### Manual Verification for Inconclusive Images
 
 Some hosts allow ordinary browsers while blocking the automated checker. These results are never used to automatically replace images or as automatic repair sources. The mandatory push check and CI accept them only with a manual confirmation from the previous **seven days**, scoped to the **exact URL, option ID, CYOA filename and production page**. Changing any of those, expiry, or a future timestamp requires verification again. Confirmations cannot override confirmed failures or the blocked-domain policy.
