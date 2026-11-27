@@ -50,7 +50,8 @@ async function checkProfile(browser, images, { baseURL, timeout = 10000, concurr
             contentType: "text/html", body: '<!doctype html><meta name="referrer" content="strict-origin-when-cross-origin"><title>Image check</title>'
         }));
         // Relative image paths resolve to the same paths as the player page.
-        if (serveLocalAssets) await page.route(url => url.origin === new URL(baseURL).origin && url.href !== documentURL, async route => {
+        if (serveLocalAssets) await page.route(url => url.origin === new URL(baseURL).origin
+            && url.pathname.startsWith(new URL(baseURL).pathname) && url.href !== documentURL, async route => {
             const url = new URL(route.request().url());
             const prefix = new URL(baseURL).pathname;
             const relative = decodeURIComponent(url.pathname.startsWith(prefix) ? url.pathname.slice(prefix.length) : url.pathname.slice(1));
@@ -60,16 +61,23 @@ async function checkProfile(browser, images, { baseURL, timeout = 10000, concurr
             catch { await route.fulfill({ status: 404, body: "Missing image asset" }); }
         });
         const diagnostics = new Map();
+        const initiatingURL = request => {
+            while (request.redirectedFrom()) request = request.redirectedFrom();
+            return request.url();
+        };
         page.on("response", response => {
             if (response.request().resourceType() === "image") {
                 const headers = response.headers();
-                diagnostics.set(response.request().url(), { status: response.status(), contentType: headers["content-type"],
+                diagnostics.set(initiatingURL(response.request()), { status: response.status(), contentType: headers["content-type"],
                     challenge: headers["cf-mitigated"] === "challenge", ...(response.status() >= 400 ? { error: `HTTP ${response.status()}` } : {}) });
             }
         });
         page.on("requestfailed", request => {
             const error = request.failure()?.errorText || "Network failure";
-            if (error !== "net::ERR_ABORTED") diagnostics.set(request.url(), { ...diagnostics.get(request.url()), error });
+            if (error !== "net::ERR_ABORTED") {
+                const url = initiatingURL(request);
+                diagnostics.set(url, { ...diagnostics.get(url), error });
+            }
         });
         await page.goto(documentURL);
         const references = new Map();

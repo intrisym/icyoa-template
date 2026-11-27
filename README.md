@@ -171,6 +171,10 @@ If an option was deleted or has no working counterpart, choose **Use a new image
 
 These tools can repair images in published versions without changing their gameplay data or publication metadata. They write only header/option image fields plus saved connections and explicit manual confirmations; they do not publish or push Git changes. Concurrent edits detected during a scan abort the operation so you can rerun it against current data. Commit repaired files, `image-links.json` and `image-verifications.json`, then push. The mandatory push check blocks confirmed failures, invalid connections and inconclusive results without a current manual confirmation.
 
+Editor/version writes and CLI image maintenance share a cross-process lock at `CYOAs/.write-lock`. A competing writer receives a conflict rather than overwriting a repair. If a process crashes while holding this lock, stop all editor/CLI writers before removing the lock directory and retrying. Direct filesystem edits do not acquire this lock; avoid editing the files manually during a repair. Draft deletion is rejected if it would leave saved image connections pointing to missing IDs. Update those connections first, or retain another version containing the connected ID.
+
+If a repair finishes but the editor cannot reload the updated document, draft editing, autosave and publication remain blocked. Retry the scan to reload the server's document before continuing; a successful reload restores editing.
+
 Equivalent local commands (use `@header` as the ID for a header image):
 
 ```sh

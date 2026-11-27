@@ -3,6 +3,7 @@ const path = require("path");
 const { randomUUID } = require("crypto");
 const { metadata, describe, normalizeVersion, compareVersions, nextVersion } = require("./versioning");
 const { validateCyoaData } = require("./scripts/validate-cyoas");
+const { withCyoaWriteLock } = require("./cyoaWriteLock");
 
 function fail(status, message) {
     const error = new Error(message);
@@ -39,7 +40,7 @@ function createVersionStore(directory) {
     }
 
     function mutate(callback) {
-        const result = pendingMutation.then(callback);
+        const result = pendingMutation.then(() => withCyoaWriteLock(directory, callback));
         pendingMutation = result.catch(() => {});
         return result;
     }
@@ -69,6 +70,24 @@ function createVersionStore(directory) {
         const archivedFile = path.join(trashDirectory, `${Date.now()}-${randomUUID()}-${filename}`);
         await fs.rename(filePath(filename), archivedFile);
         return archivedFile;
+    }
+
+    async function assertLinksSurviveRemoval(filename) {
+        const linksFile = path.join(path.dirname(directory), "image-links.json");
+        const configuration = await fs.readFile(linksFile, "utf8").then(JSON.parse).catch(error => {
+            if (error.code === "ENOENT") return { schemaVersion: 1, links: [] };
+            throw error;
+        });
+        if (!configuration.links?.length) return;
+        const { groupsFor } = require("./imageMaintenance");
+        const documents = [];
+        for (const entry of await list(true)) {
+            if (entry.filename === filename) continue;
+            const data = await read(entry.filename);
+            documents.push({ filename: entry.filename, data, seriesId: metadata(data)?.seriesId || entry.filename });
+        }
+        try { groupsFor(documents, configuration); }
+        catch (error) { fail(409, `Cannot remove this draft because saved image connections would become invalid. Update image-links.json first. ${error.message}`); }
     }
 
     return {
@@ -142,6 +161,7 @@ function createVersionStore(directory) {
                     releaseNotes
                 }), true);
                 try {
+                    await assertLinksSurviveRemoval(filename);
                     await archive(filename);
                 } catch (error) {
                     await fs.unlink(filePath(publishedFile));
@@ -160,6 +180,7 @@ function createVersionStore(directory) {
             return mutate(async () => {
                 const release = metadata(await read(filename));
                 if (release?.status === "published") fail(409, "Published versions cannot be deleted from the editor.");
+                await assertLinksSurviveRemoval(filename);
                 await archive(filename);
             });
         }

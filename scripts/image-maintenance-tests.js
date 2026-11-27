@@ -7,6 +7,7 @@ const { execFileSync } = require("node:child_process");
 const { createImageMaintenance, slotKey } = require("../imageMaintenance");
 const { checkPushedImages, pushedCommits } = require("./check-push-images");
 const { readVerifications, evaluateResults, pageURL } = require("../imageVerification");
+const { createVersionStore } = require("../cyoaVersions");
 
 const GOOD = "https://images.test/good.png";
 const BAD = "https://images.test/bad.png";
@@ -35,6 +36,48 @@ async function fixture(context, files, scan) {
     const read = async file => JSON.parse(await fs.readFile(path.join(directory, file), "utf8"));
     return { root, directory, linksFile, maintenance, read };
 }
+
+test("repairs exclude competing CLI processes and version-store writes, then release the lock", async context => {
+    let entered;
+    const scanning = new Promise(resolve => { entered = resolve; });
+    let finish;
+    const paused = new Promise(resolve => { finish = resolve; });
+    const f = await fixture(context, { "old.json": data("1", [option("same", BAD)]), "new.json": data("1.1", [option("same")]) },
+        async slots => { entered(); await paused; return slots.filter(slot => slot.url === BAD).map(slot => ({ url: BAD, error: "HTTP 404", references: [slot] })); });
+    const repairing = f.maintenance.repair();
+    try {
+        await scanning;
+        const other = createImageMaintenance({ directory: f.directory, linksFile: f.linksFile, scan: async () => [] });
+        await assert.rejects(other.repair(), /Another CYOA write/);
+        await assert.rejects(createVersionStore(f.directory).create("draft.json", []), /Another CYOA write/);
+        const result = execFileSync(process.execPath, ["-e", `
+            const { createVersionStore } = require(${JSON.stringify(path.resolve(__dirname, "../cyoaVersions"))});
+            createVersionStore(process.argv[1]).create('competing.json', []).then(() => process.exit(2), error => console.log(error.status));
+        `, f.directory], { encoding: "utf8" });
+        assert.equal(result.trim(), "409");
+    } finally { finish(); }
+    await repairing;
+    assert.equal((await f.read("old.json"))[1].subcategories[0].options[0].image, GOOD);
+    const store = createVersionStore(f.directory);
+    await store.create("draft.json", []);
+    // The API queues maintenance through the store: nested calls must work.
+    await store.maintainImages(() => f.maintenance.repair());
+    await assert.rejects(fs.stat(path.join(f.directory, ".write-lock")), { code: "ENOENT" });
+});
+
+test("draft deletion preserves saved ID connections or rejects before archiving", async context => {
+    const draft = data("1.1", [option("newBalance")]);
+    draft.at(-1).status = "draft";
+    const f = await fixture(context, { "old.json": data("1", [option("oldBalance")]), "draft.json": draft });
+    await f.maintenance.repair({ action: "link", file: "old.json", id: "oldBalance", sourceFile: "draft.json", sourceId: "newBalance" });
+    const store = createVersionStore(f.directory);
+    await assert.rejects(store.remove("draft.json"), /saved image connections/);
+    assert.deepEqual(await f.read("draft.json"), draft);
+    assert.equal((await f.maintenance.checkLinks()).links, 1);
+    await fs.writeFile(path.join(f.directory, "future.json"), JSON.stringify(data("1.2", [option("newBalance")])));
+    await store.remove("draft.json");
+    assert.equal((await f.maintenance.checkLinks()).links, 1);
+});
 
 test("repairs same-ID options, headers, and img aliases without touching gameplay or valid historical images", async context => {
     const old = data("1", [option("same", BAD), option("working", "https://images.test/old-art.png"), { id: "alias", img: BAD }]);

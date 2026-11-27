@@ -10,6 +10,7 @@
         filterQuery: ""
     };
     let versionBusy = false;
+    let reconciliationRequired = false;
     const CONFIG_ENDPOINT = "/api/config";
     const NECROMANCER_SPELL_SCHOOL_SLUGS = new Map([
         ["Liber Mortis", "liberMortis"],
@@ -358,7 +359,7 @@
     }
 
     function queueTempSave(data) {
-        if (!tempSyncState.enabled || versionBusy || CyoaVersioning.metadata(state.data)?.status === "published") return;
+        if (!tempSyncState.enabled || versionBusy || reconciliationRequired || CyoaVersioning.metadata(state.data)?.status === "published") return;
         tempSyncState.pendingData = data;
         if (!tempSyncState.saving) {
             void flushTempSaveQueue();
@@ -366,7 +367,7 @@
     }
 
     async function flushTempSaveQueue() {
-        if (!tempSyncState.enabled || !tempSyncState.pendingData) return;
+        if (!tempSyncState.enabled || reconciliationRequired || !tempSyncState.pendingData) return;
         const payload = applyNecromancerSpellRulesForSave(tempSyncState.pendingData, state.selectedFile);
         tempSyncState.pendingData = null;
         tempSyncState.saving = true;
@@ -6734,7 +6735,7 @@
     async function loadInitialData() {
         if (!state.selectedFile) {
             showSelectionModal();
-            return;
+            return false;
         }
 
         // Update preview iframe to load the correct CYOA
@@ -6745,18 +6746,20 @@
         const config = await loadSelectedConfig();
         if (config.ok) {
             state.data = config.data;
+            reconciliationRequired = false;
             if (!CyoaVersioning.metadata(state.data)) regenerateAllOptionIds();
             renderGlobalSettings();
             scheduleRenderCategories();
             schedulePreviewUpdate();
             updateVersionControls();
             showEditorMessage(`Loaded ${state.selectedFile}`, "success");
-            return;
+            return true;
         }
 
         showEditorMessage(`Failed to load ${state.selectedFile}: ${config.error}`, "error", 10000);
         // If it fails, maybe show the selection modal again after a delay
-        setTimeout(() => showSelectionModal(), 3000);
+        if (!reconciliationRequired) setTimeout(() => showSelectionModal(), 3000);
+        return false;
     }
 
     async function fetchCyoaList() {
@@ -6925,13 +6928,13 @@
             : release?.status === "draft"
                 ? `Draft${release.targetVersion ? ` v${release.targetVersion}` : ""}${release.baseVersion ? ` based on v${release.baseVersion}` : " — first release will be v0.1"}`
                 : "Version 1";
-        document.getElementById("editableContent").disabled = published || versionBusy;
-        document.getElementById("addCategoryBtn").disabled = published || versionBusy;
-        document.getElementById("importJsonBtn").disabled = published || versionBusy;
-        document.getElementById("createDraftBtn").disabled = !state.selectedFile || versionBusy;
+        document.getElementById("editableContent").disabled = published || versionBusy || reconciliationRequired;
+        document.getElementById("addCategoryBtn").disabled = published || versionBusy || reconciliationRequired;
+        document.getElementById("importJsonBtn").disabled = published || versionBusy || reconciliationRequired;
+        document.getElementById("createDraftBtn").disabled = !state.selectedFile || versionBusy || reconciliationRequired;
         document.getElementById("chooseEditorVersionBtn").disabled = !state.selectedFile || versionBusy;
         document.getElementById("publishVersionBtn").hidden = release?.status !== "draft";
-        document.getElementById("publishVersionBtn").disabled = versionBusy;
+        document.getElementById("publishVersionBtn").disabled = versionBusy || reconciliationRequired;
         document.getElementById("maintainImagesBtn").disabled = !state.selectedFile || versionBusy;
     }
 
@@ -7087,6 +7090,7 @@
             issue.hidden = true;
             showError("");
             try {
+                if (reconciliationRequired && !await loadInitialData()) throw new Error("Reload failed. Draft writes remain blocked; retry the scan to reload before continuing.");
                 if (!versions.length) await refreshVersions();
                 // Finish any older autosave before explicitly saving current edits.
                 tempSyncState.pendingData = null;
@@ -7097,6 +7101,9 @@
                     });
                     if (!save.ok) throw new Error("Could not save the current draft before checking images.");
                 }
+                // Once the server may have modified files, stale state must never
+                // be saved again, even if the response or subsequent reload fails.
+                reconciliationRequired = true;
                 const response = await fetch("/api/image-maintenance", {
                     method: "POST", headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ file: action === "repair" ? state.selectedFile : image.file, action, id: image?.id,
@@ -7104,7 +7111,7 @@
                 });
                 const result = await response.json();
                 if (!response.ok) throw new Error(result.error || "Image maintenance failed.");
-                await loadInitialData();
+                if (!await loadInitialData()) throw new Error("Image maintenance finished, but reloading failed. Draft writes remain blocked; retry the scan to reload.");
                 await refreshVersions();
                 showResults(result, image);
             } catch (error) {
@@ -7157,7 +7164,7 @@
     }
 
     async function requestVersionAction(action, values = {}) {
-        if (versionBusy) return;
+        if (versionBusy || reconciliationRequired) return;
         versionBusy = true;
         updateVersionControls();
         try {

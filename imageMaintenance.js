@@ -4,6 +4,7 @@ const { randomUUID } = require("node:crypto");
 const { metadata, compareVersions } = require("./versioning");
 const { validationMessage } = require("./imageUrlPolicy");
 const { classifyFailure, readVerifications, evaluateResults, productionURL, pageURL } = require("./imageVerification");
+const { withCyoaWriteLock } = require("./cyoaWriteLock");
 
 const ROOT = __dirname;
 const HEADER = "@header";
@@ -174,6 +175,7 @@ function createImageMaintenance({ directory = path.join(ROOT, "CYOAs"), linksFil
         },
         async checkLinks() { const { documents, configuration } = await load(); return { files: documents.length, links: configuration.links.length }; },
         async repair({ file, action = "repair", id, sourceFile, sourceId, url, confirmed = false, dryRun = false, onProgress } = {}) {
+            return withCyoaWriteLock(directory, async () => {
             const { documents, configuration, linksOriginal, verificationFile, verificationOriginal, registry } = await load();
             const selected = file && documents.find(document => document.filename === file);
             if (file && !selected) throw new Error("CYOA not found.");
@@ -248,6 +250,7 @@ function createImageMaintenance({ directory = path.join(ROOT, "CYOAs"), linksFil
                 verificationRequired: true, pageUrl: pageURL(slot.filename) }))], failures: evaluation.failures, manualVerifications: manual,
                 linked: action === "link" ? { id, sourceId } : null,
                 message: `${action === "link" ? `Connection ${dryRun ? "proposed" : "saved"}. ` : ""}${dryRun ? "Proposed" : "Applied"} ${edits.length} image repair(s); ${plan.unresolved.length} image(s) need a URL or ID connection; ${unverified.length} need manual verification; ${manual.length} have current manual confirmations.` };
+            });
         }
     };
 }

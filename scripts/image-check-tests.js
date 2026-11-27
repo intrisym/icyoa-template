@@ -4,6 +4,115 @@ const fs = require("node:fs/promises");
 const path = require("node:path");
 const { collectImages, checkProfile } = require("./check-images");
 
+test("failed editor reload blocks stale writes until the repaired draft is reconciled", async context => {
+    const browser = await require("playwright").chromium.launch();
+    context.after(() => browser.close());
+    const page = await browser.newPage();
+    const before = "https://images.test/before.png";
+    const after = "https://images.test/after.png";
+    let data = [{ type: "title", text: "Reload fixture" }, { type: "headerImage", url: before },
+        { type: "points", values: { Points: 5 } }, { name: "Choices", options: [] },
+        { type: "publication", status: "draft", seriesId: "fixture.json" }];
+    const writes = [];
+    let checks = 0;
+    let reloadsBlocked = false;
+    let failReload = true;
+    await page.route("**/*", async route => {
+        const request = route.request();
+        const url = new URL(request.url());
+        if (url.origin !== "https://editor.test") return route.abort();
+        if (url.pathname === "/api/config") {
+            if (request.method() === "PUT") {
+                data = request.postDataJSON(); writes.push(data);
+                return route.fulfill({ json: { ok: true } });
+            }
+            return reloadsBlocked && failReload ? route.fulfill({ status: 503 }) : route.fulfill({ json: data });
+        }
+        if (url.pathname === "/api/cyoas") return route.fulfill({ json: [] });
+        if (url.pathname === "/api/image-maintenance") {
+            if (request.method() === "GET") return route.fulfill({ json: { versions: [], links: [] } });
+            checks++;
+            data = structuredClone(data);
+            data.find(entry => entry.type === "headerImage").url = after;
+            reloadsBlocked = true;
+            return route.fulfill({ json: { edits: [], failures: [], unresolved: [] } });
+        }
+        const filename = path.resolve(__dirname, "..", url.pathname.slice(1) || "index.html");
+        try { return await route.fulfill({ path: filename }); }
+        catch { return route.fulfill({ status: 404 }); }
+    });
+    await page.goto("https://editor.test/editor.html?cyoa=fixture.json");
+    await page.waitForSelector("#globalHeaderInput");
+    await page.locator("#maintainImagesBtn").click();
+    await page.waitForFunction(() => document.querySelector("#imageMaintenanceStatus").textContent.includes("Draft writes remain blocked"));
+    assert.equal(await page.locator("#globalHeaderInput").isDisabled(), true);
+    const saved = writes.length;
+    await page.locator("#scanRepairImagesBtn").click();
+    await page.waitForFunction(() => document.querySelector("#imageMaintenanceStatus").textContent.includes("Reload failed"));
+    assert.equal(writes.length, saved);
+    assert.equal(checks, 1);
+    failReload = false;
+    await page.locator("#scanRepairImagesBtn").click();
+    await page.waitForFunction(() => document.querySelector("#imageMaintenanceStatus").textContent === "All images are up to date.");
+    assert.equal(writes.length, saved + 1);
+    assert.equal(writes.at(-1).find(entry => entry.type === "headerImage").url, after);
+    assert.equal(await page.locator("#globalHeaderInput").inputValue(), after);
+    assert.equal(await page.locator("#globalHeaderInput").isDisabled(), false);
+});
+
+test("checkout interception respects the deployment-directory boundary", async context => {
+    const root = await fs.mkdtemp(path.join(require("node:os").tmpdir(), "image-assets-"));
+    context.after(() => fs.rm(root, { recursive: true, force: true }));
+    const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=", "base64");
+    await fs.mkdir(path.join(root, "images"));
+    await fs.writeFile(path.join(root, "images/local.png"), png);
+    const browser = await require("playwright").chromium.launch();
+    context.after(() => browser.close());
+    const remote = [];
+    const wrapped = { newContext: async options => {
+        const session = await browser.newContext(options);
+        await session.route("https://assets.test/**", route => {
+            const pathname = new URL(route.request().url()).pathname;
+            remote.push(pathname);
+            return pathname.includes("missing") || pathname.startsWith("/project/")
+                ? route.fulfill({ status: 404 }) : route.fulfill({ contentType: "image/png", body: png });
+        });
+        return session;
+    } };
+    const images = ["images/local.png", "/shared/banner.png", "/projectile/banner.png", "/shared/missing.png"]
+        .map(url => ({ file: "CYOAs/example.json", id: url, url }));
+    const failures = await checkProfile(wrapped, images, { baseURL: "https://assets.test/project/", assetRoot: root });
+    assert.equal(failures.length, 1);
+    assert.equal(failures[0].url, "https://assets.test/shared/missing.png");
+    assert.equal(failures[0].classification, "broken");
+    assert.ok(remote.includes("/shared/banner.png"));
+    assert.ok(remote.includes("/projectile/banner.png"));
+    assert.ok(!remote.includes("/project/images/local.png"));
+});
+
+test("redirected failures retain terminal diagnostics under the initiating URL", async context => {
+    const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=", "base64");
+    const server = require("node:http").createServer((request, response) => {
+        if (request.url.startsWith("/redirect/")) {
+            response.writeHead(302, { Location: request.url.replace("/redirect/", "/terminal/"), "Cache-Control": "no-store" });
+            response.end();
+        } else if (request.url === "/terminal/good") {
+            response.writeHead(200, { "Content-Type": "image/png" }); response.end(png);
+        } else { response.writeHead(404, { "Cache-Control": "no-store" }); response.end(); }
+    });
+    await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+    context.after(() => new Promise(resolve => server.close(resolve)));
+    const browser = await require("playwright").chromium.launch();
+    context.after(() => browser.close());
+    const origin = `http://127.0.0.1:${server.address().port}`;
+    const failures = await checkProfile(browser, ["good", "missing"].map(id => ({ id, file: "CYOAs/test.json", url: `${origin}/redirect/${id}` })),
+        { baseURL: origin + "/", serveLocalAssets: false });
+    assert.equal(failures.length, 1, JSON.stringify(failures));
+    assert.equal(failures[0].url, `${origin}/redirect/missing`);
+    assert.equal(failures[0].classification, "broken");
+    assert.deepEqual(failures[0].attempts.map(attempt => attempt.status), [404, 404]);
+});
+
 test("collects header images and nested option image/img fields, ignoring ordinary links", () => {
     assert.deepEqual(collectImages([
         { type: "headerImage", url: " https://images.test/header.png " },

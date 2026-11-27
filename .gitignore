@@ -12,6 +12,7 @@ image-rehosting-report.json
 # Application Data
 temp-input.json
 CYOAs/.trash/
+CYOAs/.write-lock/
 
 *read*
 
