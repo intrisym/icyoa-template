@@ -6940,24 +6940,29 @@
         const status = document.getElementById("imageMaintenanceStatus");
         const results = document.getElementById("imageMaintenanceResults");
         const fields = document.getElementById("imageMaintenanceFields");
-        const versionSelect = document.getElementById("repairImageVersion");
-        const imageSelect = document.getElementById("repairImageTarget");
         const sourceSelect = document.getElementById("repairSourceVersion");
         const sourceId = document.getElementById("repairSourceId");
         const urlInput = document.getElementById("repairImageUrl");
         const scanButton = document.getElementById("scanRepairImagesBtn");
         const closeButton = document.getElementById("closeImageMaintenanceBtn");
+        const issue = document.getElementById("imageRepairIssue");
+        const choices = document.getElementById("imageRepairChoice");
+        const idButton = document.getElementById("chooseImageIdBtn");
+        const urlButton = document.getElementById("chooseImageUrlBtn");
+        const applyButton = document.getElementById("applyImageRepairBtn");
+        const nextButton = document.getElementById("nextRepairImageBtn");
+        const errorMessage = document.getElementById("imageRepairError");
         let versions = [];
+        let pending = [];
+        let position = 0;
+        let mode = null;
+        const repaired = new Map();
         CyoaImageUrlPolicy.bindInput(urlInput);
         const option = (value, text) => {
             const element = document.createElement("option");
             element.value = value;
             element.textContent = text;
             return element;
-        };
-        const updateImages = () => {
-            imageSelect.replaceChildren(...(versions.find(version => version.file === versionSelect.value)?.images || [])
-                .map(image => option(image.id, `${image.label} (${image.id})`)));
         };
         const updateSources = () => {
             document.getElementById("repairSourceOptions").replaceChildren(...(versions.find(version => version.file === sourceSelect.value)?.images || [])
@@ -6968,57 +6973,99 @@
             const data = await response.json();
             if (!response.ok) throw new Error(data.error || "Could not load image versions.");
             versions = data.versions;
-            document.getElementById("savedImageConnections").textContent = data.links.length
-                ? `Saved ID connections: ${data.links.map(link => link.ids.join(" ↔ ")).join("; ")}`
-                : "";
-            document.getElementById("savedImageConnections").hidden = !data.links.length;
-            for (const select of [versionSelect, sourceSelect]) select.replaceChildren(...versions.map(version =>
-                option(version.file, `v${version.version} (${version.status}) — ${version.file}`)));
-            versionSelect.value = state.selectedFile;
-            sourceSelect.value = versions.filter(version => version.file !== state.selectedFile).at(-1)?.file || state.selectedFile;
-            updateImages();
-            updateSources();
         }
-        function showResults(result) {
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.hidden = !message;
+        }
+        function chooseMode(value, focus = true) {
+            mode = value;
+            fields.hidden = !mode;
+            document.getElementById("repairLinkFields").hidden = mode !== "link";
+            document.getElementById("repairUrlFields").hidden = mode !== "replace";
+            idButton.setAttribute("aria-pressed", String(mode === "link"));
+            urlButton.setAttribute("aria-pressed", String(mode === "replace"));
+            document.getElementById("imageRepairFormTitle").textContent = mode === "link" ? "Connect the matching option" : "Replace the image";
+            applyButton.textContent = mode === "link" ? "Connect and repair" : "Verify URL and repair";
+            showError("");
+            if (focus && mode) (mode === "link" ? sourceId : urlInput).focus();
+        }
+        function showIssue() {
+            const image = pending[position];
+            issue.hidden = !image;
+            if (!image) return;
+            const version = versions.find(version => version.file === image.file);
+            document.getElementById("imageRepairPosition").textContent = `Image ${position + 1} of ${pending.length} needing help`;
+            document.getElementById("imageRepairPosition").hidden = pending.length === 1;
+            document.getElementById("imageRepairLabel").textContent = image.label;
+            document.getElementById("imageRepairVersion").textContent = version ? `Version ${version.version} · ${version.status}` : image.file;
+            const candidates = versions.filter(version => version.file !== image.file && version.images.some(candidate => candidate.id !== "@header"))
+                .sort((a, b) => CyoaVersioning.compareVersions(b.version, a.version) || Number(b.status === "draft") - Number(a.status === "draft"));
+            sourceSelect.replaceChildren(...candidates.map(version => option(version.file, `Version ${version.version} (${version.status})`)));
+            updateSources();
+            sourceId.value = "";
+            urlInput.value = "";
+            urlInput.dispatchEvent(new Event("input"));
+            choices.hidden = image.id === "@header" || !candidates.length;
+            document.getElementById("imageRepairHelp").textContent = image.id === "@header"
+                ? "This header needs a working image URL."
+                : "We couldn't find a working matching image. Did this option move, or does it need a new URL?";
+            document.getElementById("imageRepairDetails").textContent = `${image.file}\nOption ID: ${image.id}\n${image.url || ""}\n${image.errors || ""}`;
+            document.querySelector(".image-repair-details").open = false;
+            nextButton.hidden = pending.length < 2;
+            chooseMode(choices.hidden ? "replace" : null, false);
+            document.getElementById("imageRepairLabel").focus();
+        }
+        function showResults(result, previous) {
+            for (const edit of result.edits) repaired.set(`${edit.file}\0${edit.id}`, edit);
             results.replaceChildren();
-            const list = document.createElement("ul");
-            for (const edit of result.edits) {
-                const row = document.createElement("li");
-                row.textContent = `Repaired ${edit.file} / ${edit.id}`;
-                list.appendChild(row);
+            results.hidden = !repaired.size && result.unresolved.length > 0;
+            results.classList.toggle("image-sync-success", !result.unresolved.length);
+            const summary = document.createElement("p");
+            summary.textContent = repaired.size ? `${repaired.size} image${repaired.size === 1 ? "" : "s"} repaired across your versions.`
+                : result.unresolved.length ? "These images couldn't be fixed automatically." : "Every version has working images.";
+            results.appendChild(summary);
+            if (repaired.size) {
+                const details = document.createElement("details");
+                const heading = document.createElement("summary");
+                heading.textContent = "View repairs";
+                const list = document.createElement("ul");
+                for (const edit of repaired.values()) {
+                    const row = document.createElement("li");
+                    row.textContent = `${edit.file} / ${edit.id}`;
+                    list.appendChild(row);
+                }
+                details.append(heading, list);
+                results.appendChild(details);
             }
-            for (const image of result.unresolved) {
-                const row = document.createElement("li");
-                const errors = result.failures.filter(failure => failure.references.some(reference => reference.filename === image.file && reference.id === image.id))
-                    .map(failure => `${failure.profile}: ${failure.error}`);
-                row.textContent = `Needs input: ${image.file} / ${image.id} — ${errors.join("; ")} `;
-                const resolve = document.createElement("button");
-                resolve.type = "button";
-                resolve.className = "button-subtle";
-                resolve.textContent = "Resolve";
-                resolve.addEventListener("click", () => {
-                    versionSelect.value = image.file;
-                    updateImages();
-                    imageSelect.value = image.id;
-                    urlInput.focus();
-                });
-                row.appendChild(resolve);
-                list.appendChild(row);
+            pending = result.unresolved.map(image => ({ ...image, errors: result.failures
+                .filter(failure => failure.references.some(reference => reference.filename === image.file && reference.id === image.id))
+                .map(failure => `${failure.profile}: ${failure.error}`).join("\n") }));
+            position = Math.max(0, pending.findIndex(image => image.file === previous?.file && image.id === previous?.id));
+            status.textContent = pending.length ? `${pending.length} image${pending.length === 1 ? " needs" : "s need"} your help.` : "All images are up to date.";
+            showIssue();
+            if (result.linked && pending[position]?.file === previous?.file && pending[position]?.id === previous?.id) {
+                chooseMode("replace", false);
+                document.getElementById("imageRepairHelp").textContent = "The options are connected, but there is still no working image. Enter a new URL.";
             }
-            results.appendChild(list);
         }
         async function run(action) {
             if (versionBusy) return;
+            const image = pending[position];
+            if (action !== "repair" && !image) return;
+            if (action === "link" && !sourceId.value.trim()) return showError("Enter the matching option's ID.");
             if (action === "replace" && (!urlInput.value.trim() || CyoaImageUrlPolicy.validationMessage(urlInput.value))) {
-                status.textContent = CyoaImageUrlPolicy.validationMessage(urlInput.value) || "Enter a replacement image URL.";
-                return;
+                return showError(CyoaImageUrlPolicy.validationMessage(urlInput.value) || "Enter a replacement image URL.");
             }
             versionBusy = true;
             updateVersionControls();
-            fields.disabled = scanButton.disabled = closeButton.disabled = true;
-            status.textContent = "Checking images from localhost and production origins. This may take a few minutes…";
-            results.replaceChildren();
+            fields.disabled = choices.disabled = nextButton.disabled = scanButton.disabled = closeButton.disabled = true;
+            dialog.setAttribute("aria-busy", "true");
+            status.textContent = action === "repair" ? "Checking images in every version and syncing working matches…" : "Verifying your fix and syncing connected images…";
+            issue.hidden = true;
+            showError("");
             try {
+                if (!versions.length) await refreshVersions();
                 // Finish any older autosave before explicitly saving current edits.
                 tempSyncState.pendingData = null;
                 while (tempSyncState.saving) await new Promise(resolve => setTimeout(resolve, 20));
@@ -7030,35 +7077,49 @@
                 }
                 const response = await fetch("/api/image-maintenance", {
                     method: "POST", headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ file: action === "repair" ? state.selectedFile : versionSelect.value, action, id: imageSelect.value,
+                    body: JSON.stringify({ file: action === "repair" ? state.selectedFile : image.file, action, id: image?.id,
                         sourceFile: sourceSelect.value, sourceId: sourceId.value.trim(), url: urlInput.value.trim() })
                 });
                 const result = await response.json();
                 if (!response.ok) throw new Error(result.error || "Image maintenance failed.");
                 await loadInitialData();
                 await refreshVersions();
-                showResults(result);
-                status.textContent = result.message;
-            } catch (error) { status.textContent = error.message; }
+                showResults(result, image);
+            } catch (error) {
+                issue.hidden = !image;
+                if (image) {
+                    status.textContent = "This image still needs a fix.";
+                    showError(error.message);
+                } else status.textContent = `Couldn't finish the sync check: ${error.message}`;
+            }
             finally {
                 versionBusy = false;
-                fields.disabled = scanButton.disabled = closeButton.disabled = false;
+                fields.disabled = choices.disabled = nextButton.disabled = scanButton.disabled = closeButton.disabled = false;
+                scanButton.hidden = false;
+                dialog.setAttribute("aria-busy", "false");
                 updateVersionControls();
             }
         }
-        versionSelect.addEventListener("change", updateImages);
         sourceSelect.addEventListener("change", updateSources);
         document.getElementById("maintainImagesBtn").addEventListener("click", async () => {
             if (!state.selectedFile) return showEditorMessage("Select a CYOA first.", "warning");
+            if (versionBusy) return;
+            versions = [];
+            pending = [];
+            position = 0;
+            repaired.clear();
             results.replaceChildren();
-            status.textContent = "Loading image versions…";
+            results.classList.remove("image-sync-success");
+            issue.hidden = true;
+            scanButton.hidden = true;
             dialog.showModal();
-            try { await refreshVersions(); status.textContent = "Same option IDs and header images connect automatically. Other IDs can be connected below."; }
-            catch (error) { status.textContent = error.message; }
+            await run("repair");
         });
         scanButton.addEventListener("click", () => void run("repair"));
-        document.getElementById("replaceVersionImageBtn").addEventListener("click", () => void run("replace"));
-        document.getElementById("linkVersionImageBtn").addEventListener("click", () => void run("link"));
+        idButton.addEventListener("click", () => chooseMode("link"));
+        urlButton.addEventListener("click", () => chooseMode("replace"));
+        applyButton.addEventListener("click", () => { if (mode) void run(mode); });
+        nextButton.addEventListener("click", () => { position = (position + 1) % pending.length; showIssue(); });
         closeButton.addEventListener("click", () => dialog.close());
         dialog.addEventListener("cancel", event => { if (versionBusy) event.preventDefault(); });
     }

@@ -30,6 +30,7 @@ test("visual editor flags loaded and typed blocked URLs in header and option fie
         ] }] }
     ];
     const maintenanceRequests = [];
+    let headerScenario = false;
     await page.route("**/*", async route => {
         const url = new URL(route.request().url());
         if (url.origin !== "https://editor.test") return route.abort();
@@ -37,15 +38,24 @@ test("visual editor flags loaded and typed blocked URLs in header and option fie
         if (url.pathname === "/api/cyoas") return route.fulfill({ json: [] });
         if (url.pathname === "/api/image-maintenance") {
             if (route.request().method() === "GET") return route.fulfill({ json: { versions: [
-                { file: "old.json", version: "1", status: "published", images: [{ id: "oldBalance", label: "Balance", url: "https://images.test/bad.png" }] },
+                { file: "old.json", version: "1", status: "published", images: [
+                    { id: "oldBalance", label: "Balance", url: "https://images.test/bad.png" },
+                    { id: "deletedOption", label: "Deleted option", url: "https://images.test/deleted.png" }
+                ] },
                 { file: "fixture.json", version: "1.1", status: "published", images: [{ id: "balance", label: "Balance", url: "https://images.test/good.png" }] }
             ], links: [] } });
             const request = route.request().postDataJSON();
             maintenanceRequests.push(request);
+            if (request.action === "repair" && headerScenario) return route.fulfill({ json: {
+                edits: [], unresolved: [{ file: "old.json", id: "@header", label: "Header image" }], failures: []
+            } });
+            if (request.action === "link" && request.sourceId !== "balance") return route.fulfill({ status: 400, json: { error: "Select an existing matching option ID." } });
+            const deleted = { file: "old.json", id: "deletedOption", label: "Deleted option", url: "https://images.test/deleted.png" };
             return route.fulfill({ json: request.action === "repair" ? {
-                edits: [], unresolved: [{ file: "old.json", id: "oldBalance", label: "Balance" }],
+                edits: [], unresolved: [{ file: "old.json", id: "oldBalance", label: "Balance" }, deleted],
                 failures: [{ profile: "production", error: "HTTP 403", references: [{ filename: "old.json", id: "oldBalance" }] }], message: "1 image needs input."
-            } : { edits: [{ file: "old.json", id: "oldBalance" }], unresolved: [], failures: [], message: "Applied 1 image repair." } });
+            } : request.action === "link" ? { edits: [{ file: "old.json", id: "oldBalance" }], unresolved: [deleted], failures: [], linked: { id: "oldBalance", sourceId: "balance" } }
+                : { edits: [{ file: "old.json", id: "deletedOption" }], unresolved: [], failures: [] } });
         }
         if (url.pathname === "/index.html") return route.fulfill({ contentType: "text/html", body: "<!doctype html><title>Preview fixture</title>" });
         try {
@@ -77,26 +87,70 @@ test("visual editor flags loaded and typed blocked URLs in header and option fie
     await page.reload();
     await page.waitForSelector("#editableContent[disabled]");
     await page.locator("#maintainImagesBtn").click();
-    await page.waitForFunction(() => document.querySelector("#imageMaintenanceStatus").textContent.includes("connect automatically"));
-    await page.locator("#scanRepairImagesBtn").click();
-    await page.waitForFunction(() => document.querySelector("#imageMaintenanceStatus").textContent === "1 image needs input.");
-    await page.locator("#imageMaintenanceResults button").click();
-    assert.equal(await page.locator("#repairImageVersion").inputValue(), "old.json");
-    assert.equal(await page.locator("#repairImageTarget").inputValue(), "oldBalance");
+    await page.waitForFunction(() => document.querySelector("#imageMaintenanceStatus").textContent === "2 images need your help.");
+    assert.equal(maintenanceRequests.length, 1); // Opening the dialog starts the sync check.
+    assert.equal(await page.locator("#imageRepairLabel").textContent(), "Balance");
+    assert.equal(await page.locator("#imageMaintenanceFields").isVisible(), false);
+    assert.equal(await page.locator("#imageRepairDetails").isVisible(), false);
+    await page.locator("#nextRepairImageBtn").click();
+    assert.equal(await page.locator("#imageRepairLabel").textContent(), "Deleted option");
+    await page.locator("#nextRepairImageBtn").click();
+    assert.equal(await page.locator("#imageRepairLabel").textContent(), "Balance");
+    await page.locator("#chooseImageIdBtn").click();
+    assert.equal(await page.locator("#repairImageUrl").isVisible(), false);
+    await page.evaluate(() => { document.documentElement.dataset.theme = "dark"; });
+    for (const selector of ["#chooseImageIdBtn", "#chooseImageUrlBtn", "#applyImageRepairBtn"]) {
+        const button = page.locator(selector);
+        await button.hover();
+        const contrast = await button.evaluate(node => {
+            const luminance = color => {
+                const [red, green, blue] = color.match(/[\d.]+/g).slice(0, 3).map(Number).map(value => {
+                    const channel = value / 255;
+                    return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+                });
+                return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+            };
+            const style = getComputedStyle(node);
+            const foreground = luminance(style.color);
+            const background = luminance(style.backgroundColor);
+            return (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05);
+        });
+        assert(contrast >= 4.5, `${selector} contrast ${contrast}`);
+    }
     await page.locator("#repairSourceVersion").selectOption("fixture.json");
+    await page.locator("#repairSourceId").fill("wrongId");
+    await page.locator("#applyImageRepairBtn").click();
+    await page.waitForSelector("#imageRepairError:not([hidden])");
+    assert.equal(await page.locator("#repairSourceId").inputValue(), "wrongId");
     await page.locator("#repairSourceId").fill("balance");
-    await page.locator("#linkVersionImageBtn").click();
-    await page.waitForFunction(() => document.querySelector("#imageMaintenanceStatus").textContent === "Applied 1 image repair.");
-    assert.equal(maintenanceRequests[1].action, "link");
-    assert.equal(maintenanceRequests[1].file, "old.json");
-    assert.equal(maintenanceRequests[1].sourceId, "balance");
-    assert.equal(maintenanceRequests[1].id, "oldBalance");
-    await page.locator("#repairImageVersion").selectOption("old.json");
+    await page.locator("#applyImageRepairBtn").click();
+    await page.waitForFunction(() => document.querySelector("#imageMaintenanceStatus").textContent === "1 image needs your help.");
+    assert.equal(maintenanceRequests[2].action, "link");
+    assert.equal(maintenanceRequests[2].file, "old.json");
+    assert.equal(maintenanceRequests[2].sourceId, "balance");
+    assert.equal(maintenanceRequests[2].id, "oldBalance");
+    assert.equal(await page.locator("#imageRepairLabel").textContent(), "Deleted option");
+    await page.locator("#chooseImageUrlBtn").click();
+    assert.equal(await page.locator("#repairSourceId").isVisible(), false);
+    await page.setViewportSize({ width: 390, height: 844 });
+    assert.equal(await page.locator("#imageMaintenanceDialog").evaluate(node => node.scrollWidth <= node.clientWidth), true);
+    await page.locator("#repairImageUrl").fill("https://wallpapercave.com/bad.png");
+    await page.locator("#applyImageRepairBtn").click();
+    assert.equal(maintenanceRequests.length, 3); // Blocklisted URLs are rejected before a network scan.
     await page.locator("#repairImageUrl").fill("https://images.test/replacement.png");
-    await page.locator("#replaceVersionImageBtn").click();
-    await page.waitForFunction(() => !document.querySelector("#imageMaintenanceFields").disabled);
-    assert.equal(maintenanceRequests[2].action, "replace");
-    assert.equal(maintenanceRequests[2].url, "https://images.test/replacement.png");
+    await page.locator("#applyImageRepairBtn").click();
+    await page.waitForFunction(() => document.querySelector("#imageMaintenanceStatus").textContent === "All images are up to date.");
+    assert.equal(maintenanceRequests[3].action, "replace");
+    assert.equal(maintenanceRequests[3].id, "deletedOption");
+    assert.equal(maintenanceRequests[3].url, "https://images.test/replacement.png");
+    assert.equal(await page.locator("#imageRepairIssue").isVisible(), false);
+    assert.match(await page.locator("#imageMaintenanceResults").textContent(), /2 images repaired/);
+    headerScenario = true;
+    await page.locator("#scanRepairImagesBtn").click();
+    await page.waitForFunction(() => document.querySelector("#imageMaintenanceStatus").textContent === "1 image needs your help.");
+    assert.equal(await page.locator("#imageRepairLabel").textContent(), "Header image");
+    assert.equal(await page.locator("#imageRepairChoice").isVisible(), false);
+    assert.equal(await page.locator("#repairImageUrl").isVisible(), true);
     assert.equal(await page.locator("#globalHeaderInput").isDisabled(), true);
     assert.deepEqual(errors, []);
 });

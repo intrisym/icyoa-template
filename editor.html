@@ -101,33 +101,46 @@
             </div>
         </form>
     </dialog>
-    <dialog id="imageMaintenanceDialog" class="image-maintenance-dialog">
+    <dialog id="imageMaintenanceDialog" class="image-maintenance-dialog" aria-labelledby="imageMaintenanceTitle">
         <div class="image-maintenance-heading">
-            <h3>Repair Images Across Versions</h3>
+            <h3 id="imageMaintenanceTitle">Image sync</h3>
             <button id="closeImageMaintenanceBtn" type="button" class="button-subtle">Close</button>
         </div>
-        <p>Checks all versions of this CYOA. Failed images are replaced from working images with the same option ID or a saved connection. Working images stay as they are. Published versions can receive image repairs here.</p>
-        <button id="scanRepairImagesBtn" type="button">Check and Repair Connected Images</button>
         <p id="imageMaintenanceStatus" role="status" aria-live="polite"></p>
         <div id="imageMaintenanceResults"></div>
-        <p id="savedImageConnections"></p>
-        <fieldset id="imageMaintenanceFields">
-            <legend>Resolve an Image</legend>
-            <label for="repairImageVersion">Version to repair</label>
-            <select id="repairImageVersion"></select>
-            <label for="repairImageTarget">Image to repair</label>
-            <select id="repairImageTarget"></select>
-            <label for="repairImageUrl">Replacement image URL (for deleted or unmatched options)</label>
-            <input id="repairImageUrl" type="url" placeholder="https://example.com/replacement.png">
-            <button id="replaceVersionImageBtn" type="button">Verify and Replace Image</button>
-            <p>For an option that moved or changed ID, connect it to the matching option in another version. The connection is saved for future repairs.</p>
-            <label for="repairSourceVersion">Version with the matching option</label>
-            <select id="repairSourceVersion"></select>
-            <label for="repairSourceId">Matching option ID</label>
-            <input id="repairSourceId" type="text" list="repairSourceOptions" placeholder="Enter the option ID in that version">
-            <datalist id="repairSourceOptions"></datalist>
-            <button id="linkVersionImageBtn" type="button">Connect Options and Repair</button>
-        </fieldset>
+        <section id="imageRepairIssue" class="image-repair-issue" aria-labelledby="imageRepairLabel" hidden>
+            <p id="imageRepairPosition" class="image-repair-caption"></p>
+            <h4 id="imageRepairLabel" tabindex="-1"></h4>
+            <p id="imageRepairVersion" class="image-repair-caption"></p>
+            <p id="imageRepairHelp">We couldn't find a working matching image. How would you like to fix it?</p>
+            <fieldset id="imageRepairChoice" class="image-repair-choices">
+                <legend class="image-repair-caption">What happened to this option?</legend>
+                <button id="chooseImageIdBtn" type="button" class="button-subtle" aria-pressed="false">It moved or was renamed</button>
+                <button id="chooseImageUrlBtn" type="button" class="button-subtle" aria-pressed="false">Use a new image URL</button>
+            </fieldset>
+            <fieldset id="imageMaintenanceFields" hidden>
+                <legend id="imageRepairFormTitle"></legend>
+                <div id="repairLinkFields" class="image-repair-inputs" hidden>
+                    <label for="repairSourceVersion">Version with the matching option</label>
+                    <select id="repairSourceVersion"></select>
+                    <label for="repairSourceId">Its new option ID</label>
+                    <input id="repairSourceId" type="text" list="repairSourceOptions" placeholder="Enter or select the matching ID">
+                    <datalist id="repairSourceOptions"></datalist>
+                </div>
+                <div id="repairUrlFields" class="image-repair-inputs" hidden>
+                    <label for="repairImageUrl">New image URL</label>
+                    <input id="repairImageUrl" type="url" placeholder="https://example.com/replacement.png">
+                </div>
+                <button id="applyImageRepairBtn" type="button">Verify and repair</button>
+            </fieldset>
+            <p id="imageRepairError" class="image-repair-error" role="alert" hidden></p>
+            <details class="image-repair-details">
+                <summary>Image details</summary>
+                <p id="imageRepairDetails"></p>
+            </details>
+            <button id="nextRepairImageBtn" type="button" class="button-subtle" hidden>Skip to the next image</button>
+        </section>
+        <button id="scanRepairImagesBtn" type="button" class="button-subtle" hidden>Check again</button>
     </dialog>
     <script src="versioning.js"></script>
     <script src="versionPicker.js"></script>
