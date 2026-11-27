@@ -36,7 +36,7 @@ async function checkPushedImages(input, check = runImageChecks, { cwd = process.
             failures += result.failures.length;
         } finally { await fsp.rm(temporary, { recursive: true, force: true }); }
     }
-    if (failures) throw new Error(`${failures} image failure(s) in pushed snapshots. Repair and commit all affected versions before pushing.`);
+    if (failures) throw new Error(`${failures} blocking image result(s) in pushed snapshots. Repair confirmed failures or commit recent manual verification for inconclusive images before pushing.`);
 }
 
 if (require.main === module) checkPushedImages(fs.readFileSync(0, "utf8")).catch(error => {

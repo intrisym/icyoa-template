@@ -1040,6 +1040,7 @@ input.image-url-invalid:focus {
 }
 
 :root[data-theme="dark"] #imageMaintenanceDialog #applyImageRepairBtn,
+:root[data-theme="dark"] #imageMaintenanceDialog #confirmImageVerificationBtn,
 :root[data-theme="dark"] #imageMaintenanceDialog .image-repair-choices button[aria-pressed="true"] {
     background: var(--accent);
     color: #081420;
@@ -1056,6 +1057,15 @@ input.image-url-invalid:focus {
 #imageRepairDetails {
     white-space: pre-wrap;
     overflow-wrap: anywhere;
+}
+
+#imageVerificationUrl {
+    overflow-wrap: anywhere;
+}
+
+#imageManualVerification a {
+    color: var(--accent);
+    text-decoration: underline;
 }
 
 #scanRepairImagesBtn,

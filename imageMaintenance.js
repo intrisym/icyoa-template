@@ -3,6 +3,7 @@ const path = require("node:path");
 const { randomUUID } = require("node:crypto");
 const { metadata, compareVersions } = require("./versioning");
 const { validationMessage } = require("./imageUrlPolicy");
+const { classifyFailure, readVerifications, evaluateResults, productionURL, pageURL } = require("./imageVerification");
 
 const ROOT = __dirname;
 const HEADER = "@header";
@@ -69,12 +70,12 @@ function preferredSource(left, right) {
         || left.filename.localeCompare(right.filename);
 }
 
-function planRepairs(documents, configuration, failedSlots) {
+function planRepairs(documents, configuration, failedSlots, inconclusiveSlots = new Set()) {
     const changes = [];
     const unresolved = [];
     for (const slots of groupsFor(documents, configuration).values()) {
         const source = slots.filter(slot => !failedSlots.has(slotKey(slot))).sort(preferredSource)[0];
-        for (const target of slots.filter(slot => failedSlots.has(slotKey(slot)))) {
+        for (const target of slots.filter(slot => failedSlots.has(slotKey(slot)) && !inconclusiveSlots.has(slotKey(slot)))) {
             if (source) changes.push({ target, source, url: source.url });
             else unresolved.push(target);
         }
@@ -157,7 +158,10 @@ function createImageMaintenance({ directory = path.join(ROOT, "CYOAs"), linksFil
         const linksOriginal = await fs.readFile(linksFile, "utf8").catch(error => { if (error.code === "ENOENT") return null; throw error; });
         const configuration = linksOriginal ? JSON.parse(linksOriginal) : { schemaVersion: 1, links: [] };
         groupsFor(documents, configuration);
-        return { documents, configuration, linksOriginal };
+        const verificationFile = path.join(path.dirname(linksFile), "image-verifications.json");
+        const verificationOriginal = await fs.readFile(verificationFile, "utf8").catch(error => { if (error.code === "ENOENT") return null; throw error; });
+        const registry = readVerifications(path.dirname(linksFile));
+        return { documents, configuration, linksOriginal, verificationFile, verificationOriginal, registry };
     }
     const describe = slot => ({ file: slot.filename, id: slot.id, label: slot.label, url: slot.url });
     return {
@@ -169,8 +173,8 @@ function createImageMaintenance({ directory = path.join(ROOT, "CYOAs"), linksFil
             return { versions: versions.map(document => ({ file: document.filename, version: document.release?.version || document.release?.targetVersion || document.release?.baseVersion || "1", status: document.release?.status || "legacy", images: imageSlots(document).map(describe) })), links: configuration.links.filter(link => link.seriesId === selected.seriesId) };
         },
         async checkLinks() { const { documents, configuration } = await load(); return { files: documents.length, links: configuration.links.length }; },
-        async repair({ file, action = "repair", id, sourceFile, sourceId, url, dryRun = false, onProgress } = {}) {
-            const { documents, configuration, linksOriginal } = await load();
+        async repair({ file, action = "repair", id, sourceFile, sourceId, url, confirmed = false, dryRun = false, onProgress } = {}) {
+            const { documents, configuration, linksOriginal, verificationFile, verificationOriginal, registry } = await load();
             const selected = file && documents.find(document => document.filename === file);
             if (file && !selected) throw new Error("CYOA not found.");
             const scope = selected ? documents.filter(document => document.seriesId === selected.seriesId) : documents;
@@ -192,12 +196,33 @@ function createImageMaintenance({ directory = path.join(ROOT, "CYOAs"), linksFil
                 if (error) throw new Error(error);
                 target.node[target.field] = url.trim();
                 edits.push({ file, id, before: target.url, url: url.trim(), sourceFile: "manual replacement" });
+            } else if (action === "verify") {
+                if (!target || confirmed !== true || url !== target.url) throw new Error("Confirm that this exact image URL loads on the live CYOA. If the URL changed, run the check again.");
+                const error = validationMessage(target.url);
+                if (error) throw new Error(error);
             } else if (action !== "repair") throw new Error("Unknown image maintenance action.");
             const currentSlots = scope.flatMap(imageSlots);
             const failures = await scan(currentSlots, onProgress);
             const failed = new Set(failures.flatMap(failure => failure.references.map(slotKey)));
-            if (action === "replace" && failed.has(slotKey(target))) throw new Error("The replacement image failed loading checks. No files were changed.");
-            const plan = planRepairs(scope, { schemaVersion: 1, links: configuration.links.filter(link => scope.some(document => document.seriesId === link.seriesId)) }, failed);
+            const inconclusive = new Set(failures.filter(failure => classifyFailure(failure) === "inconclusive").flatMap(failure => failure.references.map(slotKey)));
+            const broken = new Set(failures.filter(failure => classifyFailure(failure) === "broken").flatMap(failure => failure.references.map(slotKey)));
+            for (const key of broken) inconclusive.delete(key);
+            if (action === "verify") {
+                if (broken.has(slotKey(target))) throw new Error("This image has a confirmed failure or policy violation. Manual verification cannot override it.");
+                if (inconclusive.has(slotKey(target))) {
+                    registry.verifications = registry.verifications.filter(entry => entry.file !== file || entry.id !== id);
+                    registry.verifications.push({ file, id, url: new URL(target.url, productionURL()).href,
+                        pageUrl: pageURL(file), method: "manual", verifiedAt: new Date().toISOString() });
+                }
+            }
+            if (action === "replace" && failed.has(slotKey(target))) throw new Error(broken.has(slotKey(target))
+                ? "The replacement image failed loading checks. No files were changed."
+                : "The replacement check was inconclusive, so this URL could not be verified automatically. No files were changed.");
+            const evaluation = evaluateResults(failures, registry);
+            const pendingVerification = new Set(evaluation.failures.filter(failure => failure.classification === "inconclusive")
+                .flatMap(failure => failure.references.map(slotKey)).filter(key => !broken.has(key)));
+            const plan = planRepairs(scope, { schemaVersion: 1, links: configuration.links.filter(link => scope.some(document => document.seriesId === link.seriesId)) }, failed, inconclusive);
+            const unverified = currentSlots.filter(slot => pendingVerification.has(slotKey(slot)));
             for (const change of plan.changes) {
                 edits.push({ file: change.target.filename, id: change.target.id, before: change.target.url, url: change.url, sourceFile: change.source.filename, sourceId: change.source.id });
                 change.target.node[change.target.field] = change.url;
@@ -206,15 +231,23 @@ function createImageMaintenance({ directory = path.join(ROOT, "CYOAs"), linksFil
                 .map(document => ({ file: path.join(directory, document.filename), original: document.original, body: JSON.stringify(document.data, null, 2) + "\n" }));
             const linksBody = JSON.stringify(configuration, null, 2) + "\n";
             if (linksBody !== linksOriginal) pending.push({ file: linksFile, original: linksOriginal, body: linksBody });
+            if (action === "verify") {
+                const body = JSON.stringify(registry, null, 2) + "\n";
+                if (body !== verificationOriginal && registry.verifications.length) pending.push({ file: verificationFile, original: verificationOriginal, body });
+            }
             // Include unchanged documents in the concurrency guard: a source
             // edited during verification must invalidate the entire plan.
             for (const document of documents) {
                 if (await fs.readFile(path.join(directory, document.filename), "utf8") !== document.original) throw new Error(`${document.filename} changed during the scan. Run it again.`);
             }
             if (!dryRun) await commitFiles(pending);
-            return { dryRun, edits, unresolved: plan.unresolved.map(describe), failures,
+            const manual = [...new Map(evaluation.manualVerifications.filter(entry => !broken.has(slotKey(entry))).map(entry => [slotKey(entry), {
+                file: entry.filename, id: entry.id, url: entry.url, pageUrl: entry.pageUrl, expiresAt: entry.expiresAt
+            }])).values()];
+            return { dryRun, edits, unresolved: [...plan.unresolved.map(describe), ...unverified.map(slot => ({ ...describe(slot),
+                verificationRequired: true, pageUrl: pageURL(slot.filename) }))], failures: evaluation.failures, manualVerifications: manual,
                 linked: action === "link" ? { id, sourceId } : null,
-                message: `${action === "link" ? `Connection ${dryRun ? "proposed" : "saved"}. ` : ""}${dryRun ? "Proposed" : "Applied"} ${edits.length} image repair(s); ${plan.unresolved.length} image(s) need a URL or ID connection.` };
+                message: `${action === "link" ? `Connection ${dryRun ? "proposed" : "saved"}. ` : ""}${dryRun ? "Proposed" : "Applied"} ${edits.length} image repair(s); ${plan.unresolved.length} image(s) need a URL or ID connection; ${unverified.length} need manual verification; ${manual.length} have current manual confirmations.` };
         }
     };
 }

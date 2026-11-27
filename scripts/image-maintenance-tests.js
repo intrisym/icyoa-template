@@ -6,6 +6,7 @@ const os = require("node:os");
 const { execFileSync } = require("node:child_process");
 const { createImageMaintenance, slotKey } = require("../imageMaintenance");
 const { checkPushedImages, pushedCommits } = require("./check-push-images");
+const { readVerifications, evaluateResults, pageURL } = require("../imageVerification");
 
 const GOOD = "https://images.test/good.png";
 const BAD = "https://images.test/bad.png";
@@ -28,7 +29,7 @@ async function fixture(context, files, scan) {
     for (const [file, value] of Object.entries(files)) await fs.writeFile(path.join(directory, file), JSON.stringify(value, null, 2) + "\n");
     await fs.writeFile(linksFile, JSON.stringify({ schemaVersion: 1, links: [] }, null, 2) + "\n");
     const defaultScan = async slots => slots.filter(slot => slot.url === BAD).map(slot => ({
-        profile: "production", url: slot.url, error: "HTTP 403", references: [{ filename: slot.filename, file: slot.file, id: slot.id }]
+        profile: "production", url: slot.url, error: "HTTP 404", references: [{ filename: slot.filename, file: slot.file, id: slot.id }]
     }));
     const maintenance = createImageMaintenance({ directory, linksFile, scan: scan || defaultScan });
     const read = async file => JSON.parse(await fs.readFile(path.join(directory, file), "utf8"));
@@ -135,9 +136,22 @@ test("push check scans the committed snapshot, deduplicates refs, and blocks rea
         const content = JSON.parse(await fs.readFile(path.join(snapshot, "CYOAs/old.json"), "utf8"));
         assert.equal(content[1].subcategories[0].options[0].image, BAD);
         return { failures: [{ url: BAD }] };
-    }, { cwd: root, env }), /image failure.*pushed snapshots/);
+    }, { cwd: root, env }), /blocking image result.*pushed snapshots/);
     assert.equal(calls, 1);
     await assert.rejects(fs.access(scannedRoot));
+    const verificationFile = path.join(root, "image-verifications.json");
+    await fs.writeFile(verificationFile, JSON.stringify({ schemaVersion: 1, verifications: [{
+        file: "old.json", id: "same", url: BAD, pageUrl: pageURL("old.json"), method: "manual", verifiedAt: new Date().toISOString()
+    }] }));
+    const checker = async ({ root: snapshot }) => evaluateResults([{
+        url: BAD, error: "net::ERR_BLOCKED_BY_ORB", profile: "production",
+        references: [{ filename: "old.json", file: "CYOAs/old.json", id: "same" }]
+    }], readVerifications(snapshot));
+    await assert.rejects(checkPushedImages(refs, checker, { cwd: root, env }), /blocking image result/); // Uncommitted proof cannot pass.
+    git(["add", "image-verifications.json"]);
+    git(["-c", "commit.gpgsign=false", "commit", "-qm", "test: committed manual verification"]);
+    const confirmed = git(["rev-parse", "HEAD"]);
+    await checkPushedImages(`refs/heads/main ${confirmed} refs/heads/main ${sha}\n`, checker, { cwd: root, env });
     assert.deepEqual(pushedCommits(`refs/heads/old ${"0".repeat(40)} refs/heads/old ${sha}\n`, root, env), []);
     assert.equal(slotKey({ filename: "old.json", id: "same" }), "old.json\0same");
 });

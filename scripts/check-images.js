@@ -1,6 +1,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { validationMessage } = require("../imageUrlPolicy");
+const { classifyFailure, readVerifications, evaluateResults } = require("../imageVerification");
 
 const ROOT = path.resolve(__dirname, "..");
 const PRODUCTION_URL = "https://intrisym.github.io/icyoa-template/";
@@ -12,14 +13,20 @@ function collectImages(data, file) {
     };
     const options = (category, location) => {
         for (const [index, option] of (category.options || []).entries()) {
+            const count = images.length;
             add(option.image || option.img, `${location}.options[${index}] (${option.id || option.name || "unnamed"})`);
+            if (images.length > count) images.at(-1).id = option.id;
         }
         for (const [index, subcategory] of (category.subcategories || []).entries()) {
             options(subcategory, `${location}.subcategories[${index}]`);
         }
     };
     for (const [index, entry] of data.entries()) {
-        if (entry.type === "headerImage") add(entry.url, `[${index}] headerImage`);
+        if (entry.type === "headerImage") {
+            const count = images.length;
+            add(entry.url, `[${index}] headerImage`);
+            if (images.length > count) images.at(-1).id = "@header";
+        }
         options(entry, `[${index}] ${entry.name || entry.type || "category"}`);
     }
     return images;
@@ -55,17 +62,26 @@ async function checkProfile(browser, images, { baseURL, timeout = 10000, concurr
         });
         const diagnostics = new Map();
         page.on("response", response => {
-            if (response.request().resourceType() === "image" && response.status() >= 400) {
-                diagnostics.set(response.request().url(), `HTTP ${response.status()}`);
+            if (response.request().resourceType() === "image") {
+                const headers = response.headers();
+                diagnostics.set(response.request().url(), { status: response.status(), contentType: headers["content-type"],
+                    challenge: headers["cf-mitigated"] === "challenge", ...(response.status() >= 400 ? { error: `HTTP ${response.status()}` } : {}) });
             }
         });
-        page.on("requestfailed", request => diagnostics.set(request.url(), request.failure()?.errorText || "Network failure"));
+        page.on("requestfailed", request => {
+            const error = request.failure()?.errorText || "Network failure";
+            if (error !== "net::ERR_ABORTED") diagnostics.set(request.url(), { ...diagnostics.get(request.url()), error });
+        });
         await page.goto(documentURL);
         const references = new Map();
         const failures = [];
         for (const image of images) {
             try {
                 const url = new URL(image.url, baseURL).href;
+                if (!["https:", "http:", "data:"].includes(new URL(url).protocol)) {
+                    failures.push({ url, error: "Unsupported image URL protocol", classification: "broken", references: [image] });
+                    continue;
+                }
                 if (!references.has(url)) references.set(url, []);
                 references.get(url).push(image);
             } catch {
@@ -73,24 +89,36 @@ async function checkProfile(browser, images, { baseURL, timeout = 10000, concurr
             }
         }
         const unique = [...references.keys()];
+        const loadImages = urls => page.evaluate(async ({ urls, timeout }) => Promise.all(urls.map(url => new Promise(resolve => {
+            const image = new Image();
+            const finish = error => {
+                clearTimeout(timer);
+                image.onload = image.onerror = null;
+                if (error) image.removeAttribute("src");
+                resolve({ url, error });
+            };
+            const timer = setTimeout(() => finish(`Timed out after ${timeout} ms`), timeout);
+            image.onload = () => finish(image.naturalWidth > 0 ? null : "Image has no decoded pixels");
+            image.onerror = () => finish("Browser could not load/decode image");
+            image.src = url;
+        }))), { urls, timeout });
         for (let offset = 0; offset < unique.length; offset += concurrency) {
-            const results = await page.evaluate(async ({ urls, timeout }) => Promise.all(urls.map(url => new Promise(resolve => {
-                const image = new Image();
-                const finish = error => {
-                    clearTimeout(timer);
-                    image.onload = image.onerror = null;
-                    if (error) image.removeAttribute("src");
-                    resolve({ url, error });
-                };
-                const timer = setTimeout(() => finish(`Timed out after ${timeout} ms`), timeout);
-                image.onload = () => finish(image.naturalWidth > 0 ? null : "Image has no decoded pixels");
-                image.onerror = () => finish("Browser could not load/decode image");
-                image.src = url;
-            }))), { urls: unique.slice(offset, offset + concurrency), timeout });
-            for (const result of results) {
-                if (!result.error) continue;
-                failures.push({ ...result, error: diagnostics.get(result.url) || result.error,
-                    references: references.get(result.url) });
+            let remaining = unique.slice(offset, offset + concurrency);
+            const attempts = new Map(remaining.map(url => [url, []]));
+            for (let attempt = 0; attempt < 2 && remaining.length; attempt += 1) {
+                remaining.forEach(url => diagnostics.delete(url));
+                const results = await loadImages(remaining);
+                remaining = [];
+                for (const result of results) {
+                    if (!result.error) continue;
+                    const observation = { ...result, ...diagnostics.get(result.url) };
+                    attempts.get(result.url).push(observation);
+                    if (!attempt) remaining.push(result.url);
+                    else {
+                        const failure = { ...observation, attempts: attempts.get(result.url), references: references.get(result.url) };
+                        failures.push({ ...failure, classification: classifyFailure(failure) });
+                    }
+                }
             }
             onProgress(Math.min(offset + concurrency, unique.length), unique.length);
         }
@@ -101,13 +129,16 @@ async function checkProfile(browser, images, { baseURL, timeout = 10000, concurr
 }
 
 function reportFailure(profile, failure) {
-    console.error(`\nFAIL [${profile}] ${failure.error}\n  URL: ${failure.url}`);
+    const manual = failure.manuallyVerified;
+    const inconclusive = failure.classification === "inconclusive";
+    const label = manual ? "MANUALLY VERIFIED" : inconclusive ? "INCONCLUSIVE — verification required" : "FAIL";
+    console.error(`\n${label} [${profile}] ${failure.error}\n  URL: ${failure.url}`);
     for (const reference of failure.references) {
         const message = `${reference.location}: ${failure.error} — ${failure.url}`;
         console.error(`  ${reference.file}: ${reference.location}`);
         if (process.env.GITHUB_ACTIONS === "true") {
             const escape = value => value.replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A").replace(/,/g, "%2C").replace(/:/g, "%3A");
-            console.log(`::error file=${escape(reference.file)},title=Image failed (${profile})::${escape(message)}`);
+            console.log(`::${manual ? "warning" : "error"} file=${escape(reference.file)},title=${escape(label)} (${profile})::${escape(message)}`);
         }
     }
 }
@@ -115,13 +146,13 @@ function reportFailure(profile, failure) {
 async function runImageChecks({ root = ROOT, files = [], reportPath = path.join(ROOT, "image-check-report.json") } = {}) {
     const { createImageMaintenance } = require("../imageMaintenance");
     await createImageMaintenance({ directory: path.join(root, "CYOAs"), linksFile: path.join(root, "image-links.json") }).checkLinks();
+    const registry = readVerifications(root);
     const images = readImages(files, root);
     const production = new URL(process.env.IMAGE_CHECK_PRODUCTION_URL || PRODUCTION_URL);
     if (production.protocol !== "https:") throw new Error("IMAGE_CHECK_PRODUCTION_URL must be an HTTPS player directory URL ending in /.");
     if (!production.pathname.endsWith("/")) throw new Error("IMAGE_CHECK_PRODUCTION_URL must end in /.");
     const { chromium } = require("playwright");
     const browser = await chromium.launch();
-    let failures = 0;
     const summary = [];
     try {
         for (const [profile, baseURL] of [["localhost", "http://localhost:8000/"], ["production", production.href]]) {
@@ -129,10 +160,8 @@ async function runImageChecks({ root = ROOT, files = [], reportPath = path.join(
             const results = await checkProfile(browser, images, { baseURL, assetRoot: root,
                 onProgress: (done, total) => console.log(`[${profile}] ${done}/${total} unique URLs checked`) });
             for (const failure of results) {
-                reportFailure(profile, failure);
                 summary.push({ profile, ...failure });
             }
-            failures += results.length;
         }
     } finally { await browser.close(); }
     const policyFailures = new Map();
@@ -143,17 +172,20 @@ async function runImageChecks({ root = ROOT, files = [], reportPath = path.join(
         policyFailures.get(image.url).references.push(image);
     }
     for (const failure of policyFailures.values()) {
-        reportFailure("policy", failure);
         summary.push(failure);
-        failures += 1;
     }
-    fs.writeFileSync(reportPath, JSON.stringify({ references: images.length, failures: summary }, null, 2) + "\n");
-    console.log(`\n${failures ? "FAILED" : "PASS"}: ${failures} image loading failure(s). Full report: ${reportPath}`);
+    const evaluation = evaluateResults(summary, registry);
+    for (const diagnostic of evaluation.diagnostics) reportFailure(diagnostic.profile, diagnostic);
+    const failures = evaluation.failures.length;
+    const accepted = new Set(evaluation.manualVerifications.map(entry => JSON.stringify([entry.file, entry.id, entry.url]))).size;
+    const label = failures ? "FAILED" : accepted ? "PASS WITH MANUAL VERIFICATION" : "PASS";
+    fs.writeFileSync(reportPath, JSON.stringify({ references: images.length, ...evaluation }, null, 2) + "\n");
+    console.log(`\n${label}: ${failures} blocking result(s); ${accepted} manually verified image(s). Full report: ${reportPath}`);
     if (process.env.GITHUB_STEP_SUMMARY) {
-        fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `## Image loading checks\n\n${images.length} references checked under localhost and production origins. **${failures} failures.**\n\nSee error annotations and the image-check-report artifact for affected files and URLs.\n`);
+        fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `## Image loading checks\n\n${images.length} references checked under localhost and production origins. **${failures} blocking results; ${accepted} manually verified results.**\n\nManual confirmations expire after seven days and apply only to the exact image URL, option and deployed page. Automated blocks remain in the report.\n\nSee annotations and the image-check-report artifact for affected files and URLs.\n`);
     }
-    if (failures) console.error("Repair connected versions with npm run images:repair, or open Repair Images Across Versions in the visual editor. Commit repaired files and image-links.json before pushing.");
-    return { references: images.length, failures: summary };
+    if (failures) console.error("Open Repair Images Across Versions to fix confirmed failures or manually verify inconclusive results on the live CYOA. Commit repaired files, image-links.json and image-verifications.json before pushing.");
+    return { references: images.length, ...evaluation };
 }
 
 if (require.main === module) runImageChecks({ files: process.argv.slice(2) }).then(result => {

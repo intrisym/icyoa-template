@@ -113,6 +113,13 @@
             <h4 id="imageRepairLabel" tabindex="-1"></h4>
             <p id="imageRepairVersion" class="image-repair-caption"></p>
             <p id="imageRepairHelp">We couldn't find a working matching image. How would you like to fix it?</p>
+            <div id="imageManualVerification" class="image-repair-inputs" hidden>
+                <a id="imageVerificationPage" target="_blank" rel="noopener noreferrer">Open the live CYOA</a>
+                <p id="imageVerificationUrl" class="image-repair-caption"></p>
+                <label><input id="imageVerificationConfirmed" type="checkbox"> I reloaded the page without cache and saw this exact image load.</label>
+                <button id="confirmImageVerificationBtn" type="button">Save verification for 7 days</button>
+                <button id="replaceInconclusiveImageBtn" type="button" class="button-subtle">Replace the URL instead</button>
+            </div>
             <fieldset id="imageRepairChoice" class="image-repair-choices">
                 <legend class="image-repair-caption">What happened to this option?</legend>
                 <button id="chooseImageIdBtn" type="button" class="button-subtle" aria-pressed="false">It moved or was renamed</button>
@@ -132,6 +139,7 @@
                     <input id="repairImageUrl" type="url" placeholder="https://example.com/replacement.png">
                 </div>
                 <button id="applyImageRepairBtn" type="button">Verify and repair</button>
+                <button id="verifyExistingImageBtn" type="button" class="button-subtle" hidden>Verify the existing live image instead</button>
             </fieldset>
             <p id="imageRepairError" class="image-repair-error" role="alert" hidden></p>
             <details class="image-repair-details">

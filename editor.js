@@ -6952,6 +6952,10 @@
         const applyButton = document.getElementById("applyImageRepairBtn");
         const nextButton = document.getElementById("nextRepairImageBtn");
         const errorMessage = document.getElementById("imageRepairError");
+        const verificationPanel = document.getElementById("imageManualVerification");
+        const verificationConfirmed = document.getElementById("imageVerificationConfirmed");
+        const verificationButton = document.getElementById("confirmImageVerificationBtn");
+        const replaceInconclusive = document.getElementById("replaceInconclusiveImageBtn");
         let versions = [];
         let pending = [];
         let position = 0;
@@ -6980,6 +6984,8 @@
         }
         function chooseMode(value, focus = true) {
             mode = value;
+            verificationPanel.hidden = !pending[position]?.verificationRequired || Boolean(mode);
+            document.getElementById("verifyExistingImageBtn").hidden = !pending[position]?.verificationRequired;
             fields.hidden = !mode;
             document.getElementById("repairLinkFields").hidden = mode !== "link";
             document.getElementById("repairUrlFields").hidden = mode !== "replace";
@@ -7006,14 +7012,19 @@
             sourceId.value = "";
             urlInput.value = "";
             urlInput.dispatchEvent(new Event("input"));
-            choices.hidden = image.id === "@header" || !candidates.length;
-            document.getElementById("imageRepairHelp").textContent = image.id === "@header"
+            choices.hidden = image.verificationRequired || image.id === "@header" || !candidates.length;
+            verificationConfirmed.checked = false;
+            document.getElementById("imageVerificationPage").href = image.pageUrl || "#";
+            document.getElementById("imageVerificationUrl").textContent = image.url || "";
+            document.getElementById("imageRepairHelp").textContent = image.verificationRequired
+                ? "The automated check was blocked or inconclusive. Open the live CYOA, reload without cache, and check this exact image in your browser."
+                : image.id === "@header"
                 ? "This header needs a working image URL."
                 : "We couldn't find a working matching image. Did this option move, or does it need a new URL?";
             document.getElementById("imageRepairDetails").textContent = `${image.file}\nOption ID: ${image.id}\n${image.url || ""}\n${image.errors || ""}`;
             document.querySelector(".image-repair-details").open = false;
             nextButton.hidden = pending.length < 2;
-            chooseMode(choices.hidden ? "replace" : null, false);
+            chooseMode(image.verificationRequired ? null : choices.hidden ? "replace" : null, false);
             document.getElementById("imageRepairLabel").focus();
         }
         function showResults(result, previous) {
@@ -7022,9 +7033,16 @@
             results.hidden = !repaired.size && result.unresolved.length > 0;
             results.classList.toggle("image-sync-success", !result.unresolved.length);
             const summary = document.createElement("p");
+            const manual = result.manualVerifications || [];
             summary.textContent = repaired.size ? `${repaired.size} image${repaired.size === 1 ? "" : "s"} repaired across your versions.`
-                : result.unresolved.length ? "These images couldn't be fixed automatically." : "Every version has working images.";
+                : manual.length ? "Current manual confirmations satisfy the check."
+                    : result.unresolved.length ? "These images couldn't be fixed automatically." : "Every version has working images.";
             results.appendChild(summary);
+            if (manual.length) {
+                const note = document.createElement("p");
+                note.textContent = `${manual.length} image${manual.length === 1 ? " has" : "s have"} a current manual confirmation. Automated checks remain inconclusive for these images.`;
+                results.appendChild(note);
+            }
             if (repaired.size) {
                 const details = document.createElement("details");
                 const heading = document.createElement("summary");
@@ -7042,9 +7060,11 @@
                 .filter(failure => failure.references.some(reference => reference.filename === image.file && reference.id === image.id))
                 .map(failure => `${failure.profile}: ${failure.error}`).join("\n") }));
             position = Math.max(0, pending.findIndex(image => image.file === previous?.file && image.id === previous?.id));
-            status.textContent = pending.length ? `${pending.length} image${pending.length === 1 ? " needs" : "s need"} your help.` : "All images are up to date.";
+            status.textContent = pending.length ? `${pending.length} image${pending.length === 1 ? " needs" : "s need"} your help.`
+                : manual.length ? "Checks complete with manual verification." : "All images are up to date.";
+            if (manual.length) results.hidden = false;
             showIssue();
-            if (result.linked && pending[position]?.file === previous?.file && pending[position]?.id === previous?.id) {
+            if (result.linked && !pending[position]?.verificationRequired && pending[position]?.file === previous?.file && pending[position]?.id === previous?.id) {
                 chooseMode("replace", false);
                 document.getElementById("imageRepairHelp").textContent = "The options are connected, but there is still no working image. Enter a new URL.";
             }
@@ -7053,6 +7073,7 @@
             if (versionBusy) return;
             const image = pending[position];
             if (action !== "repair" && !image) return;
+            if (action === "verify" && !verificationConfirmed.checked) return showError("Confirm only after you have seen this exact image load on the live page.");
             if (action === "link" && !sourceId.value.trim()) return showError("Enter the matching option's ID.");
             if (action === "replace" && (!urlInput.value.trim() || CyoaImageUrlPolicy.validationMessage(urlInput.value))) {
                 return showError(CyoaImageUrlPolicy.validationMessage(urlInput.value) || "Enter a replacement image URL.");
@@ -7060,6 +7081,7 @@
             versionBusy = true;
             updateVersionControls();
             fields.disabled = choices.disabled = nextButton.disabled = scanButton.disabled = closeButton.disabled = true;
+            verificationButton.disabled = verificationConfirmed.disabled = replaceInconclusive.disabled = true;
             dialog.setAttribute("aria-busy", "true");
             status.textContent = action === "repair" ? "Checking images in every version and syncing working matches…" : "Verifying your fix and syncing connected images…";
             issue.hidden = true;
@@ -7078,7 +7100,7 @@
                 const response = await fetch("/api/image-maintenance", {
                     method: "POST", headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ file: action === "repair" ? state.selectedFile : image.file, action, id: image?.id,
-                        sourceFile: sourceSelect.value, sourceId: sourceId.value.trim(), url: urlInput.value.trim() })
+                        sourceFile: sourceSelect.value, sourceId: sourceId.value.trim(), url: action === "verify" ? image.url : urlInput.value.trim(), confirmed: action === "verify" && verificationConfirmed.checked })
                 });
                 const result = await response.json();
                 if (!response.ok) throw new Error(result.error || "Image maintenance failed.");
@@ -7095,6 +7117,7 @@
             finally {
                 versionBusy = false;
                 fields.disabled = choices.disabled = nextButton.disabled = scanButton.disabled = closeButton.disabled = false;
+                verificationButton.disabled = verificationConfirmed.disabled = replaceInconclusive.disabled = false;
                 scanButton.hidden = false;
                 dialog.setAttribute("aria-busy", "false");
                 updateVersionControls();
@@ -7119,6 +7142,9 @@
         idButton.addEventListener("click", () => chooseMode("link"));
         urlButton.addEventListener("click", () => chooseMode("replace"));
         applyButton.addEventListener("click", () => { if (mode) void run(mode); });
+        verificationButton.addEventListener("click", () => void run("verify"));
+        replaceInconclusive.addEventListener("click", () => chooseMode("replace"));
+        document.getElementById("verifyExistingImageBtn").addEventListener("click", () => chooseMode(null));
         nextButton.addEventListener("click", () => { position = (position + 1) % pending.length; showIssue(); });
         closeButton.addEventListener("click", () => dialog.close());
         dialog.addEventListener("cancel", event => { if (versionBusy) event.preventDefault(); });

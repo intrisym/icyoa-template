@@ -376,7 +376,7 @@ const server = http.createServer(async (req, res) => {
                     const body = JSON.parse(await readRequestBody(req));
                     if (!body.file) throw new Error("Select a CYOA first.");
                     return imageMaintenance.repair({ file: body.file, action: body.action, id: body.id,
-                        sourceFile: body.sourceFile, sourceId: body.sourceId, url: body.url });
+                        sourceFile: body.sourceFile, sourceId: body.sourceId, url: body.url, confirmed: body.confirmed });
                 });
             sendJson(res, 200, result);
         } catch (error) { sendJson(res, 400, { error: error.message }); }

@@ -102,7 +102,7 @@ To check only one CYOA:
 sh scripts/check-images.sh CYOAs/blue_lock___wild_card_project_v1_1.json
 ```
 
-`npm run test:images` runs the same check. It checks every header and option image in all local CYOA JSON files, including nested subcategories and drafts, and tests each distinct URL once per origin. Chromium must load and decode the image successfully; HTTP errors, invalid image responses, network errors, and ten-second timeouts fail the check. Each failure lists the URL, CYOA file, and affected header or option. Full results are written to `image-check-report.json` (ignored by Git).
+`npm run test:images` runs the same check. It checks every header and option image in all local CYOA JSON files, including nested subcategories and drafts. Each distinct URL is tested per origin; unsuccessful loads are retried once with a ten-second timeout per attempt. A loaded, decoded image passes automatically. Invalid URLs, policy violations, and consistent confirmed missing/invalid image responses block the check. ORB/security blocks, access restrictions, timeouts, DNS failures and transient server errors are **inconclusive**, rather than proof that an image is down. Inconclusive results require a current manual verification. Every result identifies its URL, file and affected header/option. Full diagnostics, including accepted manual verifications, are written to `image-check-report.json` (ignored by Git).
 
 Each URL is tested from localhost and from the production page's origin. The checker serves a minimal document at the production URL using Playwright request interception; external image requests are real, with the browser's normal referrer and mixed-content behavior. This tests the current files before deploying them. Relative image paths are served from this checkout. It does not deploy anything or store external images in the repository.
 
@@ -112,6 +112,22 @@ CI runs this as the separate **Image loading** job on pushes and PRs, with file 
 
 These checks verify availability at test time. External hosts can change later, and the simulated production origin does not replace testing the deployed site in your browser.
 
+### Manual Verification for Inconclusive Images
+
+Some hosts allow ordinary browsers while blocking the automated checker. These results are never used to automatically replace images or as automatic repair sources. The mandatory push check and CI accept them only with a manual confirmation from the previous **seven days**, scoped to the **exact URL, option ID, CYOA filename and production page**. Changing any of those, expiry, or a future timestamp requires verification again. Confirmations cannot override confirmed failures or the blocked-domain policy.
+
+In **Repair Images Across Versions**, an inconclusive image offers **Open the live CYOA**. Open it in your normal browser, reload without cache, and check that the exact image shown in the dialog actually renders on the page (opening the raw image URL is insufficient). Check the confirmation box and click **Save verification for 7 days**. Prefer a private window when checking what a new visitor would see. Only confirm an image that is actually present on the deployed page; an unpublished change needs a deployed preview or an automatically verifiable URL first.
+
+The confirmation is recorded in `image-verifications.json`. **Commit that file before pushing**: the push hook reads confirmations from the pushed commit, never uncommitted working-tree confirmations. CI reports **PASS WITH MANUAL VERIFICATION**, retaining warnings and the automated inconclusive diagnostics. The editor also distinguishes manually accepted results from fully automatic passes. A human confirmation establishes what you observed; it cannot guarantee availability for every visitor or throughout the seven-day window.
+
+The equivalent CLI command requires explicit confirmation and the exact current URL:
+
+```sh
+npm run images:verify -- --file CYOA_FILENAME.json --id OPTION_ID --url 'https://example.com/image.png' --confirm-live-image
+```
+
+Use this only after performing the browser check described above. The command refuses stale URLs and confirmed failures. It rechecks the series and saves a confirmation if the automated result remains inconclusive; it does not convert the result into an automated success.
+
 ### Image Repairs Across Versions
 
 In the local visual editor, select a CYOA and click **Repair Images Across Versions**. The sync check starts immediately, checking every version in that CYOA series and repairing failed or blocklisted images from working connected images. Matching option IDs connect automatically within a series; headers also connect automatically. When several replacements work, the newest version is preferred. Working images keep their existing URLs, even if another version uses different artwork.
@@ -120,7 +136,7 @@ If discrepancies remain, the dialog walks through them one at a time, showing th
 
 If an option was deleted or has no working counterpart, choose **Use a new image URL** and click **Verify URL and repair**. The replacement must load from both test origins and pass the domain policy before anything is written. The same operation repairs other failed images connected to that option, then advances to the next unresolved image. Headers ask directly for a URL. **Skip to the next image** leaves an issue pending; only fixing every discrepancy produces the **All images are up to date** result. Filenames, IDs and network errors remain available under **Image details**, while successful changes are listed under **View repairs**.
 
-These tools can repair images in published versions without changing their gameplay data or publication metadata. They write only header/option image fields plus saved connections; they do not publish or push Git changes. Concurrent edits detected during a scan abort the operation so you can rerun it against current data. Commit all repaired files and `image-links.json`, then push. The mandatory push check blocks remaining image failures or invalid connections.
+These tools can repair images in published versions without changing their gameplay data or publication metadata. They write only header/option image fields plus saved connections and explicit manual confirmations; they do not publish or push Git changes. Concurrent edits detected during a scan abort the operation so you can rerun it against current data. Commit repaired files, `image-links.json` and `image-verifications.json`, then push. The mandatory push check blocks confirmed failures, invalid connections and inconclusive results without a current manual confirmation.
 
 Equivalent local commands (use `@header` as the ID for a header image):
 

@@ -31,6 +31,8 @@ test("visual editor flags loaded and typed blocked URLs in header and option fie
     ];
     const maintenanceRequests = [];
     let headerScenario = false;
+    let verificationScenario = false;
+    let manuallyConfirmed = false;
     await page.route("**/*", async route => {
         const url = new URL(route.request().url());
         if (url.origin !== "https://editor.test") return route.abort();
@@ -46,6 +48,14 @@ test("visual editor flags loaded and typed blocked URLs in header and option fie
             ], links: [] } });
             const request = route.request().postDataJSON();
             maintenanceRequests.push(request);
+            if (verificationScenario) {
+                if (request.action === "verify") manuallyConfirmed = true;
+                return route.fulfill({ json: { edits: [], failures: [],
+                    unresolved: manuallyConfirmed ? [] : [{ file: "old.json", id: "oldBalance", label: "Balance", url: "https://images.test/blocked.png",
+                        verificationRequired: true, pageUrl: "https://intrisym.github.io/icyoa-template/?cyoa=old.json" }],
+                    manualVerifications: manuallyConfirmed ? [{ file: "old.json", id: "oldBalance", expiresAt: "2026-12-03T12:00:00Z" }] : []
+                } });
+            }
             if (request.action === "repair" && headerScenario) return route.fulfill({ json: {
                 edits: [], unresolved: [{ file: "old.json", id: "@header", label: "Header image" }], failures: []
             } });
@@ -151,6 +161,23 @@ test("visual editor flags loaded and typed blocked URLs in header and option fie
     assert.equal(await page.locator("#imageRepairLabel").textContent(), "Header image");
     assert.equal(await page.locator("#imageRepairChoice").isVisible(), false);
     assert.equal(await page.locator("#repairImageUrl").isVisible(), true);
+    verificationScenario = true;
+    await page.locator("#scanRepairImagesBtn").click();
+    await page.waitForSelector("#imageManualVerification:not([hidden])");
+    assert.equal(await page.locator("#imageRepairChoice").isVisible(), false);
+    assert.equal(await page.locator("#imageMaintenanceFields").isVisible(), false);
+    assert.equal(await page.locator("#imageVerificationPage").getAttribute("href"), "https://intrisym.github.io/icyoa-template/?cyoa=old.json");
+    const beforeConfirmation = maintenanceRequests.length;
+    await page.locator("#confirmImageVerificationBtn").click();
+    assert.equal(maintenanceRequests.length, beforeConfirmation);
+    assert.equal(await page.locator("#imageRepairError").isVisible(), true);
+    await page.locator("#imageVerificationConfirmed").check();
+    await page.locator("#confirmImageVerificationBtn").click();
+    await page.waitForFunction(() => document.querySelector("#imageMaintenanceStatus").textContent === "Checks complete with manual verification.");
+    assert.equal(maintenanceRequests.at(-1).action, "verify");
+    assert.equal(maintenanceRequests.at(-1).confirmed, true);
+    assert.equal(maintenanceRequests.at(-1).url, "https://images.test/blocked.png");
+    assert.match(await page.locator("#imageMaintenanceResults").textContent(), /Automated checks remain inconclusive/);
     assert.equal(await page.locator("#globalHeaderInput").isDisabled(), true);
     assert.deepEqual(errors, []);
 });
@@ -170,6 +197,7 @@ test("Chromium decodes images, catches blocking/404/HTML/timeouts, deduplicates 
             requests.push({ url: pathname, referer: request.headers().referer });
             if (pathname === "/timeout") return; // Deliberately leave the request pending.
             if (pathname === "/good.png") return route.fulfill({ contentType: "image/png", body: png });
+            if (pathname === "/flaky.png" && requests.filter(request => request.url === pathname).length > 1) return route.fulfill({ contentType: "image/png", body: png });
             if (pathname === "/blocked") return route.fulfill({ status: 403 });
             if (pathname === "/html") return route.fulfill({ contentType: "text/html", body: "<h1>Access denied</h1>" });
             return route.fulfill({ status: 404 });
@@ -177,7 +205,7 @@ test("Chromium decodes images, catches blocking/404/HTML/timeouts, deduplicates 
         return browserContext;
     } };
     const url = "https://fixtures.test";
-    const images = ["/good.png", "/good.png", "/blocked", "/missing", "/html", "/timeout"]
+    const images = ["/good.png", "/good.png", "/blocked", "/missing", "/html", "/timeout", "/flaky.png"]
         .map((suffix, index) => ({ file: "CYOAs/test.json", location: `options[${index}]`, url: url + suffix }));
     const failures = await checkProfile(fixtureBrowser, images, { baseURL: "http://localhost:8000/", timeout: 1000 });
     assert.equal(failures.length, 4, JSON.stringify(failures));
@@ -187,6 +215,10 @@ test("Chromium decodes images, catches blocking/404/HTML/timeouts, deduplicates 
     assert(failures.some(failure => failure.error.includes("Timed out")));
     assert(requests.every(request => request.referer === "http://localhost:8000/"));
     assert.equal(requests.filter(request => request.url === "/good.png").length, 1);
+    assert.equal(requests.filter(request => request.url === "/flaky.png").length, 2);
+    assert.equal(failures.find(failure => failure.url.endsWith("/blocked")).classification, "inconclusive");
+    assert.equal(failures.find(failure => failure.url.endsWith("/missing")).classification, "broken");
+    assert.equal(failures.find(failure => failure.url.endsWith("/missing")).attempts.length, 2);
 
     // Inspect the browser-generated Referer on an HTTPS request; supply only
     // the image response to make the production-origin assertion deterministic.
@@ -211,7 +243,7 @@ test("Chromium decodes images, catches blocking/404/HTML/timeouts, deduplicates 
         { file: "CYOAs/test.json", location: "invalid URL", url: "https://" },
         referrerImage
     ], { baseURL: "https://intrisym.github.io/icyoa-template/" });
-    assert.deepEqual(productionRequests, ["http://localhost:8000/", "https://intrisym.github.io/", "https://intrisym.github.io/"]);
+    assert.deepEqual(productionRequests, ["http://localhost:8000/", "https://intrisym.github.io/", "https://intrisym.github.io/", "https://intrisym.github.io/"]);
     assert.equal(productionFailures.length, 3);
     assert(productionFailures.some(failure => failure.error === "HTTP 404" && failure.url.endsWith("/icyoa-template/missing-image-fixture.png")));
     assert(productionFailures.some(failure => failure.error === "Invalid image URL" && failure.references[0].location === "invalid URL"));
