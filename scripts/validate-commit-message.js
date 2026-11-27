@@ -1,6 +1,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { execFileSync, spawnSync } = require("node:child_process");
+const { validateBranchName } = require("./validate-branch-name");
 
 const SPECIFICATION = "https://www.conventionalcommits.org/en/v1.0.0/";
 const footerPattern = /^([\p{L}\p{N}_-]+|BREAKING CHANGE)(: | #)(.*)$/u;
@@ -95,6 +96,11 @@ function commitsForPush(input, remote = "origin") {
         const previous = existingCommit(fields[3]);
         if (previous) exclude.push(previous);
         if (/^0+$/.test(fields[1])) continue;
+        if (fields[2].startsWith("refs/heads/")) {
+            const branch = fields[2].slice("refs/heads/".length);
+            const errors = validateBranchName(branch);
+            if (errors.length) throw new Error(`Invalid target branch ${JSON.stringify(branch)}. ${errors.join(" ")}`);
+        }
         const tip = commitTip(fields[1], true);
         if (tip) tips.push(tip);
     }

@@ -1,0 +1,48 @@
+name: Test image URL
+
+on:
+  push:
+    paths:
+      - ".github/image-url-to-test.txt"
+  workflow_dispatch:
+    inputs:
+      image_url:
+        description: "Direct image URL to test"
+        required: true
+        type: string
+      production_url:
+        description: "Player directory URL used for the production-origin test"
+        required: true
+        default: "https://intrisym.github.io/icyoa-template/"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  image-url:
+    name: Check supplied image URL
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Test image decoding from localhost and production origins
+        env:
+          IMAGE_TEST_URL: ${{ inputs.image_url }}
+          IMAGE_TEST_URL_FILE: .github/image-url-to-test.txt
+          IMAGE_CHECK_PRODUCTION_URL: ${{ inputs.production_url }}
+        run: npm run test:image-url
+      - name: Upload URL test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-url-test-report
+          path: image-url-test-report.json
+          if-no-files-found: ignore

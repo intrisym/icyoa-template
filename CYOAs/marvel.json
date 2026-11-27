@@ -22,7 +22,13 @@
       "RP": 4
     },
     "allowNegative": [],
-    "attributeRanges": {}
+    "attributeRanges": {},
+    "pointTooltips": {},
+    "pointCategories": {},
+    "pointCategoryDefaults": {},
+    "derivedValues": [],
+    "enableablePointSets": [],
+    "optionGroups": []
   },
   {
     "type": "settings",
@@ -74,7 +80,9 @@
     "font-heading": "Verdana, sans-serif",
     "font-body": "'Quicksand', sans-serif",
     "selection-glow": "0 0 14px rgba(249, 199, 79, 0.72)",
-    "selection-glow-hover": "0 0 22px rgba(193, 18, 31, 0.62)"
+    "selection-glow-hover": "0 0 22px rgba(193, 18, 31, 0.62)",
+    "option-meta-slider-modifiers-color": "#7c3aed",
+    "option-meta-random-results-color": "#db2777"
   },
   {
     "type": "darkTheme",
@@ -118,7 +126,9 @@
     "font-heading": "Verdana, sans-serif",
     "font-body": "'Quicksand', sans-serif",
     "selection-glow": "0 0 12px rgba(180, 83, 9, 0.48)",
-    "selection-glow-hover": "0 0 18px rgba(185, 28, 28, 0.44)"
+    "selection-glow-hover": "0 0 18px rgba(185, 28, 28, 0.44)",
+    "option-meta-slider-modifiers-color": "#a78bfa",
+    "option-meta-random-results-color": "#f472b6"
   },
   {
     "name": "Mentors",
@@ -1699,5 +1709,12 @@
         "accentColor": "#F9C74F"
       }
     ]
+  },
+  {
+    "type": "publication",
+    "seriesId": "marvel.json",
+    "status": "published",
+    "version": "1.0",
+    "publishedAt": "2026-11-27T16:45:59.343Z"
   }
 ]

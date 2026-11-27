@@ -17,7 +17,17 @@
       "SP": 0
     },
     "allowNegative": [],
-    "attributeRanges": {}
+    "attributeRanges": {},
+    "pointTooltips": {},
+    "pointCategories": {},
+    "pointCategoryDefaults": {},
+    "derivedValues": [],
+    "enableablePointSets": [],
+    "optionGroups": []
+  },
+  {
+    "type": "settings",
+    "themeMode": "toggle"
   },
   {
     "type": "backpack",
@@ -55,7 +65,17 @@
     "font-prereq-help": "17px",
     "font-label": "19px",
     "font-heading": "Verdana, sans-serif",
-    "font-body": "'Quicksand', sans-serif"
+    "font-body": "'Quicksand', sans-serif",
+    "option-meta-bg": "#f8fafc",
+    "option-meta-heading-bg": "rgba(0, 122, 204, 0.14)",
+    "option-meta-heading-text": "#333333",
+    "option-meta-points-color": "#cccccc",
+    "option-meta-conditional-color": "#0ea5e9",
+    "option-meta-auto-grants-color": "#16a34a",
+    "option-meta-slider-modifiers-color": "#7c3aed",
+    "option-meta-random-results-color": "#db2777",
+    "option-meta-prerequisites-color": "#f59e0b",
+    "option-meta-conflicts-color": "#dc2626"
   },
   {
     "type": "darkTheme",
@@ -89,7 +109,17 @@
     "font-prereq-help": "17px",
     "font-label": "19px",
     "font-heading": "Verdana, sans-serif",
-    "font-body": "'Quicksand', sans-serif"
+    "font-body": "'Quicksand', sans-serif",
+    "option-meta-bg": "#111827",
+    "option-meta-heading-bg": "rgba(185, 28, 28, 0.18)",
+    "option-meta-heading-text": "#f3f4f6",
+    "option-meta-points-color": "#fbbf24",
+    "option-meta-conditional-color": "#38bdf8",
+    "option-meta-auto-grants-color": "#22c55e",
+    "option-meta-slider-modifiers-color": "#a78bfa",
+    "option-meta-random-results-color": "#f472b6",
+    "option-meta-prerequisites-color": "#f59e0b",
+    "option-meta-conflicts-color": "#f87171"
   },
   {
     "name": "Nen",
@@ -1057,5 +1087,12 @@
         "maxSelections": 3
       }
     ]
+  },
+  {
+    "type": "publication",
+    "seriesId": "hunter_x_hunter_v2.json",
+    "status": "published",
+    "version": "1.0",
+    "publishedAt": "2026-11-27T16:43:21.070Z"
   }
 ]

@@ -21,7 +21,13 @@
     "allowNegative": [
       "Points"
     ],
-    "attributeRanges": {}
+    "attributeRanges": {},
+    "pointTooltips": {},
+    "pointCategories": {},
+    "pointCategoryDefaults": {},
+    "derivedValues": [],
+    "enableablePointSets": [],
+    "optionGroups": []
   },
   {
     "type": "settings",
@@ -42,7 +48,6 @@
           {
             "label": "Male",
             "description": "You have the body and squishy bits of a guy. Try to avoid getting kicked in the balls.",
-            "cost": {},
             "id": "youGenderMale",
             "image": "https://images2.alphacoders.com/885/thumb-1920-885720.jpg"
           },
@@ -118,23 +123,20 @@
           {
             "label": "regular",
             "description": "You look relatively normal. No massive muscles or missing fat.",
-            "cost": {},
             "id": "youBodyRegular",
             "image": "https://www.baltana.com/files/wallpapers-35/Batman-Beyond-Comic-Character-HD-Background-Wallpaper-110163.jpg"
           },
           {
             "label": "Skinny",
             "description": "You look pretty small, like you need a sandwich or something. ",
-            "cost": {},
             "id": "youBodySkinny",
-            "image": "https://wallpapercave.com/wp/wp9347874.jpg"
+            "image": "https://i.pinimg.com/originals/d2/56/e7/d256e7a839c0e4164c30d939f2379765.jpg"
           },
           {
             "label": "Wide",
             "description": "You've got a bit of meat on your bones. Could be anywhere from chubby to obese.",
-            "cost": {},
             "id": "youBodyWide",
-            "image": "https://api.duniagames.co.id/api/content/upload/file/13655046681584954826.JPG"
+            "image": "https://i.pinimg.com/736x/8d/d5/c0/8dd5c07d7d2b023cd5ddf138c3606999.jpg"
           },
           {
             "label": "beefy",
@@ -291,29 +293,41 @@
           {
             "label": "Spectacularman Mode",
             "description": "You have 200 points to spend",
-            "cost": {
-              "Points": -200
-            },
             "id": "powersDifficultySpectacularmanMode",
-            "image": "https://wallpapercave.com/wp/Suzldiu.jpg"
+            "image": "https://i.pinimg.com/736x/44/cd/d6/44cdd6284c6948a83c63551ff57e29b1.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Points": -200
+                }
+              }
+            ]
           },
           {
             "label": "Dakest Knight (Recommended)",
             "description": "You have 100 points to spend",
-            "cost": {
-              "Points": -100
-            },
             "id": "powersDifficultyDakestKnightRecommended",
-            "image": "https://www.supanova.com.au/wp-content/uploads/2019/03/Detective-Comics-1000-Bernie-Wrightson-Cover.jpg"
+            "image": "https://i.pinimg.com/originals/56/d0/86/56d0865a5fdb2c2fccaf1b2d3fdd01ca.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Points": -100
+                }
+              }
+            ]
           },
           {
             "label": "Aquahombre Mode",
             "description": "You have 50 points to spend",
-            "cost": {
-              "Points": -50
-            },
             "id": "powersDifficultyAquahombreMode",
-            "image": "https://wallpapercave.com/wp/wp7327824.jpg"
+            "image": "https://i.pinimg.com/originals/5c/2b/f6/5c2bf65ebcfbd3817c33ea8e198c2971.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Points": -50
+                }
+              }
+            ]
           },
           {
             "label": "Normie Mode",
@@ -403,11 +417,15 @@
           {
             "label": "Sneaky",
             "description": "You will blend into the shadows, naturally disappearing and moving on silent feet. You won't be invisible, but you might as well be in the dark.",
-            "cost": {
-              "Points": 25
-            },
             "id": "powersSuperpowersSneaky",
-            "image": "https://static1.cbrimages.com/wordpress/wp-content/uploads/2020/12/Black-Widow-Marvel-comic.jpg"
+            "image": "https://static1.cbrimages.com/wordpress/wp-content/uploads/2020/12/Black-Widow-Marvel-comic.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Points": 25
+                }
+              }
+            ]
           },
           {
             "label": "Master of One ",
@@ -463,12 +481,16 @@
           {
             "label": "Amazing Healing",
             "description": "You can now recover from even mortal wounds with a little rest. ",
-            "cost": {
-              "Points": 50
-            },
             "id": "powersSuperpowersAmazingHealing",
             "prerequisites": "powersSuperpowersBetterHealing",
-            "image": "https://static1.moviewebimages.com/wordpress/wp-content/uploads/2024/01/lobo-dc.jpg"
+            "image": "https://static1.moviewebimages.com/wordpress/wp-content/uploads/2024/01/lobo-dc.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Points": 50
+                }
+              }
+            ]
           },
           {
             "label": "Physically Talented",
@@ -482,11 +504,15 @@
           {
             "label": "Super Soldier",
             "description": "You now have everything you need to be a perfect soldier. You are fast, tireless, and strong. You could go in a lot of different directions with this, and it might be one of the best powers you can get from this serum. ",
-            "cost": {
-              "Points": 65
-            },
             "id": "powersSuperpowersSuperSoldier",
-            "image": "https://wallpapercave.com/wp/wp7117156.jpg"
+            "image": "https://i.pinimg.com/originals/f0/7b/41/f07b41c9aa914cf930ceeb24b796e8d6.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Points": 65
+                }
+              }
+            ]
           },
           {
             "label": "Healing Others",
@@ -518,47 +544,67 @@
           {
             "label": "Animal Powers",
             "description": "A broad power, you have the abilities of some animal, like platypus man for example. You may also begin to look more like an animal.",
-            "cost": {
-              "Points": 45
-            },
             "id": "powersSuperpowersAnimalPowers",
-            "image": "https://static0.srcdn.com/wordpress/wp-content/uploads/2023/04/vixen-dc-comics.jpg?q=70&fit=crop&w=825&dpr=1"
+            "image": "https://static0.srcdn.com/wordpress/wp-content/uploads/2023/04/vixen-dc-comics.jpg?q=70&fit=crop&w=825&dpr=1",
+            "costOptions": [
+              {
+                "cost": {
+                  "Points": 45
+                }
+              }
+            ]
           },
           {
             "label": "Mimic",
             "description": "You can temporarily absorb and use other people's powers. You kind of have to rely on your teammates. Can last up to a day. ",
-            "cost": {
-              "Points": 25
-            },
             "id": "powersSuperpowersMimic",
-            "image": "https://static1.cbrimages.com/wordpress/wp-content/uploads/2022/12/rogue-leading-a-team-of-x-men.jpg"
+            "image": "https://static1.cbrimages.com/wordpress/wp-content/uploads/2022/12/rogue-leading-a-team-of-x-men.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Points": 25
+                }
+              }
+            ]
           },
           {
             "label": "Amplifier",
             "description": "A very useful power for any superhero team, however, you are often the squishiest member and most appealing target for any supervillain since the amplifier doesn't help you.",
-            "cost": {
-              "Points": 65
-            },
             "id": "powersSuperpowersAmplifier",
-            "image": "https://wallpapercave.com/wp/hkeeKlj.jpg"
+            "image": "https://i.pinimg.com/originals/b6/f2/40/b6f240f9e1bd8b9aa653409f206b7fba.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "Points": 65
+                }
+              }
+            ]
           },
           {
             "label": "Invisibility",
             "description": "Extremely useful for any stealthy hero or a pervert.",
-            "cost": {
-              "Points": 25
-            },
             "id": "powersSuperpowersInvisibility",
-            "image": "https://wallpapercave.com/wp/wp14639421.jpg"
+            "image": "https://i.pinimg.com/736x/43/ba/f5/43baf51efbad8236030b4a8cd9699b3b.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Points": 25
+                }
+              }
+            ]
           },
           {
             "label": "Paralyzer",
             "description": "You will grow or obtain an appendage or ability to paralyze people. When combined with animal powers, could be something like a scorpion tail.",
-            "cost": {
-              "Points": 25
-            },
             "id": "powersSuperpowersParalyzer",
-            "image": "https://upload.wikimedia.org/wikipedia/en/thumb/9/9d/Toad_(Mortimer_Toynbee_).png/402px-Toad_(Mortimer_Toynbee_).png"
+            "image": "https://i.pinimg.com/736x/14/fa/c6/14fac60eebb53b6d658955f5e1f5b67c.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Points": 25
+                }
+              }
+            ]
           },
           {
             "label": "Elemental",
@@ -645,11 +691,15 @@
           {
             "label": "Super Strength",
             "description": "You are now at least as strong as the Bulk. Extremely useful for combat, or if you need to move a couch.",
-            "cost": {
-              "Points": 80
-            },
             "id": "powersSuperpowersSuperStrength",
-            "image": "https://wallpapercave.com/wp/wp2874836.jpg"
+            "image": "https://i.pinimg.com/736x/31/e0/05/31e005368a7a6bcb989ea784b6f60426.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Points": 80
+                }
+              }
+            ]
           },
           {
             "label": "Invulnerable",
@@ -673,11 +723,15 @@
           {
             "label": "Time Stop",
             "description": "You can stop time at will. Very powerful but very straining and risky. You may go insane. ",
-            "cost": {
-              "Points": 100
-            },
             "id": "powersSuperpowersTimeStop",
-            "image": "https://www.writeups.org/wp-content/uploads/Zoom-Flash-Hunter-Zolomon-DC-Comics-h1.jpg"
+            "image": "https://i.pinimg.com/736x/b1/6d/c6/b16dc6fa27dede15190bcfa8a0f842ac.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Points": 100
+                }
+              }
+            ]
           },
           {
             "label": "Claws",
@@ -860,48 +914,68 @@
           {
             "label": "Easy to Blend",
             "description": "Where others have to keep their secret identities with kits and careful prep, you can do it with a pair of glasses.",
-            "cost": {
-              "Points": 20
-            },
             "id": "powersSuperpowersEasyToBlend",
-            "image": "https://static1.srcdn.com/wordpress/wp-content/uploads/2025/02/clark-kent-with-gallery-of-marvel-heroes.jpg"
+            "image": "https://static1.srcdn.com/wordpress/wp-content/uploads/2025/02/clark-kent-with-gallery-of-marvel-heroes.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Points": 20
+                }
+              }
+            ]
           },
           {
             "label": "Unbreakable",
             "description": "There is something inside you that just refuses to give up. A spark that refuses to die. Allows you to crack jokes in combat and fight mind control to save friends.",
-            "cost": {
-              "Points": 15
-            },
             "id": "powersSuperpowersUnbreakable",
-            "image": "https://images.alphacoders.com/974/thumb-1920-974558.jpg"
+            "image": "https://images.alphacoders.com/974/thumb-1920-974558.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Points": 15
+                }
+              }
+            ]
           },
           {
             "label": "Gaseous",
             "description": "You can turn yourself into a gas or it goes like for my will. This allows you to infiltrate almost anywhere. Regular clothes do not come with you, outfit coming with you is optional.",
-            "cost": {
-              "Points": 70
-            },
             "id": "powersSuperpowersGaseous",
-            "image": "https://3.bp.blogspot.com/-tUarKUr3G3o/U8Ax1B9DXRI/AAAAAAAAwYs/jxzkrUQrlQg/s1600/MIST_DC+COMICS.jpg"
+            "image": "https://3.bp.blogspot.com/-tUarKUr3G3o/U8Ax1B9DXRI/AAAAAAAAwYs/jxzkrUQrlQg/s1600/MIST_DC+COMICS.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Points": 70
+                }
+              }
+            ]
           },
           {
             "label": "Technominded",
             "description": "You can interface with technology in ways nobody else can. Allows you to actually walk around the Internet or code programs in seconds.",
-            "cost": {
-              "Points": 60
-            },
             "id": "powersSuperpowersTechnominded",
-            "image": "https://wallpapercave.com/wp/wp8132197.jpg"
+            "image": "https://i.pinimg.com/originals/00/e5/fd/00e5fdcff2a2c6d14db19ffc42bec65d.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Points": 60
+                }
+              }
+            ]
           },
           {
             "label": "Tactical Knowledge",
             "description": "You were already trained in weapons, but now we will train you in when and how to use them effectively.",
-            "cost": {
-              "Points": 35
-            },
             "id": "powersSuperpowersTacticalKnowledge",
             "prerequisites": "powersSuperpowersMasterOfOne || powersSuperpowersJackOfAllTrades",
-            "image": "https://wallpapercave.com/wp/wp8815434.jpg"
+            "image": "https://i.pinimg.com/originals/85/a8/39/85a839a70db074af5ec720d2e8769dfe.png",
+            "costOptions": [
+              {
+                "cost": {
+                  "Points": 35
+                }
+              }
+            ]
           },
           {
             "label": "Vehicle",
@@ -1003,11 +1077,15 @@
           {
             "label": "Greedy",
             "description": "You always struggle to turn down easy work. You are more inclined to charge more or do certain favors for money. ",
-            "cost": {
-              "Points": -15
-            },
             "id": "drawbacksDrawbacksGreedy",
-            "image": "https://wallpapercave.com/wp/wp7214123.jpg"
+            "costOptions": [
+              {
+                "cost": {
+                  "Points": -15
+                }
+              }
+            ],
+            "image": "https://i.pinimg.com/originals/1c/00/53/1c00538d69f52cf500df11d483bff4f9.jpg"
           },
           {
             "label": "Arrogant",
@@ -1039,11 +1117,15 @@
           {
             "label": "Clumsy",
             "description": "You fumble on important plays, drop plates, rip your clothes, and are a general danger with anything fragile in your hand",
-            "cost": {
-              "Points": -10
-            },
             "id": "drawbacksDrawbacksClumsy",
-            "image": "https://static.tvtropes.org/pmwiki/pub/images/goofy350_9276.png"
+            "image": "https://i.pinimg.com/736x/5b/7b/2b/5b7b2bcff55f26f2e387b71b63655280.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Points": -10
+                }
+              }
+            ]
           },
           {
             "label": "OCD",
@@ -1182,13 +1264,17 @@
           {
             "label": "Dominant",
             "description": "Both in private and on the field, you strive to be the boss. Can lead to butting heads with other heroes. ",
-            "cost": {
-              "Points": -15
-            },
             "id": "drawbacksDrawbacksDominant",
-            "image": "https://wallpapercave.com/wp/wp7254382.jpg",
+            "image": "https://i.pinimg.com/originals/aa/a3/ce/aaa3ce125bca885bd25d786c2ccd21b0.jpg",
             "conflictsWith": [
               "drawbacksDrawbacksSubmissive"
+            ],
+            "costOptions": [
+              {
+                "cost": {
+                  "Points": -15
+                }
+              }
             ]
           },
           {
@@ -1270,11 +1356,15 @@
           {
             "label": "Dull",
             "description": "You're kind of boring. You just don't shine like other supers do. I guess that makes it easier to blend in with people, but at what cost. ",
-            "cost": {
-              "Points": -15
-            },
             "id": "drawbacksDrawbacksDull",
-            "image": "https://wallpapercave.com/wp/wp4142855.jpg"
+            "image": "https://i.pinimg.com/originals/38/19/42/3819424a233408a60114898fd6922c73.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Points": -15
+                }
+              }
+            ]
           },
           {
             "label": "Unfunny",
@@ -1315,11 +1405,15 @@
           {
             "label": "Bloodthirsty",
             "description": "You are far from above killing, and in fact, you will actively try to kill your opponents. Media might label you as brutal.",
-            "cost": {
-              "Points": -50
-            },
             "id": "drawbacksDrawbacksBloodthirsty",
-            "image": "https://wallpapercave.com/wp/wp7495706.jpg"
+            "image": "https://i.pinimg.com/736x/84/e3/f1/84e3f172aba13575611a945cfe9ca25e.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Points": -50
+                }
+              }
+            ]
           },
           {
             "label": "Creeper Attractor",
@@ -1429,14 +1523,18 @@
           {
             "label": "Virginity Restoration",
             "description": "Your hymen recovers every night while you sleep. Sounds great but after the second time, it will start to become inconvenient. ",
-            "cost": {
-              "Points": -50
-            },
             "conflictsWith": [
               "youGenderMale"
             ],
             "id": "drawbacksDrawbacksVirginityRestoration",
-            "image": "https://wallpapercave.com/wp/wp8518579.jpg"
+            "image": "https://i.pinimg.com/736x/7d/7e/1e/7d7e1ee2186175bd8f9c38d898e7f68f.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Points": -50
+                }
+              }
+            ]
           },
           {
             "label": "Poor Choice",
@@ -1478,11 +1576,15 @@
           {
             "label": "Supervillain",
             "description": "Who ever said you had to go and use your pwoers for good? Go forth and conquer, you have superpowers now. Do what you want, when you want, and kill anyone that disagrees. You will make lots of powerful enemies though, so it might be best to fly under the radar until you have worked out a plan to deal with them. ",
-            "cost": {
-              "Points": -50
-            },
             "id": "drawbacksDrawbacksSupervillain",
-            "image": "https://wallpapercave.com/wp/V7yu5gb.jpg"
+            "image": "https://i.pinimg.com/736x/76/1b/11/761b11f8b2e1e3eb755e9b753c93297b.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Points": -50
+                }
+              }
+            ]
           }
         ],
         "subcategories": []
@@ -1529,9 +1631,8 @@
           {
             "label": "The Metters",
             "description": "I am sure you have heard of Spectacularman. Good looks, almost invulnerable. Upstanding Citizen? Well, this information must never leave this room, but his real name is Mark Metters. and he is and his wife, Lois Metters, desparately want a kid. They can't have one of their own, but they heard about you, and they are willing to take you in. I am sure you will learn lots from him and his friends, as he is the leader of the Liberty League. More importantly, I cannot think of a safer place than besides his side. He lives in rural New York, within flying distance of the city. Once again, we will put you in school according to your level. ",
-            "cost": {},
             "id": "teenFamilyTheMetters",
-            "image": "https://wallpapercave.com/wp/wp2090314.jpg"
+            "image": "https://i.pinimg.com/originals/62/6d/e6/626de679056833ebbf7c06f4e958a4cb.png"
           },
           {
             "label": "Little Leviathons",
@@ -1685,10 +1786,9 @@
           {
             "label": "Darkest Knight",
             "description": "A superhero that notoriously doesn't work well with others. Darkest night will probably make a plan or kill you about meeting you, or he might already have made one, depending on how recently he hacked into the CSA servers. He is a major player in the liberty league, but he spends most of his time in Chicago. With enough time, you might get him to warm up to you, but you will mostly be working with the minor super superheroes.",
-            "cost": {},
             "id": "teenMajorSuperheroesInYourAreaDarkestKnight",
             "prerequisites": "teenFamilyTheFarsons",
-            "image": "https://wallpapercave.com/wp/QqOM9cl.jpg"
+            "image": "https://i.pinimg.com/originals/a1/50/fb/a150fb555af280fcfa35061b1789c00f.png"
           },
           {
             "label": "Jimmy Gate",
@@ -1741,10 +1841,9 @@
           {
             "label": "Wonderful Woman",
             "description": "Wonderful Woman is possibly the most popular superhero in the world, due in large part to her successful managing of social media. She has her own stands, a popular YouTube channel, and an OF account. She also has a constant strings of boyfriends and girlfriends. If you are lucky, she might spot you from her invisible helicopter and give you a shot. She is also one of the founding members of the liberty league and possible ex of spectacular man.",
-            "cost": {},
             "id": "teenMajorSuperheroesInYourAreaWonderfulWoman",
             "prerequisites": "teenFamilyTheChatters",
-            "image": "https://wallpapercave.com/wp/wp7325811.jpg"
+            "image": "https://i.pinimg.com/originals/5e/e7/ef/5ee7ef8dedf20d4b8ac2152e1152e8f6.jpg"
           }
         ],
         "subcategories": []
@@ -1899,12 +1998,16 @@
           {
             "label": "Higher Paying",
             "description": "You are higher paid than most people in your chosen field are. This can be as high as 25% higher or 50% if you have charismatic. ",
-            "cost": {
-              "Points": 0
-            },
             "id": "adultBenefitsHigherPaying",
             "prerequisites": "powersSuperpowersSmart",
-            "image": "https://d23.com/app/uploads/2015/07/disney-comics-born-in-the-funnies-scrooge-feat-0-180x180.jpg"
+            "image": "https://i.pinimg.com/originals/f6/25/4d/f6254dd3b1c6c1abac637ff812855682.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "Points": 0
+                }
+              }
+            ]
           },
           {
             "label": "Lower Hours",
@@ -1917,18 +2020,16 @@
           {
             "label": "Fast Promotions",
             "description": "Something about you impresses your bosses. They can't get enough of you, and so you can climb the ranks of your job faster. ",
-            "cost": {},
             "id": "adultBenefitsFastPromotions",
             "prerequisites": "powersSuperpowersWitty",
-            "image": "https://wallpapercave.com/wp/wp7305203.png"
+            "image": "https://i.pinimg.com/736x/f2/2d/86/f22d86c0bc289d31cc7300806d80e038.jpg"
           },
           {
             "label": "Gifted",
             "description": "You can earn favors on the job by helping your boss with a 'special task.' Don't push it too hard or your boss may fire you.",
-            "cost": {},
             "id": "adultBenefitsGifted",
             "prerequisites": "drawbacksDrawbacksHot",
-            "image": "https://wallpapercave.com/wp/wp9939482.jpg"
+            "image": "https://i.pinimg.com/originals/c2/42/8e/c2428e0bb77656d87b26345e3f25d43e.jpg"
           },
           {
             "label": "Understanding",
@@ -1992,11 +2093,15 @@
           {
             "label": "Cloth",
             "description": "A bulky cloth jumpsuit that offers some protection, but does not look that stylish. I hope you have something over this. Also gets pretty hot and swampy in the heat.",
-            "cost": {
-              "SC": 15
-            },
             "id": "costumeLowerLayerCloth",
-            "image": "https://wallpapercave.com/wp/wp3633528.jpg"
+            "image": "https://i.pinimg.com/originals/cd/d5/10/cdd510eed53d796d80a72aa013618863.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "SC": 15
+                }
+              }
+            ]
           },
           {
             "label": "Latex Suit",
@@ -2038,12 +2143,16 @@
           {
             "label": "middleLayerTacticalVest",
             "description": "Stores quite a bit, while also providing lots of protection. Difficult to store and blend in though.",
-            "cost": {
-              "SC": 20
-            },
             "id": "costumeMiddleLayerMiddleLayerTacticalVest",
             "prerequisites": "powersSuperpowersTacticalKnowledge",
-            "image": "https://www.writeups.org/wp-content/uploads/Prudence-DC-Comics-Robin-Assassin.jpg"
+            "image": "https://i.pinimg.com/originals/58/1a/3d/581a3d53f0636cd502940d9f37383c6a.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "SC": 20
+                }
+              }
+            ]
           },
           {
             "label": "Exosuit",
@@ -2119,9 +2228,8 @@
           {
             "label": "Gator",
             "description": "A simple mask over the lower portion of your face, excellent at hiding noticeable features, but can be pulled off relatively easily,",
-            "cost": {},
             "id": "costumeFinishingTouchesGator",
-            "image": "https://wallpapercave.com/wp/wp10407878.jpg"
+            "image": "https://curadas.com/wp-content/uploads/2022/02/gocho-politologo-audio-video-martes.jpg"
           },
           {
             "label": "Full Face Mask",
@@ -2154,16 +2262,14 @@
           {
             "label": "Fire Retardant",
             "description": "An extra layer of fire defense, not heavy, but won't save you from smoke or heat",
-            "cost": {},
             "id": "costumeFinishingTouchesFireRetardant",
-            "image": "https://wallpapercave.com/wp/5DexBK5.jpg"
+            "image": "https://i.pinimg.com/originals/03/b4/af/03b4affb0ded3909794c7789525b02de.png"
           },
           {
             "label": "Comfortable",
             "description": "Your suit is now comfortable enough to sleep in if you wanted to",
-            "cost": {},
             "id": "costumeFinishingTouchesComfortable",
-            "image": "https://wallpapercave.com/wp/wp4261414.jpg"
+            "image": "https://i.pinimg.com/originals/67/79/2a/67792a88eb4482605b577b9b15e59e94.jpg"
           },
           {
             "label": "More pockets",
@@ -2291,11 +2397,15 @@
           {
             "label": "CSA Energy Bars",
             "description": "CSA bars, like a meal in wrapper, useful for stakeouts or hiding.",
-            "cost": {
-              "GP": 1
-            },
             "id": "costumeGadgetsCsaEnergyBars",
-            "image": "https://static.vecteezy.com/system/resources/previews/021/030/382/original/energy-bar-icon-vector.jpg"
+            "image": "https://i.pinimg.com/736x/ca/6e/c6/ca6ec637f931f12911860508e7893892--things-to-draw-candy-bars.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "GP": 1
+                }
+              }
+            ]
           },
           {
             "label": "Emergency Pack",
@@ -2462,11 +2572,15 @@
           {
             "label": "Stingfruit",
             "description": "If you prick someone with this, it will grow into an identical copy of them that lives for a day and is completely obedient to you. You get one per year, and this cost 2 gadget slots.",
-            "cost": {
-              "GP": 2
-            },
             "id": "costumeGadgetsStingfruit",
-            "image": "https://png.pngtree.com/png-clipart/20250216/original/pngtree-hand-drawing-of-thorn-vector-illustration-stem-sacred-thorn-vector-png-image_10022239.png"
+            "image": "https://i.pinimg.com/originals/9b/ee/26/9bee26e0969f9089145406cd05c9af69.jpg",
+            "costOptions": [
+              {
+                "cost": {
+                  "GP": 2
+                }
+              }
+            ]
           }
         ],
         "subcategories": []
@@ -2513,9 +2627,8 @@
           {
             "label": "Boat",
             "description": "Probably more useful in coastal regions. A boat is a great and fast mobility option on water. You boat can either be a regular boat, jet ski, or even submarine. There's a surprising depth of choices.",
-            "cost": {},
             "id": "vehicleCreatorVehiclesBoat",
-            "image": "https://images.saatchiart.com/saatchi/1933545/art/9163819/8226971-LLCNQQQT-7.jpg"
+            "image": "https://i.pinimg.com/736x/b5/09/1c/b5091cd7a823bf0c7126db1f92eba0a9.jpg"
           },
           {
             "label": "Helicopter",
@@ -2581,7 +2694,17 @@
     "points-text": "#000000",
     "font-heading": "Verdana, sans-serif",
     "font-body": "'Quicksand', sans-serif",
-    "selection-glow-color": "#dc2626"
+    "selection-glow-color": "#dc2626",
+    "option-meta-bg": "#f8fafc",
+    "option-meta-heading-bg": "rgba(0, 122, 204, 0.14)",
+    "option-meta-heading-text": "#333333",
+    "option-meta-points-color": "#cccccc",
+    "option-meta-conditional-color": "#0ea5e9",
+    "option-meta-auto-grants-color": "#16a34a",
+    "option-meta-slider-modifiers-color": "#7c3aed",
+    "option-meta-random-results-color": "#db2777",
+    "option-meta-prerequisites-color": "#f59e0b",
+    "option-meta-conflicts-color": "#dc2626"
   },
   {
     "type": "darkTheme",
@@ -2615,6 +2738,23 @@
     "font-prereq-help": "17px",
     "font-label": "19px",
     "font-heading": "Verdana, sans-serif",
-    "font-body": "'Quicksand', sans-serif"
+    "font-body": "'Quicksand', sans-serif",
+    "option-meta-bg": "#111827",
+    "option-meta-heading-bg": "rgba(185, 28, 28, 0.18)",
+    "option-meta-heading-text": "#f3f4f6",
+    "option-meta-points-color": "#fbbf24",
+    "option-meta-conditional-color": "#38bdf8",
+    "option-meta-auto-grants-color": "#22c55e",
+    "option-meta-slider-modifiers-color": "#a78bfa",
+    "option-meta-random-results-color": "#f472b6",
+    "option-meta-prerequisites-color": "#f59e0b",
+    "option-meta-conflicts-color": "#f87171"
+  },
+  {
+    "type": "publication",
+    "seriesId": "superheroAmalgam.json",
+    "status": "published",
+    "version": "1.0",
+    "publishedAt": "2026-11-27T15:56:25.445Z"
   }
 ]

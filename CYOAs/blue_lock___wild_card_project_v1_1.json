@@ -9,7 +9,7 @@
   },
   {
     "type": "headerImage",
-    "url": "https://wallpapercave.com/wp/wp12045083.png"
+    "url": "https://wallpaperaccess.com/full/8791137.png"
   },
   {
     "type": "points",
@@ -337,7 +337,7 @@
             "label": "Balance",
             "description": "You never go down no matter what. Shoulder checks, fouls, and uneven ground cannot stop you.",
             "id": "weaponsPhysicalBalance",
-            "image": "https://wallpapercave.com/wp/wp15363657.png",
+            "image": "https://i.pinimg.com/736x/72/0b/71/720b71c182fca6a81ad28d465b70942a.jpg",
             "costOptions": [
               {
                 "cost": {
@@ -350,7 +350,7 @@
             "label": "Reach",
             "description": "You stretch further than others thank to your long limbs and springlike flexibility. ",
             "id": "weaponsPhysicalReach",
-            "image": "https://wallpapercave.com/wp/wp16021127.jpg",
+            "image": "https://i.pinimg.com/736x/68/9d/fe/689dfe0459ba1e5bc9a322bf11890c78.jpg",
             "costOptions": [
               {
                 "cost": {
@@ -376,7 +376,7 @@
             "label": "Stamina",
             "description": "You are a machine who sustains 100% performance deep into extra time. ",
             "id": "weaponsPhysicalStamina",
-            "image": "https://wallpapercave.com/wp/wp15148705.webp",
+            "image": "https://i.ytimg.com/vi/jflJGX03W84/maxresdefault.jpg",
             "costOptions": [
               {
                 "cost": {
@@ -531,7 +531,7 @@
             "label": "Finesse Shot",
             "description": "You can instantly thread shots from range with the perfect blend of power and precision. ",
             "id": "weaponsShootingFinesseShot",
-            "image": "https://wallpapercave.com/wp/wp12172848.jpg",
+            "image": "https://i.pinimg.com/736x/26/6f/c2/266fc2134f22cb56455d745b7cd9779a.jpg",
             "costOptions": [
               {
                 "cost": {
@@ -693,7 +693,7 @@
             "label": "Monster of Physicality",
             "description": "You possess the ultimate all-around physique in Blue Lock, a true Monster of Physicality. Across acceleration, speed, stamina, strength, and ambidexterity, you stand among the very best, rivaling the likes of Chigiri's speed, and Kunigami's strength post-Wild Card in their respective specialties. However, your chosen height and build elevate the physical attributes best suited to your physique even further, making you the undisputed best in Blue Lock within those domains, while your remaining attributes remain firmly among the elite.\n\nYour physical superiority is not absolute, however. Extraordinary anomalies blessed with heaven-defying gifts, such as Julian Loki's Godspeed, can still surpass you within their unique specialties. Nevertheless, your unparalleled combination of physical excellence makes you a monster even among monsters, possessing the potential to one day surpass even Noel Noa.",
             "id": "weaponsCombinationsMonsterOfPhysicality",
-            "image": "https://wallpapercave.com/wp/wp15283834.jpg",
+            "image": "https://i.pinimg.com/736x/9d/32/9c/9d329cab1213b1d720372313f06cfe80.jpg",
             "prerequisites": "weaponsPhysicalAcceleration && weaponsPhysicalSpeed && weaponsPhysicalStamina && weaponsPhysicalStrength && weaponsTechnicalAmbidexterity"
           },
           {
@@ -966,7 +966,7 @@
             "conflictsWith": [
               "weaponsPhysicalStamina"
             ],
-            "image": "https://wallpapercave.com/wp/wp12276655.jpg"
+            "image": "https://i.ytimg.com/vi/LwseJXISvKw/maxresdefault.jpg"
           },
           {
             "label": "Physically Weak",

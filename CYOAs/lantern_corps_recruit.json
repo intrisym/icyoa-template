@@ -19,7 +19,13 @@
       "Complications": 5
     },
     "allowNegative": [],
-    "attributeRanges": {}
+    "attributeRanges": {},
+    "pointTooltips": {},
+    "pointCategories": {},
+    "pointCategoryDefaults": {},
+    "derivedValues": [],
+    "enableablePointSets": [],
+    "optionGroups": []
   },
   {
     "type": "settings",
@@ -69,7 +75,9 @@
     "option-meta-conditional-color": "#2563eb",
     "option-meta-auto-grants-color": "#16a34a",
     "option-meta-prerequisites-color": "#f97316",
-    "option-meta-conflicts-color": "#b91c1c"
+    "option-meta-conflicts-color": "#b91c1c",
+    "option-meta-slider-modifiers-color": "#7c3aed",
+    "option-meta-random-results-color": "#db2777"
   },
   {
     "type": "darkTheme",
@@ -111,7 +119,9 @@
     "option-meta-conditional-color": "#38bdf8",
     "option-meta-auto-grants-color": "#22c55e",
     "option-meta-prerequisites-color": "#f59e0b",
-    "option-meta-conflicts-color": "#f87171"
+    "option-meta-conflicts-color": "#f87171",
+    "option-meta-slider-modifiers-color": "#a78bfa",
+    "option-meta-random-results-color": "#f472b6"
   },
   {
     "name": "Emotional Spectrum",
@@ -3976,5 +3986,12 @@
         "requiresOption": "!actionsDutiesManagement || !actionsDutiesInternalAffairs || !actionsDutiesHonorGuard || !actionsDutiesMinionsOfTheHorde"
       }
     ]
+  },
+  {
+    "type": "publication",
+    "seriesId": "lantern_corps_recruit.json",
+    "status": "published",
+    "version": "1.0",
+    "publishedAt": "2026-11-27T16:45:06.185Z"
   }
 ]

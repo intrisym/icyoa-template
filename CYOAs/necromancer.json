@@ -504,7 +504,7 @@
             "description": "Thick trees, interwoven branches and great height, this city has existed for millennia. The elves operate the slave market for the smaller cities and almost anything or anyone can be bought here. ",
             "id": "countryLairZatmenyirTreeCity",
             "prerequisites": "countryCountryZatmenyir",
-            "image": "https://static.vecteezy.com/system/resources/previews/023/967/843/large_2x/futuristic-city-that-is-built-into-the-jungle-with-towering-trees-suspended-walkways-and-sleek-buildings-illustration-generative-ai-photo.jpg"
+            "image": "https://i.pinimg.com/originals/e5/35/db/e535db5e09fcb472d88c5b2f3e5ce01a.png"
           },
           {
             "label": "Zatmenyir Capital",
@@ -539,7 +539,7 @@
             "description": "A blend of buildings and greenery, with astounding spires and slender bridges. The elves here import most of their slaves and food. The elven lifestyle here has little in common with that of the mainland elves. ",
             "id": "countryLairValaistirCapital",
             "prerequisites": "countryCountryValaistir",
-            "image": "https://static.vecteezy.com/system/resources/thumbnails/022/806/966/small_2x/city-fantasy-backdrop-concept-art-realistic-illustration-background-with-generative-ai-photo.jpg"
+            "image": "https://img.magnific.com/premium-photo/future-green-city-middle-green-forest_662448-1509.jpg"
           },
           {
             "label": "Desert City",
@@ -612,7 +612,7 @@
             "label": "Serene Village",
             "description": "In a small and oft-ignored corner of the nation, it has gotten by without any slave raids or other strike in its past. Everyone knows everyone, and though outsiders are rare, any outsiders may be welcomed. ",
             "id": "countryLairSereneVillage",
-            "image": "https://static.vecteezy.com/system/resources/previews/022/806/959/large_2x/village-fantasy-backdrop-concept-art-realistic-illustration-background-with-generative-ai-photo.jpg"
+            "image": "https://i.pinimg.com/originals/d9/bb/72/d9bb72a487c6529be8a7d2764f8758ba.jpg"
           },
           {
             "label": "Mountaintop Mansion",
@@ -678,7 +678,7 @@
             "label": "Ruins",
             "description": "They look to be the remnants of a place much older than the trees nearby, and in much worse condition. The ruins look to be open to the air with nary a set of walls between them. You will be sleeping under the stars until you set up some sort of shelter, but there looks to be some clues as to why it was abandoned. ",
             "id": "countryLairRuins",
-            "image": "https://static.vecteezy.com/system/resources/previews/022/806/960/large_2x/ruin-building-fantasy-backdrop-concept-art-realistic-illustration-background-with-generative-ai-free-photo.jpg"
+            "image": "https://i.pinimg.com/736x/ff/73/35/ff7335381e82051a2c7e163fcdb497aa.jpg"
           },
           {
             "label": "Abandoned Fortress",
@@ -702,7 +702,7 @@
             "label": "Isolated Mansion",
             "description": "Situated in a remote location with only a sturdy stone bridge for access to the outside world. It is large and spacious, with more rooms that you use, and a ballroom. The one that sold it has informed you that they are not quite sure why the last owners have left, but you are certain you can find out why. ",
             "id": "countryLairIsolatedMansion",
-            "image": "https://png.pngtree.com/background/20230612/original/pngtree-mysterious-and-spooky-mansion-in-the-forest-picture-image_3187249.jpg"
+            "image": "https://i.pinimg.com/originals/55/34/a9/5534a95e38e6a06a5ae15fe4b8388718.jpg"
           },
           {
             "label": "Traveling Caravan",
@@ -949,7 +949,7 @@
                   "spellsReunuPertemruTier1WormThatWalks",
                   "spellsReunuPertemruTier1Eremite"
                 ],
-                "prerequisites": "(itemsItemsPhylactery) && (group(\"liberMortisTier2Spells\") >= 2)",
+                "prerequisites": "((((((itemsItemsPhylactery)))))) && (group(\"liberMortisTier2Spells\") >= 2)",
                 "image": "https://media.dotesports.com/wp-content/uploads/2024/10/MTG-Zul-Ashur-Lich-Lord-Foundations-set.jpg"
               },
               {
@@ -1067,7 +1067,7 @@
                 "label": "Circle of Bones",
                 "description": "Constructed from bones, this circle is used in a ritual of communication across vast distances.\n\nBy calling a spirit into this circle, a caster can communicate with another circle, through the spirit. The circle at the other end and the caster will both be able to hear each other, but after the call is ended the spirit will depart.",
                 "id": "spellsLiberAnimasTier3CircleOfBones",
-                "image": "https://hdpeek.com/wp-content/uploads/2026/05/druid-circle-ancient-stone-ritual-1920x1080.webp",
+                "image": "https://i.pinimg.com/originals/0e/91/6b/0e916b7f5a4655a512f934dac5cf5ce0.png",
                 "prerequisites": "group(\"liberAnimasTier4Spells\") >= 4"
               },
               {
@@ -1103,8 +1103,8 @@
                 "label": "Create Greater Ghost",
                 "description": "A ritual that is cast over a dying person that transforms their soul into a being with great power, bound to serve you. With their mind intact and their body discarded, they are yours to command. Able to interact with the physical world, and unable to be affected by the physical objects. ",
                 "id": "spellsLiberAnimasTier2CreateGreaterGhost",
-                "image": "https://wallpapercave.com/wp/wp5983744.jpg",
-                "prerequisites": "group(\"liberAnimasTier3Spells\") >= 3"
+                "prerequisites": "group(\"liberAnimasTier3Spells\") >= 3",
+                "image": "https://i.pinimg.com/736x/93/56/96/9356964ee7fe24a9fc87970f3a51876b.jpg"
               },
               {
                 "label": "Sever Soul",
@@ -1146,7 +1146,7 @@
                 "label": "Soul Drinker",
                 "description": "While the instructions to build a Soul Well concerned how to craft it, they never outlined its purpose. \n\nThat purpose was hidden, but you have discovered it. The purpose of the Soulwell is to drink the souls. Each soul nourishes you, transferring their lifespan to you, that remained from the ppoint of death. Sustaining bodily harm will consume a soul to regenerate, with more grievous bodily harm consuming more souls. The drinker can only hold 13 souls at a time. ",
                 "id": "spellsLiberAnimasTier1SoulDrinker",
-                "prerequisites": "(itemsItemsSoulWell) && (group(\"liberAnimasTier2Spells\") >= 2)",
+                "prerequisites": "((((((itemsItemsSoulWell)))))) && (group(\"liberAnimasTier2Spells\") >= 2)",
                 "image": "https://i.pinimg.com/736x/91/e7/1a/91e71a3b7daf4c74816da0f70c20c3ac.jpg",
                 "conflictsWith": [
                   "spellsPointsMotherSPath",
@@ -1380,7 +1380,7 @@
                 "label": "Vampirism",
                 "description": "You read that Empower Bloodline is said to work on one's own bloodline, though the results were never stated. You died. Then you un-died. Now, you are stronger than any living person with an empowered bloodline, stronger, faster, and hardier. You may pass this power on by causing your blood to be drunk by someone. Beware the sun, for the Mother's light burns those that have forsaken her. You require hours of sleep in a coffin each day, or you feel weak.",
                 "id": "spellsKroveriHMaTier1Vampirism",
-                "prerequisites": "(itemsItemsCoffin) && (group(\"kroveriHmaTier2Spells\") >= 2)",
+                "prerequisites": "((((((itemsItemsCoffin)))))) && (group(\"kroveriHmaTier2Spells\") >= 2)",
                 "image": "https://rare-gallery.com/mocahbig/465843-vampires-fantasy-art-fantasy-girl-artwork.jpg",
                 "conflictsWith": [
                   "spellsPointsMotherSPath",
@@ -1402,7 +1402,7 @@
                 "label": "Blood Bath",
                 "description": "While a duchess in a far-off corner of Teb'Hai was condemned to death for daring to use this ritual to preserve her life, if conducted without arousing suspicion, it will indeed provide the results she pursued. \n\nBathing in blood will indeed do such things, provided the correct rituals and spells are observed. While not making the ritualist more resistant to damage, they are entirely human and as such lack any physical signs of inhumanity. ",
                 "id": "spellsKroveriHMaTier1BloodBath",
-                "prerequisites": "(itemsItemsVialOfBlood) && (group(\"kroveriHmaTier2Spells\") >= 2)",
+                "prerequisites": "((((((itemsItemsVialOfBlood)))))) && (group(\"kroveriHmaTier2Spells\") >= 2)",
                 "image": "https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/f2746a0f-5cd7-475f-8a57-b6397762b4b0/d4urbx-e18ce3ec-d5f7-4a4d-9da0-78a2c34c69a2.png/v1/fill/w_1280,h_887,q_75,strp/blood_bath.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwic3ViIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsImF1ZCI6WyJ1cm46c2VydmljZTppbWFnZS5vcGVyYXRpb25zIl0sIm9iaiI6W1t7InBhdGgiOiIvZi9mMjc0NmEwZi01Y2Q3LTQ3NWYtOGE1Ny1iNjM5Nzc2MmI0YjAvZDR1cmJ4LWUxOGNlM2VjLWQ1ZjctNGE0ZC05ZGEwLTc4YTJjMzRjNjlhMi5wbmciLCJ3aWR0aCI6Ijw9MTI4MCIsImhlaWdodCI6Ijw9ODg3In1dXX0.2vhDx_mbWQHRH07-KvHXR84VDCD8OGuIEIvMqWUMhvs",
                 "conflictsWith": [
                   "spellsPointsMotherSPath",
@@ -1542,7 +1542,7 @@
                 "label": "Create Life",
                 "description": "Requiring a sample of a person be placed inside a metal barrel engraved with spells form the Promræn Caro.\n\nAn ignition spell from the Promræn Caro will transform the sample into a rapidly growing embryo. The grown life's age is determined by the size of the barrel, larger for older. It will take on the sample donor's visage, sans memory. ",
                 "id": "spellsPromrNCaroTier2CreateLife",
-                "prerequisites": "(itemsItemsXanthuunVat) && (group(\"promraenCaroTier3Spells\") >= 3)",
+                "prerequisites": "((((((itemsItemsXanthuunVat)))))) && (group(\"promraenCaroTier3Spells\") >= 3)",
                 "image": "https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/06cbc21b-c089-42c6-9be2-8767ec27286f/dikpga3-f572fa16-f9cb-4281-b437-e5b6e11b0c09.jpg/v1/fill/w_1182,h_676,q_70,strp/homunculus_creation_by_kirke999_dikpga3-pre.jpg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9NzMyIiwicGF0aCI6IlwvZlwvMDZjYmMyMWItYzA4OS00MmM2LTliZTItODc2N2VjMjcyODZmXC9kaWtwZ2EzLWY1NzJmYTE2LWY5Y2ItNDI4MS1iNDM3LWU1YjZlMTFiMGMwOS5qcGciLCJ3aWR0aCI6Ijw9MTI4MCJ9XV0sImF1ZCI6WyJ1cm46c2VydmljZTppbWFnZS5vcGVyYXRpb25zIl19.Hq-PPT0_FqJe1brtC_xX0OedsiirvPLceMMTbnxq3FA"
               },
               {
@@ -1783,7 +1783,7 @@
                 "label": "Regeneration",
                 "description": "Restoring the body back to its original state by stealing the health and life force of others, leaving them a husk. This skill allows the caster to recover from almost any injury as long as there is a good supply of people to drain. \n\nWhile it heals damage and replaces lost organs and body parts, it does nothing to reverse aging.",
                 "id": "spellsReunuPertemruTier2Regeneration",
-                "image": "https://creator.nightcafe.studio/api/og-creation.jpg?id=ky5MZue5y8ApJQRVN2RQ",
+                "image": "https://i.pinimg.com/736x/a8/1d/ad/a81dadd9c225801c042283e4963912bb.jpg",
                 "prerequisites": "group(\"reunuPertemruTier3Spells\") >= 3"
               },
               {
@@ -1826,7 +1826,7 @@
                 "label": "Mummification",
                 "description": "Your research into the ancient texts from Teb'lhr have come to fruition with your discovery of mummification. Requiring that your minions and any companions finish the ritual you start, you end your life and your minions inter your body. With the desiccated and bandaged corpse rising from its stone sarcophagus you live again. This form is resilient and can withstand most forms of physical assault. \n\nDespite not being a lich, mummies still have a phylactery: Their bodies. ",
                 "id": "spellsReunuPertemruTier1Mummification",
-                "image": "https://w0.peakpx.com/wallpaper/293/688/HD-wallpaper-mummy-queen-staff-fantasy-queen-skull-mummy.jpg",
+                "image": "https://i.pinimg.com/736x/03/59/58/035958f23108d2d9df800fa7aab10a17.jpg",
                 "prerequisites": "group(\"reunuPertemruTier2Spells\") >= 2",
                 "conflictsWith": [
                   "spellsPointsMotherSPath",
@@ -1870,7 +1870,7 @@
                 "label": "Eremite",
                 "description": "To become an Eremite, one requires a secret and forbidden spell, one that will tear your soul apart. Clad tight in leather, mutilated beyond recognition, Eremites are no longer able to be considered mortal.\n\nMastery over suffering is the hallmark of the Eremite and you shall have it. \n\nEremites are immortal and difficult to harm due to the suffering of others nourishing and sustaining them.",
                 "id": "spellsReunuPertemruTier1Eremite",
-                "prerequisites": "(itemsItemsSchmerzRTsel) && (group(\"reunuPertemruTier2Spells\") >= 2)",
+                "prerequisites": "((((((itemsItemsSchmerzRTsel)))))) && (group(\"reunuPertemruTier2Spells\") >= 2)",
                 "image": "https://i.pinimg.com/736x/f6/aa/da/f6aada36290f899251f93c3a9ab8a060.jpg",
                 "conflictsWith": [
                   "spellsPointsMotherSPath",
@@ -2169,13 +2169,13 @@
             "label": "Baron Orloke",
             "description": "The baron has gret strength and a mind that belies his appearance. He has had few friends and is visage scares most. His castle retains a library with books on many things. \n\n\"You stand before me... I am impressed.\" ",
             "id": "companionsCompanionsBaronOrloke",
-            "image": "https://nextluxury.com/wp-content/uploads/Petelgeus-Romanee-Conti.jpg"
+            "image": "https://i.pinimg.com/originals/f3/67/f4/f367f453b40f0a61b93e86cb5b55beb4.jpg"
           },
           {
             "label": "Nadya",
             "description": "A spirit bound to the Liber Animas, serving without end. Once a young servant girl, her life was prematurely taken. She is a good person that does not like doing bad things. \n\n\"Turning to mage 487. Regarding the soul...\" ",
             "id": "companionsCompanionsNadya",
-            "image": "https://creator.nightcafe.studio/api/og-creation.jpg?id=rMczOGcNhMdXOU0bWMm0"
+            "image": "https://i.pinimg.com/originals/d2/50/c3/d250c39016fe41fce99a6a46d109cefe.jpg"
           },
           {
             "label": "Grace",
@@ -2193,7 +2193,7 @@
             "label": "Morgan",
             "description": "Morgan had always been in contact with spirits form a young age, and has grown up knowing how to make them do her bidding. She has no skills to the living though.\n\n\"I don't get it, why did he run away when I said I talk to dead people?\"",
             "id": "companionsCompanionsMorgan",
-            "image": "https://wallpapercave.com/wp/wp6884244.jpg"
+            "image": "https://i.pinimg.com/originals/4f/fe/88/4ffe882434d33c2f575505883771656f.jpg"
           },
           {
             "label": "Kolya",
@@ -2229,7 +2229,7 @@
             "label": "Elizzbeth",
             "description": "An eccentric and affluent woman, with no medical license due to some questionable surgeries. Somehow she always makes reattachments work, with neither seams nor scars. \n\n\"What's the problem with giving someone another pair of arms?\"",
             "id": "companionsCompanionsElizzbeth",
-            "image": "https://img-v3.deepdreamgenerator.com/3997014/tz4szv_da7e63e56b28d1cb3b11e7459d733607ba34d374.jpg"
+            "image": "https://i.pinimg.com/736x/0d/af/61/0daf61643854e82e7f92da4ba979b9c4.jpg"
           },
           {
             "label": "Libyn",
@@ -2241,7 +2241,7 @@
             "label": "Catherine",
             "description": "One of your masters first creations, she is an old friend that has been with you from the beginning. She has learnt much about flesh magic, and from your master.\n\n\"You see, this is how you do it. A little more here, some less there...\"",
             "id": "companionsCompanionsCatherine",
-            "image": "https://creator.nightcafe.studio/api/og-creation.jpg?id=I3h0IQ78LIUeLt0GPl1i"
+            "image": "https://i.pinimg.com/originals/e3/88/b6/e388b6df3f86f49b865f09044aef77fd.jpg"
           },
           {
             "label": "Valaul",
@@ -2253,7 +2253,7 @@
             "label": "Kreie",
             "description": "A Kreierung, created in a Xanthuum Vat, they are based on a mix of samples. They will use you as their model of behavior, as they have only known life with you.\n\n\"You are my parent, and I will do my best to make you proud.\"",
             "id": "companionsCompanionsKreie",
-            "image": "https://creator.nightcafe.studio/api/og-creation.jpg?id=Xad60SVV9hzB4PVtjIzo"
+            "image": "https://i.pinimg.com/736x/f5/d2/db/f5d2dbb74819d69fca84543dd68a7b37.jpg"
           },
           {
             "label": "Herman",
@@ -2271,7 +2271,7 @@
             "label": "Zahra",
             "description": "A Teb'lhran desert witch that heads a trading caravan through the great desert, she is not tied down to any place. She has a close knit family that she has raised from the dead.\n\n\"Many things are moved through the desert. But I do not ask questions.\"",
             "id": "companionsCompanionsZahra",
-            "image": "https://static.vecteezy.com/system/resources/thumbnails/036/431/697/small_2x/ai-generated-portrait-of-beautiful-veiled-arab-women-with-desert-background-close-up-of-middle-eastern-women-with-beautiful-eyes-generative-ai-photo.jpg"
+            "image": "https://i.pinimg.com/736x/a7/18/8d/a7188dd94cf516c0bd130487a99481d5.jpg"
           },
           {
             "label": "Sasha",
@@ -2325,7 +2325,7 @@
             "label": "Nerrti",
             "description": "Nerrti was a cunning priestess from the Child's temple, that can regenerate mummies without items. She can pass as living, and recognizes you as the next pharaoh.\n\n\"Yes, my pharaoh. Together we will succeed where Amenthes failed.\" ",
             "id": "companionsCompanionsNerrti",
-            "image": "https://creator.nightcafe.studio/api/og-creation.jpg?id=vyjuj1EgasEShMmf3qHM"
+            "image": "https://i.pinimg.com/736x/5a/74/84/5a7484606c89aa09b0eed9ff74808107.jpg"
           },
           {
             "label": "Eshe",
@@ -2445,7 +2445,7 @@
             "label": "Bandit Leader",
             "description": "A mysterious individual that shares little beyond a common interest, they serve for their own reasons. With a gang of bandits behind them and a set of skills, they know how to win. \n\n\"The only unfair fight is the one you do not win, so fight dirty.\"",
             "id": "companionsCompanionsBanditLeader",
-            "image": "https://creator.nightcafe.studio/api/og-creation.jpg?id=e9fTsZD4mwdMtLJdSb6S"
+            "image": "https://i.pinimg.com/originals/c4/7d/dd/c47ddda2410b161433f2387d84d8f4ef.jpg"
           },
           {
             "label": "Lobsang",
@@ -2563,7 +2563,7 @@
               }
             ],
             "prerequisites": "spellsKroveriHMaTier3CreateNosferatu",
-            "image": "https://w0.peakpx.com/wallpaper/510/414/HD-wallpaper-vampire-art-fantasy-luminos-mingzhu-yang-man-skull.jpg"
+            "image": "https://i.pinimg.com/736x/04/d3/0e/04d30e3e08d72e2cb3d2be161361366a.jpg"
           },
           {
             "label": "Vampire Guardian",
@@ -2843,7 +2843,7 @@
               }
             ],
             "prerequisites": "spellsLiberMortisTier3CreateDeathKnight",
-            "image": "https://wallpapercave.com/wp/wp3241145.jpg"
+            "image": "https://i.pinimg.com/736x/5e/d6/84/5ed684105d265928e5811e23f019923b.jpg"
           },
           {
             "label": "Executioner",
@@ -3290,7 +3290,7 @@
                 }
               }
             ],
-            "image": "https://www.thingsforthinkers.games/wp-content/uploads/2024/06/kobold-5e-dnd.png"
+            "image": "https://i.pinimg.com/736x/e1/ce/4e/e1ce4e53385c9308c946f7d7ea371579.jpg"
           },
           {
             "label": "Alchemist",
@@ -3348,5 +3348,12 @@
         "subcategories": []
       }
     ]
+  },
+  {
+    "type": "publication",
+    "seriesId": "necromancer.json",
+    "status": "published",
+    "version": "1.0",
+    "publishedAt": "2026-11-27T05:24:42.976Z"
   }
 ]

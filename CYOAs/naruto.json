@@ -6913,5 +6913,12 @@
     "font-label": "24px",
     "font-heading": "Verdana, sans-serif",
     "font-body": "'Quicksand', sans-serif"
+  },
+  {
+    "type": "publication",
+    "seriesId": "naruto.json",
+    "status": "published",
+    "version": "1.0",
+    "publishedAt": "2026-11-27T16:47:24.960Z"
   }
 ]

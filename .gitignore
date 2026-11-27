@@ -4,10 +4,15 @@ Thumbs.db
 
 # Dependencies
 node_modules/
+image-check-report.json
+image-check-report-*.json
+image-url-test-report.json
+image-rehosting-report.json
 
 # Application Data
 temp-input.json
 CYOAs/.trash/
+CYOAs/.write-lock/
 
 *read*
 

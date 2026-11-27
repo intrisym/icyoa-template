@@ -5,10 +5,12 @@ const path = require("path");
 const url = require("url");
 const { createVersionStore } = require("./cyoaVersions");
 const { metadata } = require("./versioning");
+const { createImageMaintenance } = require("./imageMaintenance");
 
 const ROOT = __dirname;
 const CYOAS_DIR = path.join(ROOT, "CYOAs");
 const versionStore = createVersionStore(CYOAS_DIR);
+const imageMaintenance = createImageMaintenance();
 const PORT = Number(process.env.PORT) || 3000;
 const MAX_BODY_SIZE = 10 * 1024 * 1024; // Increased to 10MB for larger CYOAs
 
@@ -365,6 +367,21 @@ async function serveStaticAsset(res, pathname) {
 const server = http.createServer(async (req, res) => {
     const parsedUrl = url.parse(req.url || "/");
     const pathname = parsedUrl.pathname || "/";
+
+    if (pathname === "/api/image-maintenance" && (req.method === "GET" || req.method === "POST")) {
+        try {
+            const result = req.method === "GET"
+                ? await imageMaintenance.inspect(url.parse(req.url, true).query.file)
+                : await versionStore.maintainImages(async () => {
+                    const body = JSON.parse(await readRequestBody(req));
+                    if (!body.file) throw new Error("Select a CYOA first.");
+                    return imageMaintenance.repair({ file: body.file, action: body.action, id: body.id,
+                        sourceFile: body.sourceFile, sourceId: body.sourceId, url: body.url, confirmed: body.confirmed });
+                });
+            sendJson(res, 200, result);
+        } catch (error) { sendJson(res, 400, { error: error.message }); }
+        return;
+    }
 
     if (req.method === "GET" && pathname === "/api/cyoas") {
         await handleGetCyoas(req, res);

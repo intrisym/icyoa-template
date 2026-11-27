@@ -31,6 +31,7 @@
                 <button id="chooseEditorVersionBtn" type="button" disabled>Choose Version</button>
                 <button id="createDraftBtn" type="button" disabled>Create Draft From This Version</button>
                 <button id="publishVersionBtn" type="button" hidden>Publish Version</button>
+                <button id="maintainImagesBtn" type="button">Repair Images Across Versions</button>
             </div>
             <section class="editor-nav-shell" aria-label="Editor navigation">
                 <div class="editor-nav-toolbar">
@@ -100,9 +101,59 @@
             </div>
         </form>
     </dialog>
+    <dialog id="imageMaintenanceDialog" class="image-maintenance-dialog" aria-labelledby="imageMaintenanceTitle">
+        <div class="image-maintenance-heading">
+            <h3 id="imageMaintenanceTitle">Image sync</h3>
+            <button id="closeImageMaintenanceBtn" type="button" class="button-subtle">Close</button>
+        </div>
+        <p id="imageMaintenanceStatus" role="status" aria-live="polite"></p>
+        <div id="imageMaintenanceResults"></div>
+        <section id="imageRepairIssue" class="image-repair-issue" aria-labelledby="imageRepairLabel" hidden>
+            <p id="imageRepairPosition" class="image-repair-caption"></p>
+            <h4 id="imageRepairLabel" tabindex="-1"></h4>
+            <p id="imageRepairVersion" class="image-repair-caption"></p>
+            <p id="imageRepairHelp">We couldn't find a working matching image. How would you like to fix it?</p>
+            <div id="imageManualVerification" class="image-repair-inputs" hidden>
+                <a id="imageVerificationPage" target="_blank" rel="noopener noreferrer">Open the live CYOA</a>
+                <p id="imageVerificationUrl" class="image-repair-caption"></p>
+                <label><input id="imageVerificationConfirmed" type="checkbox"> I reloaded the page without cache and saw this exact image load.</label>
+                <button id="confirmImageVerificationBtn" type="button">Save verification for 7 days</button>
+                <button id="replaceInconclusiveImageBtn" type="button" class="button-subtle">Replace the URL instead</button>
+            </div>
+            <fieldset id="imageRepairChoice" class="image-repair-choices">
+                <legend class="image-repair-caption">What happened to this option?</legend>
+                <button id="chooseImageIdBtn" type="button" class="button-subtle" aria-pressed="false">It moved or was renamed</button>
+                <button id="chooseImageUrlBtn" type="button" class="button-subtle" aria-pressed="false">Use a new image URL</button>
+            </fieldset>
+            <fieldset id="imageMaintenanceFields" hidden>
+                <legend id="imageRepairFormTitle"></legend>
+                <div id="repairLinkFields" class="image-repair-inputs" hidden>
+                    <label for="repairSourceVersion">Version with the matching option</label>
+                    <select id="repairSourceVersion"></select>
+                    <label for="repairSourceId">Its new option ID</label>
+                    <input id="repairSourceId" type="text" list="repairSourceOptions" placeholder="Enter or select the matching ID">
+                    <datalist id="repairSourceOptions"></datalist>
+                </div>
+                <div id="repairUrlFields" class="image-repair-inputs" hidden>
+                    <label for="repairImageUrl">New image URL</label>
+                    <input id="repairImageUrl" type="url" placeholder="https://example.com/replacement.png">
+                </div>
+                <button id="applyImageRepairBtn" type="button">Verify and repair</button>
+                <button id="verifyExistingImageBtn" type="button" class="button-subtle" hidden>Verify the existing live image instead</button>
+            </fieldset>
+            <p id="imageRepairError" class="image-repair-error" role="alert" hidden></p>
+            <details class="image-repair-details">
+                <summary>Image details</summary>
+                <p id="imageRepairDetails"></p>
+            </details>
+            <button id="nextRepairImageBtn" type="button" class="button-subtle" hidden>Skip to the next image</button>
+        </section>
+        <button id="scanRepairImagesBtn" type="button" class="button-subtle" hidden>Check again</button>
+    </dialog>
     <script src="versioning.js"></script>
     <script src="versionPicker.js"></script>
     <script src="optionIds.js"></script>
+    <script src="imageUrlPolicy.js"></script>
     <script src="editor.js"></script>
 </body>
 

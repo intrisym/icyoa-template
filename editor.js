@@ -10,6 +10,7 @@
         filterQuery: ""
     };
     let versionBusy = false;
+    let reconciliationRequired = false;
     const CONFIG_ENDPOINT = "/api/config";
     const NECROMANCER_SPELL_SCHOOL_SLUGS = new Map([
         ["Liber Mortis", "liberMortis"],
@@ -358,7 +359,7 @@
     }
 
     function queueTempSave(data) {
-        if (!tempSyncState.enabled || versionBusy || CyoaVersioning.metadata(state.data)?.status === "published") return;
+        if (!tempSyncState.enabled || versionBusy || reconciliationRequired || CyoaVersioning.metadata(state.data)?.status === "published") return;
         tempSyncState.pendingData = data;
         if (!tempSyncState.saving) {
             void flushTempSaveQueue();
@@ -366,7 +367,7 @@
     }
 
     async function flushTempSaveQueue() {
-        if (!tempSyncState.enabled || !tempSyncState.pendingData) return;
+        if (!tempSyncState.enabled || reconciliationRequired || !tempSyncState.pendingData) return;
         const payload = applyNecromancerSpellRulesForSave(tempSyncState.pendingData, state.selectedFile);
         tempSyncState.pendingData = null;
         tempSyncState.saving = true;
@@ -2095,6 +2096,7 @@
         });
         headerField.appendChild(headerLabel);
         headerField.appendChild(headerInput);
+        CyoaImageUrlPolicy.bindInput(headerInput);
 
         // Prevent upscaling toggle
         const preventField = document.createElement("div");
@@ -4805,6 +4807,7 @@
             });
             imageField.appendChild(imageLabel);
             imageField.appendChild(imageInput);
+            CyoaImageUrlPolicy.bindInput(imageInput);
             body.appendChild(imageField);
 
             const inputTypeField = document.createElement("div");
@@ -6732,7 +6735,7 @@
     async function loadInitialData() {
         if (!state.selectedFile) {
             showSelectionModal();
-            return;
+            return false;
         }
 
         // Update preview iframe to load the correct CYOA
@@ -6743,18 +6746,20 @@
         const config = await loadSelectedConfig();
         if (config.ok) {
             state.data = config.data;
+            reconciliationRequired = false;
             if (!CyoaVersioning.metadata(state.data)) regenerateAllOptionIds();
             renderGlobalSettings();
             scheduleRenderCategories();
             schedulePreviewUpdate();
             updateVersionControls();
             showEditorMessage(`Loaded ${state.selectedFile}`, "success");
-            return;
+            return true;
         }
 
         showEditorMessage(`Failed to load ${state.selectedFile}: ${config.error}`, "error", 10000);
         // If it fails, maybe show the selection modal again after a delay
-        setTimeout(() => showSelectionModal(), 3000);
+        if (!reconciliationRequired) setTimeout(() => showSelectionModal(), 3000);
+        return false;
     }
 
     async function fetchCyoaList() {
@@ -6923,13 +6928,233 @@
             : release?.status === "draft"
                 ? `Draft${release.targetVersion ? ` v${release.targetVersion}` : ""}${release.baseVersion ? ` based on v${release.baseVersion}` : " — first release will be v0.1"}`
                 : "Version 1";
-        document.getElementById("editableContent").disabled = published || versionBusy;
-        document.getElementById("addCategoryBtn").disabled = published || versionBusy;
-        document.getElementById("importJsonBtn").disabled = published || versionBusy;
-        document.getElementById("createDraftBtn").disabled = !state.selectedFile || versionBusy;
+        document.getElementById("editableContent").disabled = published || versionBusy || reconciliationRequired;
+        document.getElementById("addCategoryBtn").disabled = published || versionBusy || reconciliationRequired;
+        document.getElementById("importJsonBtn").disabled = published || versionBusy || reconciliationRequired;
+        document.getElementById("createDraftBtn").disabled = !state.selectedFile || versionBusy || reconciliationRequired;
         document.getElementById("chooseEditorVersionBtn").disabled = !state.selectedFile || versionBusy;
         document.getElementById("publishVersionBtn").hidden = release?.status !== "draft";
-        document.getElementById("publishVersionBtn").disabled = versionBusy;
+        document.getElementById("publishVersionBtn").disabled = versionBusy || reconciliationRequired;
+        document.getElementById("maintainImagesBtn").disabled = !state.selectedFile || versionBusy;
+    }
+
+    function setupImageMaintenance() {
+        const dialog = document.getElementById("imageMaintenanceDialog");
+        const status = document.getElementById("imageMaintenanceStatus");
+        const results = document.getElementById("imageMaintenanceResults");
+        const fields = document.getElementById("imageMaintenanceFields");
+        const sourceSelect = document.getElementById("repairSourceVersion");
+        const sourceId = document.getElementById("repairSourceId");
+        const urlInput = document.getElementById("repairImageUrl");
+        const scanButton = document.getElementById("scanRepairImagesBtn");
+        const closeButton = document.getElementById("closeImageMaintenanceBtn");
+        const issue = document.getElementById("imageRepairIssue");
+        const choices = document.getElementById("imageRepairChoice");
+        const idButton = document.getElementById("chooseImageIdBtn");
+        const urlButton = document.getElementById("chooseImageUrlBtn");
+        const applyButton = document.getElementById("applyImageRepairBtn");
+        const nextButton = document.getElementById("nextRepairImageBtn");
+        const errorMessage = document.getElementById("imageRepairError");
+        const verificationPanel = document.getElementById("imageManualVerification");
+        const verificationConfirmed = document.getElementById("imageVerificationConfirmed");
+        const verificationButton = document.getElementById("confirmImageVerificationBtn");
+        const replaceInconclusive = document.getElementById("replaceInconclusiveImageBtn");
+        let versions = [];
+        let pending = [];
+        let position = 0;
+        let mode = null;
+        const repaired = new Map();
+        CyoaImageUrlPolicy.bindInput(urlInput);
+        const option = (value, text) => {
+            const element = document.createElement("option");
+            element.value = value;
+            element.textContent = text;
+            return element;
+        };
+        const updateSources = () => {
+            document.getElementById("repairSourceOptions").replaceChildren(...(versions.find(version => version.file === sourceSelect.value)?.images || [])
+                .filter(image => image.id !== "@header").map(image => option(image.id, image.label)));
+        };
+        async function refreshVersions() {
+            const response = await fetch(`/api/image-maintenance?file=${encodeURIComponent(state.selectedFile)}`, { cache: "no-store" });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Could not load image versions.");
+            versions = data.versions;
+        }
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.hidden = !message;
+        }
+        function chooseMode(value, focus = true) {
+            mode = value;
+            verificationPanel.hidden = !pending[position]?.verificationRequired || Boolean(mode);
+            document.getElementById("verifyExistingImageBtn").hidden = !pending[position]?.verificationRequired;
+            fields.hidden = !mode;
+            document.getElementById("repairLinkFields").hidden = mode !== "link";
+            document.getElementById("repairUrlFields").hidden = mode !== "replace";
+            idButton.setAttribute("aria-pressed", String(mode === "link"));
+            urlButton.setAttribute("aria-pressed", String(mode === "replace"));
+            document.getElementById("imageRepairFormTitle").textContent = mode === "link" ? "Connect the matching option" : "Replace the image";
+            applyButton.textContent = mode === "link" ? "Connect and repair" : "Verify URL and repair";
+            showError("");
+            if (focus && mode) (mode === "link" ? sourceId : urlInput).focus();
+        }
+        function showIssue() {
+            const image = pending[position];
+            issue.hidden = !image;
+            if (!image) return;
+            const version = versions.find(version => version.file === image.file);
+            document.getElementById("imageRepairPosition").textContent = `Image ${position + 1} of ${pending.length} needing help`;
+            document.getElementById("imageRepairPosition").hidden = pending.length === 1;
+            document.getElementById("imageRepairLabel").textContent = image.label;
+            document.getElementById("imageRepairVersion").textContent = version ? `Version ${version.version} · ${version.status}` : image.file;
+            const candidates = versions.filter(version => version.file !== image.file && version.images.some(candidate => candidate.id !== "@header"))
+                .sort((a, b) => CyoaVersioning.compareVersions(b.version, a.version) || Number(b.status === "draft") - Number(a.status === "draft"));
+            sourceSelect.replaceChildren(...candidates.map(version => option(version.file, `Version ${version.version} (${version.status})`)));
+            updateSources();
+            sourceId.value = "";
+            urlInput.value = "";
+            urlInput.dispatchEvent(new Event("input"));
+            choices.hidden = image.verificationRequired || image.id === "@header" || !candidates.length;
+            verificationConfirmed.checked = false;
+            document.getElementById("imageVerificationPage").href = image.pageUrl || "#";
+            document.getElementById("imageVerificationUrl").textContent = image.url || "";
+            document.getElementById("imageRepairHelp").textContent = image.verificationRequired
+                ? "The automated check was blocked or inconclusive. Open the live CYOA, reload without cache, and check this exact image in your browser."
+                : image.id === "@header"
+                ? "This header needs a working image URL."
+                : "We couldn't find a working matching image. Did this option move, or does it need a new URL?";
+            document.getElementById("imageRepairDetails").textContent = `${image.file}\nOption ID: ${image.id}\n${image.url || ""}\n${image.errors || ""}`;
+            document.querySelector(".image-repair-details").open = false;
+            nextButton.hidden = pending.length < 2;
+            chooseMode(image.verificationRequired ? null : choices.hidden ? "replace" : null, false);
+            document.getElementById("imageRepairLabel").focus();
+        }
+        function showResults(result, previous) {
+            for (const edit of result.edits) repaired.set(`${edit.file}\0${edit.id}`, edit);
+            results.replaceChildren();
+            results.hidden = !repaired.size && result.unresolved.length > 0;
+            results.classList.toggle("image-sync-success", !result.unresolved.length);
+            const summary = document.createElement("p");
+            const manual = result.manualVerifications || [];
+            summary.textContent = repaired.size ? `${repaired.size} image${repaired.size === 1 ? "" : "s"} repaired across your versions.`
+                : manual.length ? "Current manual confirmations satisfy the check."
+                    : result.unresolved.length ? "These images couldn't be fixed automatically." : "Every version has working images.";
+            results.appendChild(summary);
+            if (manual.length) {
+                const note = document.createElement("p");
+                note.textContent = `${manual.length} image${manual.length === 1 ? " has" : "s have"} a current manual confirmation. Automated checks remain inconclusive for these images.`;
+                results.appendChild(note);
+            }
+            if (repaired.size) {
+                const details = document.createElement("details");
+                const heading = document.createElement("summary");
+                heading.textContent = "View repairs";
+                const list = document.createElement("ul");
+                for (const edit of repaired.values()) {
+                    const row = document.createElement("li");
+                    row.textContent = `${edit.file} / ${edit.id}`;
+                    list.appendChild(row);
+                }
+                details.append(heading, list);
+                results.appendChild(details);
+            }
+            pending = result.unresolved.map(image => ({ ...image, errors: result.failures
+                .filter(failure => failure.references.some(reference => reference.filename === image.file && reference.id === image.id))
+                .map(failure => `${failure.profile}: ${failure.error}`).join("\n") }));
+            position = Math.max(0, pending.findIndex(image => image.file === previous?.file && image.id === previous?.id));
+            status.textContent = pending.length ? `${pending.length} image${pending.length === 1 ? " needs" : "s need"} your help.`
+                : manual.length ? "Checks complete with manual verification." : "All images are up to date.";
+            if (manual.length) results.hidden = false;
+            showIssue();
+            if (result.linked && !pending[position]?.verificationRequired && pending[position]?.file === previous?.file && pending[position]?.id === previous?.id) {
+                chooseMode("replace", false);
+                document.getElementById("imageRepairHelp").textContent = "The options are connected, but there is still no working image. Enter a new URL.";
+            }
+        }
+        async function run(action) {
+            if (versionBusy) return;
+            const image = pending[position];
+            if (action !== "repair" && !image) return;
+            if (action === "verify" && !verificationConfirmed.checked) return showError("Confirm only after you have seen this exact image load on the live page.");
+            if (action === "link" && !sourceId.value.trim()) return showError("Enter the matching option's ID.");
+            if (action === "replace" && (!urlInput.value.trim() || CyoaImageUrlPolicy.validationMessage(urlInput.value))) {
+                return showError(CyoaImageUrlPolicy.validationMessage(urlInput.value) || "Enter a replacement image URL.");
+            }
+            versionBusy = true;
+            updateVersionControls();
+            fields.disabled = choices.disabled = nextButton.disabled = scanButton.disabled = closeButton.disabled = true;
+            verificationButton.disabled = verificationConfirmed.disabled = replaceInconclusive.disabled = true;
+            dialog.setAttribute("aria-busy", "true");
+            status.textContent = action === "repair" ? "Checking images in every version and syncing working matches…" : "Verifying your fix and syncing connected images…";
+            issue.hidden = true;
+            showError("");
+            try {
+                if (reconciliationRequired && !await loadInitialData()) throw new Error("Reload failed. Draft writes remain blocked; retry the scan to reload before continuing.");
+                if (!versions.length) await refreshVersions();
+                // Finish any older autosave before explicitly saving current edits.
+                tempSyncState.pendingData = null;
+                while (tempSyncState.saving) await new Promise(resolve => setTimeout(resolve, 20));
+                if (CyoaVersioning.metadata(state.data)?.status !== "published") {
+                    const save = await fetch(`${CONFIG_ENDPOINT}?file=${encodeURIComponent(state.selectedFile)}`, {
+                        method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(state.data)
+                    });
+                    if (!save.ok) throw new Error("Could not save the current draft before checking images.");
+                }
+                // Once the server may have modified files, stale state must never
+                // be saved again, even if the response or subsequent reload fails.
+                reconciliationRequired = true;
+                const response = await fetch("/api/image-maintenance", {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ file: action === "repair" ? state.selectedFile : image.file, action, id: image?.id,
+                        sourceFile: sourceSelect.value, sourceId: sourceId.value.trim(), url: action === "verify" ? image.url : urlInput.value.trim(), confirmed: action === "verify" && verificationConfirmed.checked })
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || "Image maintenance failed.");
+                if (!await loadInitialData()) throw new Error("Image maintenance finished, but reloading failed. Draft writes remain blocked; retry the scan to reload.");
+                await refreshVersions();
+                showResults(result, image);
+            } catch (error) {
+                issue.hidden = !image;
+                if (image) {
+                    status.textContent = "This image still needs a fix.";
+                    showError(error.message);
+                } else status.textContent = `Couldn't finish the sync check: ${error.message}`;
+            }
+            finally {
+                versionBusy = false;
+                fields.disabled = choices.disabled = nextButton.disabled = scanButton.disabled = closeButton.disabled = false;
+                verificationButton.disabled = verificationConfirmed.disabled = replaceInconclusive.disabled = false;
+                scanButton.hidden = false;
+                dialog.setAttribute("aria-busy", "false");
+                updateVersionControls();
+            }
+        }
+        sourceSelect.addEventListener("change", updateSources);
+        document.getElementById("maintainImagesBtn").addEventListener("click", async () => {
+            if (!state.selectedFile) return showEditorMessage("Select a CYOA first.", "warning");
+            if (versionBusy) return;
+            versions = [];
+            pending = [];
+            position = 0;
+            repaired.clear();
+            results.replaceChildren();
+            results.classList.remove("image-sync-success");
+            issue.hidden = true;
+            scanButton.hidden = true;
+            dialog.showModal();
+            await run("repair");
+        });
+        scanButton.addEventListener("click", () => void run("repair"));
+        idButton.addEventListener("click", () => chooseMode("link"));
+        urlButton.addEventListener("click", () => chooseMode("replace"));
+        applyButton.addEventListener("click", () => { if (mode) void run(mode); });
+        verificationButton.addEventListener("click", () => void run("verify"));
+        replaceInconclusive.addEventListener("click", () => chooseMode("replace"));
+        document.getElementById("verifyExistingImageBtn").addEventListener("click", () => chooseMode(null));
+        nextButton.addEventListener("click", () => { position = (position + 1) % pending.length; showIssue(); });
+        closeButton.addEventListener("click", () => dialog.close());
+        dialog.addEventListener("cancel", event => { if (versionBusy) event.preventDefault(); });
     }
 
     function openEditorFile(filename) {
@@ -6939,7 +7164,7 @@
     }
 
     async function requestVersionAction(action, values = {}) {
-        if (versionBusy) return;
+        if (versionBusy || reconciliationRequired) return;
         versionBusy = true;
         updateVersionControls();
         try {
@@ -7138,6 +7363,7 @@
     }
 
     initializeEditorTheme();
+    setupImageMaintenance();
     setupEventListeners();
     loadInitialData();
 })();

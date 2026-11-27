@@ -2,6 +2,7 @@ name: CI
 
 on:
   push:
+  create:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
   merge_group:
@@ -11,7 +12,46 @@ permissions:
   contents: read
 
 jobs:
+  branch-names:
+    name: Branch naming
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate contributor branch name
+        run: node scripts/validate-branch-name.js --event
+
+  images:
+    if: github.event_name != 'create'
+    name: Image loading
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Test image checker against controlled browser fixtures
+        run: npm run test:images:unit
+      - name: Test image loading from localhost and production origins
+        run: npm run test:images
+      - name: Upload image failure report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-check-report
+          path: image-check-report.json
+          if-no-files-found: ignore
+
   conventional-commits:
+    if: github.event_name != 'create'
     name: Conventional Commits
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -31,6 +71,7 @@ jobs:
         run: node scripts/validate-commit-message.js --event
 
   verify:
+    if: github.event_name != 'create'
     name: Verify
     runs-on: ubuntu-latest
     timeout-minutes: 10
