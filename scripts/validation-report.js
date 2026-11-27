@@ -60,8 +60,8 @@ function renderSummary(diagnostics) {
     const lines = [errors.length ? `## CYOA validation failed: ${errors.length} error(s)` : "## CYOA validation passed", ""];
     for (const issues of [errors, warnings]) {
         if (!issues.length) continue;
-        lines.push(issues === errors ? "### Errors to fix" : "### Warnings", "", "| File | Option | Field | Problem |", "| --- | --- | --- | --- |");
-        for (const issue of issues) lines.push(`| ${cell(issue.file)} | ${cell(issue.optionLabel || issue.optionId || "File-level issue")} | ${cell(issue.field || "—")} | ${cell(issue.message)} |`);
+        lines.push(issues === errors ? "### Errors to fix" : "### Warnings", "", "| File | Option | ID | Field | Problem |", "| --- | --- | --- | --- | --- |");
+        for (const issue of issues) lines.push(`| ${cell(issue.file)} | ${cell(issue.optionLabel || issue.optionId || "File-level issue")} | ${cell(issue.optionId || "—")} | ${cell(issue.field || "—")} | ${cell(issue.message)} |`);
         lines.push("");
     }
     if (errors.length) lines.push("Correct the listed fields and rerun `sh scripts/check.sh` before pushing.", "");

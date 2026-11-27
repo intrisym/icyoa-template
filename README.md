@@ -112,6 +112,8 @@ CI runs this as the separate **Image loading** job on pushes and PRs, with file 
 
 These checks verify availability at test time. External hosts can change later, and the simulated production origin does not replace testing the deployed site in your browser.
 
+The **Image loading** job's GitHub Actions summary lists affected **CYOAs, option names, IDs, errors and image URLs** in a table. The CYOA name links to its live player page and the filename identifies the exact version to edit. Confirmed failures appear first, followed by inconclusive images requiring manual verification; each section explains the next step. Localhost and production results for the same image/option are combined into one row. Currently accepted manual verifications are collapsed separately so they do not clutter the blocking errors. The regular CYOA validation summary also has a dedicated option ID column. Full JSON diagnostics remain available as the downloadable artifact.
+
 ### Manual Verification for Inconclusive Images
 
 Some hosts allow ordinary browsers while blocking the automated checker. These results are never used to automatically replace images or as automatic repair sources. The mandatory push check and CI accept them only with a manual confirmation from the previous **seven days**, scoped to the **exact URL, option ID, CYOA filename and production page**. Changing any of those, expiry, or a future timestamp requires verification again. Confirmations cannot override confirmed failures or the blocked-domain policy.

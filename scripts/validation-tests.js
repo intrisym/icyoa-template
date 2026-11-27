@@ -177,7 +177,7 @@ test("GitHub reports create file annotations and a job summary without unsafe co
     const summary = await fs.readFile(summaryPath, "utf8");
     assert(summary.includes("## CYOA validation failed: 1 error(s)"));
     assert(summary.includes("&lt;Upgrade&gt;&#124;"));
-    assert(summary.includes("| File | Option | Field | Problem |"));
+    assert(summary.includes("| File | Option | ID | Field | Problem |"));
     assert(!formatDiagnostics(diagnostics).includes("\n::notice::injected"));
     assert(renderSummary([]).includes("CYOA validation passed"));
 });

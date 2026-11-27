@@ -2,20 +2,21 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { validationMessage } = require("../imageUrlPolicy");
 const { classifyFailure, readVerifications, evaluateResults } = require("../imageVerification");
+const { renderImageSummary } = require("./image-check-report");
 
 const ROOT = path.resolve(__dirname, "..");
 const PRODUCTION_URL = "https://intrisym.github.io/icyoa-template/";
 
 function collectImages(data, file) {
     const images = [];
-    const add = (url, location) => {
-        if (typeof url === "string" && url.trim()) images.push({ file, location, url: url.trim() });
+    const cyoaTitle = data.find(entry => entry.type === "title")?.text || path.basename(file, ".json");
+    const add = (url, location, id, label) => {
+        if (typeof url === "string" && url.trim()) images.push({ file, location, id, label, cyoaTitle, url: url.trim() });
     };
     const options = (category, location) => {
         for (const [index, option] of (category.options || []).entries()) {
-            const count = images.length;
-            add(option.image || option.img, `${location}.options[${index}] (${option.id || option.name || "unnamed"})`);
-            if (images.length > count) images.at(-1).id = option.id;
+            add(option.image || option.img, `${location}.options[${index}] (${option.id || option.name || "unnamed"})`,
+                option.id, option.label || option.name || option.id || "Unnamed option");
         }
         for (const [index, subcategory] of (category.subcategories || []).entries()) {
             options(subcategory, `${location}.subcategories[${index}]`);
@@ -23,9 +24,7 @@ function collectImages(data, file) {
     };
     for (const [index, entry] of data.entries()) {
         if (entry.type === "headerImage") {
-            const count = images.length;
-            add(entry.url, `[${index}] headerImage`);
-            if (images.length > count) images.at(-1).id = "@header";
+            add(entry.url, `[${index}] headerImage`, "@header", "Header image");
         }
         options(entry, `[${index}] ${entry.name || entry.type || "category"}`);
     }
@@ -134,8 +133,9 @@ function reportFailure(profile, failure) {
     const label = manual ? "MANUALLY VERIFIED" : inconclusive ? "INCONCLUSIVE — verification required" : "FAIL";
     console.error(`\n${label} [${profile}] ${failure.error}\n  URL: ${failure.url}`);
     for (const reference of failure.references) {
-        const message = `${reference.location}: ${failure.error} — ${failure.url}`;
-        console.error(`  ${reference.file}: ${reference.location}`);
+        const identity = `${reference.label || reference.id || "Image"} (ID: ${reference.id || "—"})`;
+        const message = `${identity} — ${failure.error} — ${failure.url} [${reference.location}]`;
+        console.error(`  ${reference.file}: ${identity} [${reference.location}]`);
         if (process.env.GITHUB_ACTIONS === "true") {
             const escape = value => value.replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A").replace(/,/g, "%2C").replace(/:/g, "%3A");
             console.log(`::${manual ? "warning" : "error"} file=${escape(reference.file)},title=${escape(label)} (${profile})::${escape(message)}`);
@@ -182,7 +182,7 @@ async function runImageChecks({ root = ROOT, files = [], reportPath = path.join(
     fs.writeFileSync(reportPath, JSON.stringify({ references: images.length, ...evaluation }, null, 2) + "\n");
     console.log(`\n${label}: ${failures} blocking result(s); ${accepted} manually verified image(s). Full report: ${reportPath}`);
     if (process.env.GITHUB_STEP_SUMMARY) {
-        fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `## Image loading checks\n\n${images.length} references checked under localhost and production origins. **${failures} blocking results; ${accepted} manually verified results.**\n\nManual confirmations expire after seven days and apply only to the exact image URL, option and deployed page. Automated blocks remain in the report.\n\nSee annotations and the image-check-report artifact for affected files and URLs.\n`);
+        fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, renderImageSummary({ references: images.length, ...evaluation }) + "\n");
     }
     if (failures) console.error("Open Repair Images Across Versions to fix confirmed failures or manually verify inconclusive results on the live CYOA. Commit repaired files, image-links.json and image-verifications.json before pushing.");
     return { references: images.length, ...evaluation };
