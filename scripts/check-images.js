@@ -1,5 +1,6 @@
 const fs = require("node:fs");
 const path = require("node:path");
+const { validationMessage } = require("../imageUrlPolicy");
 
 const ROOT = path.resolve(__dirname, "..");
 const PRODUCTION_URL = "https://intrisym.github.io/icyoa-template/";
@@ -24,17 +25,17 @@ function collectImages(data, file) {
     return images;
 }
 
-function readImages(files) {
-    const selected = files.length ? files.map(file => path.resolve(ROOT, file))
-        : fs.readdirSync(path.join(ROOT, "CYOAs"))
+function readImages(files, root = ROOT) {
+    const selected = files.length ? files.map(file => path.resolve(root, file))
+        : fs.readdirSync(path.join(root, "CYOAs"))
             .filter(file => file.endsWith(".json") && file !== "manifest.json")
-            .sort().map(file => path.join(ROOT, "CYOAs", file));
-    return selected.flatMap(file => collectImages(JSON.parse(fs.readFileSync(file, "utf8")), path.relative(ROOT, file)));
+            .sort().map(file => path.join(root, "CYOAs", file));
+    return selected.flatMap(file => collectImages(JSON.parse(fs.readFileSync(file, "utf8")), path.relative(root, file)));
 }
 
 // Serve a test document at the real origin without deploying or changing DNS.
 // Only the document is intercepted: external image requests go to their real hosts.
-async function checkProfile(browser, images, { baseURL, timeout = 10000, concurrency = 32, onProgress = () => {} }) {
+async function checkProfile(browser, images, { baseURL, timeout = 10000, concurrency = 32, assetRoot = ROOT, onProgress = () => {} }) {
     const context = await browser.newContext({ serviceWorkers: "block" });
     try {
         const page = await context.newPage();
@@ -47,8 +48,8 @@ async function checkProfile(browser, images, { baseURL, timeout = 10000, concurr
             const url = new URL(route.request().url());
             const prefix = new URL(baseURL).pathname;
             const relative = decodeURIComponent(url.pathname.startsWith(prefix) ? url.pathname.slice(prefix.length) : url.pathname.slice(1));
-            const filename = path.resolve(ROOT, relative);
-            if (!filename.startsWith(ROOT + path.sep)) return route.fulfill({ status: 404, body: "Outside repository" });
+            const filename = path.resolve(assetRoot, relative);
+            if (!filename.startsWith(assetRoot + path.sep)) return route.fulfill({ status: 404, body: "Outside repository" });
             try { await route.fulfill({ path: filename }); }
             catch { await route.fulfill({ status: 404, body: "Missing image asset" }); }
         });
@@ -111,8 +112,10 @@ function reportFailure(profile, failure) {
     }
 }
 
-async function main() {
-    const images = readImages(process.argv.slice(2));
+async function runImageChecks({ root = ROOT, files = [], reportPath = path.join(ROOT, "image-check-report.json") } = {}) {
+    const { createImageMaintenance } = require("../imageMaintenance");
+    await createImageMaintenance({ directory: path.join(root, "CYOAs"), linksFile: path.join(root, "image-links.json") }).checkLinks();
+    const images = readImages(files, root);
     const production = new URL(process.env.IMAGE_CHECK_PRODUCTION_URL || PRODUCTION_URL);
     if (production.protocol !== "https:") throw new Error("IMAGE_CHECK_PRODUCTION_URL must be an HTTPS player directory URL ending in /.");
     if (!production.pathname.endsWith("/")) throw new Error("IMAGE_CHECK_PRODUCTION_URL must end in /.");
@@ -123,7 +126,7 @@ async function main() {
     try {
         for (const [profile, baseURL] of [["localhost", "http://localhost:8000/"], ["production", production.href]]) {
             console.log(`Checking ${images.length} image references as ${profile} (${baseURL})...`);
-            const results = await checkProfile(browser, images, { baseURL,
+            const results = await checkProfile(browser, images, { baseURL, assetRoot: root,
                 onProgress: (done, total) => console.log(`[${profile}] ${done}/${total} unique URLs checked`) });
             for (const failure of results) {
                 reportFailure(profile, failure);
@@ -132,18 +135,32 @@ async function main() {
             failures += results.length;
         }
     } finally { await browser.close(); }
-    const reportPath = path.join(ROOT, "image-check-report.json");
+    const policyFailures = new Map();
+    for (const image of images) {
+        const error = validationMessage(image.url);
+        if (!error) continue;
+        if (!policyFailures.has(image.url)) policyFailures.set(image.url, { profile: "policy", url: image.url, error, references: [] });
+        policyFailures.get(image.url).references.push(image);
+    }
+    for (const failure of policyFailures.values()) {
+        reportFailure("policy", failure);
+        summary.push(failure);
+        failures += 1;
+    }
     fs.writeFileSync(reportPath, JSON.stringify({ references: images.length, failures: summary }, null, 2) + "\n");
     console.log(`\n${failures ? "FAILED" : "PASS"}: ${failures} image loading failure(s). Full report: ${reportPath}`);
     if (process.env.GITHUB_STEP_SUMMARY) {
         fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `## Image loading checks\n\n${images.length} references checked under localhost and production origins. **${failures} failures.**\n\nSee error annotations and the image-check-report artifact for affected files and URLs.\n`);
     }
-    if (failures) process.exitCode = 1;
+    if (failures) console.error("Repair connected versions with npm run images:repair, or open Repair Images Across Versions in the visual editor. Commit repaired files and image-links.json before pushing.");
+    return { references: images.length, failures: summary };
 }
 
-if (require.main === module) main().catch(error => {
+if (require.main === module) runImageChecks({ files: process.argv.slice(2) }).then(result => {
+    if (result.failures.length) process.exitCode = 1;
+}).catch(error => {
     console.error(`IMAGE CHECK FAILED: ${error.message}\nInstall dependencies and Chromium first: npm install && npx playwright install chromium`);
     process.exitCode = 1;
 });
 
-module.exports = { collectImages, readImages, checkProfile };
+module.exports = { collectImages, readImages, checkProfile, runImageChecks };

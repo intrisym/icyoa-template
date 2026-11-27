@@ -108,9 +108,40 @@ Each URL is tested from localhost and from the production page's origin. The che
 
 The production directory defaults to `https://intrisym.github.io/icyoa-template/`. For a fork or a different deployment, set `IMAGE_CHECK_PRODUCTION_URL` to your HTTPS player directory URL, ending in `/`.
 
-CI runs this as the separate **Image loading** job on pushes and PRs, with file annotations and a downloadable JSON report. It also runs `npm run test:images:unit`, which checks the checker against controlled responses, including referrer behavior. Network checks are separate from `sh scripts/check.sh` and the pre-push hook so ordinary data/logic verification stays offline. To require image checks before merging, add **Image loading** to the required status checks in GitHub branch protection.
+CI runs this as the separate **Image loading** job on pushes and PRs, with file annotations and a downloadable JSON report. It also runs `npm run test:images:unit`, which checks the checker against controlled responses, including referrer behavior. `sh scripts/check.sh` stays offline and validates saved image connections. The pre-push hook additionally requires real browser image checks on every pushed commit snapshot, including all older CYOA versions. A working-tree-only fix cannot make an unfixed committed image pass. Hook reports are saved as `image-check-report-<commit>.json`; the hook never edits CYOAs. Install Chromium before pushing. To require image checks before merging, add **Image loading** to the required status checks in GitHub branch protection.
 
 These checks verify availability at test time. External hosts can change later, and the simulated production origin does not replace testing the deployed site in your browser.
+
+### Image Repairs Across Versions
+
+In the local visual editor, select a CYOA and click **Repair Images Across Versions**, then **Check and Repair Connected Images**. This checks every version in that CYOA series and repairs failed or blocklisted images from working connected images. Matching option IDs connect automatically within a series; headers also connect automatically. When several replacements work, the newest version is preferred. Working images keep their existing URLs, even if another version uses different artwork.
+
+Unresolved images have a **Resolve** button. If the option moved and its ID changed, select the historical image, choose the version with the matching option, and enter its new ID (suggestions are provided). **Connect Options and Repair** saves that connection in `image-links.json` and runs the repairs. Connections use the series and option IDs, so they survive publishing a draft under a new filename. Connections that would merge two distinct options in the same version are rejected.
+
+If an option was deleted or has no working counterpart, select it and enter a replacement URL, then click **Verify and Replace Image**. The replacement must load from both test origins and pass the domain policy before anything is written. The same operation repairs other failed images connected to that option. Other unresolved images remain listed for follow-up.
+
+These tools can repair images in published versions without changing their gameplay data or publication metadata. They write only header/option image fields plus saved connections; they do not publish or push Git changes. Concurrent edits detected during a scan abort the operation so you can rerun it against current data. Commit all repaired files and `image-links.json`, then push. The mandatory push check blocks remaining image failures or invalid connections.
+
+Equivalent local commands (use `@header` as the ID for a header image):
+
+```sh
+# Inspect proposed repairs without changing files.
+npm run images:repair -- --file CYOA_FILENAME.json --dry-run
+
+# Repair failed images using working counterparts across every version of Blue Lock.
+npm run images:repair -- --file blue_lock___wild_card_project_v1_1.json
+
+# Connect Balance after its move from Technical to Physical.
+npm run images:link -- --file blue_lock___wild_card_project.json --id weaponsTechnicalBalance --source-file blue_lock___wild_card_project_v1_1.json --source-id weaponsPhysicalBalance
+
+# Supply a URL for a historical option with no surviving counterpart.
+npm run images:replace -- --file CYOA_FILENAME.json --id OPTION_ID --url 'https://example.com/replacement.png'
+
+# Validate saved connections without network requests.
+npm run check:image-links
+```
+
+Filenames are relative to `CYOAs/`. Omit `--file` from `images:repair` to check and repair all series. Repair commands exit with failure when manual input is still needed, while reporting any verified repairs already applied. The visual repair dialog needs the local Node server; GitHub Pages cannot write repository files.
 
 ### Validation Coverage
 

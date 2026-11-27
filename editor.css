@@ -937,6 +937,49 @@ input.image-url-invalid:focus {
     margin: 4px 0 0;
 }
 
+#imageMaintenanceDialog {
+    width: min(740px, calc(100vw - 48px));
+    max-width: min(740px, calc(100vw - 48px));
+    max-height: calc(100vh - 64px);
+    overflow: auto;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+}
+
+.image-maintenance-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+}
+
+#imageMaintenanceFields {
+    display: grid;
+    gap: 10px;
+    margin-top: 20px;
+    border: 1px solid var(--border);
+    padding: 16px;
+}
+
+#imageMaintenanceFields select {
+    width: 100%;
+    min-width: 0;
+    font: inherit;
+    color: var(--text);
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 8px;
+}
+
+#imageMaintenanceResults,
+#savedImageConnections {
+    overflow-wrap: anywhere;
+}
+
 .preview-header {
     display: flex;
     justify-content: space-between;

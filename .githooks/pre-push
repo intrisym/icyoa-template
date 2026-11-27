@@ -2,5 +2,7 @@
 set -u
 
 repo_root=$(git rev-parse --show-toplevel) || exit 1
-node "$repo_root/scripts/validate-commit-message.js" --pre-push "${1:-origin}" || exit 1
-exec sh "$repo_root/scripts/check.sh"
+push_refs=$(cat) || exit 1
+printf '%s\n' "$push_refs" | node "$repo_root/scripts/validate-commit-message.js" --pre-push "${1:-origin}" || exit 1
+sh "$repo_root/scripts/check.sh" || exit 1
+printf '%s\n' "$push_refs" | node "$repo_root/scripts/check-push-images.js"

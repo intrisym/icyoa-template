@@ -29,11 +29,24 @@ test("visual editor flags loaded and typed blocked URLs in header and option fie
             { id: "balance", label: "Balance", image: "https://cdn.wallpapercave.com/balance.png" }
         ] }] }
     ];
+    const maintenanceRequests = [];
     await page.route("**/*", async route => {
         const url = new URL(route.request().url());
         if (url.origin !== "https://editor.test") return route.abort();
         if (url.pathname === "/api/config") return route.fulfill({ json: fixture });
         if (url.pathname === "/api/cyoas") return route.fulfill({ json: [] });
+        if (url.pathname === "/api/image-maintenance") {
+            if (route.request().method() === "GET") return route.fulfill({ json: { versions: [
+                { file: "old.json", version: "1", status: "published", images: [{ id: "oldBalance", label: "Balance", url: "https://images.test/bad.png" }] },
+                { file: "fixture.json", version: "1.1", status: "published", images: [{ id: "balance", label: "Balance", url: "https://images.test/good.png" }] }
+            ], links: [] } });
+            const request = route.request().postDataJSON();
+            maintenanceRequests.push(request);
+            return route.fulfill({ json: request.action === "repair" ? {
+                edits: [], unresolved: [{ file: "old.json", id: "oldBalance", label: "Balance" }],
+                failures: [{ profile: "production", error: "HTTP 403", references: [{ filename: "old.json", id: "oldBalance" }] }], message: "1 image needs input."
+            } : { edits: [{ file: "old.json", id: "oldBalance" }], unresolved: [], failures: [], message: "Applied 1 image repair." } });
+        }
         if (url.pathname === "/index.html") return route.fulfill({ contentType: "text/html", body: "<!doctype html><title>Preview fixture</title>" });
         try {
             const filename = path.join(__dirname, "..", url.pathname.slice(1));
@@ -60,6 +73,31 @@ test("visual editor flags loaded and typed blocked URLs in header and option fie
         assert.equal(await input.evaluate(node => node.validity.customError), false);
         assert.equal(await input.getAttribute("aria-invalid"), "false");
     }
+    fixture.push({ type: "publication", status: "published", version: "1.1", seriesId: "fixture.json" });
+    await page.reload();
+    await page.waitForSelector("#editableContent[disabled]");
+    await page.locator("#maintainImagesBtn").click();
+    await page.waitForFunction(() => document.querySelector("#imageMaintenanceStatus").textContent.includes("connect automatically"));
+    await page.locator("#scanRepairImagesBtn").click();
+    await page.waitForFunction(() => document.querySelector("#imageMaintenanceStatus").textContent === "1 image needs input.");
+    await page.locator("#imageMaintenanceResults button").click();
+    assert.equal(await page.locator("#repairImageVersion").inputValue(), "old.json");
+    assert.equal(await page.locator("#repairImageTarget").inputValue(), "oldBalance");
+    await page.locator("#repairSourceVersion").selectOption("fixture.json");
+    await page.locator("#repairSourceId").fill("balance");
+    await page.locator("#linkVersionImageBtn").click();
+    await page.waitForFunction(() => document.querySelector("#imageMaintenanceStatus").textContent === "Applied 1 image repair.");
+    assert.equal(maintenanceRequests[1].action, "link");
+    assert.equal(maintenanceRequests[1].file, "old.json");
+    assert.equal(maintenanceRequests[1].sourceId, "balance");
+    assert.equal(maintenanceRequests[1].id, "oldBalance");
+    await page.locator("#repairImageVersion").selectOption("old.json");
+    await page.locator("#repairImageUrl").fill("https://images.test/replacement.png");
+    await page.locator("#replaceVersionImageBtn").click();
+    await page.waitForFunction(() => !document.querySelector("#imageMaintenanceFields").disabled);
+    assert.equal(maintenanceRequests[2].action, "replace");
+    assert.equal(maintenanceRequests[2].url, "https://images.test/replacement.png");
+    assert.equal(await page.locator("#globalHeaderInput").isDisabled(), true);
     assert.deepEqual(errors, []);
 });
 

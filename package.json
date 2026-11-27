@@ -11,11 +11,15 @@
     "test:versions": "node --test scripts/versioning-tests.js",
     "test:cyoas": "node scripts/validate-cyoas.js",
     "test:images": "node scripts/check-images.js",
+    "check:image-links": "node scripts/maintain-images.js check-links",
+    "images:repair": "node scripts/maintain-images.js repair",
+    "images:link": "node scripts/maintain-images.js link",
+    "images:replace": "node scripts/maintain-images.js replace",
     "test:images:unit": "node --test scripts/image-check-tests.js",
-    "test:validation": "node --test scripts/validation-tests.js scripts/image-url-policy-tests.js",
+    "test:validation": "node --test scripts/validation-tests.js scripts/image-url-policy-tests.js scripts/image-maintenance-tests.js",
     "test:exhaustive": "node scripts/exhaustive-cyoa-tests.js",
     "test:functional": "node scripts/functional-cyoa-tests.js",
-    "verify": "npm run check:js && npm run test:cyoas && npm run test:validation && npm run test:functional && npm run test:versions && npm run test:ids && npm run test:commits",
+    "verify": "npm run check:js && npm run test:cyoas && npm run check:image-links && npm run test:validation && npm run test:functional && npm run test:versions && npm run test:ids && npm run test:commits",
     "test": "npm run verify"
   },
   "devDependencies": {

@@ -5,6 +5,7 @@ Thumbs.db
 # Dependencies
 node_modules/
 image-check-report.json
+image-check-report-*.json
 
 # Application Data
 temp-input.json

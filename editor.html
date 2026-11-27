@@ -31,6 +31,7 @@
                 <button id="chooseEditorVersionBtn" type="button" disabled>Choose Version</button>
                 <button id="createDraftBtn" type="button" disabled>Create Draft From This Version</button>
                 <button id="publishVersionBtn" type="button" hidden>Publish Version</button>
+                <button id="maintainImagesBtn" type="button">Repair Images Across Versions</button>
             </div>
             <section class="editor-nav-shell" aria-label="Editor navigation">
                 <div class="editor-nav-toolbar">
@@ -99,6 +100,34 @@
                 <button id="cancelPublishBtn" type="button" class="button-subtle">Cancel</button>
             </div>
         </form>
+    </dialog>
+    <dialog id="imageMaintenanceDialog" class="image-maintenance-dialog">
+        <div class="image-maintenance-heading">
+            <h3>Repair Images Across Versions</h3>
+            <button id="closeImageMaintenanceBtn" type="button" class="button-subtle">Close</button>
+        </div>
+        <p>Checks all versions of this CYOA. Failed images are replaced from working images with the same option ID or a saved connection. Working images stay as they are. Published versions can receive image repairs here.</p>
+        <button id="scanRepairImagesBtn" type="button">Check and Repair Connected Images</button>
+        <p id="imageMaintenanceStatus" role="status" aria-live="polite"></p>
+        <div id="imageMaintenanceResults"></div>
+        <p id="savedImageConnections"></p>
+        <fieldset id="imageMaintenanceFields">
+            <legend>Resolve an Image</legend>
+            <label for="repairImageVersion">Version to repair</label>
+            <select id="repairImageVersion"></select>
+            <label for="repairImageTarget">Image to repair</label>
+            <select id="repairImageTarget"></select>
+            <label for="repairImageUrl">Replacement image URL (for deleted or unmatched options)</label>
+            <input id="repairImageUrl" type="url" placeholder="https://example.com/replacement.png">
+            <button id="replaceVersionImageBtn" type="button">Verify and Replace Image</button>
+            <p>For an option that moved or changed ID, connect it to the matching option in another version. The connection is saved for future repairs.</p>
+            <label for="repairSourceVersion">Version with the matching option</label>
+            <select id="repairSourceVersion"></select>
+            <label for="repairSourceId">Matching option ID</label>
+            <input id="repairSourceId" type="text" list="repairSourceOptions" placeholder="Enter the option ID in that version">
+            <datalist id="repairSourceOptions"></datalist>
+            <button id="linkVersionImageBtn" type="button">Connect Options and Repair</button>
+        </fieldset>
     </dialog>
     <script src="versioning.js"></script>
     <script src="versionPicker.js"></script>

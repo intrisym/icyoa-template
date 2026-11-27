@@ -74,6 +74,9 @@ function createVersionStore(directory) {
     return {
         read,
         list,
+        maintainImages(task) {
+            return mutate(task);
+        },
         save(filename, data) {
             return mutate(async () => {
                 if (!Array.isArray(data)) fail(400, "CYOA must contain a JSON array.");
