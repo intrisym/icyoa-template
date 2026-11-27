@@ -82,6 +82,17 @@ test('different URLs with identical image bytes upload once', async t => {
     assert.equal(f.counters.uploads, 1);
     assert.equal((await f.read('v1.json'))[0].url, NEW);
 });
+test('identical bytes are not uploaded again when the first replacement remains inconclusive', async t => {
+    const f = await fixture(t);
+    const data = await f.read('v1.json'); data[0].url = 'https://images.example/other.jpg';
+    await fs.writeFile(path.join(f.root, 'CYOAs/v1.json'), JSON.stringify(data));
+    const result = await exportImages(parseArgs(['--host', 'images.example', '--apply']), {
+        ...f.dependencies, verify: async () => ({ status: 'inconclusive' })
+    });
+    assert.equal(f.counters.uploads, 1);
+    assert.equal(result.changes.length, 0);
+    assert.equal(result.unresolved.length, 2);
+});
 test('completed CI uploads are reverified and reused without downloading or uploading again', async t => {
     const f = await fixture(t);
     await fs.writeFile(path.join(f.root, 'ci-report.json'), JSON.stringify({ uploads: [{ source: SOURCE, url: NEW, postId: 'post' }], unresolved: [] }));

@@ -139,6 +139,7 @@ async function exportImages(options, { root = path.resolve(__dirname, '..'), tok
         for (const item of uploaded) {
             const digest = current.find(image => image.source === item.source).digest;
             report.uploads.push({ ...item, digest });
+            digests.set(digest, item.url);
         }
         // Save before verification/applying, so interrupted runs can reuse uploads.
         await save();
@@ -147,7 +148,6 @@ async function exportImages(options, { root = path.resolve(__dirname, '..'), tok
                 log(`Checking replacement: ${item.url}`);
                 if (!await working(item.url)) throw new Error('ImgChest URL did not pass both browser-origin checks.');
                 replacements.set(item.source, item.url);
-                digests.set(current.find(image => image.source === item.source).digest, item.url);
             } catch (error) { fail({ source: item.source }, error); }
         }
     }
@@ -183,8 +183,9 @@ async function exportImages(options, { root = path.resolve(__dirname, '..'), tok
                 }
                 if (digests.has(digest)) {
                     const url = digests.get(digest);
-                    replacements.set(item.source, url);
-                    report.uploads.push({ source: item.source, url, digest }); await save(); continue;
+                    report.uploads.push({ source: item.source, url, digest }); await save();
+                    if (!await working(url)) throw new Error('ImgChest URL did not pass both browser-origin checks.');
+                    replacements.set(item.source, url); continue;
                 }
                 if (stopped) throw stopped;
                 batch.push({ source: item.source, digest, ...image });
