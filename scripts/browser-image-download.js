@@ -4,6 +4,89 @@ const { publicURL, downloadImage, imageType } = require('./rehost-images');
 
 const MAX_BYTES = 20 * 1024 * 1024;
 
+async function readBrowserStream(session, handle, { maxBytes = MAX_BYTES, deadline = Date.now() + 30000 } = {}) {
+    const chunks = [];
+    let size = 0;
+    try {
+        for (;;) {
+            if (Date.now() >= deadline) throw new Error('Browser image download timed out');
+            let timer;
+            let chunk;
+            try {
+                chunk = await Promise.race([
+                    session.send('IO.read', { handle, size: 65536 }),
+                    new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('Browser image download timed out')), Math.max(0, deadline - Date.now())); })
+                ]);
+            } finally { clearTimeout(timer); }
+            const bytes = Buffer.from(chunk.data, chunk.base64Encoded ? 'base64' : 'utf8');
+            size += bytes.length;
+            if (size > maxBytes) throw new Error('Image exceeds 20 MB');
+            chunks.push(bytes);
+            if (chunk.eof) return Buffer.concat(chunks);
+        }
+    } finally { await session.send('IO.close', { handle }).catch(() => {}); }
+}
+
+// Navigate normally (including cross-origin redirects) rather than asking page
+// JavaScript to fetch the URL. Stream the navigation response with a byte cap.
+async function captureImageNavigation(context, page, value, { maxBytes = MAX_BYTES } = {}) {
+    const session = await context.newCDPSession(page);
+    const pending = new Set();
+    let result;
+    let failure;
+    let lastResponse;
+    const deadline = Date.now() + 30000;
+    const { frameTree } = await session.send('Page.getFrameTree');
+    const paused = async event => {
+        const requestId = event.requestId;
+        if (event.frameId !== frameTree.frame.id || (event.responseStatusCode >= 300 && event.responseStatusCode < 400)) {
+            await session.send('Fetch.continueRequest', { requestId }); return;
+        }
+        const headers = event.responseHeaders || [];
+        const header = name => headers.find(item => item.name.toLowerCase() === name)?.value || '';
+        lastResponse = { status: event.responseStatusCode, type: header('content-type') };
+        if (event.responseStatusCode !== 200 || /text\/html/i.test(lastResponse.type)) {
+            // Leave the real access-check page visible for the user to handle.
+            await session.send('Fetch.continueRequest', { requestId }); return;
+        }
+        try {
+            if (Number(header('content-length')) > maxBytes) throw new Error('Image exceeds 20 MB');
+            const { stream } = await session.send('Fetch.takeResponseBodyAsStream', { requestId });
+            const bytes = await readBrowserStream(session, stream, { maxBytes, deadline });
+            const type = imageType(bytes);
+            await session.send('Fetch.fulfillRequest', { requestId, responseCode: 200,
+                responseHeaders: [...headers.filter(item => !['content-type', 'content-length', 'content-encoding', 'transfer-encoding', 'content-disposition'].includes(item.name.toLowerCase())),
+                    { name: 'Content-Type', value: type }, { name: 'Content-Length', value: String(bytes.length) }],
+                body: bytes.toString('base64') });
+            result = { bytes, type };
+        } catch (error) {
+            failure = error;
+            await session.send('Fetch.failRequest', { requestId, errorReason: 'Aborted' }).catch(() => {});
+        }
+    };
+    const listener = event => {
+        const task = paused(event).catch(error => { failure = error; });
+        pending.add(task); task.finally(() => pending.delete(task));
+    };
+    session.on('Fetch.requestPaused', listener);
+    try {
+        await session.send('Fetch.enable', { patterns: [{ resourceType: 'Document', requestStage: 'Response' }] });
+        let navigationError;
+        try { await page.goto(value, { waitUntil: 'domcontentloaded', timeout: 30000 }); }
+        catch (error) { navigationError = error; }
+        await Promise.all([...pending]);
+        if (failure) throw failure;
+        if (result) return result;
+        if (lastResponse && lastResponse.status !== 200) throw new Error(`Browser download HTTP ${lastResponse.status}`);
+        if (lastResponse && /text\/html/i.test(lastResponse.type)) throw new Error('Browser returned HTML instead of an image; an access check may still be active');
+        throw navigationError || new Error('Browser navigation did not return an image');
+    } finally {
+        session.off('Fetch.requestPaused', listener);
+        await session.send('Fetch.disable').catch(() => {});
+        await session.detach().catch(() => {});
+    }
+}
+
 // Chromium keeps its own TLS connection, while this CONNECT proxy resolves and
 // pins every destination to a checked public IPv4 address. A route check alone
 // would leave a DNS-rebinding window when Chromium resolves the name again.
@@ -34,11 +117,11 @@ async function createPinnedProxy({ resolve = publicURL, connect = options => net
         close: async () => { for (const socket of sockets) socket.destroy(); await new Promise(resolve => server.close(resolve)); } };
 }
 
-function createBrowserDownloader({ direct = downloadImage, prompt, launch, proxyFactory = createPinnedProxy, resolve = publicURL } = {}) {
+function createBrowserDownloader({ direct = downloadImage, prompt, launch, proxyFactory = createPinnedProxy, resolve = publicURL,
+    capture = captureImageNavigation } = {}) {
     let browser;
     let context;
     let proxy;
-    const warmed = new Set();
     async function session() {
         if (context) return context;
         proxy = await proxyFactory();
@@ -58,47 +141,17 @@ function createBrowserDownloader({ direct = downloadImage, prompt, launch, proxy
     }
     async function browserDownload(value) {
         const { url } = await resolve(value);
-        const page = await (await session()).newPage();
+        const browserContext = await session();
+        const page = await browserContext.newPage();
         try {
-            if (!warmed.has(url.origin)) {
-                await page.goto(url.origin, { waitUntil: 'domcontentloaded', timeout: 30000 });
-                // The human, rather than automation, completes any access challenge.
-                await prompt(`A browser opened ${url.origin}. Complete any access check, then press Enter here (or Ctrl+C to stop).`);
+            try { return await capture(browserContext, page, url.href); }
+            catch (error) {
+                if (!/Browser returned HTML|Browser download HTTP (403|503)/.test(error.message)) throw error;
+                // Cookies in the user's ordinary browser are not this session's.
+                await prompt(`Use the browser window opened by this command to open ${url.href} and complete any access check. When the image is visible, press Enter HERE in the terminal (or Ctrl+C to stop).`);
+                return await capture(browserContext, page, url.href);
             }
-            const result = await page.evaluate(async ({ href, maxBytes }) => {
-                const controller = new AbortController();
-                const timer = setTimeout(() => controller.abort(), 30000);
-                try {
-                    const response = await fetch(href, { signal: controller.signal });
-                    if (!response.ok) throw new Error(`Browser download HTTP ${response.status}`);
-                    if (Number(response.headers.get('content-length')) > maxBytes) throw new Error('Image exceeds 20 MB');
-                    const reader = response.body.getReader();
-                    const chunks = [];
-                    let size = 0;
-                    for (;;) {
-                        const { done, value } = await reader.read();
-                        if (done) break;
-                        size += value.length;
-                        if (size > maxBytes) { await reader.cancel(); throw new Error('Image exceeds 20 MB'); }
-                        chunks.push(value);
-                    }
-                    const bytes = new Uint8Array(size);
-                    let offset = 0;
-                    for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length; }
-                    let binary = '';
-                    for (let index = 0; index < bytes.length; index += 8192) binary += String.fromCharCode(...bytes.subarray(index, index + 8192));
-                    return { base64: btoa(binary) };
-                } catch (error) { return { error: error.message }; }
-                finally { controller.abort(); clearTimeout(timer); }
-            }, { href: url.href, maxBytes: MAX_BYTES });
-            if (result.error) throw new Error(result.error);
-            const bytes = Buffer.from(result.base64, 'base64');
-            if (bytes.length > MAX_BYTES) throw new Error('Image exceeds 20 MB');
-            const type = imageType(bytes);
-            warmed.add(url.origin);
-            return { bytes, type };
-        } catch (error) { warmed.delete(url.origin); throw error; }
-        finally { await page.close(); }
+        } finally { await page.close(); }
     }
     async function download(value) {
         try { return await direct(value); }
@@ -111,11 +164,11 @@ function createBrowserDownloader({ direct = downloadImage, prompt, launch, proxy
     async function close() {
         const currentBrowser = browser;
         const currentProxy = proxy;
-        browser = context = proxy = null; warmed.clear();
+        browser = context = proxy = null;
         try { await currentBrowser?.close(); }
         finally { await currentProxy?.close(); }
     }
     return { download, close };
 }
 
-module.exports = { createPinnedProxy, createBrowserDownloader };
+module.exports = { createPinnedProxy, createBrowserDownloader, readBrowserStream, captureImageNavigation };
