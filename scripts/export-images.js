@@ -92,7 +92,7 @@ async function applyReplacements(root, replacements) {
 
 async function exportImages(options, { root = path.resolve(__dirname, '..'), token = process.env.IMGCHEST_API_TOKEN,
     download, upload = uploadBatch, verify = testImageUrl, request = createImgChestRequest(), signal, log = console.log } = {}) {
-    if (process.env.GITHUB_ACTIONS === 'true') throw new Error('This command is local only. CI must use the approval-gated rehost-images.js workflow.');
+    if (process.env.GITHUB_ACTIONS === 'true') throw new Error('This command is local only. Authenticated image uploads are disabled in GitHub Actions.');
     if (!options.all && !options.hosts.length && !options.files.length && !options.report) throw new Error('Select --report, --host, --file or --all. Use --help for examples.');
     const input = options.report ? await readReport(path.resolve(root, options.report)) : null;
     if (options.report && !input) throw new Error('Input report not found.');
