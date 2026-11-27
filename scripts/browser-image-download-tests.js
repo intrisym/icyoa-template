@@ -49,9 +49,10 @@ function fakeBrowser(options = {}) {
             return { url, address: '8.8.8.8' };
         },
         prompt: async () => { calls.prompts++; },
-        capture: async (_context, _page, value) => {
+        capture: async (_context, _page, value, { onAccessCheck }) => {
             calls.visits.push(value);
-            if (options.html || challengePending) { challengePending = false; throw new Error('Browser returned HTML instead of an image'); }
+            if (options.html || challengePending) { challengePending = false; await onAccessCheck(); }
+            if (options.html) throw new Error('Browser returned HTML instead of an image');
             return { bytes: Buffer.from([255, 216, 255, 0]), type: 'image/jpeg' };
         },
         proxyFactory: async () => ({ server: 'http://127.0.0.1:9999', close: async () => { calls.proxyClose++; } }),
@@ -77,7 +78,7 @@ test('fallback navigates to the actual image, reuses its browser session and pro
     await downloader.download('https://public.test/b.jpg');
     assert.equal(calls.launch, 1);
     assert.equal(calls.prompts, 1);
-    assert.deepEqual(calls.visits, ['https://public.test/a.jpg', 'https://public.test/a.jpg', 'https://public.test/b.jpg']);
+    assert.deepEqual(calls.visits, ['https://public.test/a.jpg', 'https://public.test/b.jpg']);
     assert.equal(calls.pageClose, 2);
     let aborted = false;
     await calls.route({ request: () => ({ url: () => 'https://private.test/' }), abort: async () => { aborted = true; }, continue: () => assert.fail('must not continue') });
@@ -140,4 +141,10 @@ test('real Chromium captures cross-origin redirects without CORS and enforces st
     await assert.rejects(captureImageNavigation(context, page, origin + '/image.png', { maxBytes: 10 }), /exceeds/);
     await assert.rejects(captureImageNavigation(context, page, origin + '/challenge'), /HTTP 403/);
     assert.match(await page.locator('body').textContent(), /Access check/);
+    let manualNavigations = 0;
+    const solved = await captureImageNavigation(context, page, origin + '/challenge', {
+        onAccessCheck: async () => { manualNavigations++; await page.goto(origin + '/image.png'); }
+    });
+    assert.deepEqual(solved.bytes, png);
+    assert.equal(manualNavigations, 1);
 });

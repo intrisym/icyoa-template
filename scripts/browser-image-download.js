@@ -29,13 +29,12 @@ async function readBrowserStream(session, handle, { maxBytes = MAX_BYTES, deadli
 
 // Navigate normally (including cross-origin redirects) rather than asking page
 // JavaScript to fetch the URL. Stream the navigation response with a byte cap.
-async function captureImageNavigation(context, page, value, { maxBytes = MAX_BYTES } = {}) {
+async function captureImageNavigation(context, page, value, { maxBytes = MAX_BYTES, onAccessCheck } = {}) {
     const session = await context.newCDPSession(page);
     const pending = new Set();
     let result;
     let failure;
     let lastResponse;
-    const deadline = Date.now() + 30000;
     const { frameTree } = await session.send('Page.getFrameTree');
     const paused = async event => {
         const requestId = event.requestId;
@@ -52,7 +51,7 @@ async function captureImageNavigation(context, page, value, { maxBytes = MAX_BYT
         try {
             if (Number(header('content-length')) > maxBytes) throw new Error('Image exceeds 20 MB');
             const { stream } = await session.send('Fetch.takeResponseBodyAsStream', { requestId });
-            const bytes = await readBrowserStream(session, stream, { maxBytes, deadline });
+            const bytes = await readBrowserStream(session, stream, { maxBytes });
             const type = imageType(bytes);
             await session.send('Fetch.fulfillRequest', { requestId, responseCode: 200,
                 responseHeaders: [...headers.filter(item => !['content-type', 'content-length', 'content-encoding', 'transfer-encoding', 'content-disposition'].includes(item.name.toLowerCase())),
@@ -77,7 +76,16 @@ async function captureImageNavigation(context, page, value, { maxBytes = MAX_BYT
         await Promise.all([...pending]);
         if (failure) throw failure;
         if (result) return result;
-        if (lastResponse && lastResponse.status !== 200) throw new Error(`Browser download HTTP ${lastResponse.status}`);
+        if (onAccessCheck && lastResponse && ([403, 503].includes(lastResponse.status) || /text\/html/i.test(lastResponse.type))) {
+            // Keep capture active while the human completes the challenge. The
+            // image loaded by that navigation is the result; do not discard it
+            // and make a second HTTP request after the user presses Enter.
+            await onAccessCheck();
+            await Promise.all([...pending]);
+            if (failure) throw failure;
+            if (result) return result;
+        }
+        if (lastResponse && typeof lastResponse.status === 'number' && lastResponse.status !== 200) throw new Error(`Browser download HTTP ${lastResponse.status}`);
         if (lastResponse && /text\/html/i.test(lastResponse.type)) throw new Error('Browser returned HTML instead of an image; an access check may still be active');
         throw navigationError || new Error('Browser navigation did not return an image');
     } finally {
@@ -144,13 +152,8 @@ function createBrowserDownloader({ direct = downloadImage, prompt, launch, proxy
         const browserContext = await session();
         const page = await browserContext.newPage();
         try {
-            try { return await capture(browserContext, page, url.href); }
-            catch (error) {
-                if (!/Browser returned HTML|Browser download HTTP (403|503)/.test(error.message)) throw error;
-                // Cookies in the user's ordinary browser are not this session's.
-                await prompt(`Use the browser window opened by this command to open ${url.href} and complete any access check. When the image is visible, press Enter HERE in the terminal (or Ctrl+C to stop).`);
-                return await capture(browserContext, page, url.href);
-            }
+            return await capture(browserContext, page, url.href, { onAccessCheck: () =>
+                prompt(`In THIS browser tab, complete the access check for ${url.href}. When the image is visible, press Enter HERE in the terminal (or Ctrl+C to stop).`) });
         } finally { await page.close(); }
     }
     async function download(value) {

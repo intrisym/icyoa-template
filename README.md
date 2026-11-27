@@ -157,6 +157,16 @@ Only replacements passing both browser-origin checks are applied. Verified succe
 
 The local command is rejected in GitHub Actions. The remaining image workflows perform read-only checks; they do not upload images or create repair PRs. Review the JSON diff and run `sh scripts/check-images.sh` after exporting; public CDN availability from GitHub's network still needs to pass CI.
 
+Capture remains active while you complete the browser check, so the exporter uses the image loaded during that interaction instead of requesting it again after Enter. If the host still returns 403, save the actual image from your browser and create an ignored `local-images.json` file mapping each original URL to the saved file:
+
+```json
+{
+  "https://rare-gallery.com/example.jpg": "/Users/you/Downloads/saved-image.jpg"
+}
+```
+
+Run `npm run images:export -- --local-files local-images.json` to preview, then add `--apply` to upload and update matching image fields. Paths can be absolute or relative to the mapping JSON file. These supplied files are read directly, so the blocked source host is not contacted. Only URLs still used by your CYOAs are processed. The same size, image-format, deduplication and replacement-verification checks apply; saved files are never deleted. Keep downloads outside the repository. You can combine `--local-files` with `--report` to supply files for blocked entries while allowing other entries to use normal downloads.
+
 ### Manual Verification for Inconclusive Images
 
 Some hosts allow ordinary browsers while blocking the automated checker. These results are never used to automatically replace images or as automatic repair sources. The mandatory push check and CI accept them only with a manual confirmation from the previous **seven days**, scoped to the **exact URL, option ID, CYOA filename and production page**. Changing any of those, expiry, or a future timestamp requires verification again. Confirmations cannot override confirmed failures or the blocked-domain policy.

@@ -18,6 +18,7 @@ const HELP = `Local image export and URL replacement
 Add --apply to upload and update JSON files; the default only previews URLs.
 --report accepts checker diagnostics or a previous repair/export report.
 --output <path> selects the resumable report (default image-export-report.json).
+--local-files <json> maps original URLs to downloaded image file paths.
 --all explicitly selects all external image URLs. --no-browser disables fallback.
 --apply requires IMGCHEST_API_TOKEN in the environment. Nothing commits or pushes.
 `;
@@ -30,13 +31,14 @@ function parseArgs(args) {
         else if (flag === '--all') options.all = true;
         else if (flag === '--no-browser') options.browser = false;
         else if (flag === '--help') options.help = true;
-        else if (['--host', '--file', '--report', '--output'].includes(flag)) {
+        else if (['--host', '--file', '--report', '--output', '--local-files'].includes(flag)) {
             const value = args[++index];
             if (!value || value.startsWith('--')) throw new Error(`Missing value for ${flag}`);
             if (flag === '--host') {
                 if (!/^[a-zA-Z0-9.-]+$/.test(value)) throw new Error('--host requires a hostname, such as raregallery.art');
                 options.hosts.push(value.toLowerCase());
             } else if (flag === '--file') options.files.push(value);
+            else if (flag === '--local-files') options.localFiles = value;
             else options[flag.slice(2)] = value;
         } else throw new Error(`Unknown argument: ${flag}`);
     }
@@ -93,8 +95,20 @@ async function applyReplacements(root, replacements) {
 async function exportImages(options, { root = path.resolve(__dirname, '..'), token = process.env.IMGCHEST_API_TOKEN,
     download, upload = uploadBatch, verify = testImageUrl, request = createImgChestRequest(), signal, log = console.log } = {}) {
     if (process.env.GITHUB_ACTIONS === 'true') throw new Error('This command is local only. Authenticated image uploads are disabled in GitHub Actions.');
-    if (!options.all && !options.hosts.length && !options.files.length && !options.report) throw new Error('Select --report, --host, --file or --all. Use --help for examples.');
-    const input = options.report ? await readReport(path.resolve(root, options.report)) : null;
+    if (!options.all && !options.hosts.length && !options.files.length && !options.report && !options.localFiles) throw new Error('Select --report, --host, --file, --local-files or --all. Use --help for examples.');
+    const localFilesPath = options.localFiles && path.resolve(root, options.localFiles);
+    const localFiles = new Map();
+    if (localFilesPath) {
+        const supplied = await readReport(localFilesPath);
+        if (!supplied || Array.isArray(supplied) || typeof supplied !== 'object') throw new Error('--local-files needs a JSON object mapping source URLs to image file paths.');
+        for (const [url, filename] of Object.entries(supplied)) {
+            if (typeof filename !== 'string' || !filename.trim()) throw new Error('Each local image path must be a nonempty string.');
+            localFiles.set(canonical(url), path.resolve(path.dirname(localFilesPath), filename));
+        }
+    }
+    const input = options.report ? await readReport(path.resolve(root, options.report))
+        : localFilesPath && !options.all && !options.hosts.length && !options.files.length
+            ? { unresolved: [...localFiles.keys()].map(source => ({ source })) } : null;
     if (options.report && !input) throw new Error('Input report not found.');
     const documents = await readDocuments(path.join(root, 'CYOAs'));
     const sources = selectSources(documents, options, input);
@@ -172,7 +186,13 @@ async function exportImages(options, { root = path.resolve(__dirname, '..'), tok
                 }
                 if (stopped) throw stopped;
                 log(`Downloading: ${item.source}`);
-                const image = await download(item.source);
+                let image;
+                if (localFiles.has(item.source)) {
+                    const filename = localFiles.get(item.source);
+                    const stat = await fs.stat(filename);
+                    if (!stat.isFile() || stat.size > 20 * 1024 * 1024) throw new Error('Local image must be a regular file up to 20 MB.');
+                    image = { bytes: await fs.readFile(filename) };
+                } else image = await download(item.source);
                 if (image.bytes.length > 20 * 1024 * 1024) throw new Error('Image exceeds 20 MB');
                 image.type = imageType(image.bytes);
                 const digest = createHash('sha256').update(image.bytes).digest('hex');

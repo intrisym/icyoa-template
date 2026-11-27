@@ -44,6 +44,25 @@ test('preview performs no downloads, uploads or CYOA writes', async t => {
     assert.deepEqual(f.counters, { downloads: 0, uploads: 0 });
     assert.deepEqual(await f.read('v1.json'), f.data);
 });
+test('local file mappings upload saved bytes without requesting the blocked source and update all versions', async t => {
+    const f = await fixture(t);
+    await fs.writeFile(path.join(f.root, 'saved.jpg'), BYTES);
+    await fs.writeFile(path.join(f.root, 'files.json'), JSON.stringify({ [SOURCE]: 'saved.jpg', 'https://unrelated.test/unused.jpg': 'missing.jpg' }));
+    const report = await exportImages(parseArgs(['--local-files', 'files.json', '--apply']), f.dependencies);
+    assert.equal(f.counters.downloads, 0);
+    assert.equal(f.counters.uploads, 1);
+    assert.equal(report.changes.length, 4);
+    assert.equal((await f.read('v1.json'))[0].url, NEW);
+});
+test('local HTML files are rejected without uploading or changing images', async t => {
+    const f = await fixture(t);
+    await fs.writeFile(path.join(f.root, 'saved.jpg'), '<html>challenge</html>');
+    await fs.writeFile(path.join(f.root, 'files.json'), JSON.stringify({ [SOURCE]: 'saved.jpg' }));
+    const report = await exportImages(parseArgs(['--local-files', 'files.json', '--apply']), f.dependencies);
+    assert.equal(f.counters.uploads, 0);
+    assert.match(report.unresolved[0].error, /HTML challenge/);
+    assert.deepEqual(await f.read('v1.json'), f.data);
+});
 test('report selection includes inconclusive and manually verified results, deduplicating both browser profiles', () => {
     const docs = [{ filename: 'v1.json', data: [{ options: [{ id: 'a', image: SOURCE }, { id: 'b', image: 'https://unselected.test/x.png' }] }] }];
     const report = { diagnostics: [{ url: SOURCE, classification: 'inconclusive', manuallyVerified: true }, { url: SOURCE, classification: 'inconclusive' }] };

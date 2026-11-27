@@ -11,6 +11,7 @@ image-rehosting-report.json
 image-export-report.json
 image-export-report.json.*.tmp
 .image-export.lock/
+local-images.json
 
 # Application Data
 temp-input.json
