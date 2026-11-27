@@ -41,7 +41,7 @@ function readImages(files, root = ROOT) {
 
 // Serve a test document at the real origin without deploying or changing DNS.
 // Only the document is intercepted: external image requests go to their real hosts.
-async function checkProfile(browser, images, { baseURL, timeout = 10000, concurrency = 32, assetRoot = ROOT, onProgress = () => {} }) {
+async function checkProfile(browser, images, { baseURL, timeout = 10000, concurrency = 32, assetRoot = ROOT, serveLocalAssets = true, onProgress = () => {} }) {
     const context = await browser.newContext({ serviceWorkers: "block" });
     try {
         const page = await context.newPage();
@@ -50,7 +50,7 @@ async function checkProfile(browser, images, { baseURL, timeout = 10000, concurr
             contentType: "text/html", body: '<!doctype html><meta name="referrer" content="strict-origin-when-cross-origin"><title>Image check</title>'
         }));
         // Relative image paths resolve to the same paths as the player page.
-        await page.route(url => url.origin === new URL(baseURL).origin && url.href !== documentURL, async route => {
+        if (serveLocalAssets) await page.route(url => url.origin === new URL(baseURL).origin && url.href !== documentURL, async route => {
             const url = new URL(route.request().url());
             const prefix = new URL(baseURL).pathname;
             const relative = decodeURIComponent(url.pathname.startsWith(prefix) ? url.pathname.slice(prefix.length) : url.pathname.slice(1));

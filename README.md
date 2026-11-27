@@ -84,6 +84,18 @@ Run `npm run lint:commits` to audit the current branch's entire history after th
 
 ### Image Loading Checks
 
+To test a single candidate URL from GitHub's runner, use **Actions → Test image URL → Run workflow**, paste the direct image URL, and start the run. The summary shows whether it loaded and decoded under both localhost and GitHub Pages origins, or whether the result was broken/inconclusive. The JSON report is downloadable as **image-url-test-report**. This tests just the supplied image; it does not scan CYOAs, change URLs, or use saved manual confirmations.
+
+GitHub requires the workflow to be on the default branch before its manual input form is available. Until this feature is merged, you can trigger the same test on the feature branch by updating the single URL in `.github/image-url-to-test.txt` and pushing that file. It initially contains the ImgChest URL supplied for testing. Subsequent changes to that file trigger **Test image URL** automatically; normal code pushes do not trigger this extra workflow unless that file changes.
+
+Use an individual image URL such as `https://cdn.imgchest.com/files/39c64342c3e9.jpg`, rather than an ImgChest post/gallery page. No ImgChest account credentials or API integration are needed to test a public URL.
+
+The same one-URL test is available locally after installing dependencies and Chromium:
+
+```sh
+npm run test:image-url -- 'https://cdn.imgchest.com/files/39c64342c3e9.jpg'
+```
+
 The visual editor marks blocked image hosts with a red outline and an inline explanation on header and option image URL fields, including URLs already present when a CYOA is loaded. Feedback updates as you type and clears when you replace or remove the URL. This indicates editor validity; it does not automatically remove existing URLs or prevent saving/exporting CYOA data.
 
 Edit `blockedDomains` in `imageUrlPolicy.js` to maintain the blocklist. Each entry has a `domain` and a user-facing `reason`; domain matches include subdomains, but not similarly named domains or mentions inside paths/query strings. WallpaperCave is the initial entry because its URLs failed DNS resolution in the reported checks. This is a project policy, not a claim that the host fails on every network. Unlisted hosts still need the image-loading checks below.

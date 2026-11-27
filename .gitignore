@@ -6,6 +6,7 @@ Thumbs.db
 node_modules/
 image-check-report.json
 image-check-report-*.json
+image-url-test-report.json
 
 # Application Data
 temp-input.json
