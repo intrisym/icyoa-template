@@ -73,6 +73,7 @@ async function repository(context) {
     await fs.mkdir(path.join(directory, "scripts"));
     await fs.mkdir(path.join(directory, ".githooks"));
     await fs.copyFile(VALIDATOR, path.join(directory, "scripts/validate-commit-message.js"));
+    await fs.copyFile(path.join(ROOT, "scripts/validate-branch-name.js"), path.join(directory, "scripts/validate-branch-name.js"));
     await fs.copyFile(path.join(ROOT, ".githooks/commit-msg"), path.join(directory, ".githooks/commit-msg"));
     await fs.chmod(path.join(directory, ".githooks/commit-msg"), 0o755);
     git(["config", "core.hooksPath", ".githooks"]);
@@ -110,10 +111,13 @@ test("pre-push checks new branch commits and catches a bypassed commit-msg hook"
     git(["checkout", "-b", "feature/new-branch"]);
     git(["commit", "--allow-empty", "-m", "feat: add a feature"]);
     const valid = git(["rev-parse", "HEAD"]);
-    assert.equal(check(["--pre-push"], { input: `refs/heads/feature ${valid} refs/heads/feature ${"0".repeat(40)}\n` }).status, 0);
+    assert.equal(check(["--pre-push"], { input: `refs/heads/feature ${valid} refs/heads/feat/example ${"0".repeat(40)}\n` }).status, 0);
+    const badBranch = check(["--pre-push"], { input: `refs/heads/feat/example ${valid} refs/heads/codex/example ${"0".repeat(40)}\n` });
+    assert.equal(badBranch.status, 1);
+    assert(badBranch.stderr.includes("Invalid target branch"));
     git(["-c", "core.hooksPath=/dev/null", "commit", "--allow-empty", "-m", "Bypassed invalid message"]);
     const invalid = git(["rev-parse", "HEAD"]);
-    const result = check(["--pre-push"], { input: `refs/heads/feature ${invalid} refs/heads/feature ${baseline}\nrefs/tags/v1 ${invalid} refs/tags/v1 ${"0".repeat(40)}\n` });
+    const result = check(["--pre-push"], { input: `refs/heads/feature ${invalid} refs/heads/feat/example ${baseline}\nrefs/tags/v1 ${invalid} refs/tags/v1 ${"0".repeat(40)}\n` });
     assert.equal(result.status, 1);
     assert(result.stderr.includes("Bypassed invalid message"));
     assert.equal(check(["--pre-push"], { input: `refs/heads/feature ${"0".repeat(40)} refs/heads/feature ${invalid}\n` }).status, 0);
@@ -156,7 +160,7 @@ test("push and PR ranges exclude published history but reject newly introduced i
         const head = git(["rev-parse", "HEAD"]);
         const expected = valid ? 0 : 1;
         assert.equal(check(["--pre-push", "upstream"], { input: `refs/heads/main ${head} refs/heads/main ${base}\n` }).status, expected);
-        assert.equal(check(["--pre-push", "upstream"], { input: `refs/heads/feature ${head} refs/heads/feature ${"0".repeat(40)}\n` }).status, expected);
+        assert.equal(check(["--pre-push", "upstream"], { input: `refs/heads/feature ${head} refs/heads/feat/example ${"0".repeat(40)}\n` }).status, expected);
         assert.equal((await run("push", { before: base, after: head })).status, expected);
         assert.equal((await run("push", { before: "0".repeat(40), after: head, repository: { default_branch: "main" } })).status, expected);
         assert.equal((await run("pull_request", { pull_request: { title: "Any title", base: { sha: base }, head: { sha: head } } })).status, expected);

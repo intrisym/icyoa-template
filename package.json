@@ -5,7 +5,8 @@
   "scripts": {
     "check:js": "node --check script.js && node --check editor.js && node --check logicExpr.js && node --check server.js && node --check generate-manifest.js && node --check versioning.js && node --check cyoaVersions.js && node --check optionIds.js && node --check versionPicker.js && node --check imageUrlPolicy.js && node --check scripts/validate-commit-message.js && node --check scripts/check-images.js && node --check scripts/image-check-tests.js",
     "lint:commits": "node scripts/validate-commit-message.js --range HEAD",
-    "test:commits": "node --test scripts/commit-message-tests.js",
+    "test:commits": "node --test scripts/commit-message-tests.js scripts/branch-name-tests.js",
+    "lint:branch": "node scripts/validate-branch-name.js",
     "test:ids": "node --test scripts/option-id-tests.js",
     "test:versions": "node --test scripts/versioning-tests.js",
     "test:cyoas": "node scripts/validate-cyoas.js",
