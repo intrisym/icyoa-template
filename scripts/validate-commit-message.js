@@ -121,6 +121,10 @@ function eventTargets(event, eventName, sha) {
 
 function validateCommits(commits) {
     return commits.flatMap(commit => {
+        // Check topology, not the subject: ordinary commits cannot opt out by
+        // starting their message with "Merge".
+        const parents = git(["show", "-s", "--format=%P", commit]).split(/\s+/).filter(Boolean);
+        if (parents.length > 1) return [];
         const message = git(["show", "-s", "--format=%B", commit]);
         return validateMessage(message).map(error => ({ subject: `${commit.slice(0, 12)} ${message.split("\n")[0]}`, error }));
     });
@@ -153,7 +157,11 @@ function main(args = process.argv.slice(2)) {
     let issues = [];
     let checked = "message";
     if (args[0] === "--file" && args.length === 2) {
-        issues = validateMessage(readMessageFile(args[1])).map(error => ({ subject: "Commit message", error }));
+        // Git creates MERGE_HEAD before invoking commit-msg, including when a
+        // conflicted merge is completed later with git commit.
+        const merging = fs.existsSync(git(["rev-parse", "--git-path", "MERGE_HEAD"]));
+        if (merging) checked = "merge commit exempt";
+        else issues = validateMessage(readMessageFile(args[1])).map(error => ({ subject: "Commit message", error }));
     } else if (args[0] === "--pre-push" && args.length <= 2) {
         const commits = commitsForPush(fs.readFileSync(0, "utf8"), args[1]);
         checked = `${commits.length} commit(s)`;
