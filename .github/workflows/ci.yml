@@ -27,7 +27,11 @@ jobs:
   images:
     if: github.event_name != 'create'
     name: Image loading
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    # Avoid simultaneous push/PR scans overwhelming the same external hosts.
+    concurrency:
+      group: image-loading-${{ github.repository }}
+      cancel-in-progress: false
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4

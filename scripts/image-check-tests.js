@@ -30,7 +30,7 @@ test("network-change recovery retries only affected URLs and retains exhausted a
     const names = ["good", "recover", "persistent", "missing", "changed-then-missing"];
     const images = names.map(id => ({ url: `https://images.test/${id}`, id }));
     const failures = await checkProfile(browser, images, {
-        baseURL: "http://localhost:8000/", networkRetryDelays: [1, 2, 4], onRetry: message => retries.push(message)
+        baseURL: "http://localhost:8000/", perHost: 8, confirmationDelays: [], networkRetryDelays: [1, 2, 4], onRetry: message => retries.push(message)
     });
     assert.deepEqual(names.map(id => counts.get(`https://images.test/${id}`)), [1, 3, 5, 2, 2]);
     assert.equal(failures.length, 3);
@@ -44,6 +44,51 @@ test("network-change recovery retries only affected URLs and retains exhausted a
     assert.match(retries[1], /1 affected image URL\(s\) in 2 ms/);
     assert.match(retries[2], /1 affected image URL\(s\) in 4 ms/);
     assert.equal(closed, true);
+});
+
+test("inconclusive images get isolated confirmation without rechecking successful or missing images", async t => {
+    const browser = await require("playwright").chromium.launch();
+    t.after(() => browser.close());
+    const requests = [];
+    const closed = [];
+    const recovered = [];
+    let contexts = 0;
+    const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=", "base64");
+    const wrapped = { newContext: async options => {
+        const index = contexts++;
+        const context = await browser.newContext(options);
+        context.on("close", () => closed.push(index));
+        await context.route("https://fixtures.test/**", async route => {
+            const name = new URL(route.request().url()).pathname;
+            requests.push({ index, name, referer: route.request().headers().referer });
+            if (name === "/missing") return route.fulfill({ status: 404 });
+            const loads = requests.filter(request => request.index === index && request.name === name).length;
+            if (name === "/denied" || name === "/recover" && (index === 0 || loads === 1)) {
+                return route.fulfill({ status: 403, contentType: "text/html", body: "Access denied" });
+            }
+            return route.fulfill({ contentType: "image/png", body: png });
+        });
+        return context;
+    } };
+    const images = ["good", "recover", "denied", "missing"].map(id => ({ file: "CYOAs/test.json", id, url: `https://fixtures.test/${id}` }));
+    const results = await checkProfile(wrapped, images, { baseURL: "https://intrisym.github.io/icyoa-template/",
+        confirmationDelays: [1, 1], onRetry: () => {}, onRecovery: result => recovered.push(result) });
+    assert.equal(contexts, 3);
+    assert.equal(closed.length, 3);
+    assert.equal(requests.filter(request => request.name === "/good").length, 1);
+    assert.equal(requests.filter(request => request.name === "/missing").length, 2);
+    assert.deepEqual(requests.filter(request => request.index === 1).map(request => request.name), ["/denied", "/denied", "/recover", "/recover"]);
+    assert.deepEqual(requests.filter(request => request.index === 2).map(request => request.name), ["/denied", "/denied"]);
+    assert(requests.every(request => request.referer === "https://intrisym.github.io/"));
+    assert.equal(results.length, 2);
+    const denied = results.find(result => result.url.endsWith("/denied"));
+    assert.equal(denied.classification, "inconclusive");
+    assert.deepEqual(denied.attempts.map(attempt => attempt.status), [403, 403, 403, 403, 403, 403]);
+    assert.equal(results.find(result => result.url.endsWith("/missing")).classification, "broken");
+    assert.equal(recovered.length, 1);
+    assert.equal(recovered[0].references[0].id, "recover");
+    assert.equal(recovered[0].attempts.length, 4);
+    assert.equal(recovered[0].attempts.at(-1).error, null);
 });
 
 test("failed editor reload blocks stale writes until the repaired draft is reconciled", async context => {
@@ -376,7 +421,7 @@ test("Chromium decodes images, catches blocking/404/HTML/timeouts, deduplicates 
     const url = "https://fixtures.test";
     const images = ["/good.png", "/good.png", "/blocked", "/missing", "/html", "/timeout", "/flaky.png"]
         .map((suffix, index) => ({ file: "CYOAs/test.json", location: `options[${index}]`, url: url + suffix }));
-    const failures = await checkProfile(fixtureBrowser, images, { baseURL: "http://localhost:8000/", timeout: 1000 });
+    const failures = await checkProfile(fixtureBrowser, images, { baseURL: "http://localhost:8000/", timeout: 1000, confirmationDelays: [] });
     assert.equal(failures.length, 4, JSON.stringify(failures));
     assert(failures.some(failure => failure.error === "HTTP 403"));
     assert(failures.some(failure => failure.error === "HTTP 404"));
@@ -411,7 +456,7 @@ test("Chromium decodes images, catches blocking/404/HTML/timeouts, deduplicates 
         { file: "CYOAs/test.json", location: "missing relative image", url: "missing-image-fixture.png" },
         { file: "CYOAs/test.json", location: "invalid URL", url: "https://" },
         referrerImage
-    ], { baseURL: "https://intrisym.github.io/icyoa-template/" });
+    ], { baseURL: "https://intrisym.github.io/icyoa-template/", confirmationDelays: [] });
     assert.deepEqual(productionRequests, ["http://localhost:8000/", "https://intrisym.github.io/", "https://intrisym.github.io/", "https://intrisym.github.io/"]);
     assert.equal(productionFailures.length, 3);
     assert(productionFailures.some(failure => failure.error === "HTTP 404" && failure.url.endsWith("/icyoa-template/missing-image-fixture.png")));

@@ -1,5 +1,6 @@
 const fs = require("node:fs");
 const path = require("node:path");
+const { createHash } = require("node:crypto");
 const { validationMessage } = require("../imageUrlPolicy");
 const { classifyFailure, readVerifications, evaluateResults } = require("../imageVerification");
 const { renderImageSummary } = require("./image-check-report");
@@ -7,6 +8,30 @@ const { reportPath: defaultReportPath } = require("./report-files");
 
 const ROOT = path.resolve(__dirname, "..");
 const PRODUCTION_URL = "https://intrisym.github.io/icyoa-template/";
+const CHECK_SETTINGS = { timeout: 10000, concurrency: 8, perHost: 2, networkRetryDelays: [1000, 2000, 4000], confirmationDelays: [2000, 5000] };
+
+function imageBatches(urls, concurrency, perHost) {
+    if (![concurrency, perHost].every(value => Number.isInteger(value) && value > 0)) throw new Error("Image concurrency limits must be positive integers.");
+    const pending = [...urls].sort();
+    const batches = [];
+    while (pending.length) {
+        const hosts = new Map();
+        const batch = [];
+        for (let index = 0; index < pending.length && batch.length < concurrency;) {
+            const host = new URL(pending[index]).host;
+            if ((hosts.get(host) || 0) >= perHost) { index++; continue; }
+            hosts.set(host, (hosts.get(host) || 0) + 1);
+            batch.push(pending.splice(index, 1)[0]);
+        }
+        batches.push(batch);
+    }
+    return batches;
+}
+
+function imageSetHash(images) {
+    const entries = images.map(({ file, id, url }) => JSON.stringify([file, id || "", url])).sort();
+    return createHash("sha256").update(JSON.stringify(entries)).digest("hex");
+}
 
 function collectImages(data, file) {
     const images = [];
@@ -42,8 +67,10 @@ function readImages(files, root = ROOT) {
 
 // Serve a test document at the real origin without deploying or changing DNS.
 // Only the document is intercepted: external image requests go to their real hosts.
-async function checkProfile(browser, images, { baseURL, timeout = 10000, concurrency = 32, assetRoot = ROOT, serveLocalAssets = true,
-    onProgress = () => {}, networkRetryDelays = [1000, 2000, 4000],
+async function checkProfile(browser, images, { baseURL, timeout = CHECK_SETTINGS.timeout, concurrency = CHECK_SETTINGS.concurrency,
+    perHost = CHECK_SETTINGS.perHost, assetRoot = ROOT, serveLocalAssets = true,
+    onProgress = () => {}, networkRetryDelays = CHECK_SETTINGS.networkRetryDelays,
+    confirmationDelays = CHECK_SETTINGS.confirmationDelays, onRecovery = () => {},
     onRetry = message => console.log(message) }) {
     const context = await browser.newContext({ serviceWorkers: "block" });
     try {
@@ -112,8 +139,9 @@ async function checkProfile(browser, images, { baseURL, timeout = 10000, concurr
             image.onerror = () => finish("Browser could not load/decode image");
             image.src = url;
         }))), { urls, timeout });
-        for (let offset = 0; offset < unique.length; offset += concurrency) {
-            let remaining = unique.slice(offset, offset + concurrency);
+        let done = 0;
+        for (const batch of imageBatches(unique, concurrency, perHost)) {
+            let remaining = batch;
             const attempts = new Map(remaining.map(url => [url, []]));
             for (let attempt = 0; attempt < 2 + networkRetryDelays.length && remaining.length; attempt += 1) {
                 if (attempt >= 2) {
@@ -125,7 +153,11 @@ async function checkProfile(browser, images, { baseURL, timeout = 10000, concurr
                 const results = await loadImages(remaining);
                 remaining = [];
                 for (const result of results) {
-                    if (!result.error) continue;
+                    if (!result.error) {
+                        const history = attempts.get(result.url);
+                        if (history.length) onRecovery({ url: result.url, attempts: [...history, result], references: references.get(result.url) });
+                        continue;
+                    }
                     const observation = { ...result, ...diagnostics.get(result.url) };
                     attempts.get(result.url).push(observation);
                     if (!attempt || observation.error === "net::ERR_NETWORK_CHANGED" && attempt < 1 + networkRetryDelays.length) remaining.push(result.url);
@@ -135,7 +167,35 @@ async function checkProfile(browser, images, { baseURL, timeout = 10000, concurr
                     }
                 }
             }
-            onProgress(Math.min(offset + concurrency, unique.length), unique.length);
+            done += batch.length;
+            onProgress(done, unique.length);
+        }
+        // Retest only inconclusive URLs after the main scan, in fresh contexts
+        // and one at a time. Preserve the original origin and request headers;
+        // neither a successful raw download nor another profile can override it.
+        for (const [index, delay] of confirmationDelays.entries()) {
+            const pending = failures.filter(failure => failure.classification === "inconclusive");
+            if (!pending.length) break;
+            onRetry(`Confirming ${pending.length} inconclusive image URL(s) in a fresh browser context after ${delay} ms (${index + 1}/${confirmationDelays.length}).`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            const confirmationRecoveries = new Map();
+            const confirmed = await checkProfile(browser, pending.flatMap(failure => failure.references), {
+                baseURL, timeout, concurrency: 1, perHost: 1, assetRoot, serveLocalAssets,
+                networkRetryDelays: [], confirmationDelays: [], onRetry,
+                onRecovery: result => confirmationRecoveries.set(result.url, result.attempts)
+            });
+            const byURL = new Map(confirmed.map(failure => [failure.url, failure]));
+            for (const failure of pending) {
+                const next = byURL.get(failure.url);
+                if (next) {
+                    const history = [...(failure.attempts || [failure]), ...(next.attempts || [next])];
+                    Object.assign(failure, next, { attempts: history, classification: classifyFailure({ attempts: history }) });
+                } else {
+                    failures.splice(failures.indexOf(failure), 1);
+                    onRecovery({ ...failure, attempts: [...(failure.attempts || [failure]),
+                        ...(confirmationRecoveries.get(failure.url) || [{ url: failure.url, error: null }])], confirmationPass: index + 1 });
+                }
+            }
         }
         return failures;
     } finally {
@@ -170,11 +230,25 @@ async function runImageChecks({ root = ROOT, files = [], reportPath = defaultRep
     const { chromium } = require("playwright");
     const browser = await chromium.launch();
     const summary = [];
+    const recovered = [];
+    const metadata = { startedAt: new Date().toISOString(), imageSetHash: imageSetHash(images), uniqueURLs: new Set(images.map(image => image.url)).size,
+        node: process.version, playwright: require("playwright/package.json").version, chromium: browser.version(),
+        platform: process.platform, architecture: process.arch, settings: CHECK_SETTINGS,
+        profiles: { localhost: "http://localhost:8000/", production: production.href },
+        commit: process.env.GITHUB_SHA || null, event: process.env.GITHUB_EVENT_NAME || "local" };
+    console.log(`Image set SHA-256: ${metadata.imageSetHash}; Chromium ${metadata.chromium}; ${metadata.settings.concurrency} concurrent URLs, ${metadata.settings.perHost} per host.`);
     try {
         for (const [profile, baseURL] of [["localhost", "http://localhost:8000/"], ["production", production.href]]) {
             console.log(`Checking ${images.length} image references as ${profile} (${baseURL})...`);
+            let lastProgress = 0;
             const results = await checkProfile(browser, images, { baseURL, assetRoot: root,
-                onProgress: (done, total) => console.log(`[${profile}] ${done}/${total} unique URLs checked`) });
+                onRecovery: result => recovered.push({ profile, ...result }),
+                onProgress: (done, total) => {
+                    if (done === total || done - lastProgress >= 32) {
+                        console.log(`[${profile}] ${done}/${total} unique URLs checked`);
+                        lastProgress = done;
+                    }
+                } });
             for (const failure of results) {
                 summary.push({ profile, ...failure });
             }
@@ -196,13 +270,16 @@ async function runImageChecks({ root = ROOT, files = [], reportPath = defaultRep
     const accepted = new Set(evaluation.manualVerifications.map(entry => JSON.stringify([entry.file, entry.id, entry.url]))).size;
     const label = failures ? "FAILED" : accepted ? "PASS WITH MANUAL VERIFICATION" : "PASS";
     fs.mkdirSync(path.dirname(reportPath), { recursive: true });
-    fs.writeFileSync(reportPath, JSON.stringify({ references: images.length, ...evaluation }, null, 2) + "\n");
+    metadata.finishedAt = new Date().toISOString();
+    const report = { references: images.length, metadata, recovered, ...evaluation };
+    fs.writeFileSync(reportPath, JSON.stringify(report, null, 2) + "\n");
+    if (recovered.length) console.log(`Recovered after retry: ${recovered.length} image/profile result(s). See the report for affected URLs and attempt history.`);
     console.log(`\n${label}: ${failures} blocking result(s); ${accepted} manually verified image(s). Full report: ${reportPath}`);
     if (process.env.GITHUB_STEP_SUMMARY) {
-        fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, renderImageSummary({ references: images.length, ...evaluation }) + "\n");
+        fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, renderImageSummary(report) + "\n");
     }
     if (failures) console.error("Open Repair Images Across Versions to fix confirmed failures or manually verify inconclusive results on the live CYOA. Commit repaired files, image-links.json and image-verifications.json before pushing.");
-    return { references: images.length, ...evaluation };
+    return report;
 }
 
 if (require.main === module) runImageChecks({ files: process.argv.slice(2) }).then(result => {
@@ -212,4 +289,4 @@ if (require.main === module) runImageChecks({ files: process.argv.slice(2) }).th
     process.exitCode = 1;
 });
 
-module.exports = { collectImages, readImages, checkProfile, runImageChecks };
+module.exports = { collectImages, readImages, checkProfile, runImageChecks, imageBatches, imageSetHash };

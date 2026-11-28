@@ -14,7 +14,7 @@ function imageLink(value) {
     return `<code>${escape(value)}</code>`;
 }
 
-function renderImageSummary({ references = 0, diagnostics = [], failures = [], manualVerifications = [] }) {
+function renderImageSummary({ references = 0, diagnostics = [], failures = [], manualVerifications = [], recovered = [], metadata }) {
     const rows = new Map();
     for (const diagnostic of diagnostics.length ? diagnostics : failures) {
         for (const reference of diagnostic.references) {
@@ -62,6 +62,19 @@ function renderImageSummary({ references = 0, diagnostics = [], failures = [], m
         lines.push("</details>", "");
     }
     if (broken.length || unverified.length) lines.push("After resolving the rows above, commit the repairs/confirmations and rerun `npm run test:images`. The downloadable **image-check-report** artifact contains the full diagnostics.", "");
+    if (recovered.length) {
+        lines.push("<details>", `<summary>Recovered after retry (${recovered.length} image/profile results) — not blocking</summary>`, "",
+            "These images loaded and decoded successfully after earlier failures. The JSON report retains their attempt history.", "",
+            "| Profile | CYOA | Option | ID | Image URL |", "| --- | --- | --- | --- | --- |");
+        for (const result of recovered) for (const reference of result.references) {
+            lines.push(`| ${escape(result.profile)} | ${escape(reference.file)} | ${escape(reference.label)} | <code>${escape(reference.id)}</code> | ${imageLink(result.url)} |`);
+        }
+        lines.push("", "</details>", "");
+    }
+    if (metadata) lines.push("### Test environment", "",
+        `Image set SHA-256: <code>${escape(metadata.imageSetHash)}</code>.`, "",
+        `Node ${escape(metadata.node)} · Playwright ${escape(metadata.playwright)} · Chromium ${escape(metadata.chromium)} · ${escape(metadata.platform)}/${escape(metadata.architecture)}.`, "",
+        "External hosts can change their responses by time or runner IP. Matching image hashes confirm identical inputs, not identical external availability.", "");
     return lines.join("\n");
 }
 

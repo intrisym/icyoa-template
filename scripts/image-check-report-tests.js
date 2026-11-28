@@ -1,10 +1,38 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { collectImages } = require("./check-images");
+const { collectImages, imageBatches, imageSetHash } = require("./check-images");
 const { renderImageSummary } = require("./image-check-report");
 
 const reference = { file: "CYOAs/story_v1_0.json", cyoaTitle: "My Story", id: "city", label: "Futuristic City", location: "options[0]" };
 const diagnostic = { classification: "broken", profile: "production", error: "HTTP 404", url: "https://images.test/city.jpg", references: [reference] };
+
+test("request batches use stable ordering and cap global and per-host bursts", () => {
+    const urls = Array.from({ length: 30 }, (_, index) => `https://host${index % 3}.test/${index}.png`);
+    const batches = imageBatches(urls, 8, 2);
+    assert.deepEqual(batches, imageBatches([...urls].reverse(), 8, 2));
+    assert.deepEqual(batches.flat().sort(), [...urls].sort());
+    for (const batch of batches) {
+        assert(batch.length <= 8);
+        for (const url of batch) assert(batch.filter(other => new URL(other).host === new URL(url).host).length <= 2);
+    }
+    assert.throws(() => imageBatches(urls, 0, 2), /positive integers/);
+});
+
+test("image-set hashes compare identical inputs independently of discovery order", () => {
+    const images = [{ ...reference, url: diagnostic.url }, { file: "CYOAs/other.json", id: "@header", url: diagnostic.url }];
+    assert.equal(imageSetHash(images), imageSetHash([...images].reverse()));
+    assert.notEqual(imageSetHash(images), imageSetHash([{ ...images[0], url: "https://images.test/new.jpg" }, images[1]]));
+    assert.notEqual(imageSetHash(images), imageSetHash([images[0]]));
+});
+
+test("recovered images and environment metadata are visible without hiding remaining failures", () => {
+    const summary = renderImageSummary({ diagnostics: [diagnostic], recovered: [{ ...diagnostic, profile: "localhost" }],
+        metadata: { imageSetHash: "abc123", node: "22", playwright: "1", chromium: "2", platform: "linux", architecture: "x64" } });
+    assert(summary.startsWith("## Image loading checks failed"));
+    assert(summary.includes("Recovered after retry (1 image/profile results)"));
+    assert(summary.includes("Futuristic City"));
+    assert(summary.includes("Image set SHA-256: <code>abc123</code>"));
+});
 
 test("image references carry human labels, IDs and CYOA titles for headers and nested options", () => {
     const images = collectImages([
