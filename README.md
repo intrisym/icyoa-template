@@ -100,6 +100,8 @@ The visual editor marks blocked image hosts with a red outline and an inline exp
 
 Edit `blockedDomains` in `imageUrlPolicy.js` to maintain the blocklist. Each entry has a `domain` and a user-facing `reason`; domain matches include subdomains, but not similarly named domains or mentions inside paths/query strings. WallpaperCave is the initial entry because its URLs failed DNS resolution in the reported checks. This is a project policy, not a claim that the host fails on every network. Unlisted hosts still need the image-loading checks below.
 
+The separate `warningDomains` list contains `rare-gallery.com`, `raregallery.art` and `wallpapercrafter.com`, including their subdomains. Image URL fields show an advisory warning recommending local ImgChest migration because these hosts have blocked automated checks/downloads. These warnings do not invalidate the input, prevent saving or publishing, or fail validation/CI by themselves. Real image-loading checks still determine availability.
+
 Install the browser once, then run the image checks locally:
 
 ```sh

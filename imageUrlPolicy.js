@@ -7,6 +7,8 @@
             reason: "Image requests to this host have failed DNS resolution. Choose another image host."
         }
     ];
+    // Advisory only: these domains and their subdomains remain valid inputs.
+    const warningDomains = ["rare-gallery.com", "raregallery.art", "wallpapercrafter.com"];
     let messageId = 0;
 
     function validationMessage(value) {
@@ -31,17 +33,30 @@
         input.setAttribute("aria-describedby", [description, message.id].filter(Boolean).join(" "));
         const update = () => {
             const error = validationMessage(input.value);
+            const warning = error ? "" : warningMessage(input.value);
             input.setCustomValidity(error);
             input.classList.toggle("image-url-invalid", Boolean(error));
+            input.classList.toggle("image-url-caution", Boolean(warning));
             input.setAttribute("aria-invalid", String(Boolean(error)));
-            message.textContent = error;
-            message.hidden = !error;
+            message.classList.toggle("image-url-warning", Boolean(warning));
+            message.textContent = error || warning;
+            message.hidden = !error && !warning;
         };
         input.addEventListener("input", update);
         update(); // Existing/imported URLs must receive the same feedback.
     }
 
-    const api = { blockedDomains, validationMessage, bindInput };
+    function warningMessage(value) {
+        if (validationMessage(value)) return "";
+        let url;
+        try { url = new URL(String(value || "").trim(), "https://editor.invalid/"); }
+        catch { return ""; }
+        const hostname = url.hostname.toLowerCase().replace(/\.$/, "");
+        const domain = warningDomains.find(domain => hostname === domain || hostname.endsWith("." + domain));
+        return domain ? `Image host warning: ${domain}. This host has repeatedly blocked automated image checks or downloads. The image may work in your browser but fail in CI. Consider migrating it to ImgChest using the local image exporter.` : "";
+    }
+
+    const api = { blockedDomains, warningDomains, validationMessage, warningMessage, bindInput };
     if (typeof module !== "undefined" && module.exports) module.exports = api;
     else root.CyoaImageUrlPolicy = api;
 })(typeof globalThis !== "undefined" ? globalThis : this);

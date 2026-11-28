@@ -196,6 +196,14 @@ test("visual editor flags loaded and typed blocked URLs in header and option fie
         await input.fill("https://example.com/replacement.png");
         assert.equal(await input.getAttribute("aria-invalid"), "false");
         assert.equal(await input.evaluate(node => node.nextElementSibling.hidden), true);
+        await input.fill("https://rare-gallery.com/image.jpg");
+        assert.equal(await input.getAttribute("aria-invalid"), "false");
+        assert.equal(await input.evaluate(node => node.validity.customError), false);
+        assert.equal(await input.evaluate(node => node.classList.contains("image-url-caution")), true);
+        assert.match(await input.evaluate(node => node.nextElementSibling.textContent), /may work in your browser but fail in CI/);
+        await input.fill("https://cdn.imgchest.com/files/image.jpg");
+        assert.equal(await input.evaluate(node => node.nextElementSibling.hidden), true);
+        assert.equal(await input.evaluate(node => node.classList.contains("image-url-caution")), false);
         await input.fill("https://wallpapercave.com/another.png");
         assert.equal(await input.getAttribute("aria-invalid"), "true");
         await input.fill("");
