@@ -4,6 +4,7 @@ Thumbs.db
 
 # Dependencies
 node_modules/
+/reports/
 image-check-report.json
 image-check-report-*.json
 image-url-test-report.json

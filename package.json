@@ -19,7 +19,7 @@
     "images:verify": "node scripts/maintain-images.js verify",
     "images:export": "node scripts/export-images.js",
     "test:images:unit": "node --test scripts/image-check-tests.js scripts/browser-image-download-tests.js",
-    "test:validation": "node --test scripts/validation-tests.js scripts/image-url-policy-tests.js scripts/image-maintenance-tests.js scripts/image-verification-tests.js scripts/image-check-report-tests.js scripts/single-image-url-tests.js scripts/image-rehosting-tests.js scripts/image-export-tests.js",
+    "test:validation": "node --test scripts/validation-tests.js scripts/image-url-policy-tests.js scripts/image-maintenance-tests.js scripts/image-verification-tests.js scripts/image-check-report-tests.js scripts/single-image-url-tests.js scripts/image-rehosting-tests.js scripts/image-export-tests.js scripts/report-files-tests.js",
     "test:exhaustive": "node scripts/exhaustive-cyoa-tests.js",
     "test:functional": "node scripts/functional-cyoa-tests.js",
     "verify": "npm run check:js && npm run test:cyoas && npm run check:image-links && npm run test:validation && npm run test:functional && npm run test:versions && npm run test:ids && npm run test:commits",

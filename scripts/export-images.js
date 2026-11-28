@@ -8,16 +8,17 @@ const { readDocuments, commitFiles, imageSlots } = require('../imageMaintenance'
 const { replaceImages, uploadBatch, createImgChestRequest, checkoutAssetPath, imageType } = require('./rehost-images');
 const { testImageUrl } = require('./test-image-url');
 const { createBrowserDownloader } = require('./browser-image-download');
+const { reportPath, resolveReportInput, migrateLegacyReports } = require('./report-files');
 
 const HELP = `Local image export and URL replacement
 
-  npm run images:export -- --report image-check-report.json
+  npm run images:export -- --report reports/image-check-report.json
   npm run images:export -- --host raregallery.art --host wallpapercrafter.com
   npm run images:export -- --file CYOAs/necromancer.json
 
 Add --apply to upload and update JSON files; the default only previews URLs.
 --report accepts checker diagnostics or a previous repair/export report.
---output <path> selects the resumable report (default image-export-report.json).
+--output <path> selects the resumable report (default reports/image-export-report.json).
 --local-files <json> maps original URLs to downloaded image file paths.
 --all explicitly selects all external image URLs. --no-browser disables fallback.
 --apply requires IMGCHEST_API_TOKEN in the environment. Nothing commits or pushes.
@@ -96,7 +97,7 @@ async function exportImages(options, { root = path.resolve(__dirname, '..'), tok
     download, upload = uploadBatch, verify = testImageUrl, request = createImgChestRequest(), signal, log = console.log } = {}) {
     if (process.env.GITHUB_ACTIONS === 'true') throw new Error('This command is local only. Authenticated image uploads are disabled in GitHub Actions.');
     if (!options.all && !options.hosts.length && !options.files.length && !options.report && !options.localFiles) throw new Error('Select --report, --host, --file, --local-files or --all. Use --help for examples.');
-    const localFilesPath = options.localFiles && path.resolve(root, options.localFiles);
+    const localFilesPath = options.localFiles && resolveReportInput(root, options.localFiles);
     const localFiles = new Map();
     if (localFilesPath) {
         const supplied = await readReport(localFilesPath);
@@ -106,7 +107,7 @@ async function exportImages(options, { root = path.resolve(__dirname, '..'), tok
             localFiles.set(canonical(url), path.resolve(path.dirname(localFilesPath), filename));
         }
     }
-    const input = options.report ? await readReport(path.resolve(root, options.report))
+    const input = options.report ? await readReport(resolveReportInput(root, options.report))
         : localFilesPath && !options.all && !options.hosts.length && !options.files.length
             ? { unresolved: [...localFiles.keys()].map(source => ({ source })) } : null;
     if (options.report && !input) throw new Error('Input report not found.');
@@ -116,11 +117,13 @@ async function exportImages(options, { root = path.resolve(__dirname, '..'), tok
     for (const item of sources) log(`${item.source}\n  ${item.references.map(ref => `${ref.file} / ${ref.id}`).join('\n  ')}`);
     if (!options.apply || !sources.length) return { preview: true, sources };
     if (!token) throw new Error('Set IMGCHEST_API_TOKEN in your local environment before using --apply. Do not put it in a tracked file.');
-    const output = path.resolve(root, options.output || 'image-export-report.json');
+    if (!options.output) migrateLegacyReports(root);
+    const output = options.output ? path.resolve(root, options.output) : reportPath(root, 'image-export-report.json');
     if (output.startsWith(path.join(root, 'CYOAs') + path.sep)) throw new Error('--output must be outside CYOAs.');
     const previous = await readReport(output);
     const completed = [...(previous?.uploads || []), ...(input?.uploads || [])];
     if (previous && previous.kind !== 'local-image-export') throw new Error('--output already exists and is not a local export report. Use --report to read a CI report.');
+    await fs.mkdir(path.dirname(output), { recursive: true });
     const report = { kind: 'local-image-export', schemaVersion: 1, uploads: [...(previous?.uploads || [])], unresolved: [], changes: [] };
     const save = async () => {
         const temporary = output + '.' + randomUUID() + '.tmp';

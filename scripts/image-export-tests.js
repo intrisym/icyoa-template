@@ -119,6 +119,14 @@ test('completed CI uploads are reverified and reused without downloading or uplo
     assert.deepEqual(f.counters, { downloads: 0, uploads: 0 });
     assert.equal((await f.read('v1.json'))[0].url, NEW);
 });
+test('a legacy root cache is migrated and reused by the default reports output', async t => {
+    const f = await fixture(t);
+    await fs.writeFile(path.join(f.root, 'image-export-report.json'), JSON.stringify({ kind: 'local-image-export', uploads: [{ source: SOURCE, url: NEW }] }));
+    await exportImages(parseArgs(['--all', '--apply']), f.dependencies);
+    assert.equal(f.counters.uploads, 0);
+    await assert.rejects(fs.stat(path.join(f.root, 'image-export-report.json')), { code: 'ENOENT' });
+    assert.ok((await fs.stat(path.join(f.root, 'reports/image-export-report.json'))).isFile());
+});
 test('unverified uploaded URLs remain unapplied and can be resumed without reuploading', async t => {
     const f = await fixture(t);
     const options = parseArgs(['--host', 'images.example', '--apply']);

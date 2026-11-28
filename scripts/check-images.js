@@ -3,6 +3,7 @@ const path = require("node:path");
 const { validationMessage } = require("../imageUrlPolicy");
 const { classifyFailure, readVerifications, evaluateResults } = require("../imageVerification");
 const { renderImageSummary } = require("./image-check-report");
+const { reportPath: defaultReportPath } = require("./report-files");
 
 const ROOT = path.resolve(__dirname, "..");
 const PRODUCTION_URL = "https://intrisym.github.io/icyoa-template/";
@@ -151,7 +152,7 @@ function reportFailure(profile, failure) {
     }
 }
 
-async function runImageChecks({ root = ROOT, files = [], reportPath = path.join(ROOT, "image-check-report.json") } = {}) {
+async function runImageChecks({ root = ROOT, files = [], reportPath = defaultReportPath(ROOT, "image-check-report.json") } = {}) {
     const { createImageMaintenance } = require("../imageMaintenance");
     await createImageMaintenance({ directory: path.join(root, "CYOAs"), linksFile: path.join(root, "image-links.json") }).checkLinks();
     const registry = readVerifications(root);
@@ -187,6 +188,7 @@ async function runImageChecks({ root = ROOT, files = [], reportPath = path.join(
     const failures = evaluation.failures.length;
     const accepted = new Set(evaluation.manualVerifications.map(entry => JSON.stringify([entry.file, entry.id, entry.url]))).size;
     const label = failures ? "FAILED" : accepted ? "PASS WITH MANUAL VERIFICATION" : "PASS";
+    fs.mkdirSync(path.dirname(reportPath), { recursive: true });
     fs.writeFileSync(reportPath, JSON.stringify({ references: images.length, ...evaluation }, null, 2) + "\n");
     console.log(`\n${label}: ${failures} blocking result(s); ${accepted} manually verified image(s). Full report: ${reportPath}`);
     if (process.env.GITHUB_STEP_SUMMARY) {
