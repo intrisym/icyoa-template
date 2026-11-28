@@ -4,6 +4,7 @@ const os = require("node:os");
 const path = require("node:path");
 const { execFileSync, spawnSync } = require("node:child_process");
 const { runImageChecks } = require("./check-images");
+const { reportPath } = require("./report-files");
 
 function pushedCommits(input, cwd = process.cwd(), env = process.env) {
     const tips = new Set();
@@ -32,7 +33,7 @@ async function checkPushedImages(input, check = runImageChecks, { cwd = process.
             try { execFileSync("git", ["archive", "--format=tar", commit], { cwd, env, stdio: ["ignore", descriptor, "pipe"] }); }
             finally { fs.closeSync(descriptor); }
             execFileSync("tar", ["-xf", archive, "-C", checkout]);
-            const result = await check({ root: checkout, reportPath: path.resolve(`image-check-report-${commit.slice(0, 12)}.json`) });
+            const result = await check({ root: checkout, reportPath: reportPath(cwd, `image-check-report-${commit.slice(0, 12)}.json`) });
             failures += result.failures.length;
         } finally { await fsp.rm(temporary, { recursive: true, force: true }); }
     }

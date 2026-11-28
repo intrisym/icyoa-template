@@ -69,15 +69,18 @@ async function repository(context) {
     git(["config", "commit.gpgsign", "false"]);
     git(["commit", "--allow-empty", "-m", "Legacy initial commit"]);
     const baseline = git(["rev-parse", "HEAD"]);
-    await fs.writeFile(path.join(directory, ".commit-conventions.json"), JSON.stringify({ baseline }));
     await fs.mkdir(path.join(directory, "scripts"));
     await fs.mkdir(path.join(directory, ".githooks"));
-    await fs.copyFile(VALIDATOR, path.join(directory, "scripts/validate-commit-message.js"));
+    const validatorPath = path.join(directory, "scripts/validate-commit-message.js");
+    const source = await fs.readFile(VALIDATOR, "utf8");
+    const fixtureSource = source.replace(/const HISTORY_BASELINE = "[a-f0-9]+";/, `const HISTORY_BASELINE = "${baseline}";`);
+    assert.notEqual(fixtureSource, source, "Fixture must use its own repository's baseline.");
+    await fs.writeFile(validatorPath, fixtureSource);
     await fs.copyFile(path.join(ROOT, "scripts/validate-branch-name.js"), path.join(directory, "scripts/validate-branch-name.js"));
     await fs.copyFile(path.join(ROOT, ".githooks/commit-msg"), path.join(directory, ".githooks/commit-msg"));
     await fs.chmod(path.join(directory, ".githooks/commit-msg"), 0o755);
     git(["config", "core.hooksPath", ".githooks"]);
-    const check = (args, { input, extraEnv = {} } = {}) => spawnSync(process.execPath, [VALIDATOR, ...args], {
+    const check = (args, { input, extraEnv = {} } = {}) => spawnSync(process.execPath, [validatorPath, ...args], {
         cwd: directory, env: { ...env, ...extraEnv }, input, encoding: "utf8"
     });
     return { directory, env, git, check, baseline };
@@ -179,4 +182,33 @@ test("merge queue checks contributor commits without rejecting the synthetic mer
     const eventPath = path.join(directory, "merge-group.json");
     await fs.writeFile(eventPath, JSON.stringify({ merge_group: { base_sha: base, head_sha: head } }));
     assert.equal(check(["--event"], { extraEnv: { GITHUB_EVENT_PATH: eventPath, GITHUB_EVENT_NAME: "merge_group" } }).status, 0);
+});
+
+test("real merge messages pass the hook, push and CI while contributed commits remain checked", async context => {
+    const { directory, env, git, check, baseline } = await repository(context);
+    git(["checkout", "-b", "feat/merge-test"]);
+    git(["commit", "--allow-empty", "-m", "feat: add a feature"]);
+    git(["checkout", "main"]);
+    git(["commit", "--allow-empty", "-m", "fix: update main"]);
+    const base = git(["rev-parse", "HEAD"]);
+    git(["merge", "--no-ff", "--no-edit", "feat/merge-test"]);
+    const head = git(["rev-parse", "HEAD"]);
+    assert.match(git(["log", "-1", "--format=%s"]), /^Merge branch/);
+    assert.equal(check(["--range", "HEAD"]).status, 0);
+    assert.equal(check(["--pre-push"], { input: `refs/heads/main ${head} refs/heads/main ${base}\n` }).status, 0);
+    const eventPath = path.join(directory, "merge-event.json");
+    await fs.writeFile(eventPath, JSON.stringify({ before: base, after: head }));
+    assert.equal(check(["--event"], { extraEnv: { GITHUB_EVENT_PATH: eventPath, GITHUB_EVENT_NAME: "push" } }).status, 0);
+    await fs.writeFile(eventPath, JSON.stringify({ pull_request: { base: { sha: base }, head: { sha: head } } }));
+    assert.equal(check(["--event"], { extraEnv: { GITHUB_EVENT_PATH: eventPath, GITHUB_EVENT_NAME: "pull_request" } }).status, 0);
+
+    const fake = spawnSync("git", ["commit", "--allow-empty", "-m", "Merge branch 'fake'"], { cwd: directory, env, encoding: "utf8" });
+    assert.notEqual(fake.status, 0);
+    git(["checkout", "-b", "feat/invalid-contributor", baseline]);
+    git(["-c", "core.hooksPath=/dev/null", "commit", "--allow-empty", "-m", "Merge branch 'fake'"]);
+    git(["checkout", "main"]);
+    git(["merge", "--no-ff", "--no-edit", "feat/invalid-contributor"]);
+    const result = check(["--range", "HEAD"]);
+    assert.equal(result.status, 1);
+    assert(result.stderr.includes("Merge branch 'fake'"));
 });

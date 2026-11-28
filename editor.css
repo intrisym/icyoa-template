@@ -937,6 +937,18 @@ input.image-url-invalid:focus {
     margin: 4px 0 0;
 }
 
+input.image-url-caution {
+    border-color: var(--warning-border);
+}
+
+.image-url-warning {
+    color: var(--warning-text);
+    background: var(--warning-bg);
+    border: 1px solid var(--warning-border);
+    border-radius: 6px;
+    padding: 8px;
+}
+
 #imageMaintenanceDialog {
     width: min(640px, calc(100vw - 32px));
     max-width: min(640px, calc(100vw - 32px));

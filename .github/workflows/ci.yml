@@ -47,7 +47,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: image-check-report
-          path: image-check-report.json
+          path: reports/image-check-report.json
           if-no-files-found: ignore
 
   conventional-commits:

@@ -44,5 +44,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: image-url-test-report
-          path: image-url-test-report.json
+          path: reports/image-url-test-report.json
           if-no-files-found: ignore

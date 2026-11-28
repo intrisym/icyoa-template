@@ -1,9 +1,10 @@
 const fs = require("node:fs");
-const path = require("node:path");
 const { execFileSync, spawnSync } = require("node:child_process");
 const { validateBranchName } = require("./validate-branch-name");
 
 const SPECIFICATION = "https://www.conventionalcommits.org/en/v1.0.0/";
+// Legacy history through this commit predates Conventional Commits enforcement.
+const HISTORY_BASELINE = "8a5011f573ab5ed7d27f2397791b5b59f033a0cb";
 const footerPattern = /^([\p{L}\p{N}_-]+|BREAKING CHANGE)(: | #)(.*)$/u;
 
 function validateMessage(message) {
@@ -59,11 +60,8 @@ function readMessageFile(filename) {
 }
 
 function baseline() {
-    const root = git(["rev-parse", "--show-toplevel"]);
-    const config = JSON.parse(fs.readFileSync(path.join(root, ".commit-conventions.json"), "utf8"));
-    if (!/^[a-f0-9]{40,64}$/i.test(config.baseline)) throw new Error("Invalid Conventional Commits baseline.");
-    git(["cat-file", "-e", `${config.baseline}^{commit}`]);
-    return config.baseline;
+    git(["cat-file", "-e", `${HISTORY_BASELINE}^{commit}`]);
+    return HISTORY_BASELINE;
 }
 
 function collectCommits(tips, { exclude = [], noMerges = false, remote } = {}) {
@@ -123,6 +121,10 @@ function eventTargets(event, eventName, sha) {
 
 function validateCommits(commits) {
     return commits.flatMap(commit => {
+        // Check topology, not the subject: ordinary commits cannot opt out by
+        // starting their message with "Merge".
+        const parents = git(["show", "-s", "--format=%P", commit]).split(/\s+/).filter(Boolean);
+        if (parents.length > 1) return [];
         const message = git(["show", "-s", "--format=%B", commit]);
         return validateMessage(message).map(error => ({ subject: `${commit.slice(0, 12)} ${message.split("\n")[0]}`, error }));
     });
@@ -155,7 +157,11 @@ function main(args = process.argv.slice(2)) {
     let issues = [];
     let checked = "message";
     if (args[0] === "--file" && args.length === 2) {
-        issues = validateMessage(readMessageFile(args[1])).map(error => ({ subject: "Commit message", error }));
+        // Git creates MERGE_HEAD before invoking commit-msg, including when a
+        // conflicted merge is completed later with git commit.
+        const merging = fs.existsSync(git(["rev-parse", "--git-path", "MERGE_HEAD"]));
+        if (merging) checked = "merge commit exempt";
+        else issues = validateMessage(readMessageFile(args[1])).map(error => ({ subject: "Commit message", error }));
     } else if (args[0] === "--pre-push" && args.length <= 2) {
         const commits = commitsForPush(fs.readFileSync(0, "utf8"), args[1]);
         checked = `${commits.length} commit(s)`;

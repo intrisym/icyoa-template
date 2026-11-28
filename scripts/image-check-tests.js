@@ -4,6 +4,48 @@ const fs = require("node:fs/promises");
 const path = require("node:path");
 const { collectImages, checkProfile } = require("./check-images");
 
+test("network-change recovery retries only affected URLs and retains exhausted attempt history", async () => {
+    const counts = new Map();
+    const handlers = {};
+    const retries = [];
+    let closed = false;
+    const page = {
+        route: async () => {}, goto: async () => {},
+        on: (event, handler) => { handlers[event] = handler; },
+        evaluate: async (_load, { urls }) => urls.map(url => {
+            const count = (counts.get(url) || 0) + 1;
+            counts.set(url, count);
+            const name = new URL(url).pathname;
+            const request = { url: () => url, redirectedFrom: () => null, resourceType: () => "image" };
+            if (name === "/good" || name === "/recover" && count >= 3) return { url, error: null };
+            if (name === "/missing" || name === "/changed-then-missing" && count > 1) {
+                handlers.response({ request: () => request, headers: () => ({}), status: () => 404 });
+            } else {
+                handlers.requestfailed({ ...request, failure: () => ({ errorText: "net::ERR_NETWORK_CHANGED" }) });
+            }
+            return { url, error: "Browser could not load/decode image" };
+        })
+    };
+    const browser = { newContext: async () => ({ newPage: async () => page, close: async () => { closed = true; } }) };
+    const names = ["good", "recover", "persistent", "missing", "changed-then-missing"];
+    const images = names.map(id => ({ url: `https://images.test/${id}`, id }));
+    const failures = await checkProfile(browser, images, {
+        baseURL: "http://localhost:8000/", networkRetryDelays: [1, 2, 4], onRetry: message => retries.push(message)
+    });
+    assert.deepEqual(names.map(id => counts.get(`https://images.test/${id}`)), [1, 3, 5, 2, 2]);
+    assert.equal(failures.length, 3);
+    const persistent = failures.find(failure => failure.url.endsWith("/persistent"));
+    assert.equal(persistent.attempts.length, 5);
+    assert.equal(persistent.classification, "inconclusive");
+    assert(persistent.attempts.every(attempt => attempt.error === "net::ERR_NETWORK_CHANGED"));
+    assert.equal(failures.find(failure => failure.url.endsWith("/missing")).classification, "broken");
+    assert.equal(retries.length, 3);
+    assert.match(retries[0], /2 affected image URL\(s\) in 1 ms/);
+    assert.match(retries[1], /1 affected image URL\(s\) in 2 ms/);
+    assert.match(retries[2], /1 affected image URL\(s\) in 4 ms/);
+    assert.equal(closed, true);
+});
+
 test("failed editor reload blocks stale writes until the repaired draft is reconciled", async context => {
     const browser = await require("playwright").chromium.launch();
     context.after(() => browser.close());
@@ -14,6 +56,7 @@ test("failed editor reload blocks stale writes until the repaired draft is recon
         { type: "points", values: { Points: 5 } }, { name: "Choices", options: [] },
         { type: "publication", status: "draft", seriesId: "fixture.json" }];
     const writes = [];
+    const writesWhileBlocked = [];
     let checks = 0;
     let reloadsBlocked = false;
     let failReload = true;
@@ -23,10 +66,13 @@ test("failed editor reload blocks stale writes until the repaired draft is recon
         if (url.origin !== "https://editor.test") return route.abort();
         if (url.pathname === "/api/config") {
             if (request.method() === "PUT") {
+                if (reloadsBlocked) writesWhileBlocked.push(request.postDataJSON());
                 data = request.postDataJSON(); writes.push(data);
                 return route.fulfill({ json: { ok: true } });
             }
-            return reloadsBlocked && failReload ? route.fulfill({ status: 503 }) : route.fulfill({ json: data });
+            if (reloadsBlocked && failReload) return route.fulfill({ status: 503 });
+            reloadsBlocked = false;
+            return route.fulfill({ json: data });
         }
         if (url.pathname === "/api/cyoas") return route.fulfill({ json: [] });
         if (url.pathname === "/api/image-maintenance") {
@@ -54,8 +100,14 @@ test("failed editor reload blocks stale writes until the repaired draft is recon
     failReload = false;
     await page.locator("#scanRepairImagesBtn").click();
     await page.waitForFunction(() => document.querySelector("#imageMaintenanceStatus").textContent === "All images are up to date.");
-    assert.equal(writes.length, saved + 1);
-    assert.equal(writes.at(-1).find(entry => entry.type === "headerImage").url, after);
+    // Rendering the recovered draft can schedule an additional autosave. Its
+    // timing varies by runner; every save must retain the repaired image.
+    assert.ok(writes.length > saved);
+    for (const write of writes.slice(saved)) {
+        assert.equal(write.find(entry => entry.type === "headerImage").url, after);
+    }
+    assert.deepEqual(writesWhileBlocked, []);
+    assert.equal(checks, 2);
     assert.equal(await page.locator("#globalHeaderInput").inputValue(), after);
     assert.equal(await page.locator("#globalHeaderInput").isDisabled(), false);
 });
@@ -196,6 +248,14 @@ test("visual editor flags loaded and typed blocked URLs in header and option fie
         await input.fill("https://example.com/replacement.png");
         assert.equal(await input.getAttribute("aria-invalid"), "false");
         assert.equal(await input.evaluate(node => node.nextElementSibling.hidden), true);
+        await input.fill("https://rare-gallery.com/image.jpg");
+        assert.equal(await input.getAttribute("aria-invalid"), "false");
+        assert.equal(await input.evaluate(node => node.validity.customError), false);
+        assert.equal(await input.evaluate(node => node.classList.contains("image-url-caution")), true);
+        assert.match(await input.evaluate(node => node.nextElementSibling.textContent), /may work in your browser but fail in CI/);
+        await input.fill("https://cdn.imgchest.com/files/image.jpg");
+        assert.equal(await input.evaluate(node => node.nextElementSibling.hidden), true);
+        assert.equal(await input.evaluate(node => node.classList.contains("image-url-caution")), false);
         await input.fill("https://wallpapercave.com/another.png");
         assert.equal(await input.getAttribute("aria-invalid"), "true");
         await input.fill("");

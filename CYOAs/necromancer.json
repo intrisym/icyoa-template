@@ -409,7 +409,7 @@
             "label": "Kobolds",
             "description": "Kobolds were the first truly original creation by the Child, and worship it as their one true god. Kobolds live a life of simplicity, free from worry and trouble, They want for nothing of the physical realm. Kobolds have very few possessions, and kobold in all societies all things belong to everyone and no-one simultaenously. Kobolds follow an ascetic lifestyle that aids them in releasing their burden in life. \n\nThe kobolds typically live in the desert of the Untamed Lands, but are known to have immigrated to other nations. Here, they have spread their philosophy of life with those longer-lived than them. Kobolds believe the Child has two sides: A masculine side when it is awake that causes great and terrible events, and a feminine side when it is asleep that helps and heals the sick and wounded. \n\nEven more populous than the humans, the Kobolds have the shortest life expentency and the greatest rate of repoduction. Kobolds tend to live for up to half a century, and have dozens of children in this time, having reached adulthood after 5 years. They have scaly, reptilian visage and look very much alike a humanoid lizard. \n\nKobolds are a cold-blooded people, and thrive in warm lands, They are half the height of man and elf, but are able to keep their memories through the cycle of life. \n\nKobolds are prime targets for the Dark Elves' slave hunting parties and have a large slave population in Zatmenyir, due to their great ability to perform manual labor and tasks.",
             "id": "raceRaceKobolds",
-            "image": "https://eldrige.net/wp-content/uploads/2022/09/2021.09.24-Commander-Prophet-web.jpg"
+            "image": "https://cdn.imgchest.com/files/55db0d49046f.jpeg"
           }
         ],
         "subcategories": [],
@@ -802,7 +802,7 @@
                 "label": "Detect Undead",
                 "description": "A ritual that when performed will grant knowledge about the locations of. any nearby undead. \n\nAccurate enough to identify them inside a room, it can also provide a direction and a population count.\n\nThe after-effect of casting this spell lets the caster \"see\" the outlines of undead through solid objects: Up to 10km away",
                 "id": "spellsLiberMortisTier4DetectUndead",
-                "image": "https://wallpapercrafter.com/desktop1/529188-Fantasy-Mage-Magic-Skull-Summoner-Tree-Undead.jpg"
+                "image": "https://cdn.imgchest.com/files/8f030da584fc.jpeg"
               },
               {
                 "label": "Repel Animal",
@@ -1014,7 +1014,7 @@
                 "label": "Command Spirit",
                 "description": "Any spirit that the caster finds about can be forced to do their will. Usually cast upon malevolent entities, causing harm rather than benevolent ghost seeking peace, this spell compels the spirit to carry out the command and last for a single order, expiring once it is completed.",
                 "id": "spellsLiberAnimasTier4CommandSpirit",
-                "image": "https://rare-gallery.com/mocahbig/450561-fantasy-art-spirits-pillar-floating-women-artwork.jpg"
+                "image": "https://cdn.imgchest.com/files/bc2f8db7afbc.jpeg"
               },
               {
                 "label": "Create Ghost",
@@ -1287,7 +1287,7 @@
                 "label": "Bloody Memories",
                 "description": "A spell cast over blood, either spilt or not, that is then consumed or touched. Touching the blood will allow the caster to experience the last few minutes of a person's life before the blood was shed. Consuming the blood will allow the caster to see the memories of the blood's owner. This requires a ritual to ensure your memories do not mix. ",
                 "id": "spellsKroveriHMaTier3BloodyMemories",
-                "image": "https://wallpapercrafter.com/desktop1/660507-blood-swords-crow-raven-bleed-arrows-knight.jpg",
+                "image": "https://cdn.imgchest.com/files/bd417dc13e16.jpeg",
                 "prerequisites": "group(\"kroveriHmaTier4Spells\") >= 4"
               },
               {
@@ -1301,7 +1301,7 @@
                 "label": "Bloodthirsty Weapon",
                 "description": "This spell ensorcells a weapon to be sharper and harder to break, with the wielder gaining skill with the weapon. There is a side-effect to this, with the weapon seemingly taking on a life of its own. The wielder will be tempted to draw it more often, and be less willing to grant clemency to opponents. ",
                 "id": "spellsKroveriHMaTier3BloodthirstyWeapon",
-                "image": "https://rare-gallery.com/uploads/posts/4596178-alcd-redhead-warrior-leather-armor-blood-cape-dark-sword-pixiv-fantasia-rain-arrows-smoke-fantasy-art.jpg",
+                "image": "https://cdn.imgchest.com/files/346842c2f583.jpeg",
                 "prerequisites": "group(\"kroveriHmaTier4Spells\") >= 4"
               },
               {
@@ -1351,7 +1351,7 @@
                 "label": "Blood Missile",
                 "description": "A spell that causes blood to shoot from the caster's hand, vein, or other point of their body. The blood is formed into a missile and is directed by the caster's mind towards a target. \n\nWhen the missile hits the target, it hits with force of an arrow, penetrating armor and flesh, leaving only a wound behind instead of a physical object. ",
                 "id": "spellsKroveriHMaTier2BloodMissile",
-                "image": "https://wallpaperbat.com/img/611771-monsters-blood-weapons-fantasy-art-artwork-swords-chenbo-wallpaper.jpg",
+                "image": "https://cdn.imgchest.com/files/c25b9a33673d.jpeg",
                 "prerequisites": "group(\"kroveriHmaTier3Spells\") >= 3"
               },
               {
@@ -1381,7 +1381,7 @@
                 "description": "You read that Empower Bloodline is said to work on one's own bloodline, though the results were never stated. You died. Then you un-died. Now, you are stronger than any living person with an empowered bloodline, stronger, faster, and hardier. You may pass this power on by causing your blood to be drunk by someone. Beware the sun, for the Mother's light burns those that have forsaken her. You require hours of sleep in a coffin each day, or you feel weak.",
                 "id": "spellsKroveriHMaTier1Vampirism",
                 "prerequisites": "((((((itemsItemsCoffin)))))) && (group(\"kroveriHmaTier2Spells\") >= 2)",
-                "image": "https://rare-gallery.com/mocahbig/465843-vampires-fantasy-art-fantasy-girl-artwork.jpg",
+                "image": "https://cdn.imgchest.com/files/4b4564226019.jpeg",
                 "conflictsWith": [
                   "spellsPointsMotherSPath",
                   "spellsLiberMortisTier1Lichdom",
@@ -1448,7 +1448,7 @@
                 "label": "Gentle Repose",
                 "description": "A spell from the early chapter of the Promræn Caro that allows the caster to halt the decay of a body that was caused by death. As long as the spell is active the body will remain exactly as it was when the spell was cast.\n\nThis applies to parts of the body that are no longer connected, such as limbs that have been severed. ",
                 "id": "spellsPromrNCaroTier4GentleRepose",
-                "image": "https://rare-gallery.com/uploads/posts/4564106-artwork-fantasy-art-digital-art-skeleton-colorful-flowers-mountains.jpg"
+                "image": "https://cdn.imgchest.com/files/89e312fd0367.jpeg"
               },
               {
                 "label": "Cure Disease",
@@ -1472,7 +1472,7 @@
                 "label": "Reinforcement",
                 "description": "From the Promræn Caro, concerning health, this spell causes the target's bones to increase in strength, even to the point that they may not be broken. Muscles may also be reinforced, lending supernatural strength and reflexes to the target. Their skin when reinforced will turn blades and deflect arrows. Other reinforcements are also mentioned. ",
                 "id": "spellsPromrNCaroTier4Reinforcement",
-                "image": "https://rare-gallery.com/uploads/posts/4553135-hero-fantasy-art-video-games-heroes-of-might-and-magic-vi.jpg"
+                "image": "https://cdn.imgchest.com/files/0be06a8579f5.jpeg"
               },
               {
                 "label": "Inflict Paralysis",
@@ -1577,7 +1577,7 @@
                 "label": "Craft Plague",
                 "description": "A spell that cause a sample of blood or an existing disease to mutate into one that carries the traits desired. \n\nThe plague may be transmitted however you wish and even target only specific kinds of people, and may be benevolent or malevolent, grant enhanced strength or cause atrophy.\n\nOne with Cure Disease may cure it. ",
                 "id": "spellsPromrNCaroTier2CraftPlague",
-                "image": "https://rare-gallery.com/uploads/posts/4549445-plague-doctors-artwork-fantasy-art-horror.jpg",
+                "image": "https://cdn.imgchest.com/files/bac6edc43b9d.jpeg",
                 "prerequisites": "group(\"promraenCaroTier3Spells\") >= 3"
               }
             ],
@@ -1963,7 +1963,7 @@
             "label": "Horn of the Dead",
             "description": "Carved from the horn of a long dead beast and inscribed with runes of power, it has the power to command the dead.By blowing into it, the user can use chord progressions to give orders to the dead, whether or not they have any power. ",
             "id": "itemsItemsHornOfTheDead",
-            "image": "https://tellest.com/wp-content/uploads/2020/12/Horn-of-Winter-WIP-scaled.jpg"
+            "image": "https://cdn.imgchest.com/files/cc4930871b16.jpeg"
           },
           {
             "label": "Haunted Sword",
@@ -2139,7 +2139,7 @@
             "label": "Kaija",
             "description": "An imprisoned vampire, held deep within a stronghold. She is starving and weak, but if you free her will become your loyal ally. When fed, she is remarkably strong and swift. \n\n\"I've been hungry for so long, but you are going to help me change that.\" ",
             "id": "companionsCompanionsKaija",
-            "image": "https://rare-gallery.com/uploads/posts/4583587-vampires-fantasy-art-fantasy-girl.jpg"
+            "image": "https://cdn.imgchest.com/files/54c41433649b.jpeg"
           },
           {
             "label": "Eka",
@@ -2205,13 +2205,13 @@
             "label": "Em'Al",
             "description": "A human subjected to a cruel fate, their soul bound in a suit of armor. They broke free and have been working to right the wrongs they were forced to commit.\n\n\"I only look mean and evil. I used to be a farmer, for Mother's sake!\"",
             "id": "companionsCompanionsEmAl",
-            "image": "https://wallpapercrafter.com/desktop1/565315-dark-souls-dark-souls-ii-art-game-men-one-Person.jpg"
+            "image": "https://cdn.imgchest.com/files/16f1edfa41d2.jpeg"
           },
           {
             "label": "Risdare",
             "description": "A mounted warrior and his stead. Killed in combat and somehow returned from the dead. He still has all his skills and his axe remains deadly as it was in life. \n\n\"Do not shy away from the light. Do you want to live forever?\"",
             "id": "companionsCompanionsRisdare",
-            "image": "https://rare-gallery.com/uploads/posts/4589689-warrior-axes-creature-fantasy-art.jpg"
+            "image": "https://cdn.imgchest.com/files/63397b70759f.jpeg"
           },
           {
             "label": "Endhinat",
@@ -2223,7 +2223,7 @@
             "label": "Patchwerk",
             "description": "Sewn together from several bodies, she has an eclectic personality, though she is rather vain. \n\nHer creator taught her necromancy even though she had no aptitude. \n\n\"Do you think I am pretty? I will trade a lesson for a compliment.\" ",
             "id": "companionsCompanionsPatchwerk",
-            "image": "https://rare-gallery.com/mocahbig/454425-women-black-hair-WLOP-fantasy-art-fantasy-girl.jpg"
+            "image": "https://cdn.imgchest.com/files/0d0e6c2bf528.jpeg"
           },
           {
             "label": "Elizzbeth",
@@ -2235,7 +2235,7 @@
             "label": "Libyn",
             "description": "An angst-filled woman angry at someone for a reason she will not say. She was originally a sorcerer, but now has the ability to create weapons from her body.\n\n\"I will impale them, burn them, make them suffer, then they can die.\"",
             "id": "companionsCompanionsLibyn",
-            "image": "https://wallpapercrafter.com/desktop/163212-fantasy-art-women-dress-black-dress-city-birds-cleavage-fantasy-girl-WLOP.jpg"
+            "image": "https://cdn.imgchest.com/files/261d4a48c9a2.jpeg"
           },
           {
             "label": "Catherine",
@@ -2361,7 +2361,7 @@
             "label": "Teremum",
             "description": "The most feared of all Eremites, he possesses an unbridled sadism. He has a desire to make the world his Domum Lacrimans, the power to make it so, but no worldly ally. \n\n\"I will enjoy making them bleed. ANd I will enjoy making you enjoy it.\" ",
             "id": "companionsCompanionsTeremum",
-            "image": "https://wallpapercrafter.com/desktop/11610-wolf-pharaoh-art-ancient-egypt-4k.jpg"
+            "image": "https://cdn.imgchest.com/files/772a261f5bed.jpeg"
           },
           {
             "label": "Margaret",
@@ -2479,7 +2479,7 @@
               }
             ],
             "prerequisites": "spellsKroveriHMaTier3CreateNosferatu",
-            "image": "https://wallpapercrafter.com/desktop/127891-fantasy-art-creature-artwork-vampires.jpg"
+            "image": "https://cdn.imgchest.com/files/087690b2e4c2.jpeg"
           },
           {
             "label": "Vampire Bride",
@@ -2493,7 +2493,7 @@
               }
             ],
             "prerequisites": "spellsKroveriHMaTier3CreateNosferatu",
-            "image": "https://wallpapercrafter.com/desktop/142001-fantasy-art-fantasy-girl-artwork-vampires.jpg"
+            "image": "https://cdn.imgchest.com/files/8b30c4e666f5.jpeg"
           },
           {
             "label": "Dhampir",
@@ -2801,7 +2801,7 @@
               }
             ],
             "prerequisites": "spellsPromrNCaroTier2Wereform",
-            "image": "https://rare-gallery.com/uploads/posts/1068281-artwork-mythology-werewolves-screenshot-fictional-character.jpg"
+            "image": "https://cdn.imgchest.com/files/59ed2da7e87a.jpeg"
           },
           {
             "label": "Totenhund",
@@ -2941,7 +2941,7 @@
               }
             ],
             "prerequisites": "spellsReunuPertemruTier2CreateEremite",
-            "image": "https://rare-gallery.com/thumbs/4535851-fantasy-art.jpg"
+            "image": "https://cdn.imgchest.com/files/4771709ffeed.jpeg"
           },
           {
             "label": "Amkhata",
@@ -3212,7 +3212,7 @@
                 }
               }
             ],
-            "image": "https://rare-gallery.com/uploads/posts/963717-science-fiction-digital-art-concept-art-artwork.jpg"
+            "image": "https://cdn.imgchest.com/files/85d19706b1a0.jpeg"
           },
           {
             "label": "Groundskeeper",
@@ -3251,7 +3251,7 @@
                 }
               }
             ],
-            "image": "https://rare-gallery.com/uploads/posts/1036495-illustration-fantasy-art-fantasy-girl-anime-mythology-screenshot-computer-wallpaper-woman-warrior.jpg"
+            "image": "https://cdn.imgchest.com/files/fbe743005fe3.jpeg"
           },
           {
             "label": "Kobold Warrior",

@@ -3,6 +3,7 @@ const path = require("node:path");
 const { validationMessage } = require("../imageUrlPolicy");
 const { classifyFailure, readVerifications, evaluateResults } = require("../imageVerification");
 const { renderImageSummary } = require("./image-check-report");
+const { reportPath: defaultReportPath } = require("./report-files");
 
 const ROOT = path.resolve(__dirname, "..");
 const PRODUCTION_URL = "https://intrisym.github.io/icyoa-template/";
@@ -41,7 +42,9 @@ function readImages(files, root = ROOT) {
 
 // Serve a test document at the real origin without deploying or changing DNS.
 // Only the document is intercepted: external image requests go to their real hosts.
-async function checkProfile(browser, images, { baseURL, timeout = 10000, concurrency = 32, assetRoot = ROOT, serveLocalAssets = true, onProgress = () => {} }) {
+async function checkProfile(browser, images, { baseURL, timeout = 10000, concurrency = 32, assetRoot = ROOT, serveLocalAssets = true,
+    onProgress = () => {}, networkRetryDelays = [1000, 2000, 4000],
+    onRetry = message => console.log(message) }) {
     const context = await browser.newContext({ serviceWorkers: "block" });
     try {
         const page = await context.newPage();
@@ -112,7 +115,12 @@ async function checkProfile(browser, images, { baseURL, timeout = 10000, concurr
         for (let offset = 0; offset < unique.length; offset += concurrency) {
             let remaining = unique.slice(offset, offset + concurrency);
             const attempts = new Map(remaining.map(url => [url, []]));
-            for (let attempt = 0; attempt < 2 && remaining.length; attempt += 1) {
+            for (let attempt = 0; attempt < 2 + networkRetryDelays.length && remaining.length; attempt += 1) {
+                if (attempt >= 2) {
+                    const delay = networkRetryDelays[attempt - 2];
+                    onRetry(`Network changed: retrying ${remaining.length} affected image URL(s) in ${delay} ms (${attempt - 1}/${networkRetryDelays.length} recovery retries).`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
                 remaining.forEach(url => diagnostics.delete(url));
                 const results = await loadImages(remaining);
                 remaining = [];
@@ -120,7 +128,7 @@ async function checkProfile(browser, images, { baseURL, timeout = 10000, concurr
                     if (!result.error) continue;
                     const observation = { ...result, ...diagnostics.get(result.url) };
                     attempts.get(result.url).push(observation);
-                    if (!attempt) remaining.push(result.url);
+                    if (!attempt || observation.error === "net::ERR_NETWORK_CHANGED" && attempt < 1 + networkRetryDelays.length) remaining.push(result.url);
                     else {
                         const failure = { ...observation, attempts: attempts.get(result.url), references: references.get(result.url) };
                         failures.push({ ...failure, classification: classifyFailure(failure) });
@@ -151,7 +159,7 @@ function reportFailure(profile, failure) {
     }
 }
 
-async function runImageChecks({ root = ROOT, files = [], reportPath = path.join(ROOT, "image-check-report.json") } = {}) {
+async function runImageChecks({ root = ROOT, files = [], reportPath = defaultReportPath(ROOT, "image-check-report.json") } = {}) {
     const { createImageMaintenance } = require("../imageMaintenance");
     await createImageMaintenance({ directory: path.join(root, "CYOAs"), linksFile: path.join(root, "image-links.json") }).checkLinks();
     const registry = readVerifications(root);
@@ -187,6 +195,7 @@ async function runImageChecks({ root = ROOT, files = [], reportPath = path.join(
     const failures = evaluation.failures.length;
     const accepted = new Set(evaluation.manualVerifications.map(entry => JSON.stringify([entry.file, entry.id, entry.url]))).size;
     const label = failures ? "FAILED" : accepted ? "PASS WITH MANUAL VERIFICATION" : "PASS";
+    fs.mkdirSync(path.dirname(reportPath), { recursive: true });
     fs.writeFileSync(reportPath, JSON.stringify({ references: images.length, ...evaluation }, null, 2) + "\n");
     console.log(`\n${label}: ${failures} blocking result(s); ${accepted} manually verified image(s). Full report: ${reportPath}`);
     if (process.env.GITHUB_STEP_SUMMARY) {

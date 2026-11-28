@@ -3,6 +3,7 @@ const path = require("node:path");
 const { checkProfile } = require("./check-images");
 const { productionURL, classifyFailure } = require("../imageVerification");
 const { validationMessage } = require("../imageUrlPolicy");
+const { reportPath } = require("./report-files");
 
 function validateImageUrl(value) {
     const text = String(value || "").trim();
@@ -69,7 +70,9 @@ async function main() {
     } catch (error) {
         report = { url: url || "(invalid or missing image URL)", status: "unable to test", results: [], error: error.message };
     }
-    fs.writeFileSync(path.resolve("image-url-test-report.json"), JSON.stringify(report, null, 2) + "\n");
+    const output = reportPath(path.resolve(__dirname, ".."), "image-url-test-report.json");
+    fs.mkdirSync(path.dirname(output), { recursive: true });
+    fs.writeFileSync(output, JSON.stringify(report, null, 2) + "\n");
     const summary = renderUrlSummary(report);
     if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary + "\n");
     console.log(summary);
