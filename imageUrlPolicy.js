@@ -10,7 +10,7 @@
     // Advisory only: these domains and their subdomains remain valid inputs.
     const warningDomains = [
         "rare-gallery.com", "raregallery.art", "wallpapercrafter.com",
-        "eldrige.net", "tellest.com", "zestcoloring.com"
+        "eldrige.net", "tellest.com", "zestcoloring.com", "wallpaperbat.com"
     ];
     let messageId = 0;
 
