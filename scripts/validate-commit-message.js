@@ -1,9 +1,10 @@
 const fs = require("node:fs");
-const path = require("node:path");
 const { execFileSync, spawnSync } = require("node:child_process");
 const { validateBranchName } = require("./validate-branch-name");
 
 const SPECIFICATION = "https://www.conventionalcommits.org/en/v1.0.0/";
+// Legacy history through this commit predates Conventional Commits enforcement.
+const HISTORY_BASELINE = "8a5011f573ab5ed7d27f2397791b5b59f033a0cb";
 const footerPattern = /^([\p{L}\p{N}_-]+|BREAKING CHANGE)(: | #)(.*)$/u;
 
 function validateMessage(message) {
@@ -59,11 +60,8 @@ function readMessageFile(filename) {
 }
 
 function baseline() {
-    const root = git(["rev-parse", "--show-toplevel"]);
-    const config = JSON.parse(fs.readFileSync(path.join(root, ".commit-conventions.json"), "utf8"));
-    if (!/^[a-f0-9]{40,64}$/i.test(config.baseline)) throw new Error("Invalid Conventional Commits baseline.");
-    git(["cat-file", "-e", `${config.baseline}^{commit}`]);
-    return config.baseline;
+    git(["cat-file", "-e", `${HISTORY_BASELINE}^{commit}`]);
+    return HISTORY_BASELINE;
 }
 
 function collectCommits(tips, { exclude = [], noMerges = false, remote } = {}) {

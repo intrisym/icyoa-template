@@ -69,15 +69,18 @@ async function repository(context) {
     git(["config", "commit.gpgsign", "false"]);
     git(["commit", "--allow-empty", "-m", "Legacy initial commit"]);
     const baseline = git(["rev-parse", "HEAD"]);
-    await fs.writeFile(path.join(directory, ".commit-conventions.json"), JSON.stringify({ baseline }));
     await fs.mkdir(path.join(directory, "scripts"));
     await fs.mkdir(path.join(directory, ".githooks"));
-    await fs.copyFile(VALIDATOR, path.join(directory, "scripts/validate-commit-message.js"));
+    const validatorPath = path.join(directory, "scripts/validate-commit-message.js");
+    const source = await fs.readFile(VALIDATOR, "utf8");
+    const fixtureSource = source.replace(/const HISTORY_BASELINE = "[a-f0-9]+";/, `const HISTORY_BASELINE = "${baseline}";`);
+    assert.notEqual(fixtureSource, source, "Fixture must use its own repository's baseline.");
+    await fs.writeFile(validatorPath, fixtureSource);
     await fs.copyFile(path.join(ROOT, "scripts/validate-branch-name.js"), path.join(directory, "scripts/validate-branch-name.js"));
     await fs.copyFile(path.join(ROOT, ".githooks/commit-msg"), path.join(directory, ".githooks/commit-msg"));
     await fs.chmod(path.join(directory, ".githooks/commit-msg"), 0o755);
     git(["config", "core.hooksPath", ".githooks"]);
-    const check = (args, { input, extraEnv = {} } = {}) => spawnSync(process.execPath, [VALIDATOR, ...args], {
+    const check = (args, { input, extraEnv = {} } = {}) => spawnSync(process.execPath, [validatorPath, ...args], {
         cwd: directory, env: { ...env, ...extraEnv }, input, encoding: "utf8"
     });
     return { directory, env, git, check, baseline };
