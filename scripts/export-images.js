@@ -120,72 +120,80 @@ async function exportImages(options, { root = path.resolve(__dirname, '..'), tok
     if (!options.output) migrateLegacyReports(root);
     const output = options.output ? path.resolve(root, options.output) : reportPath(root, 'image-export-report.json');
     if (output.startsWith(path.join(root, 'CYOAs') + path.sep)) throw new Error('--output must be outside CYOAs.');
-    const previous = await readReport(output);
-    const completed = [...(previous?.uploads || []), ...(input?.uploads || [])];
-    if (previous && previous.kind !== 'local-image-export') throw new Error('--output already exists and is not a local export report. Use --report to read a CI report.');
-    await fs.mkdir(path.dirname(output), { recursive: true });
-    const report = { kind: 'local-image-export', schemaVersion: 1, uploads: [...(previous?.uploads || [])], unresolved: [], changes: [] };
-    const save = async () => {
-        const temporary = output + '.' + randomUUID() + '.tmp';
-        try {
-            await fs.writeFile(temporary, JSON.stringify(report, null, 2) + '\n', { flag: 'wx' });
-            await fs.rename(temporary, output);
-        } finally { await fs.rm(temporary, { force: true }); }
-    };
-    const replacements = new Map();
-    const digests = new Map();
-    const checked = new Map();
-    const working = async url => {
-        if (!checked.has(url)) checked.set(url, (await verify(url)).status === 'working');
-        return checked.get(url);
-    };
-    let stopped;
-    let batch = [];
-    const fail = (item, error) => {
-        report.unresolved.push({ ...item, references: sources.find(source => source.source === item.source)?.references || [], error: error.message });
-        log(`UNRESOLVED ${item.source}: ${error.message}`);
-    };
-    async function flush() {
-        signal?.throwIfAborted();
-        if (!batch.length) return;
-        const current = batch; batch = [];
-        let uploaded;
-        log(`Uploading ${current.length} unique image(s). The API limiter may wait up to 61 seconds before sending.`);
-        try { uploaded = await upload(current, token, request); }
-        catch (error) { current.forEach(item => fail({ source: item.source }, error)); stopped = error; await save(); return; }
-        for (const item of uploaded) {
-            const digest = current.find(image => image.source === item.source).digest;
-            report.uploads.push({ ...item, digest });
-            digests.set(digest, item.url);
-        }
-        // Save before verification/applying, so interrupted runs can reuse uploads.
-        await save();
-        for (const item of uploaded) {
-            try {
-                log(`Checking replacement: ${item.url}`);
-                if (!await working(item.url)) throw new Error('ImgChest URL did not pass both browser-origin checks.');
-                replacements.set(item.source, item.url);
-            } catch (error) { fail({ source: item.source }, error); }
-        }
-    }
     // Separate from the short CYOA write lock: the editor may keep working while
     // the download/browser session runs, but two local exporters cannot overlap.
     const lock = path.join(root, '.image-export.lock');
     try { await fs.mkdir(lock); }
     catch (error) { if (error.code !== 'EEXIST') throw error; throw new Error('Another local image export is running. If it crashed, stop all exporters before removing .image-export.lock.'); }
+    let save;
     try {
         await fs.writeFile(path.join(lock, 'owner.json'), JSON.stringify({ pid: process.pid }));
+        const previous = await readReport(output);
+        const completed = [...(previous?.uploads || []), ...(input?.uploads || [])];
+        if (previous && previous.kind !== 'local-image-export') throw new Error('--output already exists and is not a local export report. Use --report to read a CI report.');
+        await fs.mkdir(path.dirname(output), { recursive: true });
+        const report = { kind: 'local-image-export', schemaVersion: 1, uploads: [...(previous?.uploads || [])], unresolved: [], changes: [] };
+        save = async () => {
+            const temporary = output + '.' + randomUUID() + '.tmp';
+            try {
+                await fs.writeFile(temporary, JSON.stringify(report, null, 2) + '\n', { flag: 'wx' });
+                await fs.rename(temporary, output);
+            } finally { await fs.rm(temporary, { force: true }); }
+        };
+        const replacements = new Map();
+        const digests = new Map();
+        const checked = new Map();
+        const verificationStatus = async url => {
+            if (!checked.has(url)) {
+                try { checked.set(url, (await verify(url)).status); }
+                catch { checked.set(url, 'inconclusive'); }
+            }
+            return checked.get(url);
+        };
+        let stopped;
+        let batch = [];
+        const fail = (item, error) => {
+            report.unresolved.push({ ...item, references: sources.find(source => source.source === item.source)?.references || [], error: error.message });
+            log(`UNRESOLVED ${item.source}: ${error.message}`);
+        };
+        async function flush() {
+            signal?.throwIfAborted();
+            if (!batch.length) return;
+            const current = batch; batch = [];
+            let uploaded;
+            log(`Uploading ${current.length} unique image(s). The API limiter may wait up to 61 seconds before sending.`);
+            try { uploaded = await upload(current, token, request); }
+            catch (error) { current.forEach(item => fail({ source: item.source }, error)); stopped = error; await save(); return; }
+            for (const item of uploaded) {
+                const digest = current.find(image => image.source === item.source).digest;
+                report.uploads.push({ ...item, digest });
+                digests.set(digest, item.url);
+            }
+            // Save before verification/applying, so interrupted runs can reuse uploads.
+            await save();
+            for (const item of uploaded) {
+                try {
+                    log(`Checking replacement: ${item.url}`);
+                    if (await verificationStatus(item.url) !== 'working') throw new Error('ImgChest URL did not pass both browser-origin checks.');
+                    replacements.set(item.source, item.url);
+                } catch (error) { fail({ source: item.source }, error); }
+            }
+        }
         await save();
         for (const item of sources) {
             signal?.throwIfAborted();
             try {
-                const cached = completed.find(entry => canonical(entry.source) === item.source && isUploadedURL(entry.url));
-                if (cached && await working(cached.url)) {
+                const cached = completed.findLast(entry => canonical(entry.source) === item.source && isUploadedURL(entry.url));
+                if (cached && await verificationStatus(cached.url) !== 'broken') {
+                    // Persist input-report uploads even when verification is
+                    // inconclusive, so future runs never duplicate them.
+                    if (!report.uploads.some(entry => entry.source === item.source && entry.url === cached.url)) report.uploads.push(cached);
+                    await save();
+                    if (await verificationStatus(cached.url) !== 'working') throw new Error('Cached ImgChest verification is inconclusive; upload retained for a later verification attempt.');
                     log(`Reusing completed upload: ${item.source} -> ${cached.url}`);
                     replacements.set(item.source, cached.url);
                     if (cached.digest) digests.set(cached.digest, cached.url);
-                    if (!report.uploads.some(entry => entry.source === item.source && entry.url === cached.url)) report.uploads.push(cached);
-                    await save(); continue;
+                    continue;
                 }
                 if (stopped) throw stopped;
                 log(`Downloading: ${item.source}`);
@@ -201,13 +209,13 @@ async function exportImages(options, { root = path.resolve(__dirname, '..'), tok
                 const digest = createHash('sha256').update(image.bytes).digest('hex');
                 if (batch.some(pending => pending.digest === digest)) await flush();
                 if (!digests.has(digest)) {
-                    const sameBytes = completed.find(entry => entry.digest === digest && isUploadedURL(entry.url));
-                    if (sameBytes && await working(sameBytes.url)) digests.set(digest, sameBytes.url);
+                    const sameBytes = completed.findLast(entry => entry.digest === digest && isUploadedURL(entry.url));
+                    if (sameBytes && await verificationStatus(sameBytes.url) !== 'broken') digests.set(digest, sameBytes.url);
                 }
                 if (digests.has(digest)) {
                     const url = digests.get(digest);
                     report.uploads.push({ source: item.source, url, digest }); await save();
-                    if (!await working(url)) throw new Error('ImgChest URL did not pass both browser-origin checks.');
+                    if (await verificationStatus(url) !== 'working') throw new Error('ImgChest URL did not pass both browser-origin checks.');
                     replacements.set(item.source, url); continue;
                 }
                 if (stopped) throw stopped;
@@ -221,7 +229,7 @@ async function exportImages(options, { root = path.resolve(__dirname, '..'), tok
         await save();
         log(`Updated ${report.changes.length} image reference(s); ${report.unresolved.length} unresolved. Report: ${output}`);
         return report;
-    } finally { try { await save(); } finally { await fs.rm(lock, { recursive: true, force: true }); } }
+    } finally { try { if (save) await save(); } finally { await fs.rm(lock, { recursive: true, force: true }); } }
 }
 
 async function main() {

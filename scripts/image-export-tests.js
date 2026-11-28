@@ -137,6 +137,54 @@ test('unverified uploaded URLs remain unapplied and can be resumed without reupl
     assert.equal(f.counters.uploads, 1);
     assert.equal((await f.read('v1.json'))[0].url, NEW);
 });
+test('repeated inconclusive verification preserves cached uploads without new downloads or uploads', async t => {
+    const f = await fixture(t);
+    const options = parseArgs(['--all', '--apply']);
+    for (let run = 0; run < 3; run++) {
+        const report = await exportImages(options, { ...f.dependencies, verify: async () => ({ status: 'inconclusive' }) });
+        assert.equal(report.changes.length, 0);
+        assert.equal(report.unresolved.length, 1);
+        assert.equal(report.uploads.length, 1);
+    }
+    assert.deepEqual(f.counters, { downloads: 1, uploads: 1 });
+    await exportImages(options, f.dependencies);
+    assert.deepEqual(f.counters, { downloads: 1, uploads: 1 });
+    assert.equal((await f.read('v1.json'))[0].url, NEW);
+});
+test('input-report uploads survive inconclusive verification and verifier errors in the resume cache', async t => {
+    const f = await fixture(t);
+    await fs.writeFile(path.join(f.root, 'ci-report.json'), JSON.stringify({ uploads: [{ source: SOURCE, url: NEW }] }));
+    const report = await exportImages(parseArgs(['--report', 'ci-report.json', '--apply']), {
+        ...f.dependencies, verify: async () => { throw new Error('Browser unavailable'); }
+    });
+    assert.equal(report.uploads[0].url, NEW);
+    assert.equal(report.unresolved.length, 1);
+    await exportImages(parseArgs(['--all', '--apply']), f.dependencies);
+    assert.deepEqual(f.counters, { downloads: 0, uploads: 0 });
+});
+test('cached identical bytes with inconclusive verification are retained for another source without reuploading', async t => {
+    const f = await fixture(t);
+    const digest = require('node:crypto').createHash('sha256').update(BYTES).digest('hex');
+    await fs.mkdir(path.join(f.root, 'reports'));
+    await fs.writeFile(path.join(f.root, 'reports/image-export-report.json'), JSON.stringify({ kind: 'local-image-export', uploads: [{ source: 'https://old.example/image.jpg', url: NEW, digest }] }));
+    const result = await exportImages(parseArgs(['--all', '--apply']), { ...f.dependencies, verify: async () => ({ status: 'inconclusive' }) });
+    assert.equal(result.unresolved.length, 1);
+    assert.ok(result.uploads.some(entry => entry.source === SOURCE && entry.url === NEW));
+    await exportImages(parseArgs(['--all', '--apply']), f.dependencies);
+    assert.deepEqual(f.counters, { downloads: 1, uploads: 0 });
+});
+test('confirmed broken cached uploads can be replaced and the newest replacement is reused', async t => {
+    const f = await fixture(t);
+    const old = 'https://cdn.imgchest.com/files/broken.jpg';
+    await fs.mkdir(path.join(f.root, 'reports'));
+    await fs.writeFile(path.join(f.root, 'reports/image-export-report.json'), JSON.stringify({ kind: 'local-image-export', uploads: [{ source: SOURCE, url: old }] }));
+    const options = parseArgs(['--all', '--apply']);
+    const result = await exportImages(options, { ...f.dependencies, verify: async url => ({ status: url === old ? 'broken' : 'inconclusive' }) });
+    assert.equal(result.uploads.length, 2);
+    await exportImages(options, f.dependencies);
+    assert.deepEqual(f.counters, { downloads: 1, uploads: 1 });
+    assert.equal((await f.read('v1.json'))[0].url, NEW);
+});
 test('missing token and CI execution are rejected before uploads', async t => {
     const f = await fixture(t);
     await assert.rejects(exportImages(parseArgs(['--all', '--apply']), { ...f.dependencies, token: null }), /IMGCHEST_API_TOKEN/);
@@ -167,7 +215,40 @@ test('output cannot overwrite unrelated JSON or an active exporter report', asyn
     await fs.writeFile(path.join(f.root, 'package.json'), '{"name":"keep"}');
     await assert.rejects(exportImages(parseArgs(['--all', '--apply', '--output', 'package.json']), f.dependencies), /not a local export report/);
     assert.equal(await fs.readFile(path.join(f.root, 'package.json'), 'utf8'), '{"name":"keep"}');
+    await assert.rejects(fs.stat(path.join(f.root, '.image-export.lock')), { code: 'ENOENT' });
     await fs.mkdir(path.join(f.root, '.image-export.lock'));
     await assert.rejects(exportImages(parseArgs(['--all', '--apply']), f.dependencies), /Another local image export/);
     assert.equal(f.counters.uploads, 0);
+});
+
+test('preview ignores an active exporter lock and never reads or writes its output', async t => {
+    const f = await fixture(t);
+    await fs.mkdir(path.join(f.root, '.image-export.lock'));
+    const result = await exportImages(parseArgs(['--all', '--output', 'missing/report.json']), f.dependencies);
+    assert.equal(result.preview, true);
+    await assert.rejects(fs.stat(path.join(f.root, 'missing')), { code: 'ENOENT' });
+    assert.ok((await fs.stat(path.join(f.root, '.image-export.lock'))).isDirectory());
+});
+
+test('resume cache is read only while holding the exporter lock', async t => {
+    const f = await fixture(t);
+    const output = path.join(f.root, 'reports/image-export-report.json');
+    const originalRead = fs.readFile.bind(fs);
+    let reads = 0;
+    t.mock.method(fs, 'readFile', async (filename, ...args) => {
+        if (filename === output) {
+            const owner = JSON.parse(await originalRead(path.join(f.root, '.image-export.lock/owner.json'), 'utf8'));
+            assert.equal(owner.pid, process.pid);
+            reads++;
+            // Simulate a cache completed by the previous lock holder just
+            // before this exporter acquired the lock.
+            return JSON.stringify({ kind: 'local-image-export', uploads: [{ source: SOURCE, url: NEW }] });
+        }
+        return originalRead(filename, ...args);
+    });
+    await exportImages(parseArgs(['--all', '--apply']), f.dependencies);
+    assert.equal(reads, 1);
+    assert.deepEqual(f.counters, { downloads: 0, uploads: 0 });
+    assert.equal((await f.read('v1.json'))[0].url, NEW);
+    await assert.rejects(fs.stat(path.join(f.root, '.image-export.lock')), { code: 'ENOENT' });
 });
