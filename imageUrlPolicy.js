@@ -8,7 +8,10 @@
         }
     ];
     // Advisory only: these domains and their subdomains remain valid inputs.
-    const warningDomains = ["rare-gallery.com", "raregallery.art", "wallpapercrafter.com"];
+    const warningDomains = [
+        "rare-gallery.com", "raregallery.art", "wallpapercrafter.com",
+        "eldrige.net", "tellest.com", "zestcoloring.com"
+    ];
     let messageId = 0;
 
     function validationMessage(value) {

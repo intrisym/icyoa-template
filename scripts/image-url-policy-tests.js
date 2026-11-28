@@ -25,7 +25,7 @@ test("reports malformed URLs without throwing", () => {
 });
 
 test("problematic hosts get advisory warnings without validation errors", () => {
-    for (const domain of ["rare-gallery.com", "raregallery.art", "wallpapercrafter.com"]) {
+    for (const domain of ["rare-gallery.com", "raregallery.art", "wallpapercrafter.com", "eldrige.net", "tellest.com", "zestcoloring.com"]) {
         for (const url of [`https://${domain}/image.jpg`, `https://cdn.${domain}/image.jpg`, `HTTPS://${domain.toUpperCase()}./image.jpg`, `//${domain}/image.jpg`]) {
             assert.match(warningMessage(url), /may work in your browser but fail in CI/);
             assert.match(warningMessage(url), /local image exporter/);
