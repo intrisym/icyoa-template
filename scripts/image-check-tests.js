@@ -14,6 +14,7 @@ test("failed editor reload blocks stale writes until the repaired draft is recon
         { type: "points", values: { Points: 5 } }, { name: "Choices", options: [] },
         { type: "publication", status: "draft", seriesId: "fixture.json" }];
     const writes = [];
+    const writesWhileBlocked = [];
     let checks = 0;
     let reloadsBlocked = false;
     let failReload = true;
@@ -23,10 +24,13 @@ test("failed editor reload blocks stale writes until the repaired draft is recon
         if (url.origin !== "https://editor.test") return route.abort();
         if (url.pathname === "/api/config") {
             if (request.method() === "PUT") {
+                if (reloadsBlocked) writesWhileBlocked.push(request.postDataJSON());
                 data = request.postDataJSON(); writes.push(data);
                 return route.fulfill({ json: { ok: true } });
             }
-            return reloadsBlocked && failReload ? route.fulfill({ status: 503 }) : route.fulfill({ json: data });
+            if (reloadsBlocked && failReload) return route.fulfill({ status: 503 });
+            reloadsBlocked = false;
+            return route.fulfill({ json: data });
         }
         if (url.pathname === "/api/cyoas") return route.fulfill({ json: [] });
         if (url.pathname === "/api/image-maintenance") {
@@ -54,8 +58,14 @@ test("failed editor reload blocks stale writes until the repaired draft is recon
     failReload = false;
     await page.locator("#scanRepairImagesBtn").click();
     await page.waitForFunction(() => document.querySelector("#imageMaintenanceStatus").textContent === "All images are up to date.");
-    assert.equal(writes.length, saved + 1);
-    assert.equal(writes.at(-1).find(entry => entry.type === "headerImage").url, after);
+    // Rendering the recovered draft can schedule an additional autosave. Its
+    // timing varies by runner; every save must retain the repaired image.
+    assert.ok(writes.length > saved);
+    for (const write of writes.slice(saved)) {
+        assert.equal(write.find(entry => entry.type === "headerImage").url, after);
+    }
+    assert.deepEqual(writesWhileBlocked, []);
+    assert.equal(checks, 2);
     assert.equal(await page.locator("#globalHeaderInput").inputValue(), after);
     assert.equal(await page.locator("#globalHeaderInput").isDisabled(), false);
 });
