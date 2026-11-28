@@ -1670,7 +1670,7 @@
                 }
               }
             ],
-            "image": "https://raregallery.art/uploads/posts/4597109-elves-archer-world-of-warcraft-night-elves-warcraft-bow-and-arrow-video-games-fantasy-girl-bow.jpg"
+            "image": "https://cdn.imgchest.com/files/a258b02e799d.jpeg"
           },
           {
             "label": "Tundra Elf",
@@ -5746,7 +5746,7 @@
                 }
               }
             ],
-            "image": "https://wallpapercrafter.com/desktop/136905-fantasy-art-bow-and-arrow-hunter-archer-pigs.jpg"
+            "image": "https://cdn.imgchest.com/files/9116ca294c45.jpeg"
           },
           {
             "label": "Weapon-Thrower",
@@ -6085,7 +6085,7 @@
                 }
               }
             ],
-            "image": "https://wallpapercrafter.com/desktop2/766828-moon-fantasy-forest-armor-trees-night-horses.jpg",
+            "image": "https://cdn.imgchest.com/files/e4728e615b25.jpeg",
             "prerequisites": "group(\"martialWeaponry\")"
           },
           {
@@ -6226,7 +6226,7 @@
                 }
               }
             ],
-            "image": "https://raregallery.art/uploads/posts/1080774-fantasy-art-wings-clouds-flying-spear-screenshot-atmosphere-of-earth.jpg",
+            "image": "https://cdn.imgchest.com/files/060a2b8b6ad7.jpeg",
             "prerequisites": "Flight 30+ && group(\"wings\")"
           },
           {
@@ -6438,7 +6438,7 @@
             "label": "Sniper ",
             "description": "  Can compensate for Ranged damage drop-off, effectively ignoring it\n\n  Can predict enemy movement (but not actions), increasing overall accuracy\n\n  Can Perform an attack Action that guarantees a Critical Hit\n",
             "id": "jobClassesAdvancedJobClassesSniper",
-            "image": "https://raregallery.art/uploads/posts/4597748-artwork-fantasy-weapon-sniper-rifle-destiny-video-game-science-fiction-weapon.jpg",
+            "image": "https://cdn.imgchest.com/files/103b82285361.jpeg",
             "costOptions": [
               {
                 "cost": {
@@ -6538,7 +6538,7 @@
                 }
               }
             ],
-            "image": "https://wallpapercrafter.com/desktop/161566-fantasy-art-fantasy-girl-musical-instrument.jpg",
+            "image": "https://cdn.imgchest.com/files/52b4e152f057.jpeg",
             "prerequisites": "jobClassesAdvancedJobClassesJester"
           },
           {
@@ -6810,7 +6810,7 @@
                 }
               }
             ],
-            "image": "https://raregallery.art/uploads/posts/115251-might-magic-heroes-iii-game-rpg-magic-battle-battlefield-green-sword-mage-eagle-warrior-fantasy-art-screenshot-sky-clouds-pc-4k-5k.jpg"
+            "image": "https://cdn.imgchest.com/files/aa4a2027b9eb.jpeg"
           },
           {
             "label": "Scryer (Req. Divination Specialization) ",
@@ -7816,13 +7816,13 @@
             "label": "Shield",
             "description": "Martial, medium damage reduction when in use",
             "id": "cashShopAndGachaCashShopShield",
-            "image": "https://raregallery.art/uploads/posts/4513056-warrior-fantasy-art-magic-sword-shield.jpg"
+            "image": "https://cdn.imgchest.com/files/f7a3ee6bd9c1.jpeg"
           },
           {
             "label": "One-handed Weapon",
             "description": "Martial, medium damage",
             "id": "cashShopAndGachaCashShopOneHandedWeapon",
-            "image": "https://wallpapercrafter.com/desktop3/914562-fantasy-art-warrior-women-battle-arrows-sword.jpg"
+            "image": "https://cdn.imgchest.com/files/e8aca756dfe5.jpeg"
           },
           {
             "label": "Two-handeded Weapon",
