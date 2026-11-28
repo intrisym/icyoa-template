@@ -42,7 +42,9 @@ function readImages(files, root = ROOT) {
 
 // Serve a test document at the real origin without deploying or changing DNS.
 // Only the document is intercepted: external image requests go to their real hosts.
-async function checkProfile(browser, images, { baseURL, timeout = 10000, concurrency = 32, assetRoot = ROOT, serveLocalAssets = true, onProgress = () => {} }) {
+async function checkProfile(browser, images, { baseURL, timeout = 10000, concurrency = 32, assetRoot = ROOT, serveLocalAssets = true,
+    onProgress = () => {}, networkRetryDelays = [1000, 2000, 4000],
+    onRetry = message => console.log(message) }) {
     const context = await browser.newContext({ serviceWorkers: "block" });
     try {
         const page = await context.newPage();
@@ -113,7 +115,12 @@ async function checkProfile(browser, images, { baseURL, timeout = 10000, concurr
         for (let offset = 0; offset < unique.length; offset += concurrency) {
             let remaining = unique.slice(offset, offset + concurrency);
             const attempts = new Map(remaining.map(url => [url, []]));
-            for (let attempt = 0; attempt < 2 && remaining.length; attempt += 1) {
+            for (let attempt = 0; attempt < 2 + networkRetryDelays.length && remaining.length; attempt += 1) {
+                if (attempt >= 2) {
+                    const delay = networkRetryDelays[attempt - 2];
+                    onRetry(`Network changed: retrying ${remaining.length} affected image URL(s) in ${delay} ms (${attempt - 1}/${networkRetryDelays.length} recovery retries).`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
                 remaining.forEach(url => diagnostics.delete(url));
                 const results = await loadImages(remaining);
                 remaining = [];
@@ -121,7 +128,7 @@ async function checkProfile(browser, images, { baseURL, timeout = 10000, concurr
                     if (!result.error) continue;
                     const observation = { ...result, ...diagnostics.get(result.url) };
                     attempts.get(result.url).push(observation);
-                    if (!attempt) remaining.push(result.url);
+                    if (!attempt || observation.error === "net::ERR_NETWORK_CHANGED" && attempt < 1 + networkRetryDelays.length) remaining.push(result.url);
                     else {
                         const failure = { ...observation, attempts: attempts.get(result.url), references: references.get(result.url) };
                         failures.push({ ...failure, classification: classifyFailure(failure) });

@@ -4,6 +4,48 @@ const fs = require("node:fs/promises");
 const path = require("node:path");
 const { collectImages, checkProfile } = require("./check-images");
 
+test("network-change recovery retries only affected URLs and retains exhausted attempt history", async () => {
+    const counts = new Map();
+    const handlers = {};
+    const retries = [];
+    let closed = false;
+    const page = {
+        route: async () => {}, goto: async () => {},
+        on: (event, handler) => { handlers[event] = handler; },
+        evaluate: async (_load, { urls }) => urls.map(url => {
+            const count = (counts.get(url) || 0) + 1;
+            counts.set(url, count);
+            const name = new URL(url).pathname;
+            const request = { url: () => url, redirectedFrom: () => null, resourceType: () => "image" };
+            if (name === "/good" || name === "/recover" && count >= 3) return { url, error: null };
+            if (name === "/missing" || name === "/changed-then-missing" && count > 1) {
+                handlers.response({ request: () => request, headers: () => ({}), status: () => 404 });
+            } else {
+                handlers.requestfailed({ ...request, failure: () => ({ errorText: "net::ERR_NETWORK_CHANGED" }) });
+            }
+            return { url, error: "Browser could not load/decode image" };
+        })
+    };
+    const browser = { newContext: async () => ({ newPage: async () => page, close: async () => { closed = true; } }) };
+    const names = ["good", "recover", "persistent", "missing", "changed-then-missing"];
+    const images = names.map(id => ({ url: `https://images.test/${id}`, id }));
+    const failures = await checkProfile(browser, images, {
+        baseURL: "http://localhost:8000/", networkRetryDelays: [1, 2, 4], onRetry: message => retries.push(message)
+    });
+    assert.deepEqual(names.map(id => counts.get(`https://images.test/${id}`)), [1, 3, 5, 2, 2]);
+    assert.equal(failures.length, 3);
+    const persistent = failures.find(failure => failure.url.endsWith("/persistent"));
+    assert.equal(persistent.attempts.length, 5);
+    assert.equal(persistent.classification, "inconclusive");
+    assert(persistent.attempts.every(attempt => attempt.error === "net::ERR_NETWORK_CHANGED"));
+    assert.equal(failures.find(failure => failure.url.endsWith("/missing")).classification, "broken");
+    assert.equal(retries.length, 3);
+    assert.match(retries[0], /2 affected image URL\(s\) in 1 ms/);
+    assert.match(retries[1], /1 affected image URL\(s\) in 2 ms/);
+    assert.match(retries[2], /1 affected image URL\(s\) in 4 ms/);
+    assert.equal(closed, true);
+});
+
 test("failed editor reload blocks stale writes until the repaired draft is reconciled", async context => {
     const browser = await require("playwright").chromium.launch();
     context.after(() => browser.close());
